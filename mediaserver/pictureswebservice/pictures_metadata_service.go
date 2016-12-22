@@ -34,6 +34,7 @@ func (ms *PicturesMetadataService) serveAllPicturesMetadata(w http.ResponseWrite
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("etag", string(ms.picturesDAL.GetStateHashCode()))
 	w.Write(jsonBytes)
 }
 

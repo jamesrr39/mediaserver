@@ -1,15 +1,24 @@
 package picturesdal
 
 import (
+	"bytes"
 	"crypto/sha1"
 	"encoding/hex"
+	"image"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 	"io"
+	"io/ioutil"
 	"log"
 	"mediaserverapp/mediaserver/pictures"
 	"mediaserverapp/mediaserver/picturesdal/picturescache"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+
+	"github.com/rwcarlsen/goexif/exif"
 )
 
 type PicturesDAL struct {
@@ -23,6 +32,10 @@ func NewPicturesDAL(rootpath string) *PicturesDAL {
 
 func (dal *PicturesDAL) GetAll() []*pictures.PictureMetadata {
 	return dal.cache.GetAll()
+}
+
+func (dal *PicturesDAL) GetStateHashCode() pictures.HashValue {
+	return dal.cache.GetHashValue()
 }
 
 // can be null if no metadata
@@ -49,18 +62,22 @@ func (dal *PicturesDAL) UpdatePicturesCache() error {
 			return nil
 		}
 
-		file, err := os.Open(path)
+		fileBytes, err := ioutil.ReadFile(path)
 		if err != nil {
 			return err
 		}
-		defer file.Close()
 
-		fileHash, err := hashOfFile(file)
+		fileHash, err := hashOfFile(bytes.NewBuffer(fileBytes))
 		if nil != err {
 			return err
 		}
 
-		pictureMetadata := pictures.NewPictureMetadata(fileHash, strings.TrimPrefix(path, dal.rootpath), fileinfo.Size())
+		exifData, err := exif.Decode(bytes.NewBuffer(fileBytes))
+		if nil != err {
+			log.Printf("not able to read metadata for %s. Error: %s\n", path, err)
+		}
+
+		pictureMetadata := pictures.NewPictureMetadata(fileHash, strings.TrimPrefix(path, dal.rootpath), fileinfo.Size(), exifData)
 		picturesMetadatas = append(picturesMetadatas, pictureMetadata) // todo concurrency
 
 		return nil
@@ -72,11 +89,26 @@ func (dal *PicturesDAL) UpdatePicturesCache() error {
 
 	newCache := picturescache.NewPicturesCache()
 	newCache.Add(picturesMetadatas...)
+	var mu sync.Mutex
+	mu.Lock()
 	dal.cache = newCache
+	mu.Unlock()
 	return nil
 }
 
-func hashOfFile(file *os.File) (pictures.HashValue, error) {
+// GetRawPicture returns a the raw picture for a piece of metadata
+// it doesn't handle transforming the picture
+func (picturesDAL *PicturesDAL) GetRawPicture(pictureMetadata *pictures.PictureMetadata) (image.Image, string, error) {
+	file, err := os.Open(filepath.Join(picturesDAL.rootpath, pictureMetadata.RelativeFilePath))
+	if nil != err {
+		return nil, "", err
+	}
+	defer file.Close()
+
+	return image.Decode(file)
+}
+
+func hashOfFile(file io.Reader) (pictures.HashValue, error) {
 	hasher := sha1.New()
 
 	_, err := io.Copy(hasher, file)

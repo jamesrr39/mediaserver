@@ -2,13 +2,11 @@ package main
 
 import (
 	"log"
+	"mediaserverapp/mediaserver"
 	"os"
 	"path/filepath"
 
-	"mediaserverapp/mediaserver"
-
 	"github.com/jamesrr39/goutil/user"
-
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
