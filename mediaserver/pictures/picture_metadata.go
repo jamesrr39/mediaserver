@@ -35,7 +35,7 @@ func (pictureMetadata *PictureMetadata) RotateAndTransformPictureByExifData(pict
 		return nil, err
 	}
 	if exifOrientation == 0 {
-		log.Printf("No exif orientation available for %s\n")
+		log.Printf("no exif orientation available for %s\n", pictureMetadata)
 		return picture, nil
 	}
 

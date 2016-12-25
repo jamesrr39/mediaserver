@@ -302,6 +302,10 @@ boom@2.x.x:
   dependencies:
     hoek "2.x.x"
 
+bootstrap:
+  version "3.3.7"
+  resolved "https://registry.yarnpkg.com/bootstrap/-/bootstrap-3.3.7.tgz#5a389394549f23330875a3b150656574f8a9eb71"
+
 brace-expansion@^1.0.0:
   version "1.1.6"
   resolved "https://registry.yarnpkg.com/brace-expansion/-/brace-expansion-1.1.6.tgz#7197d7eaa9b87e648390ea61fc66c84427420df9"
@@ -1674,6 +1678,10 @@ negotiator@0.4.9:
 negotiator@0.6.1:
   version "0.6.1"
   resolved "https://registry.yarnpkg.com/negotiator/-/negotiator-0.6.1.tgz#2b327184e8992101177b28563fb5e7102acd0ca9"
+
+ng2-lazyload-image:
+  version "2.2.2"
+  resolved "https://registry.yarnpkg.com/ng2-lazyload-image/-/ng2-lazyload-image-2.2.2.tgz#a06638ed3a96ac571006950a18615106f3ba1623"
 
 node-pre-gyp@^0.6.29:
   version "0.6.32"
