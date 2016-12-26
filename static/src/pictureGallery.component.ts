@@ -8,8 +8,10 @@ import { PicturesByDate } from './picturesByDate';
 @Component({
     selector: 'picture-gallery',
     template: `
-        <div *ngFor="let pictureGroup of pictureGroups">
-            <picture-group [pictureGroup]="pictureGroup"></picture-group>
+        <div class="widget-container">
+            <div *ngFor="let pictureGroup of pictureGroups">
+                <picture-group [pictureGroup]="pictureGroup"></picture-group>
+            </div>
         </div>
       `,
     providers: [PictureMetadataService]
@@ -31,17 +33,22 @@ export class PictureGallery implements OnInit {
 @Component({
     selector: 'picture-group',
     template: `
-    <div class="row">
-        <h3>{{ groupDisplayString }}</h3>
-        <div class="thumbnail-container" *ngFor="let pictureMetadata of picturesMetadatas">
-                <picture-thumbnail [pictureMetadata]="pictureMetadata"></picture-thumbnail>
-        </div>
-    </div>`,
+        <div class="">
+            <div class="row col-sm-12">
+                <h3>{{ groupDisplayString }}</h3>
+                <div class="thumbnail-container" *ngFor="let pictureMetadata of picturesMetadatas">
+                        <picture-thumbnail [pictureMetadata]="pictureMetadata"></picture-thumbnail>
+                </div>
+            </div>
+        </div>`,
     styles: [`
         .thumbnail-container {
             float: left;
         }
-    `]
+      .row{
+          margin: 25px 0;
+      }
+      `]
 })
 export class PictureGroupView {
     @Input() pictureGroup: PictureGroup
@@ -57,11 +64,10 @@ export class PictureGroupView {
 @Component({
     selector: 'picture-thumbnail',
     template: `
-        <img [src]="defaultImage" [lazyLoad]="image" [offset]="offset">
+        <img [src]="defaultImage" [lazyLoad]=pictureSrc [offset]="offset">
     `,
     styles: [`
         img {
-            width: 300px;
             height: 200px;
         }
     `]
@@ -69,7 +75,10 @@ export class PictureGroupView {
 export class PictureThumbnail {
     @Input() pictureMetadata: PictureMetadata;
     defaultImage = '/a/b.jpg';
-    image = '/picture/{{pictureMetadata.hashValue}}?h=200';
+    pictureSrc: string
     offset = 100;
+    ngOnInit(){
+        this.pictureSrc = "/picture/" + this.pictureMetadata.hashValue + "?h=200"
+    }
     
 }
