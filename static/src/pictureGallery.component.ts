@@ -6,7 +6,7 @@ import { PicturesByDate } from './picturesByDate';
 
 
 @Component({
-    selector: 'my-app',
+    selector: 'picture-gallery',
     template: `
         <div *ngFor="let pictureGroup of pictureGroups">
             <picture-group [pictureGroup]="pictureGroup"></picture-group>
