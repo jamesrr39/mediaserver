@@ -21,7 +21,23 @@ func NewPicturesCache() *PicturesCache {
 	return &PicturesCache{mu: &sync.Mutex{}, mapByHash: make(map[pictures.HashValue]*pictures.PictureMetadata)}
 }
 
-func (cache *PicturesCache) Add(picturesMetadata ...*pictures.PictureMetadata) {
+func (cache *PicturesCache) Add(pictureMetadata *pictures.PictureMetadata) error {
+	cache.mu.Lock()
+	defer cache.mu.Unlock()
+
+	existingPicture := cache.mapByHash[pictureMetadata.HashValue]
+	if nil != existingPicture {
+		return &ErrItemAlreadyExists{}
+	}
+
+	cache.mapByHash[pictureMetadata.HashValue] = pictureMetadata
+	cache.picturesMetadatas = append(cache.picturesMetadatas, pictureMetadata)
+
+	return cache.setHashValue()
+
+}
+
+func (cache *PicturesCache) AddBatch(picturesMetadata ...*pictures.PictureMetadata) {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
 

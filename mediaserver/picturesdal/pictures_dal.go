@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"encoding/hex"
+	"errors"
 	"image"
 	_ "image/gif"
 	_ "image/jpeg"
@@ -15,8 +16,10 @@ import (
 	"mediaserverapp/mediaserver/picturesdal/picturescache"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/rwcarlsen/goexif/exif"
 )
@@ -41,6 +44,56 @@ func (dal *PicturesDAL) GetStateHashCode() pictures.HashValue {
 // can be null if no metadata
 func (dal *PicturesDAL) Get(hashValue pictures.HashValue) *pictures.PictureMetadata {
 	return dal.cache.Get(hashValue)
+}
+
+func (dal *PicturesDAL) Create(file io.ReadCloser, filename string, contentType string) (*pictures.PictureMetadata, error) {
+
+	if strings.Contains(filename, ".."+string(filepath.Separator)) {
+		return nil, errors.New("filename contains ..")
+	}
+
+	var fileByteBuffer bytes.Buffer
+	_, err := io.Copy(&fileByteBuffer, file)
+
+	fileHash, err := hashOfFile(bytes.NewBuffer(fileByteBuffer.Bytes()))
+	if nil != err {
+		return nil, err
+	}
+
+	if nil != dal.Get(fileHash) {
+		return nil, errors.New("a file with this hash already exists")
+	}
+
+	exifData, err := exif.Decode(bytes.NewBuffer(fileByteBuffer.Bytes()))
+	if nil != err {
+		log.Printf("not able to read metadata. Error: %s\n", err)
+	}
+
+	folder := filepath.Join(dal.rootpath, "uploads", strings.Split(time.Now().Format(time.RFC3339), "T")[0])
+	err = os.MkdirAll(folder, 0755)
+	if nil != err {
+		return nil, err
+	}
+
+	path, err := getPathForNewFile(folder, filename)
+	if nil != err {
+		return nil, err
+	}
+	log.Println("writing to " + path)
+	err = ioutil.WriteFile(path, fileByteBuffer.Bytes(), 0644)
+	if nil != err {
+		return nil, err
+	}
+
+	fileinfo, err := os.Stat(path)
+	if nil != err {
+		return nil, err
+	}
+
+	pictureMetadata := pictures.NewPictureMetadata(fileHash, strings.TrimPrefix(path, dal.rootpath), fileinfo.Size(), exifData)
+	dal.cache.Add(pictureMetadata)
+
+	return pictureMetadata, nil
 }
 
 func (dal *PicturesDAL) UpdatePicturesCache() error {
@@ -88,12 +141,37 @@ func (dal *PicturesDAL) UpdatePicturesCache() error {
 	}
 
 	newCache := picturescache.NewPicturesCache()
-	newCache.Add(picturesMetadatas...)
+	newCache.AddBatch(picturesMetadatas...)
 	var mu sync.Mutex
 	mu.Lock()
 	dal.cache = newCache
 	mu.Unlock()
 	return nil
+}
+
+func getPathForNewFile(folder, filename string) (string, error) {
+
+	fileExtension := filepath.Ext(filename)
+	withoutExtension := strings.TrimSuffix(filename, fileExtension)
+
+	for i := 0; i < 100000; i++ {
+		name := withoutExtension
+		if 0 != i {
+			name += "_" + strconv.Itoa(i)
+		}
+		name += fileExtension
+
+		path := filepath.Join(folder, name)
+		_, err := os.Stat(path)
+		if nil != err {
+			if os.IsNotExist(err) {
+				return path, nil
+			}
+			return "", err
+		}
+	}
+	return "", errors.New("ran out of numbers for the new file")
+
 }
 
 // GetRawPicture returns a the raw picture for a piece of metadata

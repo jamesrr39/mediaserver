@@ -1,6 +1,7 @@
 package pictureswebservice
 
 import (
+	"encoding/json"
 	"image/gif"  // decode
 	"image/jpeg" // decode
 	"image/png"  // decode
@@ -22,6 +23,7 @@ func NewPicturesService(picturesDAL *picturesdal.PicturesDAL) *PicturesService {
 
 	router := mux.NewRouter()
 	router.HandleFunc("/{hashValue}", picturesService.servePicture).Methods("GET")
+	router.HandleFunc("/", picturesService.servePictureUpload).Methods("POST")
 
 	picturesService.Router = router
 	return picturesService
@@ -73,6 +75,29 @@ func (ps *PicturesService) servePicture(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "Image type not supported: '"+pictureType+"'", 415)
 		return
 	}
+
+}
+
+func (ps *PicturesService) servePictureUpload(w http.ResponseWriter, r *http.Request) {
+
+	file, fileHandler, err := r.FormFile("file")
+	if nil != err {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+
+	pictureMetadata, err := ps.picturesDAL.Create(file, fileHandler.Filename, fileHandler.Header.Get("Content-Type"))
+	if nil != err {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	metadataBytes, err := json.Marshal(pictureMetadata)
+	if nil != err {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	w.Write(metadataBytes)
 
 }
 

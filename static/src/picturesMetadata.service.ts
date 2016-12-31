@@ -18,12 +18,16 @@ export class PictureMetadataService {
                 let exifMap = new Map<string, any>();
                 Object.keys(metadataJSON.exif).forEach((k) => {
                     let v = metadataJSON.exif[k];
-                    console.log("value: " + v)
                     exifMap.set(k, v);
                 })
                 return new PictureMetadata(metadataJSON.hashValue, metadataJSON.relativeFilePath, metadataJSON.fileSizeBytes, exifMap);
             })
         });
+    }
+    upload(file: File): Observable<Response> {
+        let formData = new FormData();
+        formData.append("file", file);
+        return this.http.post("/picture/", formData);
     }
 }
 

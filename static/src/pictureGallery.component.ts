@@ -9,6 +9,9 @@ import { PicturesByDate } from './picturesByDate';
     selector: 'picture-gallery',
     template: `
         <div class="widget-container">
+		<form method="POST" action="/pictures/">
+			<input type="file" name="file" multiple="true" (change)="upload($event)">
+		</form>
             <div *ngFor="let pictureGroup of pictureGroups">
                 <picture-group [pictureGroup]="pictureGroup"></picture-group>
             </div>
@@ -27,6 +30,19 @@ export class PictureGallery implements OnInit {
                 self.pictureGroups = (new PicturesByDate(picturesMetadata)).pictureGroups()
             },
             error => console.log(error))
+    }
+	upload(event: FileListTarget){
+            let fileList = event.target.files;
+            console.log("any event")
+            for (let i = 0; i < fileList.length; i++){
+                this.pictureMetadataService.upload(fileList[i]).subscribe();
+            }
+	}
+}
+
+class FileListTarget {
+    target: {
+        files: FileList
     }
 }
 
