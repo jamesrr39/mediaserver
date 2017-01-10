@@ -46,7 +46,7 @@ func (dal *PicturesDAL) Get(hashValue pictures.HashValue) *pictures.PictureMetad
 	return dal.cache.Get(hashValue)
 }
 
-func (dal *PicturesDAL) Create(file io.ReadCloser, filename string, contentType string) (*pictures.PictureMetadata, error) {
+func (dal *PicturesDAL) Create(file io.Reader, filename string, contentType string) (*pictures.PictureMetadata, error) {
 
 	if strings.Contains(filename, ".."+string(filepath.Separator)) {
 		return nil, errors.New("filename contains ..")
@@ -175,13 +175,15 @@ func getPathForNewFile(folder, filename string) (string, error) {
 }
 
 // GetRawPicture returns a the raw picture for a piece of metadata
-// it doesn't handle transforming the picture
+// it doesn't perform any transformations on the picture
 func (picturesDAL *PicturesDAL) GetRawPicture(pictureMetadata *pictures.PictureMetadata) (image.Image, string, error) {
 	file, err := os.Open(filepath.Join(picturesDAL.rootpath, pictureMetadata.RelativeFilePath))
 	if nil != err {
 		return nil, "", err
 	}
 	defer file.Close()
+
+	log.Printf("opening file %v\n", *file)
 
 	return image.Decode(file)
 }

@@ -1,17 +1,19 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ViewContainerRef } from '@angular/core';
 import { PictureMetadataService } from './picturesMetadata.service'
 import { PictureMetadata } from './pictureMetadata'
 import { PictureGroup } from './pictureGroup';
 import { PicturesByDate } from './picturesByDate';
 
+import { Overlay } from 'angular2-modal';
+import { Modal } from 'angular2-modal/plugins/bootstrap';
 
 @Component({
     selector: 'picture-gallery',
     template: `
         <div class="widget-container">
-		<form method="POST" action="/pictures/">
-			<input type="file" name="file" multiple="true" (change)="upload($event)">
-		</form>
+            <form method="POST" action="/pictures/">
+                    <input type="file" name="file" multiple="true" (change)="upload($event)">
+            </form>
             <div *ngFor="let pictureGroup of pictureGroups">
                 <picture-group [pictureGroup]="pictureGroup"></picture-group>
             </div>
@@ -21,23 +23,32 @@ import { PicturesByDate } from './picturesByDate';
 })
 export class PictureGallery implements OnInit {
     pictureGroups: PictureGroup[]
+    private picturesMetadata: PictureMetadata[] = []
     constructor(private pictureMetadataService: PictureMetadataService) {}
     ngOnInit() {
         var self = this;
-        
+
         this.pictureMetadataService.fetch().subscribe(
             (picturesMetadata) => {
-                self.pictureGroups = (new PicturesByDate(picturesMetadata)).pictureGroups()
+                self.picturesMetadata = picturesMetadata;
+                self.updateRendering()
             },
             error => console.log(error))
     }
-	upload(event: FileListTarget){
-            let fileList = event.target.files;
-            console.log("any event")
-            for (let i = 0; i < fileList.length; i++){
-                this.pictureMetadataService.upload(fileList[i]).subscribe();
-            }
-	}
+    upload(event: FileListTarget){
+        var self = this;
+
+        let fileList = event.target.files;
+        for (let i = 0; i < fileList.length; i++){
+            this.pictureMetadataService.upload(fileList[i]).subscribe(pictureMetadata => {
+                self.picturesMetadata.push(pictureMetadata);
+                self.updateRendering()
+            });
+        }
+    }
+    updateRendering() {
+        this.pictureGroups = (new PicturesByDate(this.picturesMetadata)).pictureGroups()
+    }
 }
 
 class FileListTarget {
@@ -49,7 +60,7 @@ class FileListTarget {
 @Component({
     selector: 'picture-group',
     template: `
-        <div class="">
+        <div>
             <div class="row col-sm-12">
                 <h3>{{ groupDisplayString }}</h3>
                 <div class="thumbnail-container" *ngFor="let pictureMetadata of picturesMetadatas">
@@ -61,9 +72,9 @@ class FileListTarget {
         .thumbnail-container {
             float: left;
         }
-      .row{
-          margin: 25px 0;
-      }
+        .row{
+            margin: 25px 0;
+        }
       `]
 })
 export class PictureGroupView {
@@ -80,11 +91,16 @@ export class PictureGroupView {
 @Component({
     selector: 'picture-thumbnail',
     template: `
-        <img [src]="defaultImage" [lazyLoad]=pictureSrc [offset]="offset">
+        <img [src]="defaultImage" [lazyLoad]=pictureSrc [offset]="offset" (click)="openModal()">
     `,
     styles: [`
         img {
             height: 200px;
+        }
+        :host {
+            padding: 0 5px 5px 0;
+            margin: 0 0 5px 0;
+            overflow: auto;
         }
     `]
 })
@@ -93,8 +109,27 @@ export class PictureThumbnail {
     defaultImage = '/a/b.jpg';
     pictureSrc: string
     offset = 100;
+    constructor(overlay: Overlay, vcRef: ViewContainerRef, public modal: Modal){
+        overlay.defaultViewContainer = vcRef;
+    }
     ngOnInit(){
         this.pictureSrc = "/picture/" + this.pictureMetadata.hashValue + "?h=200"
+    }
+    openModal() {
+        this.modal.alert()
+            .size('lg')
+            .isBlocking(true)
+            .showClose(true)
+            .keyboard(27)
+            .title('Hello World')
+            .body('<img src="/picture/' + this.pictureMetadata.hashValue + '?h=800">')
+            .open();
+        /*
+        this.modal.open(`
+        <h1>opened modal</h1>
+        `, {
+          
+        })*/
     }
     
 }
