@@ -102,6 +102,10 @@ angular-in-memory-web-api@~0.2.1:
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/angular-in-memory-web-api/-/angular-in-memory-web-api-0.2.1.tgz#4011c67eebcd02a8e18744724bdb7d822a417e0c"
 
+angular2-modal:
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/angular2-modal/-/angular2-modal-2.0.2.tgz#d1839a223acdc747ad023e6a835a2dbd33321557"
+
 ansi-regex@^0.2.0, ansi-regex@^0.2.1:
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/ansi-regex/-/ansi-regex-0.2.1.tgz#0d8e946967a3d8143f93e24e298525fc1b2235f9"
