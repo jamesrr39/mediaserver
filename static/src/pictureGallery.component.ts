@@ -4,27 +4,27 @@ import { PictureMetadata } from './pictureMetadata'
 import { PictureGroup } from './pictureGroup';
 import { PicturesByDate } from './picturesByDate';
 
-import { Overlay } from 'angular2-modal';
-import { Modal } from 'angular2-modal/plugins/bootstrap';
+import { PictureModal } from './pictureModal.directive';
 
 @Component({
     selector: 'picture-gallery',
     template: `
         <div class="widget-container">
             <form method="POST" action="/pictures/">
-                    <input type="file" name="file" multiple="true" (change)="upload($event)">
+                <input type="file" name="file" multiple="true" (change)="upload($event)">
             </form>
             <div *ngFor="let pictureGroup of pictureGroups">
-                <picture-group [pictureGroup]="pictureGroup"></picture-group>
+                <picture-group [pictureGroup]="pictureGroup" [pictureModal]="pictureModal"></picture-group>
             </div>
         </div>
+        <picture-modal></picture-modal>
       `,
-    providers: [PictureMetadataService]
+    providers: [PictureMetadataService, PictureModal]
 })
 export class PictureGallery implements OnInit {
     pictureGroups: PictureGroup[]
     private picturesMetadata: PictureMetadata[] = []
-    constructor(private pictureMetadataService: PictureMetadataService) {}
+    constructor(private pictureMetadataService: PictureMetadataService, public pictureModal: PictureModal) {}
     ngOnInit() {
         var self = this;
 
@@ -64,7 +64,7 @@ class FileListTarget {
             <div class="row col-sm-12">
                 <h3>{{ groupDisplayString }}</h3>
                 <div class="thumbnail-container" *ngFor="let pictureMetadata of picturesMetadatas">
-                        <picture-thumbnail [pictureMetadata]="pictureMetadata"></picture-thumbnail>
+                    <picture-thumbnail [pictureMetadata]="pictureMetadata" [pictureModal]="pictureModal"></picture-thumbnail>
                 </div>
             </div>
         </div>`,
@@ -79,8 +79,10 @@ class FileListTarget {
 })
 export class PictureGroupView {
     @Input() pictureGroup: PictureGroup
+    @Input() pictureModal: PictureModal
     groupDisplayString: string
     picturesMetadatas: PictureMetadata[]
+    constructor() {}
     ngOnInit() {
         this.groupDisplayString = this.pictureGroup.groupName()
         this.picturesMetadatas = this.pictureGroup.pictureMetadatas()
@@ -106,24 +108,25 @@ export class PictureGroupView {
 })
 export class PictureThumbnail {
     @Input() pictureMetadata: PictureMetadata;
+    @Input() pictureModal: PictureModal
     defaultImage = '/a/b.jpg';
     pictureSrc: string
     offset = 100;
-    constructor(overlay: Overlay, vcRef: ViewContainerRef, public modal: Modal){
-        overlay.defaultViewContainer = vcRef;
-    }
     ngOnInit(){
         this.pictureSrc = "/picture/" + this.pictureMetadata.hashValue + "?h=200"
     }
     openModal() {
-        this.modal.alert()
-            .size('lg')
-            .isBlocking(true)
-            .showClose(true)
-            .keyboard(27)
-            .title('Hello World')
-            .body('<img src="/picture/' + this.pictureMetadata.hashValue + '?h=800">')
-            .open();
+        
+        this.pictureModal.open(this.pictureMetadata)
+        
+//        this.modal.alert()
+//            .size('lg')
+//            .isBlocking(true)
+//            .showClose(true)
+//            .keyboard(27)
+//            .title('Hello World')
+//            .body('<img src="/picture/' + this.pictureMetadata.hashValue + '?h=800">')
+//            .open();
         /*
         this.modal.open(`
         <h1>opened modal</h1>

@@ -41,6 +41,6 @@ func (ms *MediaServer) ServeHTTP(port int) error {
 	mainRouter.PathPrefix("/api/pictureMetadata/").Handler(http.StripPrefix("/api/pictureMetadata", ms.picturesMetadataService.Router))
 	mainRouter.PathPrefix("/picture/").Handler(http.StripPrefix("/picture", ms.picturesService.Router))
 	mainRouter.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("static"))))
-	return http.ListenAndServe(":"+strconv.Itoa(port), mainRouter)
+	return http.ListenAndServe("localhost:"+strconv.Itoa(port), mainRouter)
 
 }
