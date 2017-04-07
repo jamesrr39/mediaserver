@@ -5,6 +5,7 @@ import (
 	"image/gif"  // decode
 	"image/jpeg" // decode
 	"image/png"  // decode
+	"log"
 	"mediaserverapp/mediaserver/pictures"
 	"mediaserverapp/mediaserver/picturesdal"
 	"net/http"
@@ -39,6 +40,7 @@ func (ps *PicturesService) servePicture(w http.ResponseWriter, r *http.Request) 
 
 	picture, pictureType, err := ps.picturesDAL.GetRawPicture(pictureMetadata)
 	if nil != err {
+		log.Println("failed on getting raw picture")
 		http.Error(w, err.Error(), 500)
 		return
 	}

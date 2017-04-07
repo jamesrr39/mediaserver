@@ -25,6 +25,7 @@ func main() {
 	}
 
 	mediaServer := mediaserver.NewMediaServer(fullpath)
+	log.Printf("attempting to start serving on port %d\n", *port)
 	err = mediaServer.ServeHTTP(*port)
 	if nil != err {
 		log.Fatalln("Couldn't start HTTP server. Error: " + err.Error())

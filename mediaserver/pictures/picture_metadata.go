@@ -4,6 +4,8 @@ import (
 	"image"
 	"log"
 
+	"github.com/jamesrr39/goutil/image-processing/imageprocessingutil"
+
 	"github.com/rwcarlsen/goexif/exif"
 )
 
@@ -11,7 +13,7 @@ type HashValue string
 
 type PictureMetadata struct {
 	HashValue        `json:"hashValue"`
-	RelativeFilePath string
+	RelativeFilePath string     `json:"relativeFilePath"`
 	FileSizeBytes    int64      `json:"fileSizeBytes"`
 	ExifData         *exif.Exif `json:"exif"`
 }
@@ -21,25 +23,13 @@ func NewPictureMetadata(hashValue HashValue, relativeFilePath string, fileSizeBy
 }
 
 func (pictureMetadata *PictureMetadata) RotateAndTransformPictureByExifData(picture image.Image) (image.Image, error) {
+
 	if nil == pictureMetadata.ExifData {
-		log.Printf("No exif data available for %s, not rotating and transforming\n", pictureMetadata)
-		return picture, nil
-	}
-	tag, err := pictureMetadata.ExifData.Get(exif.Orientation)
-	if nil != err {
-		return nil, err
-	}
-
-	exifOrientation, err := tag.Int(0)
-	if nil != err {
-		return nil, err
-	}
-	if exifOrientation == 0 {
-		log.Printf("no exif orientation available for %s\n", pictureMetadata)
+		log.Printf("no exif metadata available for %s to rotate or transform\n", pictureMetadata.RelativeFilePath)
 		return picture, nil
 	}
 
-	return flipAndRotatePictureByExif(picture, exifOrientation), nil
+	return imageprocessingutil.RotateAndTransformPictureByExifData(picture, *pictureMetadata.ExifData)
 
 }
 
