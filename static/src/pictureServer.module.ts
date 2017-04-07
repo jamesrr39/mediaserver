@@ -3,6 +3,7 @@ import { HttpModule } from '@angular/http';
 import { BrowserModule } from '@angular/platform-browser';
 import { PictureGallery, PictureThumbnail, PictureGroupView }  from './pictureGallery.component';
 import { PictureMetadataService } from './picturesMetadata.service'
+import { MediaserverApp } from './mediaserverApp.component'
 
 import { LazyLoadImageModule } from 'ng2-lazyload-image';
 
@@ -13,8 +14,8 @@ import { PictureModal } from './pictureModal.directive';
 
 @NgModule({
   imports: [BrowserModule, HttpModule, LazyLoadImageModule, ModalModule.forRoot(), BootstrapModalModule ],
-  declarations: [PictureGallery, PictureThumbnail, PictureGroupView, PictureModal ],
-  bootstrap: [PictureGallery],
+  declarations: [PictureGallery, PictureThumbnail, PictureGroupView, PictureModal, MediaserverApp ],
+  bootstrap: [MediaserverApp],
   providers: [PictureMetadataService]
 })
 export class AppModule { }

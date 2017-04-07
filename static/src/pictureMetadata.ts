@@ -35,4 +35,12 @@ export class PictureMetadata {
         return date;
 
     }
+    getFileName(): string {
+        if (!this.relativeFilePath){
+            console.log("no name for http://localohst:9010/picture/" + this.hashValue)
+            return "no name";
+        }
+        const indexOfLastSlash = this.relativeFilePath.lastIndexOf("/");
+        return this.relativeFilePath.substring(indexOfLastSlash);
+    }
 }

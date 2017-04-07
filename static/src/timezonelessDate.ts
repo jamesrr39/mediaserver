@@ -1,6 +1,6 @@
 export class TimezonelessDate {
     /**
-     * month is 0-based, like the navite js month
+     * month is 0-based, like the native js month
      */
     constructor(private year: number, private month: number, private day: number){}
     toISOString(): string {

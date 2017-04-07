@@ -17,7 +17,6 @@ import { PictureModal } from './pictureModal.directive';
                 <picture-group [pictureGroup]="pictureGroup" [pictureModal]="pictureModal"></picture-group>
             </div>
         </div>
-        <picture-modal></picture-modal>
       `,
     providers: [PictureMetadataService, PictureModal]
 })
