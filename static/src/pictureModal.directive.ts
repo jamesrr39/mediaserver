@@ -30,7 +30,14 @@ export class PictureModal {
         
         this.modal = document.createElement("div");
         this.modal.className = "picture-modal";
-        this.modal.innerHTML = "<img src='/picture/" + pictureMetadata.hashValue + "' alt='" + pictureMetadata.getFileName() + "' />"
+        const width = document.documentElement.clientWidth -200;
+        const height = document.documentElement.clientHeight -200;
+        this.modal.innerHTML = `
+            <img src='/picture/${pictureMetadata.hashValue}?w=${width}&h=${height}' alt='${pictureMetadata.getFileName()}' />
+            <div class="details-container">
+                <h3>Details</h3>
+            </div>
+            `;
         
         document.body.appendChild(this.maskEl);
         document.body.appendChild(this.modal);
@@ -68,11 +75,17 @@ const injectStyleSheet = () => {
             position: fixed;
             top: 100px;
             left: 10%;
-            width: 80%;
+            width: auto;
         }
         
         .picture-modal img {
             width: 100%
+        }
+        
+        .picture-modal .details-container {
+            color: white;
+            float: left;
+            
         }
     `;
     document.head.appendChild(styleSheet);

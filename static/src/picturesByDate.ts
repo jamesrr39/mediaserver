@@ -9,8 +9,7 @@ export class PicturesByDate implements PictureGroups {
     picturesInDates: PicturesInDate[] = [];
     
     constructor(pictureMetadatas: PictureMetadata[]) {
-        var datePictureMap = new Map<number, PictureMetadata[]>(),
-        self = this;
+        const datePictureMap = new Map<number, PictureMetadata[]>();
         
         // put into a map by Timestamp from TimezonelessDate
         pictureMetadatas.forEach(pictureMetadata => {
@@ -29,7 +28,7 @@ export class PicturesByDate implements PictureGroups {
         datePictureMap.forEach((pictureMetadatas, dateTaken)=>{            
             picturesInDateObjects.push(new PictureInDateObject(dateTaken, pictureMetadatas));
             
-            pictureMetadatas.sort(function(a, b){
+            pictureMetadatas.sort((a, b) => {
                 let aDate = a.dateTaken(),
                     bDate = b.dateTaken();
                     
@@ -41,17 +40,17 @@ export class PicturesByDate implements PictureGroups {
             })
         });
 
-        picturesInDateObjects.sort(function(a, b){
+        picturesInDateObjects.sort((a, b) => {
             if (a.timestamp === b.timestamp) {
                 return 0;
             }
             return (a.timestamp < b.timestamp) ? 1 : -1;
         });
         
-        self.picturesInDates = picturesInDateObjects.map(function(picturesInDateObject){
+        this.picturesInDates = picturesInDateObjects.map((picturesInDateObject) => {
             
             let dateString: string
-            if (picturesInDateObject.timestamp === null){
+            if (picturesInDateObject.timestamp === 0){
                 dateString = UNKNOWN_DATE_KEY;
             } else {
                 let date = new Date(picturesInDateObject.timestamp);

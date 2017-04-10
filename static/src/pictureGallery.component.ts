@@ -115,23 +115,7 @@ export class PictureThumbnail {
         this.pictureSrc = "/picture/" + this.pictureMetadata.hashValue + "?h=200"
     }
     openModal() {
-        
         this.pictureModal.open(this.pictureMetadata)
-        
-//        this.modal.alert()
-//            .size('lg')
-//            .isBlocking(true)
-//            .showClose(true)
-//            .keyboard(27)
-//            .title('Hello World')
-//            .body('<img src="/picture/' + this.pictureMetadata.hashValue + '?h=800">')
-//            .open();
-        /*
-        this.modal.open(`
-        <h1>opened modal</h1>
-        `, {
-          
-        })*/
     }
     
 }
