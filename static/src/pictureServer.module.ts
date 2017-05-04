@@ -10,7 +10,7 @@ import { LazyLoadImageModule } from 'ng2-lazyload-image';
 import { ModalModule } from 'angular2-modal';
 import { BootstrapModalModule } from 'angular2-modal/plugins/bootstrap';
 
-import { PictureModal } from './pictureModal.component';
+import { PictureModal } from './pictureModal/pictureModal.component';
 
 @NgModule({
   imports: [BrowserModule, HttpModule, LazyLoadImageModule, ModalModule.forRoot(), BootstrapModalModule ],

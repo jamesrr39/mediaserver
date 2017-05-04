@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import { Subscription } from 'rxjs/Subscription';
-import { PictureMetadata } from './pictureMetadata';
+import { PictureMetadata } from '../pictureMetadata';
 
 @Component({
     selector: "picture-modal",

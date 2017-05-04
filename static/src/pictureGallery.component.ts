@@ -4,7 +4,7 @@ import { PictureMetadata } from './pictureMetadata'
 import { PictureGroup, PictureGroupHelper } from './pictureGroup';
 import { PicturesByDate } from './picturesByDate';
 
-import { PictureModal } from './pictureModal.component';
+import { PictureModal } from './pictureModal/pictureModal.component';
 
 @Component({
     selector: 'picture-gallery',
