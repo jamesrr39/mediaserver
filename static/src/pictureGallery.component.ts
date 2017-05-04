@@ -1,36 +1,36 @@
 import { Component, OnInit, Input, ViewContainerRef } from '@angular/core';
 import { PictureMetadataService } from './picturesMetadata.service'
 import { PictureMetadata } from './pictureMetadata'
-import { PictureGroup } from './pictureGroup';
+import { PictureGroup, PictureGroupHelper } from './pictureGroup';
 import { PicturesByDate } from './picturesByDate';
 
-import { PictureModal } from './pictureModal.directive';
+import { PictureModal } from './pictureModal.component';
 
 @Component({
     selector: 'picture-gallery',
     template: `
         <div class="widget-container">
             <form method="POST" action="/pictures/">
-                <input type="file" name="file" multiple="true" (change)="upload($event)">
+                <input type="file" class="btn btn-primary" name="file" multiple="true" (change)="upload($event)">
             </form>
             <div *ngFor="let pictureGroup of pictureGroups">
                 <picture-group [pictureGroup]="pictureGroup" [pictureModal]="pictureModal"></picture-group>
             </div>
         </div>
       `,
-    providers: [PictureMetadataService, PictureModal]
+    providers: [PictureMetadataService]
 })
 export class PictureGallery implements OnInit {
     pictureGroups: PictureGroup[]
     private picturesMetadata: PictureMetadata[] = []
-    constructor(private pictureMetadataService: PictureMetadataService, public pictureModal: PictureModal) {}
+	pictureModal: PictureModal;
+    constructor(private pictureMetadataService: PictureMetadataService) {
+	}
     ngOnInit() {
-        var self = this;
-
         this.pictureMetadataService.fetch().subscribe(
             (picturesMetadata) => {
-                self.picturesMetadata = picturesMetadata;
-                self.updateRendering()
+                this.picturesMetadata = picturesMetadata;
+                this.updateRendering()
             },
             error => console.log(error))
     }
@@ -47,6 +47,8 @@ export class PictureGallery implements OnInit {
     }
     updateRendering() {
         this.pictureGroups = (new PicturesByDate(this.picturesMetadata)).pictureGroups()
+		let flattenGroups = PictureGroupHelper.flattenGroups(this.pictureGroups);
+		this.pictureModal = new PictureModal(flattenGroups);
     }
 }
 
@@ -71,7 +73,7 @@ class FileListTarget {
         .thumbnail-container {
             float: left;
         }
-        .row{
+        .row {
             margin: 25px 0;
         }
       `]
@@ -96,12 +98,13 @@ export class PictureGroupView {
     `,
     styles: [`
         img {
-            height: 200px;
+            max-height: 200px;
         }
         :host {
             padding: 0 5px 5px 0;
             margin: 0 0 5px 0;
             overflow: auto;
+			display: inline-block;
         }
     `]
 })

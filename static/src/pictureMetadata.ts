@@ -5,7 +5,7 @@ export class PictureMetadata {
 
     constructor(public hashValue: string, public relativeFilePath: string, public fileSizeBytes: number, public exif: Map<string, any>) { }
     // DateTime":"2014:07:30 21:19:54","DateTimeDigitized":"2014:07:30 21:19:54","DateTimeOriginal
-    dateTimeTaken(): Date {
+    getDateTimeTaken(): Date {
         if (!this.exif) {
             return null;
         }
@@ -25,8 +25,8 @@ export class PictureMetadata {
             parseInt(fragments[5], 10) // second
         );
     }
-    dateTaken(): TimezonelessDate {
-        let dateTime = this.dateTimeTaken();
+    getDateTaken(): TimezonelessDate {
+        let dateTime = this.getDateTimeTaken();
         if (!dateTime){
             return null;
         }

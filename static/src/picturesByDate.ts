@@ -13,7 +13,7 @@ export class PicturesByDate implements PictureGroups {
         
         // put into a map by Timestamp from TimezonelessDate
         pictureMetadatas.forEach(pictureMetadata => {
-            let dateTaken = pictureMetadata.dateTaken();
+            let dateTaken = pictureMetadata.getDateTaken();
             let timestampTaken = (dateTaken) ? dateTaken.toDate().getTime() : 0;
             
             if (!datePictureMap.get(timestampTaken)){
@@ -29,8 +29,8 @@ export class PicturesByDate implements PictureGroups {
             picturesInDateObjects.push(new PictureInDateObject(dateTaken, pictureMetadatas));
             
             pictureMetadatas.sort((a, b) => {
-                let aDate = a.dateTaken(),
-                    bDate = b.dateTaken();
+                let aDate = a.getDateTaken(),
+                    bDate = b.getDateTaken();
                     
                 if (aDate === bDate){
                     return 0;

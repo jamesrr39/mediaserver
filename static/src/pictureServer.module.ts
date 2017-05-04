@@ -10,12 +10,12 @@ import { LazyLoadImageModule } from 'ng2-lazyload-image';
 import { ModalModule } from 'angular2-modal';
 import { BootstrapModalModule } from 'angular2-modal/plugins/bootstrap';
 
-import { PictureModal } from './pictureModal.directive';
+import { PictureModal } from './pictureModal.component';
 
 @NgModule({
   imports: [BrowserModule, HttpModule, LazyLoadImageModule, ModalModule.forRoot(), BootstrapModalModule ],
   declarations: [PictureGallery, PictureThumbnail, PictureGroupView, PictureModal, MediaserverApp ],
   bootstrap: [MediaserverApp],
-  providers: [PictureMetadataService]
+  providers: [PictureMetadataService, PictureModal]
 })
 export class AppModule { }
