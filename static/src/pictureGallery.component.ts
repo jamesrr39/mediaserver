@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, ViewContainerRef } from '@angular/core';
+import { Component, OnInit, Input, ViewChild } from '@angular/core';
 import { PictureMetadataService } from './picturesMetadata.service'
 import { PictureMetadata } from './pictureMetadata'
 import { PictureGroup, PictureGroupHelper } from './pictureGroup';
@@ -17,14 +17,31 @@ import { PictureModal } from './pictureModal/pictureModal.component';
                 <picture-group [pictureGroup]="pictureGroup" [pictureModal]="pictureModal"></picture-group>
             </div>
         </div>
+		<button type="button" (click)="modal.show()">test</button>
+		<picture-modal>
+			<div class="modal-text">ABC in modal</div>
+			<div class="app-modal-header">
+			header
+		</div>
+		<div class="app-modal-body">
+		  Whatever content you like, form fields, anything
+		</div>
+		<div class="app-modal-footer">
+		  <button type="button" class="btn btn-default" (click)="modal.hide()">Close</button>
+		  <button type="button" class="btn btn-primary">Save changes</button>
+		</div>
+		</picture-modal>
       `,
     providers: [PictureMetadataService]
 })
 export class PictureGallery implements OnInit {
     pictureGroups: PictureGroup[]
-    private picturesMetadata: PictureMetadata[] = []
-	pictureModal: PictureModal;
-    constructor(private pictureMetadataService: PictureMetadataService) {
+	private picturesMetadata: PictureMetadata[] = []
+
+	@ViewChild(PictureModal)
+	public readonly modal: PictureModal;
+
+	constructor(private pictureMetadataService: PictureMetadataService) {
 	}
     ngOnInit() {
         this.pictureMetadataService.fetch().subscribe(
@@ -35,21 +52,20 @@ export class PictureGallery implements OnInit {
             error => console.log(error))
     }
     upload(event: FileListTarget){
-        var self = this;
+		const pictureGallery = this;
 
-        let fileList = event.target.files;
+		const fileList = event.target.files;
         for (let i = 0; i < fileList.length; i++){
             this.pictureMetadataService.upload(fileList[i]).subscribe(pictureMetadata => {
-                self.picturesMetadata.push(pictureMetadata);
-                self.updateRendering()
-            });
+				pictureGallery.picturesMetadata.push(pictureMetadata);
+				pictureGallery.updateRendering();
+			});
         }
     }
     updateRendering() {
         this.pictureGroups = (new PicturesByDate(this.picturesMetadata)).pictureGroups()
-		let flattenGroups = PictureGroupHelper.flattenGroups(this.pictureGroups);
-		this.pictureModal = new PictureModal(flattenGroups);
-    }
+		const flattenedGroups = PictureGroupHelper.flattenGroups(this.pictureGroups);
+	}
 }
 
 class FileListTarget {
@@ -88,7 +104,7 @@ export class PictureGroupView {
         this.groupDisplayString = this.pictureGroup.groupName()
         this.picturesMetadatas = this.pictureGroup.pictureMetadatas()
     }
-    
+
 }
 
 @Component({
@@ -118,7 +134,7 @@ export class PictureThumbnail {
         this.pictureSrc = "/picture/" + this.pictureMetadata.hashValue + "?h=200"
     }
     openModal() {
-        this.pictureModal.open(this.pictureMetadata)
+//        this.pictureModal.open(this.pictureMetadata)
     }
-    
+
 }
