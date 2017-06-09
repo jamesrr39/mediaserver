@@ -17,7 +17,7 @@ import { PictureModal } from './pictureModal/pictureModal.component';
                 <picture-group [pictureGroup]="pictureGroup" [pictureModal]="pictureModal"></picture-group>
             </div>
         </div>
-		<button type="button" (click)="modal.show()">test</button>
+
 		<picture-modal>
 			<div class="modal-text">ABC in modal</div>
 			<div class="app-modal-header">
@@ -27,7 +27,7 @@ import { PictureModal } from './pictureModal/pictureModal.component';
 		  Whatever content you like, form fields, anything
 		</div>
 		<div class="app-modal-footer">
-		  <button type="button" class="btn btn-default" (click)="modal.hide()">Close</button>
+		  <button type="button" class="btn btn-default" (click)="pictureModal.hide()">Close</button>
 		  <button type="button" class="btn btn-primary">Save changes</button>
 		</div>
 		</picture-modal>
@@ -39,7 +39,7 @@ export class PictureGallery implements OnInit {
 	private picturesMetadata: PictureMetadata[] = []
 
 	@ViewChild(PictureModal)
-	public readonly modal: PictureModal;
+	public readonly pictureModal: PictureModal;
 
 	constructor(private pictureMetadataService: PictureMetadataService) {
 	}
@@ -134,7 +134,8 @@ export class PictureThumbnail {
         this.pictureSrc = "/picture/" + this.pictureMetadata.hashValue + "?h=200"
     }
     openModal() {
-//        this.pictureModal.open(this.pictureMetadata)
+		//        this.pictureModal.open(this.pictureMetadata)
+		this.pictureModal.show();
     }
 
 }
