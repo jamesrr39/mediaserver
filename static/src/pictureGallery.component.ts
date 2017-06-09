@@ -19,17 +19,16 @@ import { PictureModal } from './pictureModal/pictureModal.component';
         </div>
 
 		<picture-modal>
-			<div class="modal-text">ABC in modal</div>
 			<div class="app-modal-header">
-			header
-		</div>
-		<div class="app-modal-body">
-		  Whatever content you like, form fields, anything
-		</div>
-		<div class="app-modal-footer">
-		  <button type="button" class="btn btn-default" (click)="pictureModal.hide()">Close</button>
-		  <button type="button" class="btn btn-primary">Save changes</button>
-		</div>
+				header
+			</div>
+			<div class="app-modal-body">
+			  Whatever content you like, form fields, anything
+			</div>
+			<div class="app-modal-footer">
+			  <button type="button" class="btn btn-default" (click)="pictureModal.hide()">Close</button>
+			  <button type="button" class="btn btn-primary">Save changes</button>
+			</div>
 		</picture-modal>
       `,
     providers: [PictureMetadataService]
@@ -135,7 +134,7 @@ export class PictureThumbnail {
     }
     openModal() {
 		//        this.pictureModal.open(this.pictureMetadata)
-		this.pictureModal.show();
+		this.pictureModal.show(this.pictureMetadata);
     }
 
 }
