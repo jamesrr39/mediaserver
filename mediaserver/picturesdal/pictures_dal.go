@@ -183,8 +183,6 @@ func (picturesDAL *PicturesDAL) GetRawPicture(pictureMetadata *pictures.PictureM
 	}
 	defer file.Close()
 
-	log.Printf("opening file %v\n", *file)
-
 	return image.Decode(file)
 }
 

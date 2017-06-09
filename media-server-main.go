@@ -13,7 +13,7 @@ import (
 var (
 	app              = kingpin.New("Mediaserver", "mediaserver")
 	imageRootDirFlag = app.Arg("Image Root Directory", "base directory to look for photos in").Required().String()
-	port             = app.Flag("Port", "serves up via http on this port").Default("6050").Int()
+	port             = app.Flag("Port", "serves up via http on this port").Default("9050").Int()
 )
 
 func main() {
