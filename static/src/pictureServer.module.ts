@@ -16,6 +16,6 @@ import { PictureModal } from './pictureModal/pictureModal.component';
   imports: [BrowserModule, HttpModule, LazyLoadImageModule, ModalModule.forRoot(), BootstrapModalModule ],
   declarations: [PictureGallery, PictureThumbnail, PictureGroupView, PictureModal, MediaserverApp ],
   bootstrap: [MediaserverApp],
-  providers: [PictureMetadataService, PictureModal]
+  providers: [PictureMetadataService, PictureModal, { provide: 'Window', useValue: window }]
 })
 export class AppModule { }

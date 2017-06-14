@@ -18,7 +18,7 @@ import { PictureModal } from './pictureModal/pictureModal.component';
             </div>
         </div>
 
-		<picture-modal>
+		<picture-modal [picturesMetadata]="picturesMetadata">
 			<div class="app-modal-header">
 				header
 			</div>

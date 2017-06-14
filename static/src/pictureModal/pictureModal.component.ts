@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input, Inject, PipeTransform, Pipe } from '@angular/core';
 import { PictureMetadata } from '../pictureMetadata';
 
 /*
@@ -32,6 +32,13 @@ import { PictureMetadata } from '../pictureMetadata';
 		 [ngStyle]="{'display': visible ? 'block' : 'none', 'opacity': visibleAnimate ? 1 : 0}">
 		<div class="modal-dialog">
                 <h3>{{ pictureDisplayName }}</h3>
+				<p>{{ dateTakenString }}</p>
+				<p (click)="showRawData">Raw Data</p>
+				<div>
+				<img src="/picture/{{ pictureHashValue }}">
+				</div>
+				<div class="raw-data-container">
+				</div>
 		</div>
 	</div>
   `
@@ -43,10 +50,32 @@ export class PictureModal {
 
 	private pictureMetadata: PictureMetadata;
 	private pictureDisplayName: string
+	private pictureHashValue: string
+	private dateTakenString: string
 
-	public show(pictureMetadata: PictureMetadata): void {
+	@Input() picturesMetadata: PictureMetadata[];
+
+	constructor( @Inject('Window') private window: Window) { }
+
+	private updateFields(pictureMetadata: PictureMetadata) {
 		this.pictureMetadata = pictureMetadata;
 		this.pictureDisplayName = pictureMetadata.getFileName();
+		const dateTaken = pictureMetadata.getDateTimeTaken();
+		this.dateTakenString = (null === dateTaken) ?
+			"No date information available for this picture" :
+			`Taken at ${dateTaken.toString()}`
+
+
+		const bucketedWidth = PictureSizeCalculator.getBucketedWidth(this.window.innerWidth);
+		const bucketedHeight = PictureSizeCalculator.getBucketedHeight(this.window.innerHeight);
+
+		this.pictureHashValue = pictureMetadata.hashValue + `?w=${bucketedWidth}&h=${bucketedHeight}`;
+		console.log(this.picturesMetadata.indexOf(pictureMetadata))
+		console.log(this.window.innerWidth, this.window.innerHeight)
+	}
+
+	public show(pictureMetadata: PictureMetadata): void {
+		this.updateFields(pictureMetadata);
 
 		this.visible = true;
 		setTimeout(() => this.visibleAnimate = true, 100);
@@ -62,4 +91,34 @@ export class PictureModal {
 			this.hide();
 		}
 	}
+
+	private showRawData() {
+
+	}
+
 }
+
+class PictureSizeCalculator {
+	static getBucketedWidth(windowWidth: number) {
+		return Math.floor((windowWidth - 120) / 100) * 100;
+	}
+
+	static getBucketedHeight(windowHeight: number) {
+		return Math.floor((windowHeight - 120) / 100) * 100;
+	}
+}
+
+@Component({
+	selector: "raw-info-container",
+	template: ``
+})
+class RawInfoContainer {
+	@Input() exifData: Map<String, any>;
+
+//	private exifDataList: []
+
+	ngOnInit() {
+
+	}
+}
+
