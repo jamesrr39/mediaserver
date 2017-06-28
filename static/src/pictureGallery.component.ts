@@ -44,7 +44,7 @@ import { UploadModal } from './uploadModal.component';
       `,
 	styles: [`
 		.gallery {
-			margin-top: 40px;
+			margin: 40px 10px 10px;
 		}
 		.header-toolbar {
 			position: fixed;

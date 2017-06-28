@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Http, Response } from '@angular/http'
+import { Http, Response, Headers, RequestOptions } from '@angular/http'
 import { Observable } from 'rxjs/Observable';
 import './rxjs-operators'
 
@@ -19,16 +19,14 @@ export class PictureMetadataService {
 			});
         });
     }
-    upload(file: File): Observable<PictureMetadata> {
+	upload(file: File): Observable<PictureMetadata> {
 		const formData = new FormData();
         formData.append("file", file);
-		const postObservable = this.http.post("/picture/", formData);
-
-		return postObservable.map((r: Response) => {
-            let metadataJSON = r.json() as PictureMetadataJSON
-            return this.jsonToPictureMetadata(metadataJSON);
-        });
-    }
+		return this.http.post("/picture/", formData).map((r: Response) => {
+			let metadataJSON = r.json() as PictureMetadataJSON
+			return this.jsonToPictureMetadata(metadataJSON);
+		});
+	}
     jsonToPictureMetadata(metadataJSON: PictureMetadataJSON): PictureMetadata {
 		let exifMap: Map<string, any>
         if (metadataJSON.exif) {

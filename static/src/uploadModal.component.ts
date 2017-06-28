@@ -74,7 +74,7 @@ export class UploadModal {
 	private upload(event: Event) {
 		console.log("clicked upload")
 		this.filesToUpload.forEach((file) => {
-			this.pictureMetadataService.upload(file);
+			this.pictureMetadataService.upload(file).subscribe();
 		});
 	}
 
