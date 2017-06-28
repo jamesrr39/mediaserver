@@ -6,14 +6,14 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/jamesrr39/goutil/user"
+	"github.com/jamesrr39/goutil/userextra"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
 	app              = kingpin.New("Mediaserver", "mediaserver")
 	imageRootDirFlag = app.Arg("Image Root Directory", "base directory to look for photos in").Required().String()
-	port             = app.Flag("Port", "serves up via http on this port").Default("9050").Int()
+	port             = app.Flag("port", "serves up via http on this port").Default("9050").Int()
 )
 
 func main() {
@@ -34,7 +34,7 @@ func main() {
 }
 
 func getFullDataPath(path string) (string, error) {
-	expandedPath, err := user.ExpandUser(path)
+	expandedPath, err := userextra.ExpandUser(path)
 	if nil != err {
 		return "", err
 	}

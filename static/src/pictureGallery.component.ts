@@ -5,32 +5,60 @@ import { PictureGroup, PictureGroupHelper } from './pictureGroup';
 import { PicturesByDate } from './picturesByDate';
 
 import { PictureModal } from './pictureModal/pictureModal.component';
+import { UploadModal } from './uploadModal.component';
 
 @Component({
     selector: 'picture-gallery',
     template: `
         <div class="widget-container">
-            <form method="POST" action="/pictures/">
-                <input type="file" class="btn btn-primary" name="file" multiple="true" (change)="upload($event)">
-            </form>
-            <div *ngFor="let pictureGroup of pictureGroups">
-                <picture-group [pictureGroup]="pictureGroup" [pictureModal]="pictureModal"></picture-group>
-            </div>
+			<div class="row header-toolbar">
+				<div class="col-xs-12">
+					<ul class="list-unstyled">
+						<li>
+							<button>
+								Refresh
+							</button>
+						</li>
+						<li (click)="openUploadModal()"
+							(mouseover)="$event.target.classList.add('hover-active')"
+							(mouseout)="$event.target.classList.remove('hover-active')">
+							<button>
+								<i class="glyphicon glyphicon-upload"></i>
+								Upload
+							</button>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<div class="row gallery">
+				<div *ngFor="let pictureGroup of pictureGroups">
+					<picture-group [pictureGroup]="pictureGroup" [pictureModal]="pictureModal"></picture-group>
+				</div>
+			</div>
         </div>
 
 		<picture-modal [picturesMetadata]="picturesMetadata">
-			<div class="app-modal-header">
-				header
-			</div>
-			<div class="app-modal-body">
-			  Whatever content you like, form fields, anything
-			</div>
-			<div class="app-modal-footer">
-			  <button type="button" class="btn btn-default" (click)="pictureModal.hide()">Close</button>
-			  <button type="button" class="btn btn-primary">Save changes</button>
-			</div>
 		</picture-modal>
+
+		<upload-modal></upload-modal>
       `,
+	styles: [`
+		.gallery {
+			margin-top: 40px;
+		}
+		.header-toolbar {
+			position: fixed;
+			top: 0px;
+			width: 100%;
+			height: 40px;
+			background-color: #337ab7;
+			z-index: 1;
+		}
+		.header-toolbar li {
+			float: left;
+			height: 100%;
+		}
+	  `],
     providers: [PictureMetadataService]
 })
 export class PictureGallery implements OnInit {
@@ -39,6 +67,9 @@ export class PictureGallery implements OnInit {
 
 	@ViewChild(PictureModal)
 	public readonly pictureModal: PictureModal;
+
+	@ViewChild(UploadModal)
+	public readonly uploadModal: UploadModal;
 
 	constructor(private pictureMetadataService: PictureMetadataService) {
 	}
@@ -49,28 +80,14 @@ export class PictureGallery implements OnInit {
                 this.updateRendering()
             },
             error => console.log(error))
-    }
-    upload(event: FileListTarget){
-		const pictureGallery = this;
-
-		const fileList = event.target.files;
-        for (let i = 0; i < fileList.length; i++){
-            this.pictureMetadataService.upload(fileList[i]).subscribe(pictureMetadata => {
-				pictureGallery.picturesMetadata.push(pictureMetadata);
-				pictureGallery.updateRendering();
-			});
-        }
-    }
+	}
     updateRendering() {
         this.pictureGroups = (new PicturesByDate(this.picturesMetadata)).pictureGroups()
 		const flattenedGroups = PictureGroupHelper.flattenGroups(this.pictureGroups);
 	}
-}
-
-class FileListTarget {
-    target: {
-        files: FileList
-    }
+	openUploadModal() {
+		this.uploadModal.show();
+	}
 }
 
 @Component({

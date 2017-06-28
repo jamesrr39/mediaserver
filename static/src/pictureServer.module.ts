@@ -11,10 +11,11 @@ import { ModalModule } from 'angular2-modal';
 import { BootstrapModalModule } from 'angular2-modal/plugins/bootstrap';
 
 import { PictureModal } from './pictureModal/pictureModal.component';
+import { UploadModal, ImageUploadPreview } from './uploadModal.component';
 
 @NgModule({
   imports: [BrowserModule, HttpModule, LazyLoadImageModule, ModalModule.forRoot(), BootstrapModalModule ],
-  declarations: [PictureGallery, PictureThumbnail, PictureGroupView, PictureModal, MediaserverApp ],
+  declarations: [PictureGallery, PictureThumbnail, PictureGroupView, PictureModal, MediaserverApp, UploadModal, ImageUploadPreview],
   bootstrap: [MediaserverApp],
   providers: [PictureMetadataService, PictureModal, { provide: 'Window', useValue: window }]
 })

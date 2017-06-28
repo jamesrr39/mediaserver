@@ -1,4 +1,4 @@
-import { Component, Input, Inject, PipeTransform, Pipe } from '@angular/core';
+import { Component, Input, Inject } from '@angular/core';
 import { PictureMetadata } from '../pictureMetadata';
 
 /*
@@ -41,7 +41,12 @@ import { PictureMetadata } from '../pictureMetadata';
 				</div>
 		</div>
 	</div>
-  `
+  `,
+	styles: [`
+	.modal-dialog {
+		color: white !important;
+	}
+  `]
 })
 export class PictureModal {
 
@@ -110,15 +115,20 @@ class PictureSizeCalculator {
 
 @Component({
 	selector: "raw-info-container",
-	template: ``
+	template: `
+	`
 })
 class RawInfoContainer {
 	@Input() exifData: Map<String, any>;
 
-//	private exifDataList: []
+	private exifDataList: string[]
 
 	ngOnInit() {
+		const list: string[] = [];
+		this.exifData.forEach((v, k) => {
+			list.push(`${k}: ${v}`);
+		});
+
 
 	}
 }
-
