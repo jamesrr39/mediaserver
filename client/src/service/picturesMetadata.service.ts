@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Http, Response, Headers, RequestOptions } from '@angular/http'
 import { Observable } from 'rxjs/Observable';
-import './rxjs-operators'
+import '../rxjs-operators'
 
-import { PictureMetadata } from './pictureMetadata';
+import { PictureMetadata } from '../domain/pictureMetadata';
 
 @Injectable()
 export class PictureMetadataService {

@@ -1,41 +1,25 @@
 import { Component, OnInit, Input, ViewChild } from '@angular/core';
-import { PictureMetadataService } from './picturesMetadata.service'
-import { PictureMetadata } from './pictureMetadata'
-import { PictureGroup, PictureGroupHelper } from './pictureGroup';
-import { PicturesByDate } from './picturesByDate';
+import { PictureMetadataService } from '../service/picturesMetadata.service'
+import { PictureMetadata } from '../domain/pictureMetadata'
+import { PictureGroup, PictureGroupHelper } from '../pictureGroup';
+import { PicturesByDate } from '../picturesByDate';
 
 import { PictureModal } from './pictureModal/pictureModal.component';
-import { UploadModal } from './uploadModal.component';
+import { UploadModal } from '../ui/uploadModal.component';
+import { NotificationService } from './notificationService';
+
+//import { NotificationsService } from 'angular2-notifications';
 
 @Component({
     selector: 'picture-gallery',
     template: `
-        <div class="widget-container">
-			<div class="row header-toolbar">
-				<div class="col-xs-12">
-					<ul class="list-unstyled">
-						<li>
-							<button>
-								Refresh
-							</button>
-						</li>
-						<li (click)="openUploadModal()"
-							(mouseover)="$event.target.classList.add('hover-active')"
-							(mouseout)="$event.target.classList.remove('hover-active')">
-							<button>
-								<i class="glyphicon glyphicon-upload"></i>
-								Upload
-							</button>
-						</li>
-					</ul>
-				</div>
-			</div>
+    <div class="widget-container">
 			<div class="row gallery">
 				<div *ngFor="let pictureGroup of pictureGroups">
 					<picture-group [pictureGroup]="pictureGroup" [pictureModal]="pictureModal"></picture-group>
 				</div>
 			</div>
-        </div>
+    </div>
 
 		<picture-modal [picturesMetadata]="picturesMetadata">
 		</picture-modal>
@@ -71,21 +55,26 @@ export class PictureGallery implements OnInit {
 	@ViewChild(UploadModal)
 	public readonly uploadModal: UploadModal;
 
-	constructor(private pictureMetadataService: PictureMetadataService) {
+	constructor(private pictureMetadataService: PictureMetadataService, private notificationService: NotificationService) {
+//	constructor(private pictureMetadataService: PictureMetadataService, private notificationsService: NotificationsService) {
 	}
-    ngOnInit() {
+
+  ngOnInit() {
         this.pictureMetadataService.fetch().subscribe(
-            (picturesMetadata) => {
+			(picturesMetadata) => {
+				this.notificationService.info("successfully received pictures")
                 this.picturesMetadata = picturesMetadata;
-                this.updateRendering()
-            },
+				this.updateRendering();
+			},
             error => console.log(error))
 	}
-    updateRendering() {
+
+  updateRendering() {
         this.pictureGroups = (new PicturesByDate(this.picturesMetadata)).pictureGroups()
-		const flattenedGroups = PictureGroupHelper.flattenGroups(this.pictureGroups);
+//		const flattenedGroups = PictureGroupHelper.flattenGroups(this.pictureGroups);
 	}
-	openUploadModal() {
+
+  openUploadModal() {
 		this.uploadModal.show();
 	}
 }
@@ -107,6 +96,7 @@ export class PictureGallery implements OnInit {
         }
         .row {
             margin: 25px 0;
+            min-height: 100px;
         }
       `]
 })
@@ -136,7 +126,7 @@ export class PictureGroupView {
             padding: 0 5px 5px 0;
             margin: 0 0 5px 0;
             overflow: auto;
-			display: inline-block;
+			      display: inline-block;
         }
     `]
 })

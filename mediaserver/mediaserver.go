@@ -8,8 +8,10 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/jamesrr39/goutil/httpextra"
 )
 
+// MediaServer is a server used for showing pieces of media
 type MediaServer struct {
 	Rootpath                string
 	picturesDAL             *picturesdal.PicturesDAL
@@ -17,6 +19,7 @@ type MediaServer struct {
 	picturesMetadataService *pictureswebservice.PicturesMetadataService
 }
 
+// NewMediaServer creates a new MediaServer
 func NewMediaServer(rootpath string) *MediaServer {
 	picturesDAL := picturesdal.NewPicturesDAL(rootpath)
 	mediaServer := &MediaServer{
@@ -40,7 +43,11 @@ func (ms *MediaServer) ServeHTTP(port int) error {
 
 	mainRouter.PathPrefix("/api/pictureMetadata/").Handler(http.StripPrefix("/api/pictureMetadata", ms.picturesMetadataService.Router))
 	mainRouter.PathPrefix("/picture/").Handler(http.StripPrefix("/picture", ms.picturesService.Router))
-	mainRouter.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("static"))))
-	return http.ListenAndServe("localhost:"+strconv.Itoa(port), mainRouter)
+	mainRouter.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("client"))))
+
+	server := httpextra.NewServerWithTimeouts()
+	server.Addr = "localhost:" + strconv.Itoa(port)
+	server.Handler = mainRouter
+	return server.ListenAndServe()
 
 }

@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { PictureMetadataService } from './picturesMetadata.service';
+import { PictureMetadataService } from '../service/picturesMetadata.service';
 
 @Component({
 	selector: "upload-modal",

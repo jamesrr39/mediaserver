@@ -1,4 +1,4 @@
-import { PictureMetadata } from './pictureMetadata';
+import { PictureMetadata } from './domain/pictureMetadata';
 
 export interface PictureGroup {
     groupName(): string

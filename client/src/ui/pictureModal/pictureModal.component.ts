@@ -1,5 +1,5 @@
 import { Component, Input, Inject } from '@angular/core';
-import { PictureMetadata } from '../pictureMetadata';
+import { PictureMetadata } from '../../domain/pictureMetadata';
 
 /*
 

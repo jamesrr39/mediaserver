@@ -10,12 +10,12 @@ export class PictureMetadata {
             return null;
         }
 
-        let exifDateTaken = (this.exif.get("DateTime") as string) || (this.exif.get("DateTimeDigitized") as string) || (this.exif.get("DateTimeOriginal") as string);
+		const exifDateTaken = (this.exif.get("DateTime") as string) || (this.exif.get("DateTimeDigitized") as string) || (this.exif.get("DateTimeOriginal") as string);
         if (!exifDateTaken) {
             return null;
         }
 
-        let fragments = exifDateTaken.replace(" ", ":").split(":");
+		const fragments = exifDateTaken.replace(" ", ":").split(":");
         return new Date(
             parseInt(fragments[0], 10), // year
             parseInt(fragments[1], 10) -1, // month
@@ -30,11 +30,9 @@ export class PictureMetadata {
         if (!dateTime){
             return null;
         }
-        
-        let date = new TimezonelessDate(dateTime.getFullYear(), dateTime.getMonth(), dateTime.getDate());
-        return date;
 
-    }
+		return new TimezonelessDate(dateTime.getFullYear(), dateTime.getMonth(), dateTime.getDate());
+	}
     getFileName(): string {
         if (!this.relativeFilePath){
             console.log("no name for http://localohst:9010/picture/" + this.hashValue)

@@ -3,20 +3,16 @@
   "version": "1.0.0",
   "description": "QuickStart package.json from the documentation, supplemented with testing support",
   "scripts": {
-    "start": "tsc && concurrently \"tsc -w\" \"webpack -w\" ",
+    "start": "webpack -w",
     "e2e": "tsc && concurrently \"http-server -s\" \"protractor protractor.config.js\" --kill-others --success first",
     "lint": "tslint ./app/**/*.ts -t verbose",
     "lite": "lite-server",
     "pree2e": "webdriver-manager update",
     "test": "tsc && concurrently \"tsc -w\" \"karma start karma.conf.js\"",
-    "test-once": "tsc && karma start karma.conf.js --single-run",
-    "tsc": "tsc",
-    "tsc:w": "tsc -w"
+    "test-once": "tsc && karma start karma.conf.js --single-run"
   },
-  "keywords": [],
-  "author": "",
-  "license": "MIT",
   "dependencies": {
+    "@angular/animations": "^4.2.4",
     "@angular/common": "^4.2.4",
     "@angular/compiler": "^4.2.4",
     "@angular/core": "^4.2.4",
@@ -26,7 +22,7 @@
     "@angular/platform-browser-dynamic": "^4.2.4",
     "@angular/router": "^4.2.4",
     "angular-in-memory-web-api": "~0.2.1",
-    "angular2-modal": "^2.0.2",
+    "angular2-notifications": "^0.7.4",
     "bootstrap": "^3.3.7",
     "core-js": "^2.4.1",
     "ng2-lazyload-image": "^2.2.2",
@@ -52,7 +48,7 @@
     "rimraf": "^2.5.4",
     "tslint": "^5.4.3",
     "typescript": "2.3.4",
-    "webpack": "^1.14.0"
+    "webpack": "^3.6.0"
   },
   "repository": {}
 }

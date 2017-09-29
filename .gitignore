@@ -1,5 +1,8 @@
 # liteide
 mediaserverapp
-/static/nbproject/private/
+/client/nbproject/private/
+/client/dist/
 
 npm-debug.log
+
+/bin/
