@@ -15,7 +15,7 @@ import { NotificationService } from '../service/notificationService';
 @Component({
     selector: 'picture-gallery',
     template: `
-    <div class="container">
+    <div class="container-fluid">
 			<div class="row gallery">
 				<div *ngFor="let pictureGroup of pictureGroups">
 					<picture-group [pictureGroup]="pictureGroup" [pictureModal]="pictureModal"></picture-group>

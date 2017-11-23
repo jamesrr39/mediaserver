@@ -8,7 +8,7 @@ import { PictureMetadata } from '../domain/pictureMetadata';
 @Component({
     selector: "mediaserver-app",
     template: `
-    <div class="container">
+    <div class="container-fluid">
       <div class="row header-toolbar">
         <div class="col-xs-12">
           <nav>

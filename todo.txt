@@ -1,5 +1,8 @@
 build script/bundle js
+webpack uglify
 No error on Orientation tag not found
 window.onerror
 router/link to image popup
-Thumbnails (200px high)
+cache thumbnails (200px high)
+show image info
+search
