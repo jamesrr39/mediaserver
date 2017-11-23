@@ -1,6 +1,8 @@
 import { Component, Input } from '@angular/core';
 import { PictureMetadataService } from '../service/picturesMetadata.service';
 
+import { NotificationService } from '../service/notificationService';
+
 @Component({
 	selector: "upload-modal",
 	template: `
@@ -36,7 +38,9 @@ export class UploadModal {
 
 	private filesToUpload: File[] = [];
 
-	constructor(private pictureMetadataService: PictureMetadataService) { }
+	@Input() notificationService: NotificationService;
+
+	constructor(private pictureMetadataService: PictureMetadataService) {}
 
 	public show(): void {
 		this.visible = true;
@@ -61,12 +65,6 @@ export class UploadModal {
 		for (let i = 0; i < fileList.length; i++) {
 			const file = fileList[i];
 			oldFileList.push(file);
-
-
-//			this.pictureMetadataService.upload(fileList[i]).subscribe(pictureMetadata => {
-//				pictureGallery.picturesMetadata.push(pictureMetadata);
-//				pictureGallery.updateRendering();
-//			});
 		}
 		this.filesToUpload = oldFileList;
 	}
@@ -74,7 +72,13 @@ export class UploadModal {
 	private upload(event: Event) {
 		console.log("clicked upload")
 		this.filesToUpload.forEach((file) => {
-			this.pictureMetadataService.upload(file).subscribe();
+			const observable = this.pictureMetadataService.upload(file).subscribe((pictureMetadata) => {
+				this.notificationService.success("succesfully uploaded " + file.name);
+			}, (err) => {
+				console.log("hit error block")
+				this.notificationService.success("err: ");
+				throw err;
+			});
 		});
 	}
 
@@ -92,6 +96,7 @@ class FileListTarget {
 	template: `
 	<div>
 		<img src="{{ imageSrc }}" class="upload-image" />
+		{{ file.name }}
 	</div>
 	`,
 	styles: [`

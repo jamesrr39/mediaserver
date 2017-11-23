@@ -2,6 +2,7 @@ package pictureswebservice
 
 import (
 	"encoding/json"
+	"fmt"
 	"image/gif"  // decode
 	"image/jpeg" // decode
 	"image/png"  // decode
@@ -74,7 +75,7 @@ func (ps *PicturesService) servePicture(w http.ResponseWriter, r *http.Request) 
 		w.Header().Set("Content-Type", "image/gif")
 		return
 	default:
-		http.Error(w, "Image type not supported: '"+pictureType+"'", 415)
+		http.Error(w, fmt.Sprintf("Image type not supported: '%s'", pictureType), 415)
 		return
 	}
 

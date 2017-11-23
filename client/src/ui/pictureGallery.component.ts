@@ -1,19 +1,21 @@
-import { Component, OnInit, Input, ViewChild } from '@angular/core';
+import { Component, OnInit, Input, ViewChild, ElementRef, Inject } from '@angular/core';
 import { PictureMetadataService } from '../service/picturesMetadata.service'
 import { PictureMetadata } from '../domain/pictureMetadata'
-import { PictureGroup, PictureGroupHelper } from '../pictureGroup';
-import { PicturesByDate } from '../picturesByDate';
+import { PictureGroup, PictureGroupHelper } from './pictureGroup';
+import { PicturesByDate } from './picturesByDate';
+
+import { Observable } from 'rxjs';
 
 import { PictureModal } from './pictureModal/pictureModal.component';
 import { UploadModal } from '../ui/uploadModal.component';
-import { NotificationService } from './notificationService';
+import { NotificationService } from '../service/notificationService';
 
 //import { NotificationsService } from 'angular2-notifications';
 
 @Component({
     selector: 'picture-gallery',
     template: `
-    <div class="widget-container">
+    <div class="container">
 			<div class="row gallery">
 				<div *ngFor="let pictureGroup of pictureGroups">
 					<picture-group [pictureGroup]="pictureGroup" [pictureModal]="pictureModal"></picture-group>
@@ -23,8 +25,6 @@ import { NotificationService } from './notificationService';
 
 		<picture-modal [picturesMetadata]="picturesMetadata">
 		</picture-modal>
-
-		<upload-modal></upload-modal>
       `,
 	styles: [`
 		.gallery {
@@ -45,37 +45,17 @@ import { NotificationService } from './notificationService';
 	  `],
     providers: [PictureMetadataService]
 })
-export class PictureGallery implements OnInit {
-    pictureGroups: PictureGroup[]
-	private picturesMetadata: PictureMetadata[] = []
+export class PictureGallery {
+
+  pictureGroups: PictureGroup[] = [];
+
+  @Input() picturesMetadata: PictureMetadata[];
 
 	@ViewChild(PictureModal)
 	public readonly pictureModal: PictureModal;
 
-	@ViewChild(UploadModal)
-	public readonly uploadModal: UploadModal;
-
-	constructor(private pictureMetadataService: PictureMetadataService, private notificationService: NotificationService) {
-//	constructor(private pictureMetadataService: PictureMetadataService, private notificationsService: NotificationsService) {
-	}
-
   ngOnInit() {
-        this.pictureMetadataService.fetch().subscribe(
-			(picturesMetadata) => {
-				this.notificationService.info("successfully received pictures")
-                this.picturesMetadata = picturesMetadata;
-				this.updateRendering();
-			},
-            error => console.log(error))
-	}
-
-  updateRendering() {
         this.pictureGroups = (new PicturesByDate(this.picturesMetadata)).pictureGroups()
-//		const flattenedGroups = PictureGroupHelper.flattenGroups(this.pictureGroups);
-	}
-
-  openUploadModal() {
-		this.uploadModal.show();
 	}
 }
 
@@ -109,39 +89,6 @@ export class PictureGroupView {
     ngOnInit() {
         this.groupDisplayString = this.pictureGroup.groupName()
         this.picturesMetadatas = this.pictureGroup.pictureMetadatas()
-    }
-
-}
-
-@Component({
-    selector: 'picture-thumbnail',
-    template: `
-        <img [src]="defaultImage" [lazyLoad]=pictureSrc [offset]="offset" (click)="openModal()">
-    `,
-    styles: [`
-        img {
-            max-height: 200px;
-        }
-        :host {
-            padding: 0 5px 5px 0;
-            margin: 0 0 5px 0;
-            overflow: auto;
-			      display: inline-block;
-        }
-    `]
-})
-export class PictureThumbnail {
-    @Input() pictureMetadata: PictureMetadata;
-    @Input() pictureModal: PictureModal
-    defaultImage = '/a/b.jpg';
-    pictureSrc: string
-    offset = 100;
-    ngOnInit(){
-        this.pictureSrc = "/picture/" + this.pictureMetadata.hashValue + "?h=200"
-    }
-    openModal() {
-		//        this.pictureModal.open(this.pictureMetadata)
-		this.pictureModal.show(this.pictureMetadata);
     }
 
 }

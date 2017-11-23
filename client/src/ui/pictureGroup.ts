@@ -1,4 +1,4 @@
-import { PictureMetadata } from './domain/pictureMetadata';
+import { PictureMetadata } from '../domain/pictureMetadata';
 
 export interface PictureGroup {
     groupName(): string
@@ -16,5 +16,3 @@ export class PictureGroupHelper {
 		}, []);
 	}
 }
-
-//method) Array<PictureGroup>.reduce(callbackfn: (previousValue: PictureGroup, currentValue: PictureGroup, currentIndex: number, array: PictureGroup[]) => PictureGroup, initialValue?: PictureGroup): PictureGroup (+1 overload)

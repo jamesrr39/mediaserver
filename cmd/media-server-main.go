@@ -24,7 +24,10 @@ func main() {
 		log.Fatalln("Couldn't get full path of data directory. Error: " + err.Error())
 	}
 
-	mediaServer := mediaserver.NewMediaServer(fullpath)
+	mediaServer, err := mediaserver.NewMediaServerAndScan(fullpath)
+	if nil != err {
+		log.Fatalf("couldn't create a new media server and scan the pictures directory. Error: %s", err)
+	}
 	log.Printf("attempting to start serving on port %d\n", *port)
 	err = mediaServer.ServeHTTP(*port)
 	if nil != err {

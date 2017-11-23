@@ -13,17 +13,17 @@ export class PictureMetadataService {
 		const self = this;
 
         return this.http.get("/api/pictureMetadata/").map((r: Response) => {
-            let metadatasJSON = r.json() as PictureMetadataJSON[];
-			return metadatasJSON.map(metadataJSON => {
-                return self.jsonToPictureMetadata(metadataJSON);
-			});
+          const metadatasJSON = r.json() as PictureMetadataJSON[];
+		      return metadatasJSON.map(metadataJSON => {
+            return self.jsonToPictureMetadata(metadataJSON);
+		      });
         });
     }
 	upload(file: File): Observable<PictureMetadata> {
 		const formData = new FormData();
-        formData.append("file", file);
+    formData.append("file", file);
 		return this.http.post("/picture/", formData).map((r: Response) => {
-			let metadataJSON = r.json() as PictureMetadataJSON
+			const metadataJSON = r.json() as PictureMetadataJSON
 			return this.jsonToPictureMetadata(metadataJSON);
 		});
 	}

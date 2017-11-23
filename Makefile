@@ -1,2 +1,2 @@
 build:
-	go build -o bin/media-server media-server-main.go
+	go build -o bin/media-server cmd/media-server-main.go

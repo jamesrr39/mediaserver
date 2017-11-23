@@ -19,8 +19,8 @@ type MediaServer struct {
 	picturesMetadataService *pictureswebservice.PicturesMetadataService
 }
 
-// NewMediaServer creates a new MediaServer
-func NewMediaServer(rootpath string) *MediaServer {
+// NewMediaServerAndScan creates a new MediaServer and builds a cache of pictures by scanning the rootpath
+func NewMediaServerAndScan(rootpath string) (*MediaServer, error) {
 	picturesDAL := picturesdal.NewPicturesDAL(rootpath)
 	mediaServer := &MediaServer{
 		Rootpath:                rootpath,
@@ -28,16 +28,17 @@ func NewMediaServer(rootpath string) *MediaServer {
 		picturesService:         pictureswebservice.NewPicturesService(picturesDAL),
 		picturesMetadataService: pictureswebservice.NewPicturesMetadataService(picturesDAL),
 	}
-	return mediaServer
+
+	err := mediaServer.picturesDAL.UpdatePicturesCache()
+	if nil != err {
+		return nil, err
+	}
+
+	return mediaServer, nil
 }
 
 // scans for pictures and serves http server
 func (ms *MediaServer) ServeHTTP(port int) error {
-
-	err := ms.picturesDAL.UpdatePicturesCache()
-	if nil != err {
-		return err
-	}
 
 	mainRouter := mux.NewRouter()
 

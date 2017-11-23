@@ -27,7 +27,12 @@ func NewPicturesMetadataService(picturesDAL *picturesdal.PicturesDAL) *PicturesM
 
 func (ms *PicturesMetadataService) serveAllPicturesMetadata(w http.ResponseWriter, r *http.Request) {
 
-	jsonBytes, err := json.Marshal(ms.picturesDAL.GetAll())
+	picturesMetadata := ms.picturesDAL.GetAll()
+	if 0 == len(picturesMetadata) {
+		picturesMetadata = []*pictures.PictureMetadata{}
+	}
+
+	jsonBytes, err := json.Marshal(picturesMetadata)
 	if nil != err {
 		http.Error(w, err.Error(), 500)
 		return

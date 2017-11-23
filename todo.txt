@@ -1,0 +1,5 @@
+build script/bundle js
+No error on Orientation tag not found
+window.onerror
+router/link to image popup
+Thumbnails (200px high)

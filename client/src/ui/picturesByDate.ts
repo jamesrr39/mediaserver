@@ -1,6 +1,6 @@
 import { PictureGroup, PictureGroups } from './pictureGroup';
-import { PictureMetadata } from './domain/pictureMetadata';
-import { TimezonelessDate } from './domain/timezonelessDate';
+import { PictureMetadata } from '../domain/pictureMetadata';
+import { TimezonelessDate } from '../domain/timezonelessDate';
 
 const UNKNOWN_DATE_KEY = "Unknown Date";
 
