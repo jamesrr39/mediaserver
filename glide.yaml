@@ -1,9 +1,0 @@
-package: mediaserverapp
-import:
-- package: github.com/gorilla/mux
-  version: v1.1
-- package: github.com/jamesrr39/goutil
-  subpackages:
-  - user
-- package: gopkg.in/alecthomas/kingpin.v2
-  version: v2.2.3
