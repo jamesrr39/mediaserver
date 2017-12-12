@@ -1,9 +1,13 @@
-import { Component, ViewChild, Inject } from '@angular/core';
+import { Component, ViewChild, Inject, ElementRef } from '@angular/core';
 import { UploadModal } from './uploadModal.component';
 import { PictureMetadataService } from '../service/picturesMetadata.service';
 import { NotificationService } from '../service/notificationService';
 
 import { PictureMetadata } from '../domain/pictureMetadata';
+import { PictureGallery } from "./pictureGallery.component";
+import { Observable } from "rxjs/Observable";
+import { Subscription } from "rxjs";
+
 
 @Component({
     selector: "mediaserver-app",
@@ -25,9 +29,9 @@ import { PictureMetadata } from '../domain/pictureMetadata';
 
               <input
                 type="text"
-                (keyup)="onSearchInputKeyup($event)"
                 placeholder="Search..."
-                class="form-control" />
+                class="form-control"
+                #searchInput />
           </nav>
         </div>
       </div>
@@ -47,12 +51,21 @@ export class MediaserverApp {
     @ViewChild(NotificationService)
     public readonly notificationService: NotificationService;
 
+    @ViewChild(PictureGallery)
+    public readonly pictureGallery: PictureGallery;
+
+    @ViewChild("searchInput")
+    private readonly searchInput: ElementRef;
+
+    private searchInputSubscription: Subscription;
+
     picturesMetadata: PictureMetadata[];
 
     private loaded = false;
 
     constructor(
-      private pictureMetadataService: PictureMetadataService) {}
+      private pictureMetadataService: PictureMetadataService) {
+      }
 
     ngOnInit() {
           this.pictureMetadataService.fetch().subscribe(
@@ -62,12 +75,19 @@ export class MediaserverApp {
   			}, err => {throw err});
   	}
 
-    openUploadModal() {
-      this.uploadModal.show();
+    ngAfterViewInit() {
+      this.searchInputSubscription = Observable.fromEvent(this.searchInput.nativeElement, "keyup")
+        .debounceTime(150)
+        .subscribe((event: KeyboardEvent) => {
+          console.log((event.target as HTMLInputElement).value);
+        });
     }
 
-    onSearchInputKeyup(event: KeyboardEvent) {
-      const searchTerm = (event.currentTarget as HTMLInputElement).value;
-      console.log("searched for "+searchTerm)
+    ngOnDestroy() {
+      this.searchInputSubscription.unsubscribe();
+    }
+
+    openUploadModal() {
+      this.uploadModal.show();
     }
 }
