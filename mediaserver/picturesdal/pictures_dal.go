@@ -5,10 +5,11 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"image"
-	_ "image/gif"
-	_ "image/jpeg"
-	_ "image/png"
+	_ "image/gif"  // Decode
+	_ "image/jpeg" // Decode
+	_ "image/png"  // Decode
 	"io"
 	"io/ioutil"
 	"log"
@@ -21,7 +22,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jamesrr39/goutil/dirtraversal"
 	"github.com/rwcarlsen/goexif/exif"
+)
+
+var (
+	ErrIllegalPathTraversingUp = errors.New("file path is traversing up")
+	ErrFileAlreadyExists       = errors.New("a file with this hash already exists")
 )
 
 type PicturesDAL struct {
@@ -48,12 +55,15 @@ func (dal *PicturesDAL) Get(hashValue pictures.HashValue) *pictures.PictureMetad
 
 func (dal *PicturesDAL) Create(file io.Reader, filename string, contentType string) (*pictures.PictureMetadata, error) {
 
-	if strings.Contains(filename, ".."+string(filepath.Separator)) {
-		return nil, errors.New("filename contains ..")
+	if dirtraversal.IsTryingToTraverseUp(filename) {
+		return nil, ErrIllegalPathTraversingUp
 	}
 
 	var fileByteBuffer bytes.Buffer
 	_, err := io.Copy(&fileByteBuffer, file)
+	if nil != err {
+		return nil, err
+	}
 
 	fileHash, err := hashOfFile(bytes.NewBuffer(fileByteBuffer.Bytes()))
 	if nil != err {
@@ -61,7 +71,12 @@ func (dal *PicturesDAL) Create(file io.Reader, filename string, contentType stri
 	}
 
 	if nil != dal.Get(fileHash) {
-		return nil, errors.New("a file with this hash already exists")
+		return nil, ErrFileAlreadyExists
+	}
+
+	_, _, err = image.Decode(bytes.NewBuffer(fileByteBuffer.Bytes()))
+	if nil != err {
+		return nil, fmt.Errorf("couldn't decode image. Error: %s", err)
 	}
 
 	exifData, err := exif.Decode(bytes.NewBuffer(fileByteBuffer.Bytes()))

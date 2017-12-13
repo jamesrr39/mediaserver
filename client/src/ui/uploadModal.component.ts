@@ -17,8 +17,9 @@ import { NotificationService } from '../service/notificationService';
 					<form method="POST" action="/pictures/">
 						<input type="file" class="btn btn-primary" name="file" multiple="true" (change)="addFilesToList($event)">
 					</form>
-					<div>
-						<div *ngFor="let file of filesToUpload">
+					<div class="files-preview-container">
+						<div class="files-preview" *ngFor="let file of filesToUpload">
+							<span class="glyphicon glyphicon-trash remove" (click)="remove(file)"></span>
 							<image-upload-preview [file]="file"></image-upload-preview>
 						</div>
 					</div>
@@ -29,7 +30,28 @@ import { NotificationService } from '../service/notificationService';
 			</div>
 		</div>
 	</div>
-`
+`,
+styles: [`
+	.modal-dialog {
+		width: 95%;
+	}
+
+	.remove {
+		float: right;
+	}
+
+	.files-preview {
+		float: left;
+		margin: 5px;
+		height: 200px;
+		border: 1px grey dashed;
+		padding: 5px;
+	}
+
+	.files-preview-container {
+		overflow: auto;
+	}
+	`]
 })
 export class UploadModal {
 
@@ -69,15 +91,19 @@ export class UploadModal {
 		this.filesToUpload = oldFileList;
 	}
 
+	private remove(file: File) {
+		const index = this.filesToUpload.indexOf(file);
+		this.filesToUpload.splice(index, 1);
+	}
+
 	private upload(event: Event) {
-		console.log("clicked upload")
 		this.filesToUpload.forEach((file) => {
 			const observable = this.pictureMetadataService.upload(file).subscribe((pictureMetadata) => {
 				this.notificationService.success("succesfully uploaded " + file.name);
-			}, (err) => {
-				console.log("hit error block")
-				this.notificationService.success("err: ");
-				throw err;
+				const index = this.filesToUpload.indexOf(file);
+				this.filesToUpload.splice(index, 1);
+			}, (response: Response) => {
+				this.notificationService.error(`couldn't upload ${file.name}. Status Text: ${response.statusText}. Error: ${response.text()}`);
 			});
 		});
 	}
@@ -96,13 +122,11 @@ class FileListTarget {
 	template: `
 	<div>
 		<img src="{{ imageSrc }}" class="upload-image" />
+		<br>
 		{{ file.name }}
 	</div>
 	`,
 	styles: [`
-	@host-container {
-		float: left;
-	}
 	.upload-image {
 		max-height: 150px;
 		max-width: 250px;

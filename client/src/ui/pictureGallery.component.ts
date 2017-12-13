@@ -55,8 +55,17 @@ export class PictureGallery {
 	public readonly pictureModal: PictureModal;
 
   ngOnInit() {
-        this.pictureGroups = (new PicturesByDate(this.picturesMetadata)).pictureGroups()
+    this.createPictureGroups();
+  }
+
+  createPictureGroups() {
+    this.pictureGroups = (new PicturesByDate(this.picturesMetadata)).pictureGroups()
 	}
+
+  setPicturesMetadatas(picturesMetadata: PictureMetadata[]) {
+    this.picturesMetadata = picturesMetadata;
+    this.createPictureGroups();
+  }
 }
 
 @Component({

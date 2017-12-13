@@ -16,7 +16,7 @@ import { Subscription } from "rxjs";
       <div class="row header-toolbar">
         <div class="col-xs-12">
           <nav>
-            <button class="btn btn-default">
+            <button (click)="refresh()" class="btn btn-default">
               Refresh
             </button>
             <button (click)="openUploadModal()"
@@ -35,9 +35,7 @@ import { Subscription } from "rxjs";
           </nav>
         </div>
       </div>
-      <div *ngIf="loaded">
-        <picture-gallery [picturesMetadata]="picturesMetadata">Loading AppComponent content here ...</picture-gallery>
-      </div>
+      <picture-gallery [picturesMetadata]="picturesMetadata">Loading AppComponent content here ...</picture-gallery>
     </div>
 
     <upload-modal [notificationService]="notificationService"></upload-modal>
@@ -59,28 +57,37 @@ export class MediaserverApp {
 
     private searchInputSubscription: Subscription;
 
-    picturesMetadata: PictureMetadata[];
-
-    private loaded = false;
+    picturesMetadata: PictureMetadata[] = [];
 
     constructor(
-      private pictureMetadataService: PictureMetadataService) {
-      }
-
-    ngOnInit() {
-          this.pictureMetadataService.fetch().subscribe(
-  			(picturesMetadata) => {
-          this.picturesMetadata = picturesMetadata;
-          this.loaded = true;
-  			}, err => {throw err});
-  	}
+      private pictureMetadataService: PictureMetadataService) {}
 
     ngAfterViewInit() {
+      this.fetch(false);
+
       this.searchInputSubscription = Observable.fromEvent(this.searchInput.nativeElement, "keyup")
         .debounceTime(150)
         .subscribe((event: KeyboardEvent) => {
           console.log((event.target as HTMLInputElement).value);
         });
+    }
+
+    fetch(shouldRefresh: boolean): Observable<PictureMetadata[]> {
+      const observable = this.pictureMetadataService.fetch(shouldRefresh);
+      observable.subscribe(
+        (picturesMetadata) => {
+          this.picturesMetadata = picturesMetadata;
+          this.pictureGallery.setPicturesMetadatas(picturesMetadata);
+        }, err => {
+          this.notificationService.error("Gallery fetch failed. Error: " + err)
+        });
+        return observable;
+    }
+
+    refresh() {
+      this.fetch(true).subscribe(() => {
+        this.notificationService.success("Gallery successfully refreshed");
+      })
     }
 
     ngOnDestroy() {

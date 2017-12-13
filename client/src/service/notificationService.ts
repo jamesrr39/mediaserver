@@ -4,7 +4,7 @@ import { Component, NgZone, ViewChild } from '@angular/core';
 	selector: "notification-service",
 	template: `
 			<div class="notification alert alert-{{notification.level}}" *ngFor="let notification of notifications">
-				{{ notification.message }}
+				{{ notification.message }} <span class="glyphicon glyphicon-remove" (click)="removeNotification(notification)"></span>
 			</div>
 	`,
 	styles: [`
@@ -19,10 +19,6 @@ export class NotificationService {
 
 	notifications: Notification[] = [];
 
-	constructor(){
-		console.log("constructed notification service")
-	}
-
 	success(message: string) {
 		const notification = new Notification("success", message);
 		this.notifications.push(notification);
@@ -31,6 +27,15 @@ export class NotificationService {
 		}, 4000);
 	}
 
+	error(message: string) {
+		const notification = new Notification("danger", message);
+		this.notifications.push(notification);
+	}
+
+	private removeNotification(notification: Notification) {
+		const index = this.notifications.indexOf(notification);
+		this.notifications.splice(index, 1);
+	}
 }
 
 class Notification {

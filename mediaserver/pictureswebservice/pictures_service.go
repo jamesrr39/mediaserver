@@ -54,7 +54,13 @@ func (ps *PicturesService) servePicture(w http.ResponseWriter, r *http.Request) 
 
 	widthParam := r.URL.Query().Get("w")
 	heightParam := r.URL.Query().Get("h")
-	sizeToResizeTo, err := widthAndHeightStringsToSize(widthParam, heightParam, pictures.Size{uint(picture.Bounds().Max.X), uint(picture.Bounds().Max.Y)})
+	sizeToResizeTo, err := widthAndHeightStringsToSize(
+		widthParam,
+		heightParam,
+		pictures.Size{
+			Width:  uint(picture.Bounds().Max.X),
+			Height: uint(picture.Bounds().Max.Y),
+		})
 	if nil != err {
 		http.Error(w, err.Error(), 400)
 		return
@@ -91,6 +97,16 @@ func (ps *PicturesService) servePictureUpload(w http.ResponseWriter, r *http.Req
 
 	pictureMetadata, err := ps.picturesDAL.Create(file, fileHandler.Filename, fileHandler.Header.Get("Content-Type"))
 	if nil != err {
+		if picturesdal.ErrFileAlreadyExists == err {
+			http.Error(w, err.Error(), 409)
+			return
+		}
+
+		if picturesdal.ErrIllegalPathTraversingUp == err {
+			http.Error(w, err.Error(), 400)
+			return
+		}
+
 		http.Error(w, err.Error(), 500)
 		return
 	}

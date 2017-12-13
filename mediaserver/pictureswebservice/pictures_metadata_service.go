@@ -2,6 +2,7 @@ package pictureswebservice
 
 import (
 	"encoding/json"
+	"fmt"
 	"mediaserverapp/mediaserver/pictures"
 	"mediaserverapp/mediaserver/picturesdal"
 	"net/http"
@@ -26,6 +27,14 @@ func NewPicturesMetadataService(picturesDAL *picturesdal.PicturesDAL) *PicturesM
 }
 
 func (ms *PicturesMetadataService) serveAllPicturesMetadata(w http.ResponseWriter, r *http.Request) {
+	shouldRefresh := ("true" == r.URL.Query().Get("refresh"))
+	if shouldRefresh {
+		err := ms.picturesDAL.UpdatePicturesCache()
+		if nil != err {
+			http.Error(w, fmt.Sprintf("couldn't update pictures cache (refresh pictures library). Error: %s", err), 500)
+			return
+		}
+	}
 
 	picturesMetadata := ms.picturesDAL.GetAll()
 	if 0 == len(picturesMetadata) {
