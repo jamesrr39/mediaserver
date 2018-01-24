@@ -18,8 +18,9 @@ import { UploadModal, ImageUploadPreview } from './ui/uploadModal.component';
 // yarn add angular2-notifications
 
 import { Observable } from 'rxjs';
+import { RawInfoContainer } from "./ui/pictureModal/rawInfo.component";
 
-const debouncedScrollObservable = Observable.fromEvent(window, "scroll").debounceTime(150);
+const debouncedScrollObservable = Observable.fromEvent(window, 'scroll').debounceTime(150);
 
 @NgModule({
 	imports: [BrowserModule, HttpModule, LazyLoadImageModule],
@@ -32,6 +33,7 @@ const debouncedScrollObservable = Observable.fromEvent(window, "scroll").debounc
 		MediaserverApp,
 		UploadModal,
 		ImageUploadPreview,
+		RawInfoContainer,
 		NotificationService
 	],
   bootstrap: [MediaserverApp],
@@ -39,7 +41,7 @@ const debouncedScrollObservable = Observable.fromEvent(window, "scroll").debounc
 		PictureMetadataService,
 		PictureModal,
 		{ provide: 'Window', useValue: window },
-		{ provide: "debouncedScrollObservable", useValue: debouncedScrollObservable}
+		{ provide: 'debouncedScrollObservable', useValue: debouncedScrollObservable}
 	]
 })
 export class AppModule { }

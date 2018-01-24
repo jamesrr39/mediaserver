@@ -4,13 +4,13 @@ import { PictureMetadataService } from '../service/picturesMetadata.service';
 import { NotificationService } from '../service/notificationService';
 
 import { PictureMetadata } from '../domain/pictureMetadata';
-import { PictureGallery } from "./pictureGallery.component";
-import { Observable } from "rxjs/Observable";
-import { Subscription } from "rxjs";
+import { PictureGallery } from './pictureGallery.component';
+import { Observable } from 'rxjs/Observable';
+import { Subscription } from 'rxjs';
 
 
 @Component({
-    selector: "mediaserver-app",
+    selector: 'mediaserver-app',
     template: `
     <div class="container-fluid">
       <div class="row header-toolbar">

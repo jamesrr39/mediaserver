@@ -1,9 +1,12 @@
-import { Component, Input, Inject } from '@angular/core';
+import { Component, Input, Inject, ViewChild, ElementRef } from '@angular/core';
 import { PictureMetadata } from '../../domain/pictureMetadata';
 import { Observable, Subscription } from 'rxjs';
+import { RawInfoContainer } from "./rawInfo.component";
 
 const LEFT_ARROW_KEYCODE = 37;
 const RIGHT_ARROW_KEYCODE = 39;
+
+
 
 @Component({
 	selector: 'picture-modal',
@@ -19,13 +22,13 @@ const RIGHT_ARROW_KEYCODE = 39;
 				</div>
 				<div class="col-sm-3">
 					<div class="pull-right actions-buttons-container">
-						<i (click)="showRawData()" class="glyphicon glyphicon-info-sign" aria-label="Information"></i>
+						<i (click)="onShowRawInformationClicked()" class="glyphicon glyphicon-info-sign" aria-label="Information"></i>
 						<i (click)="hide()" class="glyphicon glyphicon-remove" aria-label="Close"></i>
 					</div>
 				</div>
 			</div>
 			<div class="row">
-				<div class="picture-container">
+				<div class="col-md-12 picture-container" #pictureContainer>
 					<div (click)="showPrevious()" class="show-previous">
 						&lt;
 					</div>
@@ -34,10 +37,8 @@ const RIGHT_ARROW_KEYCODE = 39;
 						&gt;
 					</div>
 				</div>
-				<div class="raw-data-container">
-					Raw data here
+				<raw-info-container></raw-info-container>
 				</div>
-			</div>
 		</div>
 	</div>
   `,
@@ -86,9 +87,19 @@ export class PictureModal {
 	private pictureHashValue: string
 	private dateTakenString: string
 
+	private isRawInfoShown = false;
+
 	private resizeSubscription: Subscription;
 
 	@Input() picturesMetadata: PictureMetadata[];
+
+
+  @ViewChild(RawInfoContainer)
+  public readonly rawInfoContainer: RawInfoContainer;
+
+	@ViewChild("pictureContainer")
+	private readonly pictureContainer: ElementRef;
+
 
 	constructor( @Inject('Window') private window: Window) { }
 
@@ -121,19 +132,19 @@ export class PictureModal {
 
 	private showPrevious() {
 		const indexOfPicture = this.picturesMetadata.indexOf(this.pictureMetadata);
-		if (0 === indexOfPicture){
+		if (0 === indexOfPicture) {
 			return;
 		}
 
-		this.updatePictureMetadata(this.picturesMetadata[indexOfPicture -1]);
+		this.updatePictureMetadata(this.picturesMetadata[indexOfPicture - 1]);
 	}
 	private showNext() {
 		const indexOfPicture = this.picturesMetadata.indexOf(this.pictureMetadata);
-		if (this.picturesMetadata.length === (indexOfPicture +1)){
+		if (this.picturesMetadata.length === (indexOfPicture + 1)) {
 			return;
 		}
 
-		this.updatePictureMetadata(this.picturesMetadata[indexOfPicture +1]);
+		this.updatePictureMetadata(this.picturesMetadata[indexOfPicture + 1]);
 	}
 
 	public onContainerClicked(event: MouseEvent): void {
@@ -150,6 +161,7 @@ export class PictureModal {
 			"No date information available for this picture" :
 			`Taken at ${dateTaken.toString()}`
 
+		this.rawInfoContainer.update(pictureMetadata);
 		this.updatePicture();
 	}
 
@@ -160,8 +172,11 @@ export class PictureModal {
 		this.pictureHashValue = this.pictureMetadata.hashValue + `?w=${bucketedWidth}&h=${bucketedHeight}`;
 	}
 
-	private showRawData() {
-
+	private onShowRawInformationClicked() {
+		if (this.isRawInfoShown) {
+			this.pictureContainer // to col-md-12
+			this.rawInfoContainer // hide
+		}
 	}
 
 }
@@ -173,30 +188,5 @@ class PictureSizeCalculator {
 
 	static getBucketedHeight(windowHeight: number) {
 		return Math.floor((windowHeight - 120) / 100) * 100;
-	}
-}
-
-@Component({
-	selector: "raw-info-container",
-	template: `
-		<ul>
-			<li *ngFor="let exifDatum of exifData">
-				{{ exifDatum }}
-			</li>
-		</ul>
-	`
-})
-class RawInfoContainer {
-	@Input() exifData: Map<String, any>;
-
-	private exifDataList: string[]
-
-	ngOnInit() {
-		const list: string[] = [];
-		this.exifData.forEach((v, k) => {
-			list.push(`${k}: ${v}`);
-		});
-
-
 	}
 }
