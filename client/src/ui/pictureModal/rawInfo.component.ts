@@ -9,12 +9,18 @@ type ExifData = {
 @Component({
 	selector: "raw-info-container",
 	template: `
-		<ul>
+		<ul class="list-unstyled">
 			<li *ngFor="let exifDatum of exifData">
 				{{ exifDatum.key }} : {{ exifDatum.value }}
 			</li>
 		</ul>
-	`
+	`,
+	styles: [`
+		:host {
+			background-color: white;
+			color: grey;
+		}
+	`]
 })
 export class RawInfoContainer {
 	private exifData: ExifData[] = [];

@@ -1,7 +1,10 @@
-import { Component, Input, Inject, ViewChild, ElementRef } from '@angular/core';
+import { Component, Input, Inject, ViewChild, ElementRef, trigger, state, style, transition, animate } from '@angular/core';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+
 import { PictureMetadata } from '../../domain/pictureMetadata';
 import { Observable, Subscription } from 'rxjs';
 import { RawInfoContainer } from "./rawInfo.component";
+// import { slideInOutAnimation } from "../animations/slideAnimation";
 
 const LEFT_ARROW_KEYCODE = 37;
 const RIGHT_ARROW_KEYCODE = 39;
@@ -10,74 +13,99 @@ const RIGHT_ARROW_KEYCODE = 39;
 
 @Component({
 	selector: 'picture-modal',
+	animations: [
+		trigger("rawInfoDivState", [
+			state("closed", style({
+				display: "none",
+				width: 0,
+			})),
+			state("open", style({
+				display: "inline-block",
+				width: "400px",
+			})),
+			transition("closed <=> open", animate(300))
+		])
+	],
+	host: {
+	 	'(window:keydown)': 'onKeypress($event)'
+	},
 	template: `
-	<div (click)="onContainerClicked($event)" class="modal fade" tabindex="-1" [ngClass]="{'in': visibleAnimate}"
-		 [ngStyle]="{'display': visible ? 'block' : 'none', 'opacity': visibleAnimate ? 1 : 0}">
-		<div class="modal-dialog">
-    	<div class="row">
-				<div class="col-sm-3"></div>
-				<div class="col-sm-6">
-					<h3>{{ pictureDisplayName }}</h3>
-					<p>{{ dateTakenString }}</p>
-				</div>
-				<div class="col-sm-3">
-					<div class="pull-right actions-buttons-container">
-						<i (click)="onShowRawInformationClicked()" class="glyphicon glyphicon-info-sign" aria-label="Information"></i>
-						<i (click)="hide()" class="glyphicon glyphicon-remove" aria-label="Close"></i>
+		<div (click)="onContainerClicked($event)" class="modal fade" tabindex="-1" [ngClass]="{'in': visibleAnimate}"
+			 [ngStyle]="{'display': visible ? 'block' : 'none', 'opacity': visibleAnimate ? 1 : 0}">
+			<div class="modal-dialog">
+				<!-- start control buttons -->
+	    	<div class="row">
+					<div class="col-sm-3"></div>
+					<div class="col-sm-6">
+						<h3>{{ pictureDisplayName }}</h3>
+						<p>{{ dateTakenString }}</p>
+					</div>
+					<div class="col-sm-3">
+						<div class="pull-right actions-buttons-container">
+							<i (click)="onShowRawInformationClicked()" class="glyphicon glyphicon-info-sign" aria-label="Information"></i>
+							<i (click)="hide()" class="glyphicon glyphicon-remove" aria-label="Close"></i>
+						</div>
 					</div>
 				</div>
+				<!-- end control buttons -->
+				<!-- start content -->
+				<div class="row">
+					<div class="picture-container-wrapper">
+						<div class="picture-container" #pictureContainer>
+							<div (click)="showPrevious()" class="show-previous">&larr;</div>
+							<div>
+								<img src="/picture/{{ pictureHashValue }}" class="picture" />
+							</div>
+							<div (click)="showNext()" class="show-next">&rarr;</div>
+						</div>
+					</div>
+					<div class="raw-info-container-state" [@rawInfoDivState]="rawInfoContainerState">
+						<raw-info-container></raw-info-container>
+					</div>
+				</div>
+				<!-- end content -->
 			</div>
-			<div class="row">
-				<div class="col-md-12 picture-container" #pictureContainer>
-					<div (click)="showPrevious()" class="show-previous">
-						&lt;
-					</div>
-					<img src="/picture/{{ pictureHashValue }}" class="picture">
-					<div (click)="showNext()" class="show-next">
-						&gt;
-					</div>
-				</div>
-				<raw-info-container></raw-info-container>
-				</div>
 		</div>
-	</div>
   `,
 	styles: [`
-	.modal-dialog {
-		color: white !important;
-		width: auto;
-		text-align: center;
-	}
-	.actions-buttons-container {
-		margin-right: 20px;
-	}
-	.actions-buttons-container * {
-		cursor: pointer;
-		font-size: 40px;
-		margin-left: 15px;
-		margin-top: 20px;
-	}
+		.modal-dialog {
+			color: white !important;
+			width: auto;
+			text-align: center;
+		}
+		.actions-buttons-container {
+			margin-right: 20px;
+		}
+		.actions-buttons-container * {
+			cursor: pointer;
+			font-size: 20px;
+			margin-left: 15px;
+			margin-top: 20px;
+		}
+		.show-previous,.show-next {
+			min-width: 50px;
+			flex-grow: 1;
+			cursor: pointer;
+			font-size: 1.5em;
+			position: relative;
+			top: 50%;
+			transform: translateY(-50%);
+		}
 
-	.show-previous {
-		min-width: 50px;
-		flex-grow: 1;
-		cursor: pointer;
-	}
-	.show-next {
-		min-width: 50px;
-		flex-grow: 1;
-		cursor: pointer;
-	}
+		.picture-container-wrapper,.raw-info-container-state {
+			display: inline-block;
+		}
 
-
-	.picture-container {
-		overflow: auto;
-		display: flex;
-	}
+		.picture-container {
+			overflow: auto;
+			display: flex;
+	    align-items: center;
+	    justify-content: center;
+		}
   `],
-	host: { '(window:keydown)': 'onKeypress($event)' },
 })
 export class PictureModal {
+	private rawInfoContainerState = "closed";
 
 	public visible = false;
 	public visibleAnimate = false;
@@ -99,7 +127,6 @@ export class PictureModal {
 
 	@ViewChild("pictureContainer")
 	private readonly pictureContainer: ElementRef;
-
 
 	constructor( @Inject('Window') private window: Window) { }
 
@@ -173,10 +200,13 @@ export class PictureModal {
 	}
 
 	private onShowRawInformationClicked() {
-		if (this.isRawInfoShown) {
-			this.pictureContainer // to col-md-12
-			this.rawInfoContainer // hide
-		}
+
+
+		this.rawInfoContainerState = (this.rawInfoContainerState === "closed") ? "open" : "closed";
+		// if (this.isRawInfoShown) {
+		// 	this.pictureContainer // to col-md-12
+		// 	this.rawInfoContainer // hide
+		// }
 	}
 
 }

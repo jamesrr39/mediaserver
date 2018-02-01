@@ -1,6 +1,7 @@
 import { NgModule }      from '@angular/core';
 import { HttpModule } from '@angular/http';
 import { BrowserModule } from '@angular/platform-browser';
+import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { PictureGallery, PictureGroupView }  from './ui/pictureGallery.component';
 //import { PictureGroupView } from './ui/pictureGroup';
 import { PictureThumbnail } from './ui/pictureThumbnail.component';
@@ -23,8 +24,7 @@ import { RawInfoContainer } from "./ui/pictureModal/rawInfo.component";
 const debouncedScrollObservable = Observable.fromEvent(window, 'scroll').debounceTime(150);
 
 @NgModule({
-	imports: [BrowserModule, HttpModule, LazyLoadImageModule],
-	//	imports: [BrowserModule, HttpModule, LazyLoadImageModule, SimpleNotificationsModule.forRoot()],
+	imports: [BrowserModule, HttpModule, LazyLoadImageModule, BrowserAnimationsModule],
 	declarations: [
 		PictureGallery,
 		PictureThumbnail,
