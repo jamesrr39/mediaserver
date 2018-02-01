@@ -1892,7 +1892,7 @@ negotiator@0.6.1:
   version "0.6.1"
   resolved "https://registry.yarnpkg.com/negotiator/-/negotiator-0.6.1.tgz#2b327184e8992101177b28563fb5e7102acd0ca9"
 
-ng2-lazyload-image@^2.2.2:
+ng2-lazyload-image@^2.4.0:
   version "2.4.0"
   resolved "https://registry.yarnpkg.com/ng2-lazyload-image/-/ng2-lazyload-image-2.4.0.tgz#0423808cf04e53917b0f5330a73fa1aa68c55886"
 
@@ -3100,6 +3100,6 @@ yeast@0.1.2:
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/yeast/-/yeast-0.1.2.tgz#008e06d8094320c372dbc2f8ed76a0ca6c8ac419"
 
-zone.js@0.7.2:
-  version "0.7.2"
-  resolved "https://registry.yarnpkg.com/zone.js/-/zone.js-0.7.2.tgz#1a62b6be4b24d1b935e4566b0b4386b66966d1a7"
+zone.js@^0.8.20:
+  version "0.8.20"
+  resolved "https://registry.yarnpkg.com/zone.js/-/zone.js-0.8.20.tgz#a218c48db09464b19ff6fc8f0d4bb5b1046e185d"
