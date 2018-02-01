@@ -51,14 +51,12 @@ const RIGHT_ARROW_KEYCODE = 39;
 				<!-- end control buttons -->
 				<!-- start content -->
 				<div class="row">
-					<div class="picture-container-wrapper">
-						<div class="picture-container" #pictureContainer>
-							<div (click)="showPrevious()" class="show-previous">&larr;</div>
-							<img src="/picture/{{ pictureHashValue }}" class="picture" />
-							<div (click)="showNext()" class="show-next">&rarr;</div>
-							<div class="raw-info-container-state" [@rawInfoDivState]="rawInfoContainerState">
-								<raw-info-container></raw-info-container>
-							</div>
+					<div class="picture-container" #pictureContainer>
+						<div (click)="showPrevious()" class="show-previous">&larr;</div>
+						<img src="/picture/{{ pictureHashValue }}" class="picture" />
+						<div (click)="showNext()" class="show-next">&rarr;</div>
+						<div class="raw-info-container-state" [@rawInfoDivState]="rawInfoContainerState">
+							<raw-info-container></raw-info-container>
 						</div>
 					</div>
 				</div>
@@ -94,10 +92,6 @@ const RIGHT_ARROW_KEYCODE = 39;
 
 		.picture {
 			flex-shrink: 1;
-		}
-
-		.picture-container-wrapper,.raw-info-container-state {
-			display: inline-block;
 		}
 
 		.picture-container {
