@@ -100,6 +100,11 @@ const RIGHT_ARROW_KEYCODE = 39;
 	    align-items: center;
 	    justify-content: center;
 		}
+
+		.raw-info-container-state {
+			background-color: white;
+			color: black;
+		}
   `],
 })
 export class PictureModal {
