@@ -20,8 +20,9 @@ const RIGHT_ARROW_KEYCODE = 39;
 				width: 0,
 			})),
 			state("open", style({
+				flex: "0 0 400px",
 				display: "inline-block",
-				width: "400px",
+				// width: "400px",
 			})),
 			transition("closed <=> open", animate(300))
 		])
@@ -53,14 +54,12 @@ const RIGHT_ARROW_KEYCODE = 39;
 					<div class="picture-container-wrapper">
 						<div class="picture-container" #pictureContainer>
 							<div (click)="showPrevious()" class="show-previous">&larr;</div>
-							<div>
-								<img src="/picture/{{ pictureHashValue }}" class="picture" />
-							</div>
+							<img src="/picture/{{ pictureHashValue }}" class="picture" />
 							<div (click)="showNext()" class="show-next">&rarr;</div>
+							<div class="raw-info-container-state" [@rawInfoDivState]="rawInfoContainerState">
+								<raw-info-container></raw-info-container>
+							</div>
 						</div>
-					</div>
-					<div class="raw-info-container-state" [@rawInfoDivState]="rawInfoContainerState">
-						<raw-info-container></raw-info-container>
 					</div>
 				</div>
 				<!-- end content -->
@@ -72,6 +71,7 @@ const RIGHT_ARROW_KEYCODE = 39;
 			color: white !important;
 			width: auto;
 			text-align: center;
+			height: 100%;
 		}
 		.actions-buttons-container {
 			margin-right: 20px;
@@ -84,12 +84,16 @@ const RIGHT_ARROW_KEYCODE = 39;
 		}
 		.show-previous,.show-next {
 			min-width: 50px;
-			flex-grow: 1;
+			flex-grow: 0;
 			cursor: pointer;
 			font-size: 1.5em;
 			position: relative;
 			top: 50%;
 			transform: translateY(-50%);
+		}
+
+		.picture {
+			flex-shrink: 1;
 		}
 
 		.picture-container-wrapper,.raw-info-container-state {
