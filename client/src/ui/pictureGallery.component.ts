@@ -7,7 +7,6 @@ import { PicturesByDate } from './picturesByDate';
 import { Observable } from 'rxjs';
 
 import { PictureModal } from './pictureModal/pictureModal.component';
-import { UploadModal } from '../ui/uploadModal.component';
 import { NotificationService } from '../service/notificationService';
 
 //import { NotificationsService } from 'angular2-notifications';

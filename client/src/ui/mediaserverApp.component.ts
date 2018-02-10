@@ -38,7 +38,7 @@ import { Subscription } from 'rxjs';
       <picture-gallery [picturesMetadata]="picturesMetadata">Loading AppComponent content here ...</picture-gallery>
     </div>
 
-    <upload-modal [notificationService]="notificationService"></upload-modal>
+    <upload-modal [notificationService]="notificationService" [onUploadCallback]="onUploadCallback"></upload-modal>
     <notification-service></notification-service>
     `
 })
@@ -58,6 +58,11 @@ export class MediaserverApp {
     private searchInputSubscription: Subscription;
 
     picturesMetadata: PictureMetadata[] = [];
+
+    private onUploadCallback = (pictureMetadata: PictureMetadata) => {
+      this.picturesMetadata = this.picturesMetadata.concat([pictureMetadata]);
+      this.pictureGallery.setPicturesMetadatas(this.picturesMetadata);
+    }
 
     constructor(
       private pictureMetadataService: PictureMetadataService) {}

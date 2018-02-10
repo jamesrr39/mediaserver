@@ -23,6 +23,7 @@ import { RawInfoContainer } from "./ui/pictureModal/rawInfo.component";
 
 const debouncedScrollObservable = Observable.fromEvent(window, 'scroll').debounceTime(150);
 
+
 @NgModule({
 	imports: [BrowserModule, HttpModule, LazyLoadImageModule, BrowserAnimationsModule],
 	declarations: [

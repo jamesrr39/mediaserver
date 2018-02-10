@@ -2,6 +2,9 @@ import { Component, Input } from '@angular/core';
 import { PictureMetadataService } from '../service/picturesMetadata.service';
 
 import { NotificationService } from '../service/notificationService';
+import { PictureMetadata } from "../domain/pictureMetadata";
+
+type FileUploadedCallback = (pictureMetadata: PictureMetadata) => void;
 
 @Component({
 	selector: "upload-modal",
@@ -25,7 +28,7 @@ import { NotificationService } from '../service/notificationService';
 					</div>
 				</div>
 				<div class="modal-footer">
-					<button type="button" class="btn btn-primary" (click)="upload($event)">Upload</button>
+					<button type="button" class="btn btn-primary {{isUploading ? 'disabled' : ''}}" (click)="upload($event)">Upload</button>
 				</div>
 			</div>
 		</div>
@@ -60,7 +63,11 @@ export class UploadModal {
 
 	private filesToUpload: File[] = [];
 
+	private isUploading = false;
+
 	@Input() notificationService: NotificationService;
+
+	@Input() onUploadCallback: FileUploadedCallback;
 
 	constructor(private pictureMetadataService: PictureMetadataService) {}
 
@@ -97,12 +104,26 @@ export class UploadModal {
 	}
 
 	private upload(event: Event) {
+		if (this.isUploading) {
+			// already uploading; reject click
+			return;
+		}
+		this.isUploading = true;
+
+		const onUploadResponse = (file: File) => {
+			this.remove(file);
+			if (this.filesToUpload.length === 0) {
+				this.isUploading = false;
+			}
+		};
+
 		this.filesToUpload.forEach((file) => {
 			const observable = this.pictureMetadataService.upload(file).subscribe((pictureMetadata) => {
 				this.notificationService.success("succesfully uploaded " + file.name);
-				const index = this.filesToUpload.indexOf(file);
-				this.filesToUpload.splice(index, 1);
+				onUploadResponse(file);
+				this.onUploadCallback(pictureMetadata);
 			}, (response: Response) => {
+				onUploadResponse(file);
 				this.notificationService.error(`couldn't upload ${file.name}. Status Text: ${response.statusText}. Error: ${response.text()}`);
 			});
 		});
