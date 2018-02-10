@@ -31,45 +31,49 @@ const RIGHT_ARROW_KEYCODE = 39;
 	 	'(window:keydown)': 'onKeypress($event)'
 	},
 	template: `
-		<div (click)="onContainerClicked($event)" class="modal fade" tabindex="-1" [ngClass]="{'in': visibleAnimate}"
-			 [ngStyle]="{'display': visible ? 'block' : 'none', 'opacity': visibleAnimate ? 1 : 0}">
-			<div class="modal-dialog">
-				<!-- start control buttons -->
-	    	<div class="row">
-					<div class="col-sm-3"></div>
-					<div class="col-sm-6">
-						<h3>{{ pictureDisplayName }}</h3>
-						<p>{{ dateTakenString }}</p>
-					</div>
-					<div class="col-sm-3">
-						<div class="pull-right actions-buttons-container">
-							<i (click)="onShowRawInformationClicked()" class="glyphicon glyphicon-info-sign" aria-label="Information"></i>
-							<i (click)="hide()" class="glyphicon glyphicon-remove" aria-label="Close"></i>
-						</div>
-					</div>
-				</div>
-				<!-- end control buttons -->
-				<!-- start content -->
-				<div class="row">
-					<div class="picture-container" #pictureContainer>
-						<div (click)="showPrevious()" class="show-previous">&larr;</div>
-						<img src="/picture/{{ pictureHashValue }}" class="picture" />
-						<div (click)="showNext()" class="show-next">&rarr;</div>
-						<div class="raw-info-container-state" [@rawInfoDivState]="rawInfoContainerState">
-							<raw-info-container></raw-info-container>
-						</div>
-					</div>
-				</div>
-				<!-- end content -->
+	<div (click)="onContainerClicked($event)" class="modal fade" tabindex="-1" [ngClass]="{'in': visibleAnimate}"
+	   [ngStyle]="{'display': visible ? 'block' : 'none', 'opacity': visibleAnimate ? 1 : 0}">
+	  <div class="modal-dialog">
+	    <!-- start content -->
+			<div class="modal-content-container">
+		    <div class="picture-container" #pictureContainer>
+		      <!-- start control buttons -->
+		      <div class="top-row" style="display:flex; flex-direction: row;">
+		        <div>
+		          <h3>{{ pictureDisplayName }}</h3>
+		          <p>{{ dateTakenString }}</p>
+		        </div>
+		        <div class="pull-right actions-buttons-container">
+		          <i (click)="onShowRawInformationClicked()" class="glyphicon glyphicon-info-sign" aria-label="Information"></i>
+		          <i (click)="hide()" class="glyphicon glyphicon-remove" aria-label="Close"></i>
+		        </div>
+		      </div>
+		      <!-- end control buttons -->
+		      <div class="main-content">
+		        <div (click)="showPrevious()" class="show-previous">&larr;</div>
+		        <img src="/picture/{{ pictureHashValue }}" class="picture" />
+		        <div (click)="showNext()" class="show-next">&rarr;</div>
+		      </div>
+		    </div>
+		    <div class="raw-info-container-state" [@rawInfoDivState]="rawInfoContainerState">
+		      <raw-info-container></raw-info-container>
+		    </div>
 			</div>
-		</div>
-  `,
+	    <!-- end content -->
+	  </div>
+	</div>
+	`,
 	styles: [`
+		.modal-content-container {
+			display: flex;
+		}
+
 		.modal-dialog {
 			color: white !important;
 			width: auto;
 			text-align: center;
 			height: 100%;
+			margin: 0;
 		}
 		.actions-buttons-container {
 			margin-right: 20px;
@@ -80,14 +84,19 @@ const RIGHT_ARROW_KEYCODE = 39;
 			margin-left: 15px;
 			margin-top: 20px;
 		}
+		.show-next {
+			right: 0px;
+		}
+		.show-previous {
+			left: 0px;
+		}
 		.show-previous,.show-next {
 			min-width: 50px;
 			flex-grow: 0;
 			cursor: pointer;
 			font-size: 1.5em;
-			position: relative;
+			position: absolute;
 			top: 50%;
-			transform: translateY(-50%);
 		}
 
 		.picture {
@@ -98,9 +107,17 @@ const RIGHT_ARROW_KEYCODE = 39;
 			overflow: auto;
 			display: flex;
 	    align-items: center;
-	    justify-content: center;
+			flex-direction: column;
+			flex-grow: 1;
 		}
 
+		.top-row {
+			flex-grow: 0;
+		}
+		.main-content {
+			position: relative;
+			width: 100%;
+		}
 		.raw-info-container-state {
 			background-color: white;
 			color: black;

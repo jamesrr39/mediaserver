@@ -5,6 +5,7 @@ import (
 	"mediaserverapp/mediaserver"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/jamesrr39/goutil/userextra"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
@@ -29,7 +30,7 @@ func main() {
 		log.Fatalf("couldn't create a new media server and scan the pictures directory. Error: %s", err)
 	}
 	log.Printf("attempting to start serving on port %d\n", *port)
-	err = mediaServer.ServeHTTP(*port)
+	err = mediaServer.ServeHTTP("localhost:" + strconv.Itoa(*port))
 	if nil != err {
 		log.Fatalln("Couldn't start HTTP server. Error: " + err.Error())
 	}

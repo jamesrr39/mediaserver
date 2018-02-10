@@ -5,7 +5,6 @@ import (
 	"mediaserverapp/mediaserver/picturesdal"
 	"mediaserverapp/mediaserver/pictureswebservice"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/jamesrr39/goutil/httpextra"
@@ -38,7 +37,7 @@ func NewMediaServerAndScan(rootpath string) (*MediaServer, error) {
 }
 
 // scans for pictures and serves http server
-func (ms *MediaServer) ServeHTTP(port int) error {
+func (ms *MediaServer) ServeHTTP(addr string) error {
 
 	mainRouter := mux.NewRouter()
 
@@ -47,7 +46,7 @@ func (ms *MediaServer) ServeHTTP(port int) error {
 	mainRouter.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("client"))))
 
 	server := httpextra.NewServerWithTimeouts()
-	server.Addr = "localhost:" + strconv.Itoa(port)
+	server.Addr = addr
 	server.Handler = mainRouter
 	return server.ListenAndServe()
 
