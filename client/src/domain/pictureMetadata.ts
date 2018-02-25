@@ -26,18 +26,18 @@ export class PictureMetadata {
         );
     }
     getDateTaken(): TimezonelessDate {
-        let dateTime = this.getDateTimeTaken();
-        if (!dateTime){
-            return null;
-        }
+      let dateTime = this.getDateTimeTaken();
+      if (!dateTime){
+          return null;
+      }
 
-		return new TimezonelessDate(dateTime.getFullYear(), dateTime.getMonth(), dateTime.getDate());
-	}
+  		return new TimezonelessDate(dateTime.getFullYear(), dateTime.getMonth(), dateTime.getDate());
+  	}
     getFileName(): string {
-        if (!this.relativeFilePath){
-            return "no name";
-        }
-        const indexOfLastSlash = this.relativeFilePath.lastIndexOf("/") + 1;
-        return this.relativeFilePath.substring(indexOfLastSlash);
+      if (!this.relativeFilePath){
+          return "no name";
+      }
+      const indexOfLastSlash = this.relativeFilePath.lastIndexOf("/") + 1;
+      return this.relativeFilePath.substring(indexOfLastSlash);
     }
 }

@@ -132,7 +132,7 @@ export class UploadModal {
 }
 
 
-class FileListTarget {
+type FileListTarget = {
 	target: {
 		files: FileList
 	}
