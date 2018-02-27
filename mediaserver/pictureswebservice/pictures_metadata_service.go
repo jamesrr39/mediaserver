@@ -11,11 +11,11 @@ import (
 )
 
 type PicturesMetadataService struct {
-	picturesDAL *picturesdal.PicturesDAL
+	picturesDAL *picturesdal.MediaServerDAL
 	Router      http.Handler
 }
 
-func NewPicturesMetadataService(picturesDAL *picturesdal.PicturesDAL) *PicturesMetadataService {
+func NewPicturesMetadataService(picturesDAL *picturesdal.MediaServerDAL) *PicturesMetadataService {
 	picturesService := &PicturesMetadataService{picturesDAL: picturesDAL}
 
 	router := mux.NewRouter()

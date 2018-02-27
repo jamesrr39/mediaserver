@@ -6,16 +6,23 @@ import (
 	"mediaserverapp/mediaserver/pictures"
 	"os"
 	"path/filepath"
+	"sync"
 )
 
 type ThumbnailsCache struct {
 	BasePath string
+	mu       *sync.Mutex
 }
 
-func NewThumbnailsCacheConn(basePath string) *ThumbnailsCache {
-	return &ThumbnailsCache{basePath}
+func NewThumbnailsCacheConn(basePath string) (*ThumbnailsCache, error) {
+	err := os.MkdirAll(basePath, 0700)
+	if nil != err {
+		return nil, err
+	}
+	return &ThumbnailsCache{basePath, new(sync.Mutex)}, nil
 }
 
+// Get fetches the gzipped thumbnail file bytes
 func (c *ThumbnailsCache) Get(hash pictures.HashValue) (io.ReadCloser, error) {
 	file, err := os.Open(c.getFilePath(hash))
 	if nil == err {
@@ -29,7 +36,11 @@ func (c *ThumbnailsCache) Get(hash pictures.HashValue) (io.ReadCloser, error) {
 	return nil, err
 }
 
+// Save persists a gzipped thumbnail bytes to disk
 func (c *ThumbnailsCache) Save(hash pictures.HashValue, gzippedThumbnailBytes []byte) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	return ioutil.WriteFile(c.getFilePath(hash), gzippedThumbnailBytes, 0600)
 }
 

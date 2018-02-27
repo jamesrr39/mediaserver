@@ -8,7 +8,10 @@ import (
 )
 
 func Test_getFilePath(t *testing.T) {
-	thumbnailsCache := NewThumbnailsCacheConn("a/b/c")
+	thumbnailsCache := &ThumbnailsCache{
+		BasePath: "a/b/c",
+	}
+
 	hash := pictures.HashValue("0123456789abcdef")
 	assert.Equal(t, "a/b/c/01/23456789abcdef", thumbnailsCache.getFilePath(hash))
 }

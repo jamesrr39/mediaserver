@@ -14,7 +14,8 @@ import (
 	"io/ioutil"
 	"log"
 	"mediaserverapp/mediaserver/pictures"
-	"mediaserverapp/mediaserver/picturesdal/picturescache"
+	"mediaserverapp/mediaserver/picturesdal/picturesmetadatacache"
+	"mediaserverapp/mediaserver/picturesdal/thumbnailscache"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -31,29 +32,39 @@ var (
 	ErrFileAlreadyExists       = errors.New("a file with this hash already exists")
 )
 
-type PicturesDAL struct {
-	rootpath string
-	cache    *picturescache.PicturesCache
+type MediaServerDAL struct {
+	rootpath              string
+	picturesMetadataCache *picturesmetadatacache.PicturesMetadataCache
+	ThumbnailsCache       *thumbnailscache.ThumbnailsCache
 }
 
-func NewPicturesDAL(rootpath string) *PicturesDAL {
-	return &PicturesDAL{rootpath, picturescache.NewPicturesCache()}
+func NewMediaServerDAL(rootpath, cachesBasePath string) (*MediaServerDAL, error) {
+	thumbnailsCacheConn, err := thumbnailscache.NewThumbnailsCacheConn(filepath.Join(cachesBasePath, "thumbnails"))
+	if nil != err {
+		return nil, err
+	}
+
+	return &MediaServerDAL{
+		rootpath,
+		picturesmetadatacache.NewPicturesMetadataCache(),
+		thumbnailsCacheConn,
+	}, nil
 }
 
-func (dal *PicturesDAL) GetAll() []*pictures.PictureMetadata {
-	return dal.cache.GetAll()
+func (dal *MediaServerDAL) GetAll() []*pictures.PictureMetadata {
+	return dal.picturesMetadataCache.GetAll()
 }
 
-func (dal *PicturesDAL) GetStateHashCode() pictures.HashValue {
-	return dal.cache.GetHashValue()
+func (dal *MediaServerDAL) GetStateHashCode() pictures.HashValue {
+	return dal.picturesMetadataCache.GetHashValue()
 }
 
 // can be null if no metadata
-func (dal *PicturesDAL) Get(hashValue pictures.HashValue) *pictures.PictureMetadata {
-	return dal.cache.Get(hashValue)
+func (dal *MediaServerDAL) Get(hashValue pictures.HashValue) *pictures.PictureMetadata {
+	return dal.picturesMetadataCache.Get(hashValue)
 }
 
-func (dal *PicturesDAL) Create(file io.Reader, filename string, contentType string) (*pictures.PictureMetadata, error) {
+func (dal *MediaServerDAL) Create(file io.Reader, filename string, contentType string) (*pictures.PictureMetadata, error) {
 
 	if dirtraversal.IsTryingToTraverseUp(filename) {
 		return nil, ErrIllegalPathTraversingUp
@@ -106,12 +117,12 @@ func (dal *PicturesDAL) Create(file io.Reader, filename string, contentType stri
 	}
 
 	pictureMetadata := pictures.NewPictureMetadata(fileHash, strings.TrimPrefix(path, dal.rootpath), fileinfo.Size(), exifData)
-	dal.cache.Add(pictureMetadata)
+	dal.picturesMetadataCache.Add(pictureMetadata)
 
 	return pictureMetadata, nil
 }
 
-func (dal *PicturesDAL) UpdatePicturesCache() error {
+func (dal *MediaServerDAL) UpdatePicturesCache() error {
 	var picturesMetadatas []*pictures.PictureMetadata
 
 	err := filepath.Walk(dal.rootpath, func(path string, fileinfo os.FileInfo, err error) error {
@@ -155,11 +166,11 @@ func (dal *PicturesDAL) UpdatePicturesCache() error {
 		return err
 	}
 
-	newCache := picturescache.NewPicturesCache()
+	newCache := picturesmetadatacache.NewPicturesMetadataCache()
 	newCache.AddBatch(picturesMetadatas...)
 	var mu sync.Mutex
 	mu.Lock()
-	dal.cache = newCache
+	dal.picturesMetadataCache = newCache
 	mu.Unlock()
 	return nil
 }
@@ -191,7 +202,7 @@ func getPathForNewFile(folder, filename string) (string, error) {
 
 // GetRawPicture returns a the raw picture for a piece of metadata
 // it doesn't perform any transformations on the picture
-func (picturesDAL *PicturesDAL) GetRawPicture(pictureMetadata *pictures.PictureMetadata) (image.Image, string, error) {
+func (picturesDAL *MediaServerDAL) GetRawPicture(pictureMetadata *pictures.PictureMetadata) (image.Image, string, error) {
 	file, err := os.Open(filepath.Join(picturesDAL.rootpath, pictureMetadata.RelativeFilePath))
 	if nil != err {
 		return nil, "", err

@@ -1,4 +1,4 @@
-package picturescache
+package picturesmetadatacache
 
 import (
 	"bytes"
@@ -10,18 +10,18 @@ import (
 	"sync"
 )
 
-type PicturesCache struct {
+type PicturesMetadataCache struct {
 	mu                *sync.Mutex
 	picturesMetadatas []*pictures.PictureMetadata
 	mapByHash         map[pictures.HashValue]*pictures.PictureMetadata
 	hashValue         pictures.HashValue
 }
 
-func NewPicturesCache() *PicturesCache {
-	return &PicturesCache{mu: &sync.Mutex{}, mapByHash: make(map[pictures.HashValue]*pictures.PictureMetadata)}
+func NewPicturesMetadataCache() *PicturesMetadataCache {
+	return &PicturesMetadataCache{mu: &sync.Mutex{}, mapByHash: make(map[pictures.HashValue]*pictures.PictureMetadata)}
 }
 
-func (cache *PicturesCache) Add(pictureMetadata *pictures.PictureMetadata) error {
+func (cache *PicturesMetadataCache) Add(pictureMetadata *pictures.PictureMetadata) error {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
 
@@ -37,7 +37,7 @@ func (cache *PicturesCache) Add(pictureMetadata *pictures.PictureMetadata) error
 
 }
 
-func (cache *PicturesCache) AddBatch(picturesMetadata ...*pictures.PictureMetadata) {
+func (cache *PicturesMetadataCache) AddBatch(picturesMetadata ...*pictures.PictureMetadata) {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
 
@@ -56,7 +56,7 @@ func (cache *PicturesCache) AddBatch(picturesMetadata ...*pictures.PictureMetada
 
 }
 
-func (cache *PicturesCache) setHashValue() error {
+func (cache *PicturesMetadataCache) setHashValue() error {
 	var byteBuffer bytes.Buffer
 	encoder := gob.NewEncoder(&byteBuffer)
 	err := encoder.Encode(cache.picturesMetadatas)
@@ -72,15 +72,15 @@ func (cache *PicturesCache) setHashValue() error {
 	return nil
 }
 
-func (cache *PicturesCache) GetHashValue() pictures.HashValue {
+func (cache *PicturesMetadataCache) GetHashValue() pictures.HashValue {
 	return cache.hashValue
 }
 
-func (cache *PicturesCache) GetAll() []*pictures.PictureMetadata {
+func (cache *PicturesMetadataCache) GetAll() []*pictures.PictureMetadata {
 	return cache.picturesMetadatas
 }
 
 // can be nil if picture metadata not in cache
-func (cache *PicturesCache) Get(hashValue pictures.HashValue) *pictures.PictureMetadata {
+func (cache *PicturesMetadataCache) Get(hashValue pictures.HashValue) *pictures.PictureMetadata {
 	return cache.mapByHash[hashValue]
 }

@@ -1,4 +1,4 @@
-package picturescache
+package picturesmetadatacache
 
 type ErrItemAlreadyExists struct{}
 

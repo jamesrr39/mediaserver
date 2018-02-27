@@ -16,11 +16,11 @@ import (
 )
 
 type PicturesService struct {
-	picturesDAL *picturesdal.PicturesDAL
+	picturesDAL *picturesdal.MediaServerDAL
 	Router      http.Handler
 }
 
-func NewPicturesService(picturesDAL *picturesdal.PicturesDAL) *PicturesService {
+func NewPicturesService(picturesDAL *picturesdal.MediaServerDAL) *PicturesService {
 	picturesService := &PicturesService{picturesDAL: picturesDAL}
 
 	router := mux.NewRouter()
