@@ -13,26 +13,26 @@ import (
 // MediaServer is a server used for showing pieces of media
 type MediaServer struct {
 	Rootpath                string
-	picturesDAL             *picturesdal.MediaServerDAL
+	mediaServerDAL          *picturesdal.MediaServerDAL
 	picturesService         *pictureswebservice.PicturesService
 	picturesMetadataService *pictureswebservice.PicturesMetadataService
 }
 
 // NewMediaServerAndScan creates a new MediaServer and builds a cache of pictures by scanning the rootpath
 func NewMediaServerAndScan(rootpath, cachesDir string) (*MediaServer, error) {
-	picturesDAL, err := picturesdal.NewMediaServerDAL(rootpath, cachesDir)
+	mediaServerDAL, err := picturesdal.NewMediaServerDAL(rootpath, cachesDir)
 	if nil != err {
 		return nil, err
 	}
 
 	mediaServer := &MediaServer{
 		Rootpath:                rootpath,
-		picturesDAL:             picturesDAL,
-		picturesService:         pictureswebservice.NewPicturesService(picturesDAL),
-		picturesMetadataService: pictureswebservice.NewPicturesMetadataService(picturesDAL),
+		mediaServerDAL:          mediaServerDAL,
+		picturesService:         pictureswebservice.NewPicturesService(mediaServerDAL),
+		picturesMetadataService: pictureswebservice.NewPicturesMetadataService(mediaServerDAL),
 	}
 
-	err = mediaServer.picturesDAL.UpdatePicturesCache()
+	err = mediaServer.mediaServerDAL.PicturesMetadataDAL.UpdatePicturesCache()
 	if nil != err {
 		return nil, err
 	}

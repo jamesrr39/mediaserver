@@ -6,3 +6,7 @@ build:
 
 run_dev_client:
 	cd client && yarn start
+
+test:
+	go vet -all ./...
+	go test ./...

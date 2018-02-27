@@ -3,25 +3,23 @@ package pictureswebservice
 import (
 	"encoding/json"
 	"fmt"
-	"image/gif"  // decode
-	"image/jpeg" // decode
-	"image/png"  // decode
+	"io"
 	"log"
+
 	"mediaserverapp/mediaserver/pictures"
 	"mediaserverapp/mediaserver/picturesdal"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
 )
 
 type PicturesService struct {
-	picturesDAL *picturesdal.MediaServerDAL
-	Router      http.Handler
+	mediaServerDAL *picturesdal.MediaServerDAL
+	Router         http.Handler
 }
 
 func NewPicturesService(picturesDAL *picturesdal.MediaServerDAL) *PicturesService {
-	picturesService := &PicturesService{picturesDAL: picturesDAL}
+	picturesService := &PicturesService{mediaServerDAL: picturesDAL}
 
 	router := mux.NewRouter()
 	router.HandleFunc("/{hashValue}", picturesService.servePicture).Methods("GET")
@@ -32,59 +30,42 @@ func NewPicturesService(picturesDAL *picturesdal.MediaServerDAL) *PicturesServic
 }
 
 func (ps *PicturesService) servePicture(w http.ResponseWriter, r *http.Request) {
-	hashValue := mux.Vars(r)["hashValue"]
-	pictureMetadata := ps.picturesDAL.Get(pictures.HashValue(hashValue))
-	if pictureMetadata == nil {
-		http.Error(w, "Couldn't find a picture for '"+hashValue+"'. Try rescanning the cache.", 404)
-		return
-	}
 
-	picture, pictureType, err := ps.picturesDAL.GetRawPicture(pictureMetadata)
+	hash := mux.Vars(r)["hashValue"]
+	width := r.URL.Query().Get("w")
+	height := r.URL.Query().Get("h")
+
+	pictureReader, pictureFormat, err := ps.mediaServerDAL.PicturesDAL.GetPictureBytes(pictures.HashValue(hash), width, height)
 	if nil != err {
-		log.Println("failed on getting raw picture")
-		http.Error(w, err.Error(), 500)
-		return
+		switch err {
+		case picturesdal.ErrHashNotFound:
+			http.Error(w, "picture not found for this hash", 404)
+			return
+		default:
+			http.Error(w, fmt.Sprintf("failed get picture for hash '%s'. Error: '%s'", hash, err), 500)
+			return
+		}
 	}
 
-	picture, err = pictureMetadata.RotateAndTransformPictureByExifData(picture)
-	if nil != err {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-
-	widthParam := r.URL.Query().Get("w")
-	heightParam := r.URL.Query().Get("h")
-	sizeToResizeTo, err := widthAndHeightStringsToSize(
-		widthParam,
-		heightParam,
-		pictures.Size{
-			Width:  uint(picture.Bounds().Max.X),
-			Height: uint(picture.Bounds().Max.Y),
-		})
-	if nil != err {
-		http.Error(w, err.Error(), 400)
-		return
-	}
-	picture = pictures.ResizePicture(picture, sizeToResizeTo)
-
-	switch pictureType {
+	switch pictureFormat {
 	case "jpeg":
-		jpeg.Encode(w, picture, nil)
 		w.Header().Set("Content-Type", "image/jpeg")
-		return
 	case "png":
-		png.Encode(w, picture)
 		w.Header().Set("Content-Type", "image/png")
-		return
 	case "gif":
-		gif.Encode(w, picture, nil)
 		w.Header().Set("Content-Type", "image/gif")
-		return
 	default:
-		http.Error(w, fmt.Sprintf("Image type not supported: '%s'", pictureType), 415)
+		http.Error(w, fmt.Sprintf("Image type not supported: '%s'", pictureFormat), 415)
 		return
 	}
 
+	_, err = io.Copy(w, pictureReader)
+	if nil != err {
+		errMessage := fmt.Errorf("ERROR writing bytes to response for hash '%s'. Error: '%s'", hash, err)
+		log.Println(errMessage)
+		http.Error(w, errMessage.Error(), 500)
+		return
+	}
 }
 
 func (ps *PicturesService) servePictureUpload(w http.ResponseWriter, r *http.Request) {
@@ -95,7 +76,7 @@ func (ps *PicturesService) servePictureUpload(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	pictureMetadata, err := ps.picturesDAL.Create(file, fileHandler.Filename, fileHandler.Header.Get("Content-Type"))
+	pictureMetadata, err := ps.mediaServerDAL.Create(file, fileHandler.Filename, fileHandler.Header.Get("Content-Type"))
 	if nil != err {
 		if picturesdal.ErrFileAlreadyExists == err {
 			http.Error(w, err.Error(), 409)
@@ -118,60 +99,4 @@ func (ps *PicturesService) servePictureUpload(w http.ResponseWriter, r *http.Req
 	}
 	w.Write(metadataBytes)
 
-}
-
-// widthAndHeightStringsToSize scales the maximum picture dimenions to the width and height URL Query parameters
-// it will use the smallest size
-// example: Picture 300w x 400h , widthParam "600" heightParam "900"
-// resulting size: 600 x 800
-// we won't size the picture up from the original picture size
-func widthAndHeightStringsToSize(widthParam, heightParam string, pictureSize pictures.Size) (pictures.Size, error) {
-	if "" == widthParam && "" == heightParam {
-		return pictureSize, nil
-	}
-
-	var width, height int
-	var err error
-	if "" == widthParam {
-		width = int(pictureSize.Width)
-	} else {
-		width, err = strconv.Atoi(widthParam)
-		if nil != err {
-			return pictures.Size{}, err
-		}
-	}
-
-	if "" == heightParam {
-		height = int(pictureSize.Height)
-	} else {
-		height, err = strconv.Atoi(heightParam)
-		if nil != err {
-			return pictures.Size{}, err
-		}
-	}
-
-	// max allowed width; smallest from picture width or width from param
-	maxAllowedWidth := int(pictureSize.Width)
-	if width < maxAllowedWidth {
-		maxAllowedWidth = width
-	}
-
-	// max allowed height; smallest from picture height or height from param
-	maxAllowedHeight := int(pictureSize.Height)
-	if height < maxAllowedHeight {
-		maxAllowedHeight = height
-	}
-
-	widthRatio := float64(maxAllowedWidth) / float64(int(pictureSize.Width))
-	heightRatio := float64(maxAllowedHeight) / float64(int(pictureSize.Height))
-
-	smallestRatio := widthRatio
-	if heightRatio < smallestRatio {
-		smallestRatio = heightRatio
-	}
-
-	return pictures.Size{
-		Width:  uint(float64(pictureSize.Width) * smallestRatio),
-		Height: uint(float64(pictureSize.Height) * smallestRatio),
-	}, nil
 }

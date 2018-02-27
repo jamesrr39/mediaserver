@@ -29,14 +29,14 @@ func NewPicturesMetadataService(picturesDAL *picturesdal.MediaServerDAL) *Pictur
 func (ms *PicturesMetadataService) serveAllPicturesMetadata(w http.ResponseWriter, r *http.Request) {
 	shouldRefresh := ("true" == r.URL.Query().Get("refresh"))
 	if shouldRefresh {
-		err := ms.picturesDAL.UpdatePicturesCache()
+		err := ms.picturesDAL.PicturesMetadataDAL.UpdatePicturesCache()
 		if nil != err {
 			http.Error(w, fmt.Sprintf("couldn't update pictures cache (refresh pictures library). Error: %s", err), 500)
 			return
 		}
 	}
 
-	picturesMetadata := ms.picturesDAL.GetAll()
+	picturesMetadata := ms.picturesDAL.PicturesMetadataDAL.GetAll()
 	if 0 == len(picturesMetadata) {
 		picturesMetadata = []*pictures.PictureMetadata{}
 	}
@@ -48,14 +48,14 @@ func (ms *PicturesMetadataService) serveAllPicturesMetadata(w http.ResponseWrite
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("etag", string(ms.picturesDAL.GetStateHashCode()))
+	w.Header().Set("etag", string(ms.picturesDAL.PicturesMetadataDAL.GetStateHashCode()))
 	w.Write(jsonBytes)
 }
 
 func (ms *PicturesMetadataService) servePictureMetadata(w http.ResponseWriter, r *http.Request) {
 
 	hashValue := mux.Vars(r)["hashValue"]
-	pictureMetadata := ms.picturesDAL.Get(pictures.HashValue(hashValue))
+	pictureMetadata := ms.picturesDAL.PicturesMetadataDAL.Get(pictures.HashValue(hashValue))
 	if nil == pictureMetadata {
 		http.Error(w, "Couldn't find a picture for '"+hashValue+"'. Try rescanning the cache.", 404)
 		return
