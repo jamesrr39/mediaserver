@@ -8,7 +8,7 @@ import { PictureGallery } from './pictureGallery.component';
 import { Observable } from 'rxjs/Observable';
 import { Subscription } from 'rxjs';
 
-
+// FIXME: show search bar
 @Component({
     selector: 'mediaserver-app',
     template: `
@@ -28,6 +28,7 @@ import { Subscription } from 'rxjs';
               </button>
 
               <input
+                style="display: none;"
                 type="text"
                 placeholder="Search..."
                 class="form-control"

@@ -19,6 +19,7 @@ import {PictureModal} from './pictureModal/pictureModal.component';
         .not-loaded {
           width: 200px;
           height: 200px;
+          background-color: #bbb;
         }
         img {
             max-height: 200px;

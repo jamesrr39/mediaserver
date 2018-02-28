@@ -14,9 +14,7 @@ export class PictureMetadataService {
 
     return this.http.get("/api/pictureMetadata/" + urlSuffix).map((r: Response) => {
       const metadatasJSON = r.json() as PictureMetadataJSON[];
-      return metadatasJSON.map(metadataJSON => {
-        return this.jsonToPictureMetadata(metadataJSON);
-      });
+      return metadatasJSON.map(metadataJSON => this.jsonToPictureMetadata(metadataJSON));
     });
   }
 
@@ -45,7 +43,7 @@ export class PictureMetadataService {
   }
 }
 
-class PictureMetadataJSON {
+type PictureMetadataJSON = {
     hashValue: string
     relativeFilePath: string
     fileSizeBytes: number
