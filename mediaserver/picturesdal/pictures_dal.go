@@ -15,6 +15,8 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+
+	"github.com/jamesrr39/goutil/image-processing/imageprocessingutil"
 )
 
 var ErrHashNotFound = errors.New("hash not found")
@@ -53,14 +55,18 @@ func (dal *PicturesDAL) GetPictureBytes(hash pictures.HashValue, width, height s
 		return nil, "", ErrHashNotFound
 	}
 
-	picture, pictureFormat, err := dal.GetRawPicture(pictureMetadata)
+	rawPicture, pictureFormat, err := dal.GetRawPicture(pictureMetadata)
 	if nil != err {
 		return nil, "", err
 	}
 
-	picture, err = pictureMetadata.RotateAndTransformPictureByExifData(picture)
-	if nil != err {
-		return nil, "", err
+	picture := rawPicture
+	// FIXME: tests for no orientation exif tag, no exif data
+	if nil != pictureMetadata.ExifData {
+		picture, err = imageprocessingutil.RotateAndTransformPictureByExifData(rawPicture, *pictureMetadata.ExifData)
+		if nil != err {
+			log.Printf("couldn't rotate and transform picture with hash '%s'. Error: '%s'\n", hash, err)
+		}
 	}
 
 	sizeToResizeTo, err := widthAndHeightStringsToSize(
