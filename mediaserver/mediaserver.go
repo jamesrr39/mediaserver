@@ -4,9 +4,9 @@ import (
 	//	"log"
 	"mediaserverapp/mediaserver/picturesdal"
 	"mediaserverapp/mediaserver/pictureswebservice"
-	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/cors"
 	"github.com/jamesrr39/goutil/httpextra"
 )
 
@@ -43,15 +43,19 @@ func NewMediaServerAndScan(rootpath, cachesDir string) (*MediaServer, error) {
 // scans for pictures and serves http server
 func (ms *MediaServer) ServeHTTP(addr string) error {
 
-	mainRouter := mux.NewRouter()
+	mainRouter := chi.NewRouter()
+	mainRouter.Use(cors.New(cors.Options{
+		AllowedOrigins: []string{"*"},
+	}).Handler)
 
-	mainRouter.PathPrefix("/api/pictureMetadata/").Handler(http.StripPrefix("/api/pictureMetadata", ms.picturesMetadataService.Router))
-	mainRouter.PathPrefix("/picture/").Handler(http.StripPrefix("/picture", ms.picturesService.Router))
-	mainRouter.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("client"))))
+	mainRouter.Route("/api/", func(r chi.Router) {
+		r.Mount("/pictureMetadata/", ms.picturesMetadataService)
+	})
+
+	mainRouter.Mount("/picture/", ms.picturesService)
 
 	server := httpextra.NewServerWithTimeouts()
 	server.Addr = addr
 	server.Handler = mainRouter
 	return server.ListenAndServe()
-
 }

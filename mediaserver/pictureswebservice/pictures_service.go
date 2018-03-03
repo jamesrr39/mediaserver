@@ -10,28 +10,32 @@ import (
 	"mediaserverapp/mediaserver/picturesdal"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi"
 )
 
 type PicturesService struct {
 	mediaServerDAL *picturesdal.MediaServerDAL
-	Router         http.Handler
+	http.Handler
 }
 
-func NewPicturesService(picturesDAL *picturesdal.MediaServerDAL) *PicturesService {
-	picturesService := &PicturesService{mediaServerDAL: picturesDAL}
+func NewPicturesService(mediaServerDAL *picturesdal.MediaServerDAL) *PicturesService {
+	router := chi.NewRouter()
 
-	router := mux.NewRouter()
-	router.HandleFunc("/{hashValue}", picturesService.servePicture).Methods("GET")
-	router.HandleFunc("/", picturesService.servePictureUpload).Methods("POST")
+	picturesService := &PicturesService{mediaServerDAL, router}
 
-	picturesService.Router = router
+	router.Get("/{hash}", picturesService.servePicture)
+	router.Post("/", picturesService.servePictureUpload)
+
 	return picturesService
 }
 
 func (ps *PicturesService) servePicture(w http.ResponseWriter, r *http.Request) {
 
-	hash := mux.Vars(r)["hashValue"]
+	hash := chi.URLParam(r, "hash")
+	if "" == hash {
+		http.Error(w, http.StatusText(422), 422)
+		return
+	}
 	width := r.URL.Query().Get("w")
 	height := r.URL.Query().Get("h")
 
