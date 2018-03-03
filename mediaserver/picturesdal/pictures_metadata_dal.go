@@ -1,7 +1,6 @@
 package picturesdal
 
 import (
-	"bytes"
 	"io/ioutil"
 	"log"
 	"mediaserverapp/mediaserver/pictures"
@@ -10,8 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-
-	"github.com/rwcarlsen/goexif/exif"
 )
 
 type PicturesMetadataDAL struct {
@@ -62,21 +59,17 @@ func (dal *PicturesMetadataDAL) UpdatePicturesCache() error {
 		}
 
 		fileBytes, err := ioutil.ReadFile(path)
-		if err != nil {
-			return err
-		}
-
-		fileHash, err := hashOfFile(bytes.NewBuffer(fileBytes))
 		if nil != err {
 			return err
 		}
 
-		exifData, err := exif.Decode(bytes.NewBuffer(fileBytes))
+		relativeFilePath := strings.TrimPrefix(path, dal.picturesBasePath)
+
+		pictureMetadata, _, err := pictures.NewPictureMetadataAndPictureFromBytes(fileBytes, relativeFilePath)
 		if nil != err {
-			log.Printf("not able to read metadata for %s. Error: %s\n", path, err)
+			return err
 		}
 
-		pictureMetadata := pictures.NewPictureMetadata(fileHash, strings.TrimPrefix(path, dal.picturesBasePath), fileinfo.Size(), exifData)
 		picturesMetadatas = append(picturesMetadatas, pictureMetadata) // todo concurrency
 
 		return nil

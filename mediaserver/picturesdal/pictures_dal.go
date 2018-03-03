@@ -9,14 +9,13 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io"
+	"io/ioutil"
 	"log"
 	"mediaserverapp/mediaserver/pictures"
 	"mediaserverapp/mediaserver/picturesdal/thumbnailscache"
 	"os"
 	"path/filepath"
 	"strconv"
-
-	"github.com/jamesrr39/goutil/image-processing/imageprocessingutil"
 )
 
 var ErrHashNotFound = errors.New("hash not found")
@@ -37,7 +36,8 @@ func NewPicturesDAL(picturesBasePath, cachesBasePath string, picturesMetadataDAL
 }
 
 func (dal *PicturesDAL) GetPictureBytes(hash pictures.HashValue, width, height string) (io.Reader, string, error) {
-	if dal.thumbnailsCache.IsSizeCacheable(width, height) {
+	isSizeCachable := dal.thumbnailsCache.IsSizeCacheable(width, height)
+	if isSizeCachable {
 		// look in on-disk cache for thumbnail
 		file, pictureFormat, err := dal.thumbnailsCache.Get(hash)
 		if nil == err && nil != file {
@@ -47,6 +47,7 @@ func (dal *PicturesDAL) GetPictureBytes(hash pictures.HashValue, width, height s
 		if nil != err {
 			log.Printf("ERROR getting thumbnail from cache for hash: '%s'. Error: '%s'\n", hash, err)
 		}
+
 	}
 
 	// picture not available in on-disk cache - fetch the image, perform transformations and save it to cache
@@ -55,18 +56,9 @@ func (dal *PicturesDAL) GetPictureBytes(hash pictures.HashValue, width, height s
 		return nil, "", ErrHashNotFound
 	}
 
-	rawPicture, pictureFormat, err := dal.GetRawPicture(pictureMetadata)
+	picture, pictureFormat, err := dal.GetPicture(pictureMetadata)
 	if nil != err {
 		return nil, "", err
-	}
-
-	picture := rawPicture
-	// FIXME: tests for no orientation exif tag, no exif data
-	if nil != pictureMetadata.ExifData {
-		picture, err = imageprocessingutil.RotateAndTransformPictureByExifData(rawPicture, *pictureMetadata.ExifData)
-		if nil != err {
-			log.Printf("couldn't rotate and transform picture with hash '%s'. Error: '%s'\n", hash, err)
-		}
 	}
 
 	sizeToResizeTo, err := widthAndHeightStringsToSize(
@@ -79,6 +71,8 @@ func (dal *PicturesDAL) GetPictureBytes(hash pictures.HashValue, width, height s
 	if nil != err {
 		return nil, "", err
 	}
+
+	log.Printf("resizing to %v\n", sizeToResizeTo)
 	picture = pictures.ResizePicture(picture, sizeToResizeTo)
 
 	byteBuffer := bytes.NewBuffer(nil)
@@ -94,21 +88,30 @@ func (dal *PicturesDAL) GetPictureBytes(hash pictures.HashValue, width, height s
 		return nil, "", fmt.Errorf("mime type not supported: '%s'", pictureFormat)
 	}
 
-	go dal.saveThumbnailToCache(hash, pictureFormat, byteBuffer.Bytes())
-
-	return byteBuffer, pictureFormat, nil
+	if isSizeCachable {
+		go dal.saveThumbnailToCache(hash, pictureFormat, byteBuffer.Bytes())
+	}
+	return bytes.NewBuffer(byteBuffer.Bytes()), pictureFormat, nil
 }
 
-// GetRawPicture returns a the raw picture from a picture metadata
-// it doesn't perform any transformations on the picture
-func (dal *PicturesDAL) GetRawPicture(pictureMetadata *pictures.PictureMetadata) (image.Image, string, error) {
+func (dal *PicturesDAL) GetPicture(pictureMetadata *pictures.PictureMetadata) (image.Image, string, error) {
 	file, err := os.Open(filepath.Join(dal.picturesBasePath, pictureMetadata.RelativeFilePath))
 	if nil != err {
 		return nil, "", err
 	}
 	defer file.Close()
 
-	return image.Decode(file)
+	fileBytes, err := ioutil.ReadAll(file)
+	if nil != err {
+		return nil, "", err
+	}
+
+	_, picture, err := pictures.NewPictureMetadataAndPictureFromBytes(fileBytes, pictureMetadata.RelativeFilePath)
+	if nil != err {
+		return nil, "", err
+	}
+
+	return picture, pictureMetadata.Format, nil
 }
 
 func (dal *PicturesDAL) saveThumbnailToCache(hash pictures.HashValue, pictureFormat string, gzippedThumbnailBytes []byte) {

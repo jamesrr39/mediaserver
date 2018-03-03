@@ -3,10 +3,15 @@ import { PictureMetadata } from '../domain/PictureMetadata';
 
 import { Observable } from '../util/Observable';
 
-const thumbnailStyle = {
-  height: '200px',
-  minWidth: '200px',
-  backgroundColor: '#bbb',
+const generateThumbnailStyle = (pictureMetadata: PictureMetadata) => {
+  const ratio = 200 / pictureMetadata.rawSize.height;
+  const width = pictureMetadata.rawSize.width * ratio;
+
+  return {
+    height: '200px',
+    backgroundColor: '#bbb',
+    width,
+  };
 };
 
 export interface ThumbnailProps {
@@ -80,6 +85,8 @@ export class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
       img = '';
     }
     // const img = <img src={imgSrc} />;
+
+    const thumbnailStyle = generateThumbnailStyle(this.props.pictureMetadata);
 
     return (
       <div style={thumbnailStyle} ref={el => this.element = el}>
