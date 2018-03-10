@@ -1,4 +1,4 @@
-package thumbnailscache
+package diskcache
 
 import (
 	"bytes"
@@ -16,7 +16,7 @@ type ThumbnailsCache struct {
 }
 
 type serializedThumbnail struct {
-	PictureFormat              string
+	PictureFormat         string
 	GzippedThumbnailBytes []byte
 }
 

@@ -44,7 +44,7 @@ func NewPictureMetadata(hashValue HashValue, relativeFilePath string, fileSizeBy
 }
 
 func NewPictureMetadataAndPictureFromBytes(fileBytes []byte, relativeFilePath string) (*PictureMetadata, image.Image, error) {
-	hash, err := hashOfFile(bytes.NewBuffer(fileBytes))
+	hash, err := NewHash(bytes.NewBuffer(fileBytes))
 	if nil != err {
 		return nil, nil, err
 	}
@@ -76,7 +76,7 @@ func (pictureMetadata *PictureMetadata) String() string {
 	return string(pictureMetadata.HashValue) + " (" + pictureMetadata.RelativeFilePath + ")"
 }
 
-func hashOfFile(file io.Reader) (HashValue, error) {
+func NewHash(file io.Reader) (HashValue, error) {
 	hasher := sha1.New()
 
 	_, err := io.Copy(hasher, file)

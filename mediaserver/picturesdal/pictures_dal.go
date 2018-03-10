@@ -12,7 +12,7 @@ import (
 	"io/ioutil"
 	"log"
 	"mediaserverapp/mediaserver/pictures"
-	"mediaserverapp/mediaserver/picturesdal/thumbnailscache"
+	"mediaserverapp/mediaserver/picturesdal/diskcache"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -22,12 +22,12 @@ var ErrHashNotFound = errors.New("hash not found")
 
 type PicturesDAL struct {
 	picturesBasePath    string
-	thumbnailsCache     *thumbnailscache.ThumbnailsCache
+	thumbnailsCache     *diskcache.ThumbnailsCache
 	picturesMetadataDAL *PicturesMetadataDAL
 }
 
 func NewPicturesDAL(picturesBasePath, cachesBasePath string, picturesMetadataDAL *PicturesMetadataDAL) (*PicturesDAL, error) {
-	thumbnailsCacheConn, err := thumbnailscache.NewThumbnailsCacheConn(filepath.Join(cachesBasePath, "thumbnails"))
+	thumbnailsCacheConn, err := diskcache.NewThumbnailsCacheConn(filepath.Join(cachesBasePath, "thumbnails"))
 	if nil != err {
 		return nil, err
 	}

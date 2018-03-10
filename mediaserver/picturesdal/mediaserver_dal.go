@@ -24,9 +24,10 @@ type MediaServerDAL struct {
 	rootpath            string
 	PicturesDAL         *PicturesDAL
 	PicturesMetadataDAL *PicturesMetadataDAL
+	// dbConn              *mediaserverdb.DBConn
 }
 
-func NewMediaServerDAL(picturesBasePath, cachesBasePath string) (*MediaServerDAL, error) {
+func NewMediaServerDAL(picturesBasePath, cachesBasePath, dataDir string) (*MediaServerDAL, error) {
 	picturesMetadataDAL := NewPicturesMetadataDAL(picturesBasePath)
 
 	picturesDAL, err := NewPicturesDAL(picturesBasePath, cachesBasePath, picturesMetadataDAL)
@@ -34,10 +35,23 @@ func NewMediaServerDAL(picturesBasePath, cachesBasePath string) (*MediaServerDAL
 		return nil, err
 	}
 
+	err = os.MkdirAll(dataDir, 0700)
+	if nil != err {
+		return nil, err
+	}
+
+	// mediaserverDBPath := filepath.Join(dataDir, "mediaserver_db.db")
+	//
+	// dbConn, err := mediaserverdb.NewDBConn(mediaserverDBPath)
+	// if nil != err {
+	// 	return nil, err
+	// }
+
 	return &MediaServerDAL{
 		picturesBasePath,
 		picturesDAL,
 		picturesMetadataDAL,
+		// dbConn,
 	}, nil
 }
 

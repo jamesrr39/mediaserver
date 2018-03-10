@@ -3,7 +3,9 @@ package mediaserver
 import (
 	//	"log"
 	"mediaserverapp/mediaserver/picturesdal"
+	"mediaserverapp/mediaserver/picturesdal/diskstorage/mediaserverdb"
 	"mediaserverapp/mediaserver/pictureswebservice"
+	"path/filepath"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
@@ -16,11 +18,17 @@ type MediaServer struct {
 	mediaServerDAL          *picturesdal.MediaServerDAL
 	picturesService         *pictureswebservice.PicturesService
 	picturesMetadataService *pictureswebservice.PicturesMetadataService
+	dbConn                  *mediaserverdb.DBConn
 }
 
 // NewMediaServerAndScan creates a new MediaServer and builds a cache of pictures by scanning the rootpath
-func NewMediaServerAndScan(rootpath, cachesDir string) (*MediaServer, error) {
-	mediaServerDAL, err := picturesdal.NewMediaServerDAL(rootpath, cachesDir)
+func NewMediaServerAndScan(rootpath, cachesDir, dataDir string) (*MediaServer, error) {
+	mediaServerDAL, err := picturesdal.NewMediaServerDAL(rootpath, cachesDir, dataDir)
+	if nil != err {
+		return nil, err
+	}
+
+	dbConn, err := mediaserverdb.NewDBConn(filepath.Join(dataDir, "mediaserver.db"))
 	if nil != err {
 		return nil, err
 	}
@@ -29,15 +37,25 @@ func NewMediaServerAndScan(rootpath, cachesDir string) (*MediaServer, error) {
 		Rootpath:                rootpath,
 		mediaServerDAL:          mediaServerDAL,
 		picturesService:         pictureswebservice.NewPicturesService(mediaServerDAL),
-		picturesMetadataService: pictureswebservice.NewPicturesMetadataService(mediaServerDAL),
+		picturesMetadataService: pictureswebservice.NewPicturesMetadataService(dbConn, mediaServerDAL),
 	}
 
-	err = mediaServer.mediaServerDAL.PicturesMetadataDAL.UpdatePicturesCache()
+	tx, err := dbConn.Begin()
+	if nil != err {
+		return nil, err
+	}
+	defer mediaserverdb.CommitOrRollback(tx)
+
+	err = mediaServer.mediaServerDAL.PicturesMetadataDAL.UpdatePicturesCache(tx)
 	if nil != err {
 		return nil, err
 	}
 
 	return mediaServer, nil
+}
+
+func (ms *MediaServer) Close() error {
+	return ms.dbConn.Close()
 }
 
 // scans for pictures and serves http server

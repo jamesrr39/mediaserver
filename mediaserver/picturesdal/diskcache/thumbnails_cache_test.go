@@ -1,4 +1,4 @@
-package thumbnailscache
+package diskcache
 
 import (
 	"mediaserverapp/mediaserver/pictures"

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"mediaserverapp/mediaserver/pictures"
 	"mediaserverapp/mediaserver/picturesdal"
+	"mediaserverapp/mediaserver/picturesdal/diskstorage/mediaserverdb"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -12,12 +13,13 @@ import (
 
 type PicturesMetadataService struct {
 	picturesDAL *picturesdal.MediaServerDAL
+	dbConn      *mediaserverdb.DBConn
 	http.Handler
 }
 
-func NewPicturesMetadataService(picturesDAL *picturesdal.MediaServerDAL) *PicturesMetadataService {
+func NewPicturesMetadataService(dbConn *mediaserverdb.DBConn, picturesDAL *picturesdal.MediaServerDAL) *PicturesMetadataService {
 	router := chi.NewRouter()
-	picturesService := &PicturesMetadataService{picturesDAL, router}
+	picturesService := &PicturesMetadataService{picturesDAL, dbConn, router}
 
 	router.Get("/", picturesService.serveAllPicturesMetadata)
 
@@ -27,7 +29,14 @@ func NewPicturesMetadataService(picturesDAL *picturesdal.MediaServerDAL) *Pictur
 func (ms *PicturesMetadataService) serveAllPicturesMetadata(w http.ResponseWriter, r *http.Request) {
 	shouldRefresh := ("true" == r.URL.Query().Get("refresh"))
 	if shouldRefresh {
-		err := ms.picturesDAL.PicturesMetadataDAL.UpdatePicturesCache()
+		tx, err := ms.dbConn.Begin()
+		if nil != err {
+			http.Error(w, fmt.Sprintf("couldn't open transaction to database. Error: %s", err), 500)
+			return
+		}
+		defer mediaserverdb.CommitOrRollback(tx)
+
+		err = ms.picturesDAL.PicturesMetadataDAL.UpdatePicturesCache(tx)
 		if nil != err {
 			http.Error(w, fmt.Sprintf("couldn't update pictures cache (refresh pictures library). Error: %s", err), 500)
 			return
