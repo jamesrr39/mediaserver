@@ -1,5 +1,8 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
+
+import { BrowserRouter } from 'react-router-dom';
+
 import { MediaServer } from './ui/MediaServer';
 import registerServiceWorker from './registerServiceWorker';
 import './index.css';
@@ -16,8 +19,15 @@ const props = {
   scrollObservable: scrollObservable,
 };
 
-ReactDOM.render(
-  <MediaServer {...props}  />,
-  document.getElementById('root') as HTMLElement
+const app = (
+  <BrowserRouter>
+    <MediaServer {...props}  />
+  </BrowserRouter>
+);
+
+ReactDOM.render(app, document.getElementById('root') as HTMLElement
 );
 registerServiceWorker();
+
+// https://medium.com/@pshrmn/a-simple-react-router-v4-tutorial-7f23ff27adf
+// FIXME remove link

@@ -3,21 +3,23 @@ import { PictureMetadata } from '../domain/PictureMetadata';
 
 import { Observable } from '../util/Observable';
 import { Thumbnail } from './Thumbnail';
+import { Link } from 'react-router-dom';
 
 export interface GalleryProps {
   picturesMetadatas: PictureMetadata[];
   scrollObservable: Observable;
 }
 
-const galleryStyle = {
-  display: 'flex',
-  flexDirection: 'row',
-  flexWrap: 'wrap',
-  // flexDirection: 'row',
-} as React.CSSProperties;
-
-const thumbnailContainerStyle = {
-  margin: '0 10px 10px 0',
+const styles = {
+  gallery: {
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    // flexDirection: 'row',
+  } as React.CSSProperties,
+  thumbnail: {
+      margin: '0 10px 10px 0',
+  }
 };
 
 export class Gallery extends React.Component<GalleryProps> {
@@ -28,12 +30,16 @@ export class Gallery extends React.Component<GalleryProps> {
         pictureMetadata,
       };
 
+      const linkUrl = `/picture/${pictureMetadata.hashValue}`;
+
       return (
-        <div key={index} style={thumbnailContainerStyle}>
-          <Thumbnail {...thumbnailProps} />
+        <div key={index} style={styles.thumbnail}>
+          <Link to={linkUrl}>
+            <Thumbnail {...thumbnailProps} />
+          </Link>
         </div>);
     });
 
-    return (<div style={galleryStyle}>{pictures}</div>);
+    return (<div style={styles.gallery}>{pictures}</div>);
   }
 }

@@ -3,6 +3,8 @@ import { PictureMetadataService } from '../service/PictureMetadataService';
 import { PictureMetadata } from '../domain/PictureMetadata';
 import { Gallery } from './Gallery';
 import { Observable } from '../util/Observable';
+import { Route } from 'react-router';
+import { PictureModal } from './PictureModal';
 
 export interface MediaServerProps {
   pictureMetadataService: PictureMetadataService;
@@ -26,7 +28,7 @@ export class MediaServer extends React.Component<MediaServerProps, MediaServerSt
     });
   }
 
-  generateGallery() {
+  generateGallery = () => {
     if (this.state.picturesMetadatas === null) {
       return <p>Loading</p>;
     }
@@ -43,8 +45,8 @@ export class MediaServer extends React.Component<MediaServerProps, MediaServerSt
 
     return (
       <div>
-        Photos
         {gallery}
+        <Route path="/picture/:hash" component={PictureModal} />
       </div>
     );
   }
