@@ -1,28 +1,19 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
-import { BrowserRouter } from 'react-router-dom';
-
-import { MediaServer } from './ui/MediaServer';
 import registerServiceWorker from './registerServiceWorker';
 import './index.css';
-import { LocalhostPictureMetadataService } from './service/PictureMetadataService';
-import { DebouncedObservable } from './util/Observable';
 
-const scrollObservable = new DebouncedObservable(150);
+import { Provider } from 'react-redux';
+import configureStore from './configureStore';
+import MediaServer from './ui/MediaServer';
 
-window.addEventListener('scroll', () => scrollObservable.triggerEvent());
-window.addEventListener('resize', () => scrollObservable.triggerEvent());
-
-const props = {
-  pictureMetadataService: new LocalhostPictureMetadataService(),
-  scrollObservable: scrollObservable,
-};
+const store = configureStore();
 
 const app = (
-  <BrowserRouter>
-    <MediaServer {...props}  />
-  </BrowserRouter>
+  <Provider store={store} >
+    <MediaServer />
+  </Provider>
 );
 
 ReactDOM.render(app, document.getElementById('root') as HTMLElement

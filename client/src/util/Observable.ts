@@ -16,16 +16,11 @@ export class DebouncedObservable {
   }
 
   addListener(cb: Callback) {
-    // tslint:disable-next-line
-    console.log("adding listener")
     this.callbacks.push(cb);
   }
 
   removeListener(cb: Callback) {
     const i = this.callbacks.indexOf(cb);
-
-    // tslint:disable-next-line
-    console.log("removing listener at index", i);
 
     this.callbacks.splice(i, 1);
   }

@@ -4,6 +4,8 @@ import { PictureMetadata } from '../domain/PictureMetadata';
 import { Observable } from '../util/Observable';
 import { Thumbnail } from './Thumbnail';
 import { Link } from 'react-router-dom';
+import { State } from '../reducers';
+import { connect } from 'react-redux';
 
 export interface GalleryProps {
   picturesMetadatas: PictureMetadata[];
@@ -22,7 +24,11 @@ const styles = {
   }
 };
 
-export class Gallery extends React.Component<GalleryProps> {
+class Gallery extends React.Component<GalleryProps> {
+  componentDidMount() {
+    this.props.scrollObservable.triggerEvent();
+  }
+
   render() {
     const pictures = this.props.picturesMetadatas.map((pictureMetadata, index) => {
       const thumbnailProps = {
@@ -43,3 +49,14 @@ export class Gallery extends React.Component<GalleryProps> {
     return (<div style={styles.gallery}>{pictures}</div>);
   }
 }
+
+function mapStateToProps(state: State) {
+  const { picturesMetadatas, scrollObservable } = state.picturesMetadatas;
+
+  return {
+    picturesMetadatas,
+    scrollObservable,
+  };
+}
+
+export default connect(mapStateToProps)(Gallery);

@@ -1,53 +1,45 @@
 import * as React from 'react';
-import { PictureMetadataService } from '../service/PictureMetadataService';
 import { PictureMetadata } from '../domain/PictureMetadata';
-import { Gallery } from './Gallery';
+import Gallery from './Gallery';
 import { Observable } from '../util/Observable';
-import { Route } from 'react-router';
-import { PictureModal } from './PictureModal';
+import { Route, Switch } from 'react-router';
+import PictureModal from './PictureModal';
+import { connect } from 'react-redux';
+import { State } from '../reducers';
+import { fetchPicturesMetadata } from '../actions';
+import { HashRouter } from 'react-router-dom';
 
-export interface MediaServerProps {
-  pictureMetadataService: PictureMetadataService;
+interface MediaServerProps {
+  picturesMetadatas: PictureMetadata[];
   scrollObservable: Observable;
+  // tslint:disable-next-line
+  dispatch: any;
 }
 
-export interface MediaServerState {
-  picturesMetadatas: null|PictureMetadata[];
-}
-
-export class MediaServer extends React.Component<MediaServerProps, MediaServerState> {
-  constructor(props: MediaServerProps) {
-    super(props);
-    this.state = {picturesMetadatas: null};
-
-    props.pictureMetadataService.getAll().then(picturesMetadatas => {
-      const newState = {
-        picturesMetadatas
-      };
-      this.setState(newState, () => this.props.scrollObservable.triggerEvent());
-    });
-  }
-
-  generateGallery = () => {
-    if (this.state.picturesMetadatas === null) {
-      return <p>Loading</p>;
-    }
-
-    const galleryProps = {
-      picturesMetadatas: this.state.picturesMetadatas,
-      scrollObservable: this.props.scrollObservable,
-    };
-    return <Gallery {...galleryProps} />;
+class MediaServer extends React.Component<MediaServerProps> {
+  componentWillMount() {
+    this.props.dispatch(fetchPicturesMetadata());
   }
 
   render() {
-    const gallery = this.generateGallery();
-
     return (
-      <div>
-        {gallery}
-        <Route path="/picture/:hash" component={PictureModal} />
-      </div>
+        <HashRouter>
+          <Switch>
+            <Route exact={true} path="/" component={Gallery} />
+            <Route path="/picture/:hash" component={PictureModal} />
+          </Switch>
+        </HashRouter>
     );
   }
 }
+
+function mapStateToProps(state: State) {
+  const { picturesMetadatas, scrollObservable } = state.picturesMetadatas;
+
+  return {
+    picturesMetadatas,
+    scrollObservable,
+  };
+}
+
+export default connect(mapStateToProps)(MediaServer);
