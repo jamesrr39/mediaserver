@@ -17,7 +17,7 @@ var (
 	imageRootDirFlag = app.Arg("Image Root Directory", "The base directory to look for photos in").Required().String()
 	addr             = app.Flag("addr", addrHelp).Default("localhost:9050").String()
 	cacheDir         = app.Flag("cache-dir", "Directory to cache data like picture thumbnails in").Default("~/.cache/github.com/jamesrr39/mediaserver").String()
-	dataDir          = app.Flag("data-dir", "Directory to store application data").Default("~/.local/share/github.com/jamesrr39/mediaserver").String()
+	metadataDir      = app.Flag("metadata-dir", "Directory to store application data").Default("~/.local/share/github.com/jamesrr39/mediaserver").String()
 )
 
 func main() {
@@ -33,12 +33,12 @@ func main() {
 		log.Fatalf("Couldn't expand the cache directory path from '%s'. Error: %s\n", *cacheDir, err)
 	}
 
-	expandedDataDir, err := userextra.ExpandUser(*dataDir)
+	expandedMetadataDir, err := userextra.ExpandUser(*metadataDir)
 	if nil != err {
-		log.Fatalf("Couldn't expand the data directory path from '%s'. Error: %s\n", *dataDir, err)
+		log.Fatalf("Couldn't expand the data directory path from '%s'. Error: %s\n", *metadataDir, err)
 	}
 
-	mediaServer, err := mediaserver.NewMediaServerAndScan(fullpath, expandedCacheDir, expandedDataDir)
+	mediaServer, err := mediaserver.NewMediaServerAndScan(fullpath, expandedCacheDir, expandedMetadataDir)
 	if nil != err {
 		log.Fatalf("couldn't create a new media server and scan the pictures directory. Error: %s", err)
 	}

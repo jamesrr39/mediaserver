@@ -6,7 +6,7 @@ export interface PictureMetadataService {
 
 export class LocalhostPictureMetadataService implements PictureMetadataService {
   getAll(): Promise<PictureMetadata[]> {
-    return fetch('//localhost:9050/api/pictureMetadata/').then((response) => {
+    return fetch('/api/pictureMetadata/').then((response) => {
       return response.json();
     });
   }
