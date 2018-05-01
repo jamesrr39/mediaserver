@@ -5,6 +5,7 @@ import (
 	"mediaserverapp/mediaserver/picturesdal"
 	"mediaserverapp/mediaserver/picturesdal/diskstorage/mediaserverdb"
 	"mediaserverapp/mediaserver/pictureswebservice"
+	"mediaserverapp/mediaserver/static_assets_handler"
 	"path/filepath"
 
 	"github.com/go-chi/chi"
@@ -71,6 +72,7 @@ func (ms *MediaServer) ServeHTTP(addr string) error {
 	})
 
 	mainRouter.Mount("/picture/", ms.picturesService)
+	mainRouter.Mount("/", statichandlers.NewClientHandler())
 
 	server := httpextra.NewServerWithTimeouts()
 	server.Addr = addr

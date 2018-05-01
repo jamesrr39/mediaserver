@@ -110,6 +110,18 @@
 			"revisionTime": "2017-08-14T20:04:35Z"
 		},
 		{
+			"checksumSHA1": "aoYDmf0vxCZJOvIwTdElHi2IXH4=",
+			"path": "github.com/rakyll/statik",
+			"revision": "fcdcb7b85139b8b9ca1d8ef1d98d8593e90d117f",
+			"revisionTime": "2018-03-30T20:43:14Z"
+		},
+		{
+			"checksumSHA1": "++Uxr4F++QrnFEbBlQsJ3VuQoNM=",
+			"path": "github.com/rakyll/statik/fs",
+			"revision": "fcdcb7b85139b8b9ca1d8ef1d98d8593e90d117f",
+			"revisionTime": "2018-03-30T20:43:14Z"
+		},
+		{
 			"checksumSHA1": "5u7IjdCaoyqgKGRJiLjTYj9KZxo=",
 			"path": "github.com/rwcarlsen/goexif/exif",
 			"revision": "709fab3d192d7c62f86043caff1e7e3fb0f42bd8",
