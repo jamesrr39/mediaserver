@@ -3,7 +3,6 @@ import { PictureMetadata } from '../domain/PictureMetadata';
 
 import { Observable } from '../util/Observable';
 import { Thumbnail } from './Thumbnail';
-import { Link } from 'react-router-dom';
 import { State } from '../reducers';
 import { connect } from 'react-redux';
 
@@ -17,7 +16,6 @@ const styles = {
     display: 'flex',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    // flexDirection: 'row',
   } as React.CSSProperties,
   thumbnail: {
       margin: '0 10px 10px 0',
@@ -36,13 +34,13 @@ class Gallery extends React.Component<GalleryProps> {
         pictureMetadata,
       };
 
-      const linkUrl = `/picture/${pictureMetadata.hashValue}`;
+      const linkUrl = `#/picture/${pictureMetadata.hashValue}`;
 
       return (
         <div key={index} style={styles.thumbnail}>
-          <Link to={linkUrl}>
+          <a href={linkUrl}>
             <Thumbnail {...thumbnailProps} />
-          </Link>
+          </a>
         </div>);
     });
 

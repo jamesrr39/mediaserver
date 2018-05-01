@@ -4,16 +4,16 @@ import Gallery from './Gallery';
 import { Observable } from '../util/Observable';
 import { Route, Switch } from 'react-router';
 import PictureModal from './PictureModal';
-import { connect } from 'react-redux';
+import { connect, Dispatch } from 'react-redux';
 import { State } from '../reducers';
 import { fetchPicturesMetadata } from '../actions';
 import { HashRouter } from 'react-router-dom';
+import { Action } from 'redux';
 
 interface MediaServerProps {
   picturesMetadatas: PictureMetadata[];
   scrollObservable: Observable;
-  // tslint:disable-next-line
-  dispatch: any;
+  dispatch: Dispatch<Action>;
 }
 
 class MediaServer extends React.Component<MediaServerProps> {
@@ -23,12 +23,14 @@ class MediaServer extends React.Component<MediaServerProps> {
 
   render() {
     return (
+      <div>
+        <Gallery />
         <HashRouter>
           <Switch>
-            <Route exact={true} path="/" component={Gallery} />
             <Route path="/picture/:hash" component={PictureModal} />
           </Switch>
         </HashRouter>
+      </div>
     );
   }
 }
@@ -42,4 +44,4 @@ function mapStateToProps(state: State) {
   };
 }
 
-export default connect(mapStateToProps)(MediaServer);
+export default connect(mapStateToProps, null, null, {pure: false})(MediaServer);

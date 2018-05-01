@@ -1,9 +1,6 @@
 import { createStore, applyMiddleware } from 'redux';
 import thunkMiddleware from 'redux-thunk';
-// import { createLogger } from 'redux-logger'
 import rootReducer from './reducers';
-
-// const loggerMiddleware = createLogger()
 
 // tslint:disable-next-line
 export default function configureStore(preloadedState?: any) {
@@ -12,7 +9,6 @@ export default function configureStore(preloadedState?: any) {
     preloadedState,
     applyMiddleware(
       thunkMiddleware,
-      // loggerMiddleware
     )
   );
 }
