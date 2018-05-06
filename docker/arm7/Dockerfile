@@ -1,24 +1,21 @@
 FROM alpine:3.7
 # FROM armhf/alpine:3.5
 
-RUN mkdir -p /var/local/mediaserver
-RUN mkdir -p /var/cache/mediaserver
-
 COPY bin/mediaserver /opt/mediaserver
 
 EXPOSE 9050
 
-RUN addgroup -S pi && adduser -S -g pi pi
+RUN addgroup -S mediaserver && adduser -S -u 1001 mediaserver mediaserver
 
-RUN chown -R pi:pi /var/local/mediaserver
-RUN chown -R pi:pi /var/cache/mediaserver
-RUN chown pi:pi /opt/mediaserver
+RUN chown mediaserver:mediaserver /opt/mediaserver
 
-WORKDIR /home/pi
+WORKDIR /home/mediaserver
 
-USER pi
+USER mediaserver
+
+RUN mkdir -p /home/mediaserver/cache /home/mediaserver/data /home/mediaserver/metadata
 
 # copy this to the build folder and add the binary there
 
 # ENTRYPOINT ["ls", "-l", "/opt"]
-ENTRYPOINT ["/opt/mediaserver", "/var/local/mediaserver/data", "--addr=:9050", "--cache-dir=/var/cache/mediaserver", "--metadata-dir=/var/local/mediaserver/metadata"]
+ENTRYPOINT ["/opt/mediaserver", "/home/mediaserver/data", "--addr=:9050", "--cache-dir=/home/mediaserver/cache", "--metadata-dir=/home/mediaserver/metadata"]

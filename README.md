@@ -1,5 +1,7 @@
+## Run
 
+### Docker
 
-make build_docker_linux_x86_64 && docker run -v ~/tmp/mediaserver:/var/local/mediaserver/data jamesrr39/mediaserver_x86_64:latest
+Make sure the user IDs are set to be the same between the host and guest
 
-you should probably also mount the metadata dir in a volume too, to prevent loss of data
+    make build_docker_linux_x86_64 && docker run -v ~/tmp/mediaserver:/var/local/mediaserver/data jamesrr39/mediaserver_x86_64:latest

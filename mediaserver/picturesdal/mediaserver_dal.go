@@ -27,10 +27,10 @@ type MediaServerDAL struct {
 	// dbConn              *mediaserverdb.DBConn
 }
 
-func NewMediaServerDAL(picturesBasePath, cachesBasePath, dataDir string) (*MediaServerDAL, error) {
+func NewMediaServerDAL(picturesBasePath, cachesBasePath, dataDir string, maxConcurrentResizes uint) (*MediaServerDAL, error) {
 	picturesMetadataDAL := NewPicturesMetadataDAL(picturesBasePath)
 
-	picturesDAL, err := NewPicturesDAL(picturesBasePath, cachesBasePath, picturesMetadataDAL)
+	picturesDAL, err := NewPicturesDAL(picturesBasePath, cachesBasePath, picturesMetadataDAL, maxConcurrentResizes)
 	if nil != err {
 		return nil, err
 	}

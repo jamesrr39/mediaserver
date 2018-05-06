@@ -16,6 +16,8 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+
+	"github.com/jamesrr39/semaphore"
 )
 
 var ErrHashNotFound = errors.New("hash not found")
@@ -24,15 +26,16 @@ type PicturesDAL struct {
 	picturesBasePath    string
 	thumbnailsCache     *diskcache.ThumbnailsCache
 	picturesMetadataDAL *PicturesMetadataDAL
+	pictureResizeQueue  *semaphore.Semaphore
 }
 
-func NewPicturesDAL(picturesBasePath, cachesBasePath string, picturesMetadataDAL *PicturesMetadataDAL) (*PicturesDAL, error) {
+func NewPicturesDAL(picturesBasePath, cachesBasePath string, picturesMetadataDAL *PicturesMetadataDAL, maxConcurrentResizes uint) (*PicturesDAL, error) {
 	thumbnailsCacheConn, err := diskcache.NewThumbnailsCacheConn(filepath.Join(cachesBasePath, "thumbnails"))
 	if nil != err {
 		return nil, err
 	}
 
-	return &PicturesDAL{picturesBasePath, thumbnailsCacheConn, picturesMetadataDAL}, nil
+	return &PicturesDAL{picturesBasePath, thumbnailsCacheConn, picturesMetadataDAL, semaphore.NewSemaphore(maxConcurrentResizes)}, nil
 }
 
 func (dal *PicturesDAL) GetPictureBytes(hash pictures.HashValue, width, height string) (io.Reader, string, error) {
@@ -72,6 +75,8 @@ func (dal *PicturesDAL) GetPictureBytes(hash pictures.HashValue, width, height s
 		return nil, "", err
 	}
 
+	dal.pictureResizeQueue.Add()
+	defer dal.pictureResizeQueue.Done()
 	log.Printf("resizing to %v\n", sizeToResizeTo)
 	picture = pictures.ResizePicture(picture, sizeToResizeTo)
 

@@ -23,8 +23,8 @@ type MediaServer struct {
 }
 
 // NewMediaServerAndScan creates a new MediaServer and builds a cache of pictures by scanning the rootpath
-func NewMediaServerAndScan(rootpath, cachesDir, dataDir string) (*MediaServer, error) {
-	mediaServerDAL, err := picturesdal.NewMediaServerDAL(rootpath, cachesDir, dataDir)
+func NewMediaServerAndScan(rootpath, cachesDir, dataDir string, maxConcurrentResizes uint) (*MediaServer, error) {
+	mediaServerDAL, err := picturesdal.NewMediaServerDAL(rootpath, cachesDir, dataDir, maxConcurrentResizes)
 	if nil != err {
 		return nil, err
 	}
