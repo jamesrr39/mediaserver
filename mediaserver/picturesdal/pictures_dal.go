@@ -84,6 +84,10 @@ func (dal *PicturesDAL) GetPicture(pictureMetadata *pictures.PictureMetadata) (i
 	return picture, pictureMetadata.Format, nil
 }
 
+func (dal *PicturesDAL) EnsureAllThumbnailsForPicture(pictureMetadata *pictures.PictureMetadata) error {
+	return dal.thumbnailsCache.EnsureAllThumbnailsForPicture(pictureMetadata, dal.GetPicture)
+}
+
 func (dal *PicturesDAL) saveThumbnailToCache(hash pictures.HashValue, size pictures.Size, pictureFormat string, gzippedThumbnailBytes []byte) {
 	log.Printf("saving %s with mimetype '%s'\n", hash, pictureFormat)
 	err := dal.thumbnailsCache.Save(hash, size, pictureFormat, gzippedThumbnailBytes)

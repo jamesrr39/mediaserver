@@ -53,15 +53,18 @@ func (c *ThumbnailsCache) Get(hash pictures.HashValue, size pictures.Size) (io.R
 	return bytes.NewBuffer(thumbnail.GzippedThumbnailBytes), thumbnail.PictureFormat, nil
 }
 
-func (c *ThumbnailsCache) EnsureAllThumbnailsForPicture(pictureMetadata *pictures.PictureMetadata, picture image.Image) error {
+type GetPictureFunc func(pictureMetadata *pictures.PictureMetadata) (image.Image, string, error)
+
+func (c *ThumbnailsCache) EnsureAllThumbnailsForPicture(pictureMetadata *pictures.PictureMetadata, getPictureFunc GetPictureFunc) error {
+	var requiredSizes []pictures.Size
 	for _, thumbnailHeight := range generated.ThumbnailHeights {
 		if pictureMetadata.RawSize.Height < thumbnailHeight {
 			continue
 		}
-		aspectRatio := pictureMetadata.RawSize.Width / pictureMetadata.RawSize.Height
+		aspectRatio := pictureMetadata.RawSize.AspectRatio()
 		resizeSize := pictures.Size{
 			Height: thumbnailHeight,
-			Width:  thumbnailHeight * aspectRatio,
+			Width:  uint(float64(thumbnailHeight) * aspectRatio),
 		}
 		if pictureMetadata.RawSize.Width < resizeSize.Width {
 			continue
@@ -76,11 +79,27 @@ func (c *ThumbnailsCache) EnsureAllThumbnailsForPicture(pictureMetadata *picture
 			return err
 		}
 
+		requiredSizes = append(requiredSizes, resizeSize)
+	}
+
+	if len(requiredSizes) == 0 {
+		// skip getting the picture, if there are no sizes required
+		return nil
+	}
+
+	picture, _, err := getPictureFunc(pictureMetadata)
+	if err != nil {
+		return err
+	}
+
+	for _, resizeSize := range requiredSizes {
 		newPicture := c.pictureResizer.ResizePicture(picture, resizeSize)
 		pictureBytes, err := pictures.EncodePicture(newPicture, pictureMetadata.Format)
 		if err != nil {
 			return err
 		}
+		println("resizing to", resizeSize.Width, resizeSize.Height)
+
 		err = c.Save(pictureMetadata.HashValue, resizeSize, pictureMetadata.Format, pictureBytes)
 		if err != nil {
 			return err

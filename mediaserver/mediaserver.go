@@ -2,6 +2,7 @@ package mediaserver
 
 import (
 	//	"log"
+
 	"mediaserverapp/mediaserver/picturesdal"
 	"mediaserverapp/mediaserver/picturesdal/diskstorage/mediaserverdb"
 	"mediaserverapp/mediaserver/pictureswebservice"
@@ -51,6 +52,19 @@ func NewMediaServerAndScan(rootpath, cachesDir, dataDir string, maxConcurrentRes
 	if nil != err {
 		return nil, err
 	}
+
+	println("updated picture cache")
+	// ensure thumbnails
+	// ensureThumbnailsSema := semaphore.NewSemaphore(100)
+	for _, pictureMetadata := range mediaServer.mediaServerDAL.PicturesMetadataDAL.GetAll() {
+		// ensureThumbnailsSema.Add()
+		println("ensuring thumbnails for ", pictureMetadata.RelativeFilePath)
+		err = mediaServer.mediaServerDAL.PicturesDAL.EnsureAllThumbnailsForPicture(pictureMetadata)
+		if err != nil {
+			return nil, err
+		}
+	}
+	// ensureThumbnailsSema.Wait()
 
 	return mediaServer, nil
 }

@@ -23,6 +23,10 @@ type RawSize struct {
 	Height uint `json:"height"`
 }
 
+func (r RawSize) AspectRatio() float64 {
+	return float64(r.Width) / float64(r.Height)
+}
+
 func RawSizeFromImage(picture image.Image) RawSize {
 	return RawSize{
 		Width:  uint(picture.Bounds().Max.X),
@@ -56,7 +60,7 @@ func NewPictureMetadataAndPictureFromBytes(fileBytes []byte, relativeFilePath st
 
 	exifData, err := exif.Decode(bytes.NewBuffer(fileBytes))
 	if nil != err {
-		log.Printf("not able to read metadata. Error: %s\n", err)
+		log.Printf("not able to read metadata (maybe there is none). Error: %s\n", err)
 	}
 
 	// FIXME: tests for no orientation exif tag, no exif data
