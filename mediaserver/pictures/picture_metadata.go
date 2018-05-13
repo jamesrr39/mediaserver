@@ -19,14 +19,14 @@ import (
 type HashValue string
 
 type RawSize struct {
-	Width  int `json:"width"`
-	Height int `json:"height"`
+	Width  uint `json:"width"`
+	Height uint `json:"height"`
 }
 
 func RawSizeFromImage(picture image.Image) RawSize {
 	return RawSize{
-		Width:  picture.Bounds().Max.X,
-		Height: picture.Bounds().Max.Y,
+		Width:  uint(picture.Bounds().Max.X),
+		Height: uint(picture.Bounds().Max.Y),
 	}
 }
 

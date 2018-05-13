@@ -29,5 +29,5 @@
     "@types/node": "^9.4.6",
     "typescript": "^2.7.2"
   },
-  "proxy": "//localhost:9050"
+  "proxy": "http://localhost:9050"
 }

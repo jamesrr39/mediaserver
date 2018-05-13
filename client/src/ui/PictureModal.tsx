@@ -5,6 +5,7 @@ import { PictureMetadata } from '../domain/PictureMetadata';
 import { SERVER_BASE_URL } from '../configs';
 import { Link } from 'react-router-dom';
 import { Action } from 'redux';
+import { THUMBNAIL_HEIGHTS } from '../generated/thumbnail_sizes';
 
 const KeyCodes = {
   ESCAPE: 27,
@@ -32,12 +33,14 @@ const styles = {
     backgroundColor: 'black',
     zIndex: 10000,
     color: 'white',
+    display: 'flex',
+    flexDirection: 'column',
   } as React.CSSProperties,
   pictureContainer: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    height: '100%',
+    flexGrow: 1,
   } as React.CSSProperties,
   navigationButton: {
     color: 'white',
@@ -50,12 +53,6 @@ const styles = {
     verticalAlign: 'middle',
   },
 };
-
-// type ComponentState = {
-//   currentPictureMetadata: PictureMetadata;
-//   previousPictureMetadata: PictureMetadata;
-//   nextPictureMetadata: PictureMetadata;
-// };
 
 class PictureModal extends React.Component<Props> {
   private pictureEl: HTMLImageElement|null;
@@ -114,11 +111,30 @@ class PictureModal extends React.Component<Props> {
         return;
       }
 
-      const pictureHeight = (el.clientHeight - 100);
-      const pictureWidth = (el.clientWidth - 100);
+      const pictureMetadata = this.pictureMetadata as PictureMetadata;
 
-      const hash = (this.pictureMetadata as PictureMetadata).hashValue;
-      const url = `${SERVER_BASE_URL}/picture/${hash}?w=${pictureWidth}&h=${pictureHeight}`;
+      const idealHeight = (el.clientHeight - 100);
+      const idealWidth = (el.clientWidth - 100);
+
+      const aspectRatio = pictureMetadata.rawSize.width / pictureMetadata.rawSize.height;
+
+      let chosenHeight = THUMBNAIL_HEIGHTS.find((height) => {
+        const width = Math.round(height * aspectRatio);
+        if (height >= idealHeight || width >= idealWidth) {
+          return true;
+        }
+        return false;
+      });
+      if (!chosenHeight) {
+        chosenHeight = pictureMetadata.rawSize.height;
+      }
+
+      // tslint:disable-next-line
+      console.log("requesting (w, h)", Math.round(chosenHeight * aspectRatio), chosenHeight, "with available size (w, h)", idealWidth, idealHeight);
+
+      const url = `${SERVER_BASE_URL}/picture/${pictureMetadata.hashValue}?h=${chosenHeight}`;
+      this.pictureEl.style.maxHeight = `${idealHeight}px`;
+      this.pictureEl.style.maxWidth = `${idealWidth}px`;
       this.pictureEl.src = url;
     };
 
@@ -130,13 +146,19 @@ class PictureModal extends React.Component<Props> {
       ? <Link to={`/picture/${this.nextPictureMetadata.hashValue}`} style={styles.navigationButton}>&rarr;</Link>
       : <span style={styles.navigationButton} />;
 
+    const imgStyle = {};
+
     return (
       <div style={styles.modal} ref={refCb}>
-        <Link to="/" style={styles.navigationButton}>&#x274C;</Link>
+        <div>
+          <Link to="/" style={styles.navigationButton}>&#x274C;</Link>
+        </div>
         <div style={styles.pictureContainer}>
-          {previousLink}
-          <img src={pictureURL} ref={(el) => {this.pictureEl = el; }} />
-          {nextLink}
+          <div>{previousLink}</div>
+          <div>
+            <img src={pictureURL} style={imgStyle} ref={(el) => {this.pictureEl = el; }} />
+          </div>
+          <div>{nextLink}</div>
         </div>
       </div>
     );

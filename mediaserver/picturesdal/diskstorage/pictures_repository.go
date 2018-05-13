@@ -29,7 +29,7 @@ WHERE hash == $1
 
 	var fileSizeBytes int64
 	var exifDataJSON, format string
-	var rawSizeWidth, rawSizeHeight int
+	var rawSizeWidth, rawSizeHeight uint
 	err := row.Scan(&fileSizeBytes, &exifDataJSON, &rawSizeWidth, &rawSizeHeight, &format)
 	if nil != err {
 		if err == sql.ErrNoRows {

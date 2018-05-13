@@ -3,11 +3,7 @@ package picturesdal
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"image"
-	"image/gif"
-	"image/jpeg"
-	"image/png"
 	"io"
 	"io/ioutil"
 	"log"
@@ -15,9 +11,6 @@ import (
 	"mediaserverapp/mediaserver/picturesdal/diskcache"
 	"os"
 	"path/filepath"
-	"strconv"
-
-	"github.com/jamesrr39/semaphore"
 )
 
 var ErrHashNotFound = errors.New("hash not found")
@@ -26,23 +19,18 @@ type PicturesDAL struct {
 	picturesBasePath    string
 	thumbnailsCache     *diskcache.ThumbnailsCache
 	picturesMetadataDAL *PicturesMetadataDAL
-	pictureResizeQueue  *semaphore.Semaphore
+	pictureResizer      *pictures.PictureResizer
 }
 
-func NewPicturesDAL(picturesBasePath, cachesBasePath string, picturesMetadataDAL *PicturesMetadataDAL, maxConcurrentResizes uint) (*PicturesDAL, error) {
-	thumbnailsCacheConn, err := diskcache.NewThumbnailsCacheConn(filepath.Join(cachesBasePath, "thumbnails"))
-	if nil != err {
-		return nil, err
-	}
-
-	return &PicturesDAL{picturesBasePath, thumbnailsCacheConn, picturesMetadataDAL, semaphore.NewSemaphore(maxConcurrentResizes)}, nil
+func NewPicturesDAL(picturesBasePath, cachesBasePath string, picturesMetadataDAL *PicturesMetadataDAL, thumbnailsCache *diskcache.ThumbnailsCache, pictureResizer *pictures.PictureResizer) (*PicturesDAL, error) {
+	return &PicturesDAL{picturesBasePath, thumbnailsCache, picturesMetadataDAL, pictureResizer}, nil
 }
 
-func (dal *PicturesDAL) GetPictureBytes(hash pictures.HashValue, width, height string) (io.Reader, string, error) {
-	isSizeCachable := dal.thumbnailsCache.IsSizeCacheable(width, height)
+func (dal *PicturesDAL) GetPictureBytes(hash pictures.HashValue, size pictures.Size) (io.Reader, string, error) {
+	isSizeCachable := dal.thumbnailsCache.IsSizeCacheable(size)
 	if isSizeCachable {
 		// look in on-disk cache for thumbnail
-		file, pictureFormat, err := dal.thumbnailsCache.Get(hash)
+		file, pictureFormat, err := dal.thumbnailsCache.Get(hash, size)
 		if nil == err && nil != file {
 			return file, pictureFormat, nil
 		}
@@ -50,7 +38,6 @@ func (dal *PicturesDAL) GetPictureBytes(hash pictures.HashValue, width, height s
 		if nil != err {
 			log.Printf("ERROR getting thumbnail from cache for hash: '%s'. Error: '%s'\n", hash, err)
 		}
-
 	}
 
 	// picture not available in on-disk cache - fetch the image, perform transformations and save it to cache
@@ -64,39 +51,17 @@ func (dal *PicturesDAL) GetPictureBytes(hash pictures.HashValue, width, height s
 		return nil, "", err
 	}
 
-	sizeToResizeTo, err := widthAndHeightStringsToSize(
-		width,
-		height,
-		pictures.Size{
-			Width:  uint(picture.Bounds().Max.X),
-			Height: uint(picture.Bounds().Max.Y),
-		})
-	if nil != err {
+	picture = dal.pictureResizer.ResizePicture(picture, size)
+
+	pictureBytes, err := pictures.EncodePicture(picture, pictureFormat)
+	if err != nil {
 		return nil, "", err
 	}
 
-	dal.pictureResizeQueue.Add()
-	defer dal.pictureResizeQueue.Done()
-	log.Printf("resizing to %v\n", sizeToResizeTo)
-	picture = pictures.ResizePicture(picture, sizeToResizeTo)
-
-	byteBuffer := bytes.NewBuffer(nil)
-
-	switch pictureFormat {
-	case "jpeg":
-		jpeg.Encode(byteBuffer, picture, nil)
-	case "png":
-		png.Encode(byteBuffer, picture)
-	case "gif":
-		gif.Encode(byteBuffer, picture, nil)
-	default:
-		return nil, "", fmt.Errorf("mime type not supported: '%s'", pictureFormat)
-	}
-
 	if isSizeCachable {
-		go dal.saveThumbnailToCache(hash, pictureFormat, byteBuffer.Bytes())
+		go dal.saveThumbnailToCache(hash, size, pictureFormat, pictureBytes)
 	}
-	return bytes.NewBuffer(byteBuffer.Bytes()), pictureFormat, nil
+	return bytes.NewBuffer(pictureBytes), pictureFormat, nil
 }
 
 func (dal *PicturesDAL) GetPicture(pictureMetadata *pictures.PictureMetadata) (image.Image, string, error) {
@@ -119,66 +84,10 @@ func (dal *PicturesDAL) GetPicture(pictureMetadata *pictures.PictureMetadata) (i
 	return picture, pictureMetadata.Format, nil
 }
 
-func (dal *PicturesDAL) saveThumbnailToCache(hash pictures.HashValue, pictureFormat string, gzippedThumbnailBytes []byte) {
+func (dal *PicturesDAL) saveThumbnailToCache(hash pictures.HashValue, size pictures.Size, pictureFormat string, gzippedThumbnailBytes []byte) {
 	log.Printf("saving %s with mimetype '%s'\n", hash, pictureFormat)
-	err := dal.thumbnailsCache.Save(hash, pictureFormat, gzippedThumbnailBytes)
+	err := dal.thumbnailsCache.Save(hash, size, pictureFormat, gzippedThumbnailBytes)
 	if nil != err {
 		log.Printf("ERROR writing thumbnail to on-disk cache for hash '%s'. Error: '%s'\n", hash, err)
 	}
-}
-
-// widthAndHeightStringsToSize scales the maximum picture dimenions to the width and height URL Query parameters
-// it will use the smallest size
-// example: Picture 300w x 400h , widthParam "600" heightParam "900"
-// resulting size: 600 x 800
-// we won't size the picture up from the original picture size
-func widthAndHeightStringsToSize(widthParam, heightParam string, pictureSize pictures.Size) (pictures.Size, error) {
-	if "" == widthParam && "" == heightParam {
-		return pictureSize, nil
-	}
-
-	var width, height int
-	var err error
-	if "" == widthParam {
-		width = int(pictureSize.Width)
-	} else {
-		width, err = strconv.Atoi(widthParam)
-		if nil != err {
-			return pictures.Size{}, err
-		}
-	}
-
-	if "" == heightParam {
-		height = int(pictureSize.Height)
-	} else {
-		height, err = strconv.Atoi(heightParam)
-		if nil != err {
-			return pictures.Size{}, err
-		}
-	}
-
-	// max allowed width; smallest from picture width or width from param
-	maxAllowedWidth := int(pictureSize.Width)
-	if width < maxAllowedWidth {
-		maxAllowedWidth = width
-	}
-
-	// max allowed height; smallest from picture height or height from param
-	maxAllowedHeight := int(pictureSize.Height)
-	if height < maxAllowedHeight {
-		maxAllowedHeight = height
-	}
-
-	widthRatio := float64(maxAllowedWidth) / float64(int(pictureSize.Width))
-	heightRatio := float64(maxAllowedHeight) / float64(int(pictureSize.Height))
-
-	smallestRatio := widthRatio
-	if heightRatio < smallestRatio {
-		smallestRatio = heightRatio
-	}
-
-	return pictures.Size{
-		Width:  uint(float64(pictureSize.Width) * smallestRatio),
-		Height: uint(float64(pictureSize.Height) * smallestRatio),
-	}, nil
 }

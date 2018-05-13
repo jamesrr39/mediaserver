@@ -13,5 +13,6 @@ func Test_getFilePath(t *testing.T) {
 	}
 
 	hash := pictures.HashValue("0123456789abcdef")
-	assert.Equal(t, "a/b/c/01/23456789abcdef", thumbnailsCache.getFilePath(hash))
+	height := uint(200)
+	assert.Equal(t, "a/b/c/01/23456789abcdef_h200", thumbnailsCache.getFilePath(hash, height))
 }

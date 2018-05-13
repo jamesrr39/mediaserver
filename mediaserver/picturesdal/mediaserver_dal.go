@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"mediaserverapp/mediaserver/pictures"
+	"mediaserverapp/mediaserver/picturesdal/diskcache"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -24,13 +25,19 @@ type MediaServerDAL struct {
 	rootpath            string
 	PicturesDAL         *PicturesDAL
 	PicturesMetadataDAL *PicturesMetadataDAL
-	// dbConn              *mediaserverdb.DBConn
 }
 
 func NewMediaServerDAL(picturesBasePath, cachesBasePath, dataDir string, maxConcurrentResizes uint) (*MediaServerDAL, error) {
-	picturesMetadataDAL := NewPicturesMetadataDAL(picturesBasePath)
+	pictureResizer := pictures.NewPictureResizer(maxConcurrentResizes)
 
-	picturesDAL, err := NewPicturesDAL(picturesBasePath, cachesBasePath, picturesMetadataDAL, maxConcurrentResizes)
+	thumbnailsCache, err := diskcache.NewThumbnailsCache(filepath.Join(cachesBasePath, "thumbnails"), pictureResizer)
+	if nil != err {
+		return nil, err
+	}
+
+	picturesMetadataDAL := NewPicturesMetadataDAL(picturesBasePath, thumbnailsCache)
+
+	picturesDAL, err := NewPicturesDAL(picturesBasePath, cachesBasePath, picturesMetadataDAL, thumbnailsCache, pictureResizer)
 	if nil != err {
 		return nil, err
 	}
@@ -40,18 +47,10 @@ func NewMediaServerDAL(picturesBasePath, cachesBasePath, dataDir string, maxConc
 		return nil, err
 	}
 
-	// mediaserverDBPath := filepath.Join(dataDir, "mediaserver_db.db")
-	//
-	// dbConn, err := mediaserverdb.NewDBConn(mediaserverDBPath)
-	// if nil != err {
-	// 	return nil, err
-	// }
-
 	return &MediaServerDAL{
 		picturesBasePath,
 		picturesDAL,
 		picturesMetadataDAL,
-		// dbConn,
 	}, nil
 }
 
@@ -62,31 +61,6 @@ func (dal *MediaServerDAL) Create(file io.Reader, filename, contentType string) 
 	if dirtraversal.IsTryingToTraverseUp(filename) {
 		return nil, ErrIllegalPathTraversingUp
 	}
-	//
-	// var fileByteBuffer bytes.Buffer
-	// _, err := io.Copy(&fileByteBuffer, file)
-	// if nil != err {
-	// 	return nil, err
-	// }
-	//
-	// fileHash, err := hashOfFile(bytes.NewBuffer(fileByteBuffer.Bytes()))
-	// if nil != err {
-	// 	return nil, err
-	// }
-	//
-	// if nil != dal.PicturesMetadataDAL.Get(fileHash) {
-	// 	return nil, ErrFileAlreadyExists
-	// }
-	//
-	// _, _, err = image.Decode(bytes.NewBuffer(fileByteBuffer.Bytes()))
-	// if nil != err {
-	// 	return nil, fmt.Errorf("couldn't decode image. Error: %s", err)
-	// }
-	//
-	// exifData, err := exif.Decode(bytes.NewBuffer(fileByteBuffer.Bytes()))
-	// if nil != err {
-	// 	log.Printf("not able to read metadata. Error: %s\n", err)
-	// }
 
 	fileBytes, err := ioutil.ReadAll(file)
 	if nil != err {

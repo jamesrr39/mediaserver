@@ -3,9 +3,11 @@ package picturesdal
 import (
 	"bytes"
 	"database/sql"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"mediaserverapp/mediaserver/pictures"
+	"mediaserverapp/mediaserver/picturesdal/diskcache"
 	"mediaserverapp/mediaserver/picturesdal/diskstorage"
 	"mediaserverapp/mediaserver/picturesdal/picturesmetadatacache"
 	"os"
@@ -18,10 +20,11 @@ type PicturesMetadataDAL struct {
 	picturesBasePath string
 	cache            *picturesmetadatacache.PicturesMetadataCache
 	dbDAL            *diskstorage.PicturesMetadataRepository // FIXME rename
+	thumbnailsCache  *diskcache.ThumbnailsCache
 }
 
-func NewPicturesMetadataDAL(picturesBasePath string) *PicturesMetadataDAL {
-	return &PicturesMetadataDAL{picturesBasePath, picturesmetadatacache.NewPicturesMetadataCache(), diskstorage.NewPicturesMetadataRepository()}
+func NewPicturesMetadataDAL(picturesBasePath string, thumbnailsCache *diskcache.ThumbnailsCache) *PicturesMetadataDAL {
+	return &PicturesMetadataDAL{picturesBasePath, picturesmetadatacache.NewPicturesMetadataCache(), diskstorage.NewPicturesMetadataRepository(), thumbnailsCache}
 }
 
 func (dal *PicturesMetadataDAL) GetAll() []*pictures.PictureMetadata {
@@ -80,14 +83,18 @@ func (dal *PicturesMetadataDAL) UpdatePicturesCache(tx *sql.Tx) error {
 			if err != diskstorage.ErrNotFound {
 				log.Printf("expected error getting picture metadata from database for relative path '%s': '%s'\n", relativeFilePath, err)
 			} else {
-				pictureMetadata, _, err = pictures.NewPictureMetadataAndPictureFromBytes(fileBytes, relativeFilePath)
+				pictureMetadata, picture, err := pictures.NewPictureMetadataAndPictureFromBytes(fileBytes, relativeFilePath)
 				if nil != err {
 					return err
 				}
 
 				err = dal.dbDAL.CreatePictureMetadata(tx, pictureMetadata)
 				if nil != err {
-					log.Printf("expected error setting picture metadata to database for relative file path '%s': '%s'\n", relativeFilePath, err)
+					return fmt.Errorf("expected error setting picture metadata to database for relative file path '%s': '%s'\n", relativeFilePath, err)
+				}
+				err = dal.thumbnailsCache.EnsureAllThumbnailsForPicture(pictureMetadata, picture)
+				if err != nil {
+					return err
 				}
 			}
 		}
