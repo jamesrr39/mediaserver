@@ -14,6 +14,8 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/jamesrr39/goutil/fswalker"
 )
 
 type PicturesMetadataDAL struct {
@@ -49,7 +51,7 @@ func (dal *PicturesMetadataDAL) Get(hashValue pictures.HashValue) *pictures.Pict
 func (dal *PicturesMetadataDAL) UpdatePicturesCache(tx *sql.Tx) error {
 	var picturesMetadatas []*pictures.PictureMetadata
 
-	err := filepath.Walk(dal.picturesBasePath, func(path string, fileinfo os.FileInfo, err error) error {
+	walkFunc := func(path string, fileinfo os.FileInfo, err error) error {
 		if nil != err {
 			return err
 		}
@@ -97,8 +99,9 @@ func (dal *PicturesMetadataDAL) UpdatePicturesCache(tx *sql.Tx) error {
 		picturesMetadatas = append(picturesMetadatas, pictureMetadata) // todo concurrency
 
 		return nil
-	})
+	}
 
+	err := fswalker.Walk(dal.picturesBasePath, walkFunc, fswalker.WalkOptions{FollowSymlinks: true})
 	if nil != err {
 		return err
 	}

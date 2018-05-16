@@ -5,3 +5,5 @@ yarn-debug.log
 
 /bin/
 /build/
+
+/.atom/

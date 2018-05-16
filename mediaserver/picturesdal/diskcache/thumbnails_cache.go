@@ -57,7 +57,7 @@ type GetPictureFunc func(pictureMetadata *pictures.PictureMetadata) (image.Image
 
 func (c *ThumbnailsCache) EnsureAllThumbnailsForPicture(pictureMetadata *pictures.PictureMetadata, getPictureFunc GetPictureFunc) error {
 	var requiredSizes []pictures.Size
-	for _, thumbnailHeight := range generated.ThumbnailHeights {
+	for x, thumbnailHeight := range generated.ThumbnailHeights {
 		if pictureMetadata.RawSize.Height < thumbnailHeight {
 			continue
 		}
@@ -69,7 +69,8 @@ func (c *ThumbnailsCache) EnsureAllThumbnailsForPicture(pictureMetadata *picture
 		if pictureMetadata.RawSize.Width < resizeSize.Width {
 			continue
 		}
-		_, err := os.Stat(c.getFilePath(pictureMetadata.HashValue, resizeSize.Height))
+		filePath := c.getFilePath(pictureMetadata.HashValue, resizeSize.Height)
+		_, err := os.Stat(filePath)
 		if err == nil {
 			// thumbnail already exists
 			continue
@@ -78,6 +79,7 @@ func (c *ThumbnailsCache) EnsureAllThumbnailsForPicture(pictureMetadata *picture
 			// there was an error and it wasn't that it doesn't exist already
 			return err
 		}
+		println("adding to required sizes:", filePath, thumbnailHeight, x, resizeSize.Height)
 
 		requiredSizes = append(requiredSizes, resizeSize)
 	}
@@ -86,6 +88,7 @@ func (c *ThumbnailsCache) EnsureAllThumbnailsForPicture(pictureMetadata *picture
 		// skip getting the picture, if there are no sizes required
 		return nil
 	}
+	println("required sizes for", fmt.Sprintf("%v", requiredSizes), pictureMetadata.RelativeFilePath, pictureMetadata.HashValue)
 
 	picture, _, err := getPictureFunc(pictureMetadata)
 	if err != nil {
@@ -98,10 +101,11 @@ func (c *ThumbnailsCache) EnsureAllThumbnailsForPicture(pictureMetadata *picture
 		if err != nil {
 			return err
 		}
-		println("resizing to", resizeSize.Width, resizeSize.Height)
+		println("resizing to", resizeSize.Width, resizeSize.Height, pictureMetadata.RelativeFilePath, pictureMetadata.HashValue)
 
 		err = c.Save(pictureMetadata.HashValue, resizeSize, pictureMetadata.Format, pictureBytes)
 		if err != nil {
+			println("errored on", err.Error())
 			return err
 		}
 	}
@@ -129,6 +133,11 @@ func (c *ThumbnailsCache) Save(hash pictures.HashValue, size pictures.Size, pict
 	thumbnail := &serializedThumbnail{pictureFormat, gzippedThumbnailBytes}
 	err = gob.NewEncoder(file).Encode(thumbnail)
 	if nil != err {
+		return err
+	}
+
+	err = file.Sync()
+	if err != nil {
 		return err
 	}
 

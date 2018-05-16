@@ -55,16 +55,10 @@ func NewMediaServerAndScan(rootpath, cachesDir, dataDir string, maxConcurrentRes
 
 	println("updated picture cache")
 	// ensure thumbnails
-	// ensureThumbnailsSema := semaphore.NewSemaphore(100)
-	for _, pictureMetadata := range mediaServer.mediaServerDAL.PicturesMetadataDAL.GetAll() {
-		// ensureThumbnailsSema.Add()
-		println("ensuring thumbnails for ", pictureMetadata.RelativeFilePath)
-		err = mediaServer.mediaServerDAL.PicturesDAL.EnsureAllThumbnailsForPicture(pictureMetadata)
-		if err != nil {
-			return nil, err
-		}
+	err = mediaServer.mediaServerDAL.PicturesDAL.EnsureAllThumbnailsForPictures(mediaServer.mediaServerDAL.PicturesMetadataDAL.GetAll())
+	if err != nil {
+		return nil, err
 	}
-	// ensureThumbnailsSema.Wait()
 
 	return mediaServer, nil
 }
