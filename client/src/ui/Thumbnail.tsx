@@ -76,12 +76,13 @@ export class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
     });
   }
 
-  private isInViewport(offset: number = 0) {
+  private isInViewport() {
     if (!this.element) {
       return false;
     }
 
     const top = this.element.getBoundingClientRect().top;
+    const offset = this.element.offsetHeight;
     const isInViewport = (top + offset) >= 0 && (top - offset) <= window.innerHeight;
     return isInViewport;
   }
