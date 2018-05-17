@@ -5,6 +5,7 @@ import { Observable } from '../util/Observable';
 import { Thumbnail } from './Thumbnail';
 import { State } from '../reducers';
 import { connect } from 'react-redux';
+import GalleryTopBar from './GalleryTopBar';
 
 export interface GalleryProps {
   picturesMetadatas: PictureMetadata[];
@@ -23,7 +24,7 @@ const styles = {
 };
 
 class Gallery extends React.Component<GalleryProps> {
-  componentDidMount() {
+  componentWillUpdate() {
     this.props.scrollObservable.triggerEvent();
   }
 
@@ -44,7 +45,14 @@ class Gallery extends React.Component<GalleryProps> {
         </div>);
     });
 
-    return (<div style={styles.gallery}>{pictures}</div>);
+    return (
+      <div>
+        <GalleryTopBar />
+        <div style={styles.gallery}>
+          {pictures}
+        </div>
+      </div>
+    );
   }
 }
 

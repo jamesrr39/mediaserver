@@ -96,6 +96,11 @@ func (dal *MediaServerDAL) Create(file io.Reader, filename, contentType string) 
 
 	dal.PicturesMetadataDAL.add(pictureMetadata)
 
+	err = dal.PicturesDAL.EnsureAllThumbnailsForPictures([]*pictures.PictureMetadata{pictureMetadata})
+	if err != nil {
+		return nil, err
+	}
+
 	return pictureMetadata, nil
 }
 
