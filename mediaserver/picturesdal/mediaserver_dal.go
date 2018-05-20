@@ -67,7 +67,7 @@ func (dal *MediaServerDAL) Create(file io.Reader, filename, contentType string) 
 		return nil, err
 	}
 
-	relativeFolderPath := filepath.Join(dal.rootpath, "uploads", strings.Split(time.Now().Format(time.RFC3339), "T")[0])
+	relativeFolderPath := filepath.Join("uploads", strings.Split(time.Now().Format(time.RFC3339), "T")[0])
 	absoluteFilePath, relativeFilePath, err := dal.getPathForNewFile(relativeFolderPath, filename)
 	if nil != err {
 		return nil, err

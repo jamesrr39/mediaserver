@@ -57,7 +57,7 @@ type GetPictureFunc func(pictureMetadata *pictures.PictureMetadata) (image.Image
 
 func (c *ThumbnailsCache) EnsureAllThumbnailsForPicture(pictureMetadata *pictures.PictureMetadata, getPictureFunc GetPictureFunc) error {
 	var requiredSizes []pictures.Size
-	for x, thumbnailHeight := range generated.ThumbnailHeights {
+	for _, thumbnailHeight := range generated.ThumbnailHeights {
 		if pictureMetadata.RawSize.Height < thumbnailHeight {
 			continue
 		}
@@ -79,7 +79,7 @@ func (c *ThumbnailsCache) EnsureAllThumbnailsForPicture(pictureMetadata *picture
 			// there was an error and it wasn't that it doesn't exist already
 			return err
 		}
-		println("adding to required sizes:", filePath, thumbnailHeight, x, resizeSize.Height)
+		println("adding to required sizes:", filePath, thumbnailHeight, resizeSize.Height)
 
 		requiredSizes = append(requiredSizes, resizeSize)
 	}

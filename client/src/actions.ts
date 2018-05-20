@@ -1,6 +1,7 @@
 import { PictureMetadata } from './domain/PictureMetadata';
 import { Action } from 'redux';
 import { SERVER_BASE_URL } from './configs';
+import { GalleryNotification } from './ui/NotificationBarComponent';
 
 export const FETCH_PICTURES_METADATA = 'FETCH_PICTURES_METADATA';
 
@@ -12,14 +13,37 @@ export interface PicturesMetadataFetchedAction extends Action {
 
 export const UPLOAD_FILE = 'UPLOAD_FILE';
 
+export interface UploadFileAction extends Action {
+  type: 'UPLOAD_FILE';
+}
+
 export const PICTURE_SUCCESSFULLY_UPLOADED = 'PICTURE_SUCCESSFULLY_UPLOADED';
 
 export interface PictureSuccessfullyUploadedAction extends Action {
+  type: 'PICTURE_SUCCESSFULLY_UPLOADED';
   pictureMetadata: PictureMetadata;
 }
 
+export const NOTIFY = 'NOTIFY';
+
+export interface NotifyAction extends Action {
+  type: 'NOTIFY';
+  notification: GalleryNotification;
+}
+
+export const REMOVE_NOTIFICATION = 'REMOVE_NOTIFICATION';
+
+export interface RemoveNotificationAction extends Action {
+  type: 'REMOVE_NOTIFICATION';
+  notification: GalleryNotification;
+}
+
+export type MediaserverAction = NotifyAction & UploadFileAction
+  & PicturesMetadataFetchedAction
+  & UploadFileAction
+  & PictureSuccessfullyUploadedAction;
+
 export function fetchPicturesMetadata() {
-  // tslint:disable-next-line
   return (dispatch: (action: Action) => void) => {
     dispatch({
       type: FETCH_PICTURES_METADATA,
@@ -34,29 +58,69 @@ export function fetchPicturesMetadata() {
 }
 
 export function uploadFile(file: File) {
-  return (dispatch: (action: Action) => void) => {
+  return (dispatch: (action:
+    RemoveNotificationAction | UploadFileAction | PictureSuccessfullyUploadedAction | NotifyAction) => void) => {
     dispatch({
       type: UPLOAD_FILE,
     });
     const formData = new FormData();
     formData.append('file', file);
     return fetch(`${SERVER_BASE_URL}/picture/`, {
-      method: 'POST',
-      body: formData,
-    })
+        method: 'POST',
+        body: formData,
+      })
       .then(response => {
         if (!response.ok) {
           throw Error(response.statusText);
         }
         return response.json();
       })
-      .then((pictureMetadata: PictureMetadata) => dispatch({
-        type: PICTURE_SUCCESSFULLY_UPLOADED,
-        pictureMetadata,
-      } as PictureSuccessfullyUploadedAction)
-    ).then(() => fetchPicturesMetadata()(dispatch)).catch((error => {
-      // tslint:disable-next-line
-      console.log(error);
-    }));
+      .then((pictureMetadata: PictureMetadata) => {
+        dispatch({
+          type: PICTURE_SUCCESSFULLY_UPLOADED,
+          pictureMetadata,
+        });
+        const notification = {
+          level: 'info',
+          text: 'uploaded picture',
+        } as GalleryNotification;
+        dispatch({
+          type: NOTIFY,
+          notification,
+        });
+        if (notification.level === 'info') {
+          const cb = () => dispatch({
+            type: REMOVE_NOTIFICATION,
+            notification,
+          });
+          setTimeout(cb, 5000);
+        }
+      })
+      .catch((error: Error) => dispatch({
+            type: NOTIFY,
+            notification: {
+              level: 'error',
+              text: error.message,
+            },
+          })
+      );
+  };
+}
+
+export function notify(notification: GalleryNotification) {
+  return (dispatch: (action: NotifyAction | RemoveNotificationAction) => void) => {
+    dispatch({
+      type: NOTIFY,
+      notification,
+    });
+  };
+}
+
+export function removeNotification(notification: GalleryNotification) {
+  return (dispatch: (action: RemoveNotificationAction) => void) => {
+    dispatch({
+      type: REMOVE_NOTIFICATION,
+      notification,
+    });
   };
 }

@@ -19,6 +19,10 @@ interface MediaServerProps {
 class MediaServer extends React.Component<MediaServerProps> {
   componentWillMount() {
     this.props.dispatch(fetchPicturesMetadata());
+    // const cb = () => {
+    //   this.props.dispatch(notify({level: 'info', text: 'aaaa'}));
+    // };
+    // setInterval(cb, 3500);
   }
 
   render() {

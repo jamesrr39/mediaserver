@@ -61,7 +61,9 @@ class GalleryTopBar extends React.Component<Props, GalleryTopBarState> {
 }
 
 function mapStateToProps() {
-  return {};
+  return {
+
+  };
 }
 
 export default connect(mapStateToProps)(GalleryTopBar);

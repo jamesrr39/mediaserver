@@ -6,6 +6,7 @@ import { Thumbnail } from './Thumbnail';
 import { State } from '../reducers';
 import { connect } from 'react-redux';
 import GalleryTopBar from './GalleryTopBar';
+import NotificationBarComponent from './NotificationBarComponent';
 
 export interface GalleryProps {
   picturesMetadatas: PictureMetadata[];
@@ -20,7 +21,12 @@ const styles = {
   } as React.CSSProperties,
   thumbnail: {
       margin: '0 10px 10px 0',
-  }
+  },
+  notificationsComponent: {
+    position: 'fixed',
+    left: '30px',
+    bottom: '30px',
+  } as React.CSSProperties,
 };
 
 class Gallery extends React.Component<GalleryProps> {
@@ -51,6 +57,10 @@ class Gallery extends React.Component<GalleryProps> {
         <div style={styles.gallery}>
           {pictures}
         </div>
+        <div style={styles.notificationsComponent}>
+          <NotificationBarComponent />
+        </div>
+
       </div>
     );
   }
