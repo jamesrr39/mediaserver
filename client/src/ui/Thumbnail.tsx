@@ -9,9 +9,9 @@ const generateThumbnailStyle = (pictureMetadata: PictureMetadata) => {
   const width = pictureMetadata.rawSize.width * ratio;
 
   return {
-    height: '200px',
+    maxHeight: '200px',
     backgroundColor: '#bbb',
-    width,
+    maxWidth: width,
   };
 };
 
@@ -25,16 +25,16 @@ type ThumbnailState = {
 };
 
 export class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
+  state = {
+    isImageQueuedOrLoaded: false,
+  };
+
   private element: null|HTMLElement = null;
 
   private scrollListener: () => void;
 
   constructor(props: ThumbnailProps) {
     super(props);
-
-    this.state = {
-      isImageQueuedOrLoaded: false,
-    };
 
     this.scrollListener = this._scrollListener.bind(this);
   }
@@ -52,7 +52,12 @@ export class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
 
     let img;
     if (this.state.isImageQueuedOrLoaded) {
-      img = <img src={imgSrc} />;
+      const onload = () => {
+        if (this.element) {
+          this.element.style.backgroundColor = 'transparent';
+        }
+      };
+      img = <img src={imgSrc} onLoad={onload} />;
     } else {
       img = '';
     }
