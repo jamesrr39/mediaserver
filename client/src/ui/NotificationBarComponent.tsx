@@ -26,12 +26,19 @@ const baseStyles = {
 const styles = {
   infoNotification: {
     ...baseStyles.notification,
-    borderColor: 'lightgreen',
+    borderColor: '#41ba6f',
+    backgroundColor: 'lightgreen',
   },
   errorNotification: {
     ...baseStyles.notification,
     borderColor: 'red',
-  }
+    backgroundColor: '#d16d60',
+  },
+  closeNotificationButton: {
+    background: 'none',
+    border: '1px black solid',
+    cursor: 'pointer',
+  },
 };
 
 class NotificationBar extends React.Component<Props> {
@@ -44,8 +51,15 @@ class NotificationBar extends React.Component<Props> {
       const notificationStyle = (notification.level === 'info') ? styles.infoNotification : styles.errorNotification;
       return (
         <div key={index} style={notificationStyle}>
-          {notification.text}
-          <button onClick={() => this.removeNotification(notification)} aria-label="close">X</button>
+          {notification.text}&nbsp;
+          <button
+            type="button"
+            style={styles.closeNotificationButton}
+            onClick={() => this.removeNotification(notification)}
+            aria-label="close"
+          >
+            &times;
+          </button>
         </div>
       );
     });

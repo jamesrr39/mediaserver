@@ -82,25 +82,23 @@ export function uploadFile(file: File) {
         });
         const notification = {
           level: 'info',
-          text: 'uploaded picture',
+          text: `uploaded '${file.name}'`,
         } as GalleryNotification;
         dispatch({
           type: NOTIFY,
           notification,
         });
-        if (notification.level === 'info') {
-          const cb = () => dispatch({
-            type: REMOVE_NOTIFICATION,
-            notification,
-          });
-          setTimeout(cb, 5000);
-        }
+        const cb = () => dispatch({
+          type: REMOVE_NOTIFICATION,
+          notification,
+        });
+        setTimeout(cb, 3000);
       })
       .catch((error: Error) => dispatch({
             type: NOTIFY,
             notification: {
               level: 'error',
-              text: error.message,
+              text: `error uploading '${file.name}': ${error.message}`,
             },
           })
       );
