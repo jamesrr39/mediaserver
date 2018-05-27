@@ -13,7 +13,6 @@ import (
 	"log"
 
 	"github.com/jamesrr39/goutil/image-processing/imageprocessingutil"
-	"github.com/rwcarlsen/goexif/exif"
 )
 
 type HashValue string
@@ -36,14 +35,14 @@ func RawSizeFromImage(picture image.Image) RawSize {
 
 type PictureMetadata struct {
 	HashValue        `json:"hashValue"`
-	RelativeFilePath string     `json:"relativeFilePath"`
-	FileSizeBytes    int64      `json:"fileSizeBytes"`
-	ExifData         *exif.Exif `json:"exif"`
-	RawSize          RawSize    `json:"rawSize"`
-	Format           string     `json:"format"`
+	RelativeFilePath string    `json:"relativeFilePath"`
+	FileSizeBytes    int64     `json:"fileSizeBytes"`
+	ExifData         *ExifData `json:"exif"`
+	RawSize          RawSize   `json:"rawSize"`
+	Format           string    `json:"format"`
 }
 
-func NewPictureMetadata(hashValue HashValue, relativeFilePath string, fileSizeBytes int64, exifData *exif.Exif, rawSize RawSize, format string) *PictureMetadata {
+func NewPictureMetadata(hashValue HashValue, relativeFilePath string, fileSizeBytes int64, exifData *ExifData, rawSize RawSize, format string) *PictureMetadata {
 	return &PictureMetadata{hashValue, relativeFilePath, fileSizeBytes, exifData, rawSize, format}
 }
 
@@ -58,18 +57,17 @@ func NewPictureMetadataAndPictureFromBytes(fileBytes []byte, relativeFilePath st
 		return nil, nil, fmt.Errorf("couldn't decode image. Error: %s", err)
 	}
 
-	exifData, err := exif.Decode(bytes.NewBuffer(fileBytes))
+	exifData, err := DecodeExifFromFile(bytes.NewBuffer(fileBytes))
 	if nil != err {
 		log.Printf("not able to read metadata (maybe there is none). Error: %s\n", err)
 	}
 
-	// FIXME: tests for no orientation exif tag, no exif data
-	if nil != exifData {
-		transformedPicture, err := imageprocessingutil.RotateAndTransformPictureByExifData(picture, *exifData)
-		if nil != err {
-			log.Printf("couldn't rotate and transform picture with hash '%s'. Error: '%s'\n", hash, err)
+	if exifData != nil {
+		orientation, err := exifData.GetOrientation()
+		if err != nil {
+			log.Printf("couldn't get exif orientation information for picture with hash '%s' and relative path '%s'. Error: '%s'\n", hash, relativeFilePath, err)
 		} else {
-			picture = transformedPicture
+			picture = imageprocessingutil.FlipAndRotatePictureByExif(picture, orientation)
 		}
 	}
 

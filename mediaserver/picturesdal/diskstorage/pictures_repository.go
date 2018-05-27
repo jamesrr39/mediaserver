@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"mediaserverapp/mediaserver/pictures"
-
-	"github.com/rwcarlsen/goexif/exif"
 )
 
 type PicturesMetadataRepository struct {
@@ -39,7 +37,7 @@ WHERE hash == $1
 		return nil, err
 	}
 
-	var exifData *exif.Exif
+	var exifData *pictures.ExifData
 	if exifDataJSON != "" {
 		err = json.NewDecoder(bytes.NewBuffer([]byte(exifDataJSON))).Decode(&exifData)
 		if nil != err {
