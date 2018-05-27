@@ -83,7 +83,7 @@ func (dal *PicturesMetadataDAL) UpdatePicturesCache(tx *sql.Tx) error {
 		pictureMetadata, err := dal.dbDAL.GetPictureMetadata(tx, hash, relativeFilePath)
 		if nil != err {
 			if err != diskstorage.ErrNotFound {
-				return fmt.Errorf("expected error getting picture metadata from database for relative path '%s': '%s'\n", relativeFilePath, err)
+				return fmt.Errorf("unexpected error getting picture metadata from database for relative path '%s': '%s'", relativeFilePath, err)
 			}
 			pictureMetadata, _, err = pictures.NewPictureMetadataAndPictureFromBytes(fileBytes, relativeFilePath)
 			if nil != err {
@@ -92,7 +92,7 @@ func (dal *PicturesMetadataDAL) UpdatePicturesCache(tx *sql.Tx) error {
 
 			err = dal.dbDAL.CreatePictureMetadata(tx, pictureMetadata)
 			if nil != err {
-				return fmt.Errorf("expected error setting picture metadata to database for relative file path '%s': '%s'\n", relativeFilePath, err)
+				return fmt.Errorf("unexpected error setting picture metadata to database for relative file path '%s': '%s'", relativeFilePath, err)
 			}
 		}
 
