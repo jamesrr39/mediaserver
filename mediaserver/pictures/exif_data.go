@@ -3,6 +3,7 @@ package pictures
 import (
 	"fmt"
 	"io"
+	"log"
 
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/tiff"
@@ -35,6 +36,11 @@ func (e ExifData) GetOrientation() (int, error) {
 	switch orientationInf.(type) {
 	case int:
 		return (orientationInf).(int), nil
+	case *tiff.Tag:
+		orientationTag := orientationInf.(*tiff.Tag)
+		orientationInt, err := orientationTag.Int(0)
+		log.Printf("rotating by orientation tag (*tiff.Tag). Tag Val: '%v', int val: '%v', err: '%s'\n", orientationTag, orientationInt, err)
+		return orientationInt, nil
 	default:
 		return 0, fmt.Errorf("couldn't convert orientation (%T):(%v) to int", orientationInf, orientationInf)
 	}
