@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { PictureMetadata, getTimeTaken } from '../domain/PictureMetadata';
+import { PictureMetadata, createCompareTimeTakenFunc } from '../domain/PictureMetadata';
 
 import { Observable } from '../util/Observable';
 import { Thumbnail } from './Thumbnail';
@@ -28,6 +28,8 @@ const styles = {
   } as React.CSSProperties,
 };
 
+const gallerySortingFunc = createCompareTimeTakenFunc(true);
+
 class Gallery extends React.Component<GalleryProps> {
   componentDidMount() {
       this.props.scrollObservable.triggerEvent();
@@ -38,24 +40,7 @@ class Gallery extends React.Component<GalleryProps> {
   }
 
   render() {
-    this.props.picturesMetadatas.sort((a, b) => {
-      const aTaken = getTimeTaken(a);
-      const bTaken = getTimeTaken(b);
-
-      if (aTaken === bTaken) {
-        return 0;
-      }
-
-      if (aTaken === null) {
-        return -1;
-      }
-
-      if (bTaken === null) {
-        return 1;
-      }
-
-      return (aTaken.getTime() > bTaken.getTime()) ? 1 : -1;
-    });
+    this.props.picturesMetadatas.sort(gallerySortingFunc);
 
     const pictures = this.props.picturesMetadatas.map((pictureMetadata, index) => {
       const thumbnailProps = {

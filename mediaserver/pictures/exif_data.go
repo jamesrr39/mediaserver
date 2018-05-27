@@ -16,7 +16,7 @@ func DecodeExifFromFile(file io.Reader) (*ExifData, error) {
 		return nil, err
 	}
 
-	var exifData ExifData
+	exifData := make(ExifData)
 	err = externalExifData.Walk(&exifData)
 	if err != nil {
 		return nil, err
