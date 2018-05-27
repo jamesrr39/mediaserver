@@ -21,6 +21,8 @@ class MediaServer extends React.Component<MediaServerProps> {
     this.props.dispatch(fetchPicturesMetadata());
   }
 
+    // <Route path="/" exact={true} component={Gallery} />
+      // <Route path="/gallery" exact={true} component={Gallery} />
   render() {
     return (
       <div>

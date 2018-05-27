@@ -6,6 +6,7 @@ import { SERVER_BASE_URL } from '../configs';
 import { Link } from 'react-router-dom';
 import { Action } from 'redux';
 import { THUMBNAIL_HEIGHTS } from '../generated/thumbnail_sizes';
+import { Observable } from '../util/Observable';
 
 const KeyCodes = {
   ESCAPE: 27,
@@ -21,6 +22,7 @@ type Props = {
   }
   picturesMetadatas: PictureMetadata[],
   dispatch: Dispatch<Action>,
+  scrollObservable: Observable,
 };
 
 const styles = {
@@ -61,11 +63,6 @@ class PictureModal extends React.Component<Props> {
   private previousPictureMetadata: PictureMetadata | null = null;
   private nextPictureMetadata: PictureMetadata | null = null;
 
-  constructor(props: Props) {
-    super(props);
-
-  }
-
   setRenderData() {
     const { picturesMetadatas, match } = this.props;
     let i;
@@ -89,12 +86,18 @@ class PictureModal extends React.Component<Props> {
     }
   }
 
+  listenToResize = () => {
+    this.setState(state => ({...state}));
+  }
+
   componentDidMount() {
     document.addEventListener('keyup', this.listenToKeyUp);
+    this.props.scrollObservable.addListener(this.listenToResize);
   }
 
   componentWillUnmount() {
     document.removeEventListener('keyup', this.listenToKeyUp);
+    this.props.scrollObservable.removeListener(this.listenToResize);
   }
 
   render() {
@@ -195,26 +198,14 @@ class PictureModal extends React.Component<Props> {
         return;
     }
   }
-
-  // private onDivRefCreated = (el: HTMLDivElement|null) => {
-  //   if (el === null || this.pictureEl === null || this.pictureMetadata === null) {
-  //     return;
-  //   }
-  //
-  //   const pictureHeight = (el.clientHeight - 100);
-  //   const pictureWidth = (el.clientWidth - 20);
-  //
-  //   const hash = (pictureMetadata as PictureMetadata).hashValue;
-  //   const url = `${SERVER_BASE_URL}/picture/${hash}?w=${pictureWidth}&h=${pictureHeight}`;
-  //   this.pictureEl.src = url;
-  // };
 }
 
 function mapStateToProps(state: State) {
-  const { picturesMetadatas } = state.picturesMetadatas;
+  const { picturesMetadatas, scrollObservable } = state.picturesMetadatas;
 
   return {
     picturesMetadatas,
+    scrollObservable,
   };
 }
 

@@ -4,14 +4,22 @@ import { PictureMetadata } from '../domain/PictureMetadata';
 import { Observable } from '../util/Observable';
 import { SERVER_BASE_URL } from '../configs';
 
-const generateThumbnailStyle = (pictureMetadata: PictureMetadata) => {
+const generateThumbnailStyle = (pictureMetadata: PictureMetadata, isLoaded: boolean) => {
   const ratio = 200 / pictureMetadata.rawSize.height;
   const width = pictureMetadata.rawSize.width * ratio;
 
+  if (isLoaded) {
+    return {
+      backgroundColor: 'transparent',
+      maxWidth: width,
+      maxHeight: '200px',
+    };
+  }
+
   return {
-    maxHeight: '200px',
+    height: '200px',
     backgroundColor: '#bbb',
-    maxWidth: width,
+    width,
   };
 };
 
@@ -22,11 +30,13 @@ export interface ThumbnailProps {
 
 type ThumbnailState = {
   isImageQueuedOrLoaded: boolean;
+  isImageLoaded: boolean;
 };
 
 export class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
   state = {
     isImageQueuedOrLoaded: false,
+    isImageLoaded: false,
   };
 
   private element: null|HTMLElement = null;
@@ -53,16 +63,17 @@ export class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
     let img;
     if (this.state.isImageQueuedOrLoaded) {
       const onload = () => {
-        if (this.element) {
-          this.element.style.backgroundColor = 'transparent';
-        }
+        this.setState(state => ({
+          ...state,
+          isImageLoaded: true,
+        }));
       };
       img = <img src={imgSrc} onLoad={onload} />;
     } else {
       img = '';
     }
 
-    const thumbnailStyle = generateThumbnailStyle(this.props.pictureMetadata);
+    const thumbnailStyle = generateThumbnailStyle(this.props.pictureMetadata, this.state.isImageLoaded);
 
     return (
       <div style={thumbnailStyle} ref={el => this.element = el}>

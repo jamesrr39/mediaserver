@@ -3,8 +3,11 @@ import { connect, Dispatch } from 'react-redux';
 import { ChangeEvent } from 'react';
 import { uploadFile } from '../actions';
 import { Action } from 'redux';
+import { Link } from 'react-router-dom';
+import { withRouter } from 'react-router-dom';
+import { compose } from 'redux';
 
-type GalleryTopBarState = {
+type ComponentState = {
   isUploadingEnabled: boolean;
 };
 
@@ -27,7 +30,7 @@ const styles = {
   }
 };
 
-class GalleryTopBar extends React.Component<Props, GalleryTopBarState> {
+class MediaserverTopBar extends React.Component<Props, ComponentState> {
   state = {
     isUploadingEnabled: true
   };
@@ -51,6 +54,7 @@ class GalleryTopBar extends React.Component<Props, GalleryTopBarState> {
   render() {
     return (
       <div style={styles.container}>
+        <Link to="/gallery">Gallery</Link>
         <label style={styles.customFileUpload}>
           Upload
           <input style={styles.uploadInput} type="file" multiple={true} onChange={this.onFileUploadSelected} />
@@ -60,10 +64,7 @@ class GalleryTopBar extends React.Component<Props, GalleryTopBarState> {
   }
 }
 
-function mapStateToProps() {
-  return {
-
-  };
-}
-
-export default connect(mapStateToProps)(GalleryTopBar);
+export default compose(
+  withRouter,
+  connect((state) => (state)),
+)(MediaserverTopBar);

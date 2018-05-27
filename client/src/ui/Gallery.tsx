@@ -1,11 +1,10 @@
 import * as React from 'react';
-import { PictureMetadata } from '../domain/PictureMetadata';
+import { PictureMetadata, getTimeTaken } from '../domain/PictureMetadata';
 
 import { Observable } from '../util/Observable';
 import { Thumbnail } from './Thumbnail';
 import { State } from '../reducers';
 import { connect } from 'react-redux';
-import GalleryTopBar from './GalleryTopBar';
 import NotificationBarComponent from './NotificationBarComponent';
 
 export interface GalleryProps {
@@ -30,11 +29,34 @@ const styles = {
 };
 
 class Gallery extends React.Component<GalleryProps> {
-  componentWillUpdate() {
+  componentDidMount() {
+      this.props.scrollObservable.triggerEvent();
+  }
+
+  componentDidUpdate() {
     this.props.scrollObservable.triggerEvent();
   }
 
   render() {
+    this.props.picturesMetadatas.sort((a, b) => {
+      const aTaken = getTimeTaken(a);
+      const bTaken = getTimeTaken(b);
+
+      if (aTaken === bTaken) {
+        return 0;
+      }
+
+      if (aTaken === null) {
+        return -1;
+      }
+
+      if (bTaken === null) {
+        return 1;
+      }
+
+      return (aTaken.getTime() > bTaken.getTime()) ? 1 : -1;
+    });
+
     const pictures = this.props.picturesMetadatas.map((pictureMetadata, index) => {
       const thumbnailProps = {
         scrollObservable: this.props.scrollObservable,
@@ -53,7 +75,6 @@ class Gallery extends React.Component<GalleryProps> {
 
     return (
       <div>
-        <GalleryTopBar />
         <div style={styles.gallery}>
           {pictures}
         </div>
