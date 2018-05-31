@@ -2,13 +2,14 @@ import * as React from 'react';
 import { PictureMetadata } from '../domain/PictureMetadata';
 import Gallery from './Gallery';
 import { Observable } from '../util/Observable';
-import { Route, Switch } from 'react-router';
+import { Route } from 'react-router';
 import PictureModal from './PictureModal';
 import { connect, Dispatch } from 'react-redux';
 import { State } from '../reducers';
 import { fetchPicturesMetadata } from '../actions';
 import { HashRouter } from 'react-router-dom';
 import { Action } from 'redux';
+import MediaserverTopBar from './MediaserverTopBar';
 
 interface MediaServerProps {
   picturesMetadatas: PictureMetadata[];
@@ -21,16 +22,15 @@ class MediaServer extends React.Component<MediaServerProps> {
     this.props.dispatch(fetchPicturesMetadata());
   }
 
-    // <Route path="/" exact={true} component={Gallery} />
-      // <Route path="/gallery" exact={true} component={Gallery} />
   render() {
     return (
       <div>
-        <Gallery />
         <HashRouter>
-          <Switch>
+          <div>
+            <MediaserverTopBar />
+            <Route path="/" component={Gallery} />
             <Route path="/picture/:hash" component={PictureModal} />
-          </Switch>
+          </div>
         </HashRouter>
       </div>
     );

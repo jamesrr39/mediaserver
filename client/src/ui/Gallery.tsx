@@ -66,7 +66,6 @@ class Gallery extends React.Component<GalleryProps> {
         <div style={styles.notificationsComponent}>
           <NotificationBarComponent />
         </div>
-
       </div>
     );
   }

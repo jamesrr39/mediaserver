@@ -3,10 +3,12 @@ import { State } from '../reducers';
 import { connect, Dispatch } from 'react-redux';
 import { PictureMetadata } from '../domain/PictureMetadata';
 import { SERVER_BASE_URL } from '../configs';
-import { Link } from 'react-router-dom';
+import { Link, withRouter } from 'react-router-dom';
 import { Action } from 'redux';
 import { THUMBNAIL_HEIGHTS } from '../generated/thumbnail_sizes';
 import { Observable } from '../util/Observable';
+import { compose } from 'redux';
+import { History } from 'history';
 
 const KeyCodes = {
   ESCAPE: 27,
@@ -19,7 +21,8 @@ type Props = {
     params: {
       hash: string;
     }
-  }
+  },
+  history: History,
   picturesMetadatas: PictureMetadata[],
   dispatch: Dispatch<Action>,
   scrollObservable: Observable,
@@ -168,18 +171,18 @@ class PictureModal extends React.Component<Props> {
   }
 
   private goBack = () => {
-    window.location.hash = '#';
+    this.props.history.push('/');
   }
 
   private goToPrevious = () => {
     if (this.previousPictureMetadata !== null) {
-      window.location.hash = `#/picture/${this.previousPictureMetadata.hashValue}`;
+      this.props.history.push(`/picture/${this.previousPictureMetadata.hashValue}`);
     }
   }
 
   private goToNext = () => {
     if (this.nextPictureMetadata !== null) {
-      window.location.hash = `#/picture/${this.nextPictureMetadata.hashValue}`;
+      this.props.history.push(`/picture/${this.nextPictureMetadata.hashValue}`);
     }
   }
 
@@ -209,4 +212,7 @@ function mapStateToProps(state: State) {
   };
 }
 
-export default connect(mapStateToProps)(PictureModal);
+export default compose(
+  withRouter,
+  connect(mapStateToProps)
+)(PictureModal);
