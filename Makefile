@@ -12,11 +12,12 @@ build_prod_arm7: clean bundle_static_assets
 	mkdir -p build/bin/arm7
 	env GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -tags "purego prod" -o build/bin/arm7/mediaserver cmd/media-server-main.go
 
-#run_dev_server:
-#	go run cmd/media-server-main.go
-
 run_dev_client:
 	cd client && yarn start
+
+run_dev_server:
+	mkdir -p ~/tmp/mediaserver/data ~/tmp/mediaserver/metadata ~/tmp/mediaserver/cache
+	go run cmd/media-server-main.go ~/tmp/mediaserver/data --metadata-dir=~/tmp/mediaserver/metadata --cache-dir=~/tmp/mediaserver/cache
 
 test:
 	go vet -all ./...

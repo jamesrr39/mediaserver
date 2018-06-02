@@ -30,7 +30,7 @@ func NewMediaServerAndScan(rootpath, cachesDir, dataDir string, maxConcurrentRes
 		return nil, err
 	}
 
-	dbConn, err := mediaserverdb.NewDBConn(filepath.Join(dataDir, "mediaserver.db"))
+	dbConn, err := mediaserverdb.NewDBConn(filepath.Join(dataDir, "mediaserver.db"), NewProductionLogger())
 	if nil != err {
 		return nil, err
 	}
@@ -53,7 +53,6 @@ func NewMediaServerAndScan(rootpath, cachesDir, dataDir string, maxConcurrentRes
 		return nil, err
 	}
 
-	println("updated picture cache")
 	// ensure thumbnails
 	err = mediaServer.mediaServerDAL.PicturesDAL.EnsureAllThumbnailsForPictures(mediaServer.mediaServerDAL.PicturesMetadataDAL.GetAll())
 	if err != nil {

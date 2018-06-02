@@ -16,20 +16,25 @@ type db interface {
 
 type DBConn struct {
 	db
+	logger Logger
 }
 
 func init() {
 	ql.RegisterDriver()
 }
 
-func NewDBConn(dbPath string) (*DBConn, error) {
-	log.Printf("opening ql db at '%s'\n", dbPath)
+type Logger interface {
+	Printlnf(entry string, args ...interface{})
+}
+
+func NewDBConn(dbPath string, logger Logger) (*DBConn, error) {
+	logger.Printlnf("opening ql db at '%s'", dbPath)
 	db, err := sql.Open("ql", dbPath)
 	if nil != err {
 		return nil, err
 	}
 
-	dbConn := &DBConn{db}
+	dbConn := &DBConn{db, logger}
 
 	err = dbConn.runChangescripts()
 	if nil != err {
@@ -50,11 +55,16 @@ func (dbConn *DBConn) runChangescripts() error {
 		return err
 	}
 
-	log.Println("getting db version")
-
 	version, err := dbConn.getCurrentVersion(tx)
 	if nil != err {
 		return err
+	}
+
+	appSchemaVersion := len(changescripts)
+	if appSchemaVersion < version {
+		return fmt.Errorf("app schema version is older than the database schema version. App schema version: %d, database schema version: %d",
+			appSchemaVersion,
+			version)
 	}
 
 	if version == 0 {
@@ -64,16 +74,16 @@ func (dbConn *DBConn) runChangescripts() error {
 		}
 	}
 
-	log.Printf("starting to apply changescripts. Current version: %d\n", version)
-	for ; version < len(changescripts); version++ {
+	dbConn.logger.Printlnf("starting to apply changescripts. Current version: %d", version)
+	for ; version < appSchemaVersion; version++ {
 		changescript := changescripts[version]
-		log.Printf("applying changescript %d: '%s'\n", version, changescript)
+		dbConn.logger.Printlnf("applying changescript %d: '%s'", version, changescript)
 		_, err = tx.Exec(changescript)
 		if nil != err {
 			return fmt.Errorf("errors applying db version %d. Error: '%s'. Changescript: '%s'", version, err, changescript)
 		}
 	}
-	log.Printf("updating db version to %d\n", version)
+	dbConn.logger.Printlnf("updating db version to %d", version)
 	_, err = tx.Exec("UPDATE db_state SET version = $1", version)
 	if nil != err {
 		return err
@@ -94,7 +104,6 @@ func (dbConn *DBConn) getCurrentVersion(tx *sql.Tx) (int, error) {
 	var version int
 	err := row.Scan(&version)
 	if nil != err {
-		log.Printf("error getting version: %s\n", err)
 		if err == sql.ErrNoRows {
 			return 0, nil
 		}
