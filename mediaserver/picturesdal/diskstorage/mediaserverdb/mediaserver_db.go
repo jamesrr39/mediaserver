@@ -24,7 +24,7 @@ func init() {
 }
 
 type Logger interface {
-	Printlnf(entry string, args ...interface{})
+	Printlnf(message string, args ...interface{})
 }
 
 func NewDBConn(dbPath string, logger Logger) (*DBConn, error) {

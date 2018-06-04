@@ -7,6 +7,7 @@ import (
 	"log"
 	"mediaserverapp/mediaserver/pictures"
 	"mediaserverapp/mediaserver/picturesdal/diskcache"
+	"mediaserverapp/mediaserver/picturesdal/diskstorage"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -25,6 +26,7 @@ type MediaServerDAL struct {
 	rootpath            string
 	PicturesDAL         *PicturesDAL
 	PicturesMetadataDAL *PicturesMetadataDAL
+	CollectionsDAL      *diskstorage.CollectionsRepository
 }
 
 func NewMediaServerDAL(picturesBasePath, cachesBasePath, dataDir string, maxConcurrentResizes uint) (*MediaServerDAL, error) {
@@ -51,11 +53,13 @@ func NewMediaServerDAL(picturesBasePath, cachesBasePath, dataDir string, maxConc
 		picturesBasePath,
 		picturesDAL,
 		picturesMetadataDAL,
+		diskstorage.NewCollectionsRepository(),
 	}, nil
 }
 
 // Create adds a new picture to the collection
 // TODO: is contentType needed?
+// FIXME is this function needed
 func (dal *MediaServerDAL) Create(file io.Reader, filename, contentType string) (*pictures.PictureMetadata, error) {
 
 	if dirtraversal.IsTryingToTraverseUp(filename) {

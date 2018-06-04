@@ -20,6 +20,7 @@ type MediaServer struct {
 	mediaServerDAL          *picturesdal.MediaServerDAL
 	picturesService         *pictureswebservice.PicturesService
 	picturesMetadataService *pictureswebservice.PicturesMetadataService
+	collectionsService      *pictureswebservice.CollectionsWebService
 	dbConn                  *mediaserverdb.DBConn
 }
 
@@ -40,6 +41,7 @@ func NewMediaServerAndScan(rootpath, cachesDir, dataDir string, maxConcurrentRes
 		mediaServerDAL:          mediaServerDAL,
 		picturesService:         pictureswebservice.NewPicturesService(mediaServerDAL),
 		picturesMetadataService: pictureswebservice.NewPicturesMetadataService(dbConn, mediaServerDAL),
+		collectionsService:      pictureswebservice.NewCollectionsWebService(dbConn, mediaServerDAL.CollectionsDAL),
 	}
 
 	tx, err := dbConn.Begin()
@@ -67,7 +69,7 @@ func (ms *MediaServer) Close() error {
 }
 
 // scans for pictures and serves http server
-func (ms *MediaServer) ServeHTTP(addr string) error {
+func (ms *MediaServer) ListenAndServe(addr string) error {
 
 	mainRouter := chi.NewRouter()
 	mainRouter.Use(cors.New(cors.Options{
@@ -76,6 +78,7 @@ func (ms *MediaServer) ServeHTTP(addr string) error {
 
 	mainRouter.Route("/api/", func(r chi.Router) {
 		r.Mount("/pictureMetadata/", ms.picturesMetadataService)
+		r.Mount("/collections/", ms.collectionsService)
 	})
 
 	mainRouter.Mount("/picture/", ms.picturesService)

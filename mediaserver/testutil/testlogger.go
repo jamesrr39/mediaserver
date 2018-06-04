@@ -11,7 +11,7 @@ func NewTestLogger() *TestLogger {
 	return &TestLogger{}
 }
 
-func (l *TestLogger) WriteString(message string, args ...interface{}) {
+func (l *TestLogger) Printlnf(message string, args ...interface{}) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.Entries = append(l.Entries)

@@ -46,11 +46,10 @@ func main() {
 	defer mediaServer.Close()
 
 	log.Printf("attempting to start serving on address: '%s'\n", *addr)
-	err = mediaServer.ServeHTTP(*addr)
+	err = mediaServer.ListenAndServe(*addr)
 	if nil != err {
 		log.Fatalf("Couldn't start HTTP server. Error: %s\n", err)
 	}
-
 }
 
 func getFullDataPath(path string) (string, error) {

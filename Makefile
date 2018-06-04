@@ -1,6 +1,9 @@
 clean:
 	rm -rf build
 
+codegen:
+	go run codegen/generate-main.go
+
 build_prod_x86_64: clean bundle_static_assets
 	go run vendor/github.com/rakyll/statik/statik.go -src=client/build -dest=build/client
 	mkdir -p build/bin/x86_64
