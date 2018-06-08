@@ -1,7 +1,9 @@
 import * as React from 'react';
 import { Collection } from '../../domain/Collection';
+import { PictureMetadata } from '../../domain/PictureMetadata';
 
 type Props = {
+  picturesMetadatasMap: Map<string, PictureMetadata>;
   collection: Collection;
 };
 

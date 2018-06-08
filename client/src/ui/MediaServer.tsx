@@ -11,21 +11,22 @@ import { HashRouter } from 'react-router-dom';
 import { Action } from 'redux';
 import MediaserverTopBar from './MediaserverTopBar';
 import { fetchCollections } from '../collectionsActions';
-import CollectionsComponent, {
-  extractFolderCollectionsFromPicturesMetadatas
- } from './collections/CollectionsListingComponent';
+import CollectionsComponent from './collections/CollectionsListingComponent';
 import CollectionViewComponent from './collections/CollectionViewComponent';
-
-interface MediaServerProps {
-  picturesMetadatas: PictureMetadata[];
-  scrollObservable: Observable;
-  dispatch: Dispatch<Action>;
-}
+import { extractFolderCollectionsFromPicturesMetadatas } from '../domain/Collection';
+import NotFoundComponent from './NotFoundComponent';
 
 type CollectionViewRouteParams = {
   name: string;
   type: string;
 };
+
+interface MediaServerProps {
+  picturesMetadatas: PictureMetadata[];
+  scrollObservable: Observable;
+  picturesMetadatasMap: Map<string, PictureMetadata>;
+  dispatch: Dispatch<Action>;
+}
 
 class MediaServer extends React.Component<MediaServerProps> {
   componentWillMount() {
@@ -42,11 +43,15 @@ class MediaServer extends React.Component<MediaServerProps> {
         const collection = extractFolderCollectionsFromPicturesMetadatas(this.props.picturesMetadatas)
           .find(currentCollection => (currentCollection.name === name));
         if (!collection) {
-          throw new Error('no collection found');
+          return <NotFoundComponent message={'no collection found'} />;
         }
-        return <CollectionViewComponent {...{collection}} />;
+        const props = {
+          collection,
+          picturesMetadatasMap: this.props.picturesMetadatasMap,
+        };
+        return <CollectionViewComponent {...props} />;
       default:
-        throw new Error('type not found');
+        return <NotFoundComponent message={'type not found'} />;
     }
   }
 
@@ -69,11 +74,12 @@ class MediaServer extends React.Component<MediaServerProps> {
 }
 
 function mapStateToProps(state: State) {
-  const { picturesMetadatas, scrollObservable } = state.picturesMetadatas;
+  const { picturesMetadatas, scrollObservable, picturesMetadatasMap } = state.picturesMetadatas;
 
   return {
     picturesMetadatas,
     scrollObservable,
+    picturesMetadatasMap,
   };
 }
 

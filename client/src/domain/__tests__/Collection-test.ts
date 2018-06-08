@@ -1,5 +1,5 @@
-import { extractFolderCollectionsFromPicturesMetadatas } from '../CollectionsListingComponent';
-import { PictureMetadata } from '../../../domain/PictureMetadata';
+import { PictureMetadata } from '../PictureMetadata';
+import { extractFolderCollectionsFromPicturesMetadatas } from '../Collection';
 
 test('extractFolderCollectionsFromPicturesMetadatas', () => {
   const picturesMetadatas = [{
