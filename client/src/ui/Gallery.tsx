@@ -6,6 +6,7 @@ import { Thumbnail } from './Thumbnail';
 import { State } from '../reducers';
 import { connect } from 'react-redux';
 import NotificationBarComponent from './NotificationBarComponent';
+import { Link } from 'react-router-dom';
 
 export interface GalleryProps {
   picturesMetadatas: PictureMetadata[];
@@ -32,7 +33,7 @@ const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
 class Gallery extends React.Component<GalleryProps> {
   componentDidMount() {
-      this.props.scrollObservable.triggerEvent();
+    this.props.scrollObservable.triggerEvent();
   }
 
   componentDidUpdate() {
@@ -48,13 +49,13 @@ class Gallery extends React.Component<GalleryProps> {
         pictureMetadata,
       };
 
-      const linkUrl = `#/picture/${pictureMetadata.hashValue}`;
+      const linkUrl = `/gallery/picture/${pictureMetadata.hashValue}`;
 
       return (
         <div key={index} style={styles.thumbnail}>
-          <a href={linkUrl}>
+          <Link to={linkUrl}>
             <Thumbnail {...thumbnailProps} />
-          </a>
+          </Link>
         </div>);
     });
 

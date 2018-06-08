@@ -135,9 +135,6 @@ class PictureModal extends React.Component<Props> {
         chosenHeight = pictureMetadata.rawSize.height;
       }
 
-      // tslint:disable-next-line
-      console.log("requesting (w, h)", Math.round(chosenHeight * aspectRatio), chosenHeight, "with available size (w, h)", idealWidth, idealHeight);
-
       const url = `${SERVER_BASE_URL}/picture/${pictureMetadata.hashValue}?h=${chosenHeight}`;
       this.pictureEl.style.maxHeight = `${idealHeight}px`;
       this.pictureEl.style.maxWidth = `${idealWidth}px`;
@@ -145,11 +142,19 @@ class PictureModal extends React.Component<Props> {
     };
 
     const previousLink = this.previousPictureMetadata
-      ? <Link to={`/picture/${this.previousPictureMetadata.hashValue}`} style={styles.navigationButton}>&larr;</Link>
+      ? (
+        <Link to={`/gallery/picture/${this.previousPictureMetadata.hashValue}`} style={styles.navigationButton}>
+          &larr;
+        </Link>
+      )
       : <span style={styles.navigationButton} />;
 
     const nextLink = this.nextPictureMetadata
-      ? <Link to={`/picture/${this.nextPictureMetadata.hashValue}`} style={styles.navigationButton}>&rarr;</Link>
+      ? (
+        <Link to={`/gallery/picture/${this.nextPictureMetadata.hashValue}`} style={styles.navigationButton}>
+          &rarr;
+        </Link>
+      )
       : <span style={styles.navigationButton} />;
 
     const imgStyle = {};
@@ -157,7 +162,7 @@ class PictureModal extends React.Component<Props> {
     return (
       <div style={styles.modal} ref={refCb}>
         <div>
-          <Link to="/" style={styles.navigationButton}>&#x274C;</Link>
+          <Link to="/gallery" style={styles.navigationButton}>&#x274C;</Link>
         </div>
         <div style={styles.pictureContainer}>
           <div>{previousLink}</div>
@@ -171,18 +176,18 @@ class PictureModal extends React.Component<Props> {
   }
 
   private goBack = () => {
-    this.props.history.push('/');
+    this.props.history.push('/gallery');
   }
 
   private goToPrevious = () => {
     if (this.previousPictureMetadata !== null) {
-      this.props.history.push(`/picture/${this.previousPictureMetadata.hashValue}`);
+      this.props.history.push(`/gallery/picture/${this.previousPictureMetadata.hashValue}`);
     }
   }
 
   private goToNext = () => {
     if (this.nextPictureMetadata !== null) {
-      this.props.history.push(`/picture/${this.nextPictureMetadata.hashValue}`);
+      this.props.history.push(`/gallery/picture/${this.nextPictureMetadata.hashValue}`);
     }
   }
 

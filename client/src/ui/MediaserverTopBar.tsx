@@ -54,7 +54,8 @@ class MediaserverTopBar extends React.Component<Props, ComponentState> {
   render() {
     return (
       <div style={styles.container}>
-        <Link to="/">Gallery</Link>
+        <Link to="/gallery">Gallery</Link>
+        <Link to="/collections">Collections</Link>
         <label style={styles.customFileUpload}>
           Upload
           <input style={styles.uploadInput} type="file" multiple={true} onChange={this.onFileUploadSelected} />

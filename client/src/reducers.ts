@@ -10,6 +10,8 @@ import {
  } from './actions';
 import { DebouncedObservable, Observable } from './util/Observable';
 import { GalleryNotification } from './ui/NotificationBarComponent';
+import { Collection } from './domain/Collection';
+import { CollectionsAction, COLLECTIONS_FETCHED } from './collectionsActions';
 
 const scrollObservable = new DebouncedObservable(150);
 
@@ -21,29 +23,37 @@ type PicturesMetadataState = {
   picturesMetadatas: PictureMetadata[],
   scrollObservable: Observable,
   notifications: GalleryNotification[],
+  picturesMetadatasMap: Map<string, PictureMetadata>,
 };
 
 export type State = {
   picturesMetadatas: PicturesMetadataState,
+  collections: CollectionReducerState,
 };
 
-const initialState = {
+const picturesMetadatasInitialState = {
   isFetching: false,
   picturesMetadatas: [],
   scrollObservable,
   notifications: [],
+  picturesMetadatasMap: new Map<string, PictureMetadata>(),
 };
 
-function picturesMetadatas(state: PicturesMetadataState = initialState, action: MediaserverAction) {
+function picturesMetadatas(state: PicturesMetadataState = picturesMetadatasInitialState, action: MediaserverAction) {
   switch (action.type) {
     case FETCH_PICTURES_METADATA:
       return Object.assign({}, state, {
         isFetching: true,
       });
     case PICTURES_METADATA_FETCHED:
+      const picturesMetadatasMap = new Map<string, PictureMetadata>();
+      action.picturesMetadatas.forEach(pictureMetadata => {
+        picturesMetadatasMap.set(pictureMetadata.hashValue, pictureMetadata);
+      });
       return Object.assign({}, state, {
         isFetching: false,
         picturesMetadatas: action.picturesMetadatas,
+        picturesMetadatasMap,
       });
     case NOTIFY:
       return {
@@ -72,6 +82,27 @@ function picturesMetadatas(state: PicturesMetadataState = initialState, action: 
   }
 }
 
+type CollectionReducerState = {
+  collections: Collection[];
+};
+
+const collectionInitialState = {
+  collections: [],
+};
+
+function collections(state: CollectionReducerState = collectionInitialState, action: CollectionsAction) {
+  switch (action.type) {
+    case COLLECTIONS_FETCHED:
+      return {
+        ...state,
+        collections: action.collections,
+      };
+    default:
+      return state;
+  }
+}
+
 export default combineReducers({
   picturesMetadatas,
+  collections,
 });
