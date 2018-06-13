@@ -10,15 +10,34 @@ type Props = {
   picturesMetadatas: PictureMetadata[];
 };
 
+const styles = {
+  collectionBox: {
+    backgroundColor: '#ccc',
+    margin: '10px',
+  },
+  collectionsWrapper: {
+    display: 'flex',
+  },
+  collectionNameText: {
+    textAlign: 'center',
+  },
+};
+
 class CollectionsComponent extends React.Component<Props> {
   renderFolderCollections() {
     const collectionsList = extractFolderCollectionsFromPicturesMetadatas(this.props.picturesMetadatas)
       .map((collection, index) => {
         const linkUrl = `/collections/${encodeURIComponent(collection.type)}/${encodeURIComponent(collection.name)}`;
+
+        const thumbnails = collection.hashes.slice(0, 4).map((hash, thumbnailIndex) => {
+          const url = `/picture/${hash}?h=100`;
+          return <img key={thumbnailIndex} src={url} />;
+        });
         return (
-          <div key={index}>
+          <div key={index} style={styles.collectionBox}>
             <Link to={linkUrl}>
-              {collection.name}
+              <p style={styles.collectionNameText}>{collection.name}</p>
+              {thumbnails}
             </Link>
           </div>
         );
@@ -27,7 +46,9 @@ class CollectionsComponent extends React.Component<Props> {
     return (
       <div>
         <h2>By Folder</h2>
-        {collectionsList}
+        <div style={styles.collectionsWrapper}>
+          {collectionsList}
+        </div>
       </div>
     );
   }
