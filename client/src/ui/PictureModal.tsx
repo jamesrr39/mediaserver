@@ -17,15 +17,12 @@ const KeyCodes = {
 };
 
 type Props = {
-  match: {
-    params: {
-      hash: string;
-    }
-  },
+  hash: string,
   history: History,
   picturesMetadatas: PictureMetadata[],
   dispatch: Dispatch<Action>,
   scrollObservable: Observable,
+  baseUrl: string, // for example, /gallery
 };
 
 const styles = {
@@ -67,11 +64,11 @@ class PictureModal extends React.Component<Props> {
   private nextPictureMetadata: PictureMetadata | null = null;
 
   setRenderData() {
-    const { picturesMetadatas, match } = this.props;
+    const { picturesMetadatas, hash } = this.props;
     let i;
 
     for (i = 0; i < picturesMetadatas.length; i++) {
-      if (picturesMetadatas[i].hashValue === match.params.hash) {
+      if (picturesMetadatas[i].hashValue === hash) {
         if (i !== 0) {
           this.previousPictureMetadata = picturesMetadatas[i - 1];
         } else {
@@ -143,7 +140,10 @@ class PictureModal extends React.Component<Props> {
 
     const previousLink = this.previousPictureMetadata
       ? (
-        <Link to={`/gallery/picture/${this.previousPictureMetadata.hashValue}`} style={styles.navigationButton}>
+        <Link
+          to={`${this.props.baseUrl}/picture/${this.previousPictureMetadata.hashValue}`}
+          style={styles.navigationButton}
+        >
           &larr;
         </Link>
       )
@@ -151,7 +151,10 @@ class PictureModal extends React.Component<Props> {
 
     const nextLink = this.nextPictureMetadata
       ? (
-        <Link to={`/gallery/picture/${this.nextPictureMetadata.hashValue}`} style={styles.navigationButton}>
+        <Link
+          to={`${this.props.baseUrl}/picture/${this.nextPictureMetadata.hashValue}`}
+          style={styles.navigationButton}
+        >
           &rarr;
         </Link>
       )
@@ -162,7 +165,7 @@ class PictureModal extends React.Component<Props> {
     return (
       <div style={styles.modal} ref={refCb}>
         <div>
-          <Link to="/gallery" style={styles.navigationButton}>&#x274C;</Link>
+          <Link to={this.props.baseUrl} style={styles.navigationButton}>&#x274C;</Link>
         </div>
         <div style={styles.pictureContainer}>
           <div>{previousLink}</div>
@@ -176,18 +179,18 @@ class PictureModal extends React.Component<Props> {
   }
 
   private goBack = () => {
-    this.props.history.push('/gallery');
+    this.props.history.push(this.props.baseUrl);
   }
 
   private goToPrevious = () => {
     if (this.previousPictureMetadata !== null) {
-      this.props.history.push(`/gallery/picture/${this.previousPictureMetadata.hashValue}`);
+      this.props.history.push(`${this.props.baseUrl}/picture/${this.previousPictureMetadata.hashValue}`);
     }
   }
 
   private goToNext = () => {
     if (this.nextPictureMetadata !== null) {
-      this.props.history.push(`/gallery/picture/${this.nextPictureMetadata.hashValue}`);
+      this.props.history.push(`${this.props.baseUrl}/picture/${this.nextPictureMetadata.hashValue}`);
     }
   }
 
@@ -209,10 +212,9 @@ class PictureModal extends React.Component<Props> {
 }
 
 function mapStateToProps(state: State) {
-  const { picturesMetadatas, scrollObservable } = state.picturesMetadatas;
+  const { scrollObservable } = state.picturesMetadatas;
 
   return {
-    picturesMetadatas,
     scrollObservable,
   };
 }

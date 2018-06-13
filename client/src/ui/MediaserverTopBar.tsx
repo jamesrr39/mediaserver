@@ -26,7 +26,10 @@ const styles = {
     display: 'none',
   },
   container: {
-    margin: '10px'
+    margin: '10px',
+  },
+  linkContainer: {
+    padding: '10px',
   }
 };
 
@@ -54,8 +57,8 @@ class MediaserverTopBar extends React.Component<Props, ComponentState> {
   render() {
     return (
       <div style={styles.container}>
-        <Link to="/gallery">Gallery</Link>
-        <Link to="/collections">Collections</Link>
+        <Link to="/gallery" style={styles.linkContainer}>Gallery</Link>
+        <Link to="/collections" style={styles.linkContainer}>Collections</Link>
         <label style={styles.customFileUpload}>
           Upload
           <input style={styles.uploadInput} type="file" multiple={true} onChange={this.onFileUploadSelected} />
