@@ -17,7 +17,8 @@ const styles = {
   },
   collectionsWrapper: {
     display: 'flex',
-  },
+    flexWrap: 'wrap',
+  } as React.CSSProperties,
   collectionNameText: {
     textAlign: 'center',
   },
