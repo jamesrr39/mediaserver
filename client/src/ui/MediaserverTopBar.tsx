@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect, Dispatch } from 'react-redux';
 import { ChangeEvent } from 'react';
-import { uploadFile } from '../actions';
+import { queueFileForUpload } from '../actions';
 import { Action } from 'redux';
 import { Link } from 'react-router-dom';
 import { withRouter } from 'react-router-dom';
@@ -50,7 +50,7 @@ class MediaserverTopBar extends React.Component<Props, ComponentState> {
     });
     for (let i = 0; i < event.target.files.length; i++) {
         const file = event.target.files[i];
-        this.props.dispatch(uploadFile(file));
+        this.props.dispatch(queueFileForUpload(file));
     }
   }
 
