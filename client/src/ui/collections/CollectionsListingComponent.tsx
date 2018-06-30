@@ -40,7 +40,7 @@ class CollectionsComponent extends React.Component<Props> {
 
         let thumbnailHtml = <span>?</span>;
         if (collection.hashes.length !== 0) {
-          const url = `/picture/${collection.hashes[2]}?h=200`;
+          const url = `/picture/${collection.hashes[0]}?h=200`;
           thumbnailStyle.backgroundImage = `url(${url})`;
           thumbnailHtml = <span />;
         }
