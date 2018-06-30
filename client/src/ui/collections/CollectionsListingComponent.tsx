@@ -12,16 +12,21 @@ type Props = {
 
 const styles = {
   collectionBox: {
-    backgroundColor: '#ccc',
+    border: '1px black dotted',
     margin: '10px',
+    padding: '5px',
   },
   collectionsWrapper: {
     display: 'flex',
     flexWrap: 'wrap',
   } as React.CSSProperties,
-  collectionNameText: {
-    textAlign: 'center',
-  },
+  thumbnailHtml: {
+    width: '200px',
+    height: '200px',
+    overflow: 'hidden',
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'center center',
+  } as React.CSSProperties,
 };
 
 class CollectionsComponent extends React.Component<Props> {
@@ -29,16 +34,22 @@ class CollectionsComponent extends React.Component<Props> {
     const collectionsList = extractFolderCollectionsFromPicturesMetadatas(this.props.picturesMetadatas)
       .map((collection, index) => {
         const linkUrl = `/collections/${encodeURIComponent(collection.type)}/${encodeURIComponent(collection.name)}`;
+        const thumbnailStyle = {
+          ...styles.thumbnailHtml,
+        };
 
-        const thumbnails = collection.hashes.slice(0, 4).map((hash, thumbnailIndex) => {
-          const url = `/picture/${hash}?h=100`;
-          return <img key={thumbnailIndex} src={url} />;
-        });
+        let thumbnailHtml = <span>?</span>;
+        if (collection.hashes.length !== 0) {
+          const url = `/picture/${collection.hashes[2]}?h=200`;
+          thumbnailStyle.backgroundImage = `url(${url})`;
+          thumbnailHtml = <span />;
+        }
+
         return (
           <div key={index} style={styles.collectionBox}>
             <Link to={linkUrl}>
-              <p style={styles.collectionNameText}>{collection.name}</p>
-              {thumbnails}
+              <div style={thumbnailStyle}>{thumbnailHtml}</div>
+              <p>{collection.name}</p>
             </Link>
           </div>
         );

@@ -8,7 +8,6 @@ import {
   REMOVE_NOTIFICATION,
   PICTURE_SUCCESSFULLY_UPLOADED,
   UPLOAD_FILE,
-  // UPLOAD_FILE,
   // FILE_UPLOAD_FINISHED,
  } from './actions';
 import { DebouncedObservable, Observable } from './util/Observable';

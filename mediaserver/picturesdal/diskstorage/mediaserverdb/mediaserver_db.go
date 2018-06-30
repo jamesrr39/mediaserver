@@ -6,6 +6,8 @@ import (
 	"io"
 	"log"
 
+	"github.com/jamesrr39/goutil/logger"
+
 	ql "github.com/cznic/ql" // register driver
 )
 
@@ -16,19 +18,15 @@ type db interface {
 
 type DBConn struct {
 	db
-	logger Logger
+	logger logger.Logger
 }
 
 func init() {
 	ql.RegisterDriver()
 }
 
-type Logger interface {
-	Printlnf(message string, args ...interface{})
-}
-
-func NewDBConn(dbPath string, logger Logger) (*DBConn, error) {
-	logger.Printlnf("opening ql db at '%s'", dbPath)
+func NewDBConn(dbPath string, logger logger.Logger) (*DBConn, error) {
+	logger.Info("opening ql db at '%s'", dbPath)
 	db, err := sql.Open("ql", dbPath)
 	if nil != err {
 		return nil, err
@@ -74,16 +72,16 @@ func (dbConn *DBConn) runChangescripts() error {
 		}
 	}
 
-	dbConn.logger.Printlnf("starting to apply changescripts. Current version: %d", version)
+	dbConn.logger.Info("starting to apply changescripts. Current version: %d", version)
 	for ; version < appSchemaVersion; version++ {
 		changescript := changescripts[version]
-		dbConn.logger.Printlnf("applying changescript %d: '%s'", version, changescript)
+		dbConn.logger.Info("applying changescript %d: '%s'", version, changescript)
 		_, err = tx.Exec(changescript)
 		if nil != err {
 			return fmt.Errorf("errors applying db version %d. Error: '%s'. Changescript: '%s'", version, err, changescript)
 		}
 	}
-	dbConn.logger.Printlnf("updating db version to %d", version)
+	dbConn.logger.Info("updating db version to %d", version)
 	_, err = tx.Exec("UPDATE db_state SET version = $1", version)
 	if nil != err {
 		return err

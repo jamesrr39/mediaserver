@@ -7,11 +7,13 @@ import (
 	"mediaserverapp/mediaserver/picturesdal/diskstorage/mediaserverdb"
 	"mediaserverapp/mediaserver/pictureswebservice"
 	"mediaserverapp/mediaserver/static_assets_handler"
+	"os"
 	"path/filepath"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
 	"github.com/jamesrr39/goutil/httpextra"
+	"github.com/jamesrr39/goutil/logger"
 )
 
 // MediaServer is a server used for showing pieces of media
@@ -31,7 +33,7 @@ func NewMediaServerAndScan(rootpath, cachesDir, dataDir string, maxConcurrentRes
 		return nil, err
 	}
 
-	dbConn, err := mediaserverdb.NewDBConn(filepath.Join(dataDir, "mediaserver.db"), NewProductionLogger())
+	dbConn, err := mediaserverdb.NewDBConn(filepath.Join(dataDir, "mediaserver.db"), logger.NewLogger(os.Stdout))
 	if nil != err {
 		return nil, err
 	}
