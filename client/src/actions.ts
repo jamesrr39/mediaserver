@@ -93,6 +93,24 @@ export function queueFileForUpload(file: File) {
     };
 
     const onFailure = (response: Response) => {
+      if (response.status === 409) {
+        const notification = {
+          level: 'info',
+          text: `'${file.name}' already uploaded`,
+        };
+        dispatch({
+          type: NOTIFY,
+          notification,
+        } as NotifyAction);
+
+        const cb = () => dispatch({
+          type: REMOVE_NOTIFICATION,
+          notification,
+        } as RemoveNotificationAction);
+        setTimeout(cb, 3000);
+        return;
+      }
+
       dispatch({
         type: NOTIFY,
         notification: {

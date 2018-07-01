@@ -33,7 +33,7 @@ func NewMediaServerAndScan(rootpath, cachesDir, dataDir string, maxConcurrentRes
 		return nil, err
 	}
 
-	dbConn, err := mediaserverdb.NewDBConn(filepath.Join(dataDir, "mediaserver.db"), logger.NewLogger(os.Stdout))
+	dbConn, err := mediaserverdb.NewDBConn(filepath.Join(dataDir, "mediaserver.db"), logger.NewLogger(os.Stdout, logger.LogLevelInfo))
 	if nil != err {
 		return nil, err
 	}

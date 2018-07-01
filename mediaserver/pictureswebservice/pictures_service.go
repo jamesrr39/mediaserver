@@ -1,7 +1,6 @@
 package pictureswebservice
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -11,6 +10,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
 )
 
 type PicturesService struct {
@@ -97,6 +97,7 @@ func (ps *PicturesService) servePictureUpload(w http.ResponseWriter, r *http.Req
 		http.Error(w, err.Error(), 400)
 		return
 	}
+	defer file.Close()
 
 	pictureMetadata, err := ps.mediaServerDAL.Create(file, fileHandler.Filename, fileHandler.Header.Get("Content-Type"))
 	if nil != err {
@@ -114,11 +115,5 @@ func (ps *PicturesService) servePictureUpload(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	metadataBytes, err := json.Marshal(pictureMetadata)
-	if nil != err {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	w.Write(metadataBytes)
-
+	render.JSON(w, r, pictureMetadata)
 }

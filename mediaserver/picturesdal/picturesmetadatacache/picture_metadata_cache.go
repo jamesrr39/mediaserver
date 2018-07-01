@@ -27,14 +27,13 @@ func (cache *PicturesMetadataCache) Add(pictureMetadata *pictures.PictureMetadat
 
 	existingPicture := cache.mapByHash[pictureMetadata.HashValue]
 	if nil != existingPicture {
-		return &ErrItemAlreadyExists{}
+		return ErrItemAlreadyExists
 	}
 
 	cache.mapByHash[pictureMetadata.HashValue] = pictureMetadata
 	cache.picturesMetadatas = append(cache.picturesMetadatas, pictureMetadata)
 
 	return cache.setHashValue()
-
 }
 
 func (cache *PicturesMetadataCache) AddBatch(picturesMetadata ...*pictures.PictureMetadata) {
@@ -53,7 +52,6 @@ func (cache *PicturesMetadataCache) AddBatch(picturesMetadata ...*pictures.Pictu
 	}
 
 	cache.setHashValue()
-
 }
 
 func (cache *PicturesMetadataCache) setHashValue() error {

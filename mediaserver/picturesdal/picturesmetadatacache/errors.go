@@ -1,7 +1,5 @@
 package picturesmetadatacache
 
-type ErrItemAlreadyExists struct{}
+import "errors"
 
-func (e *ErrItemAlreadyExists) Error() string {
-	return "item already exists"
-}
+var ErrItemAlreadyExists = errors.New("item already exists")
