@@ -61,5 +61,5 @@ func (l *Logger) log(level LogLevel, message string, args ...interface{}) {
 		return
 	}
 	text := fmt.Sprintf(message, args...)
-	l.outWriter.Write([]byte(fmt.Sprintf("%s: %s | %s\n", level, text, l.nowFunc().Format("2006/01/02 15:04:05"))))
+	l.outWriter.Write([]byte(fmt.Sprintf("%s %s: %s\n", l.nowFunc().Format("2006/01/02 15:04:05"), level, text)))
 }
