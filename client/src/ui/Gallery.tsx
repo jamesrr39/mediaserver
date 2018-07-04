@@ -10,7 +10,8 @@ import { Link } from 'react-router-dom';
 export interface GalleryProps {
   picturesMetadatas: PictureMetadata[];
   scrollObservable: Observable;
-  pictureModalUrlbase: string; // example: /gallery/picture
+  pictureModalUrlbase?: string; // example: /gallery/picture
+  onClickThumbnail?: (pictureMetadata: PictureMetadata) => void;
 }
 
 const styles = {
@@ -42,11 +43,33 @@ class Gallery extends React.Component<GalleryProps> {
 
       const linkUrl = `${this.props.pictureModalUrlbase}/${pictureMetadata.hashValue}`;
 
+      let innerHtml = <Thumbnail {...thumbnailProps} />;
+      if (this.props.pictureModalUrlbase) {
+        innerHtml = (
+          <Link to={linkUrl}>
+            {innerHtml}
+          </Link>
+        );
+      }
+
+      if (this.props.onClickThumbnail) {
+        // FIXME any
+        // tslint:disable-next-line
+        const onClickThumbnail = (event: any) => {
+          event.preventDefault();
+          if (this.props.onClickThumbnail) {
+            this.props.onClickThumbnail(pictureMetadata);
+          }
+        };
+
+        innerHtml = (
+          <a href="#" onClick={onClickThumbnail}>{innerHtml}</a>
+        );
+      }
+
       return (
         <div key={index} style={styles.thumbnail}>
-          <Link to={linkUrl}>
-            <Thumbnail {...thumbnailProps} />
-          </Link>
+          {innerHtml}
         </div>);
     });
 

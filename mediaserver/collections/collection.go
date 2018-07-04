@@ -6,9 +6,9 @@ import (
 )
 
 type Collection struct {
-	ID         int64
-	Name       string
-	FileHashes []pictures.HashValue
+	ID         int64                `json:"id"`
+	Name       string               `json:"name"`
+	FileHashes []pictures.HashValue `json:"fileHashes"`
 }
 
 var ErrNoName = errors.New("no name supplied for the collection")

@@ -2,17 +2,25 @@ import * as React from 'react';
 import { Collection } from '../../domain/Collection';
 import { PictureMetadata } from '../../domain/PictureMetadata';
 import Gallery from '../Gallery';
+import { withRouter } from 'react-router';
+import { compose } from 'redux';
+import { connect } from 'react-redux';
+import { History } from 'history';
+import { themeStyles } from '../../theme/theme';
 
 type Props = {
   picturesMetadatasMap: Map<string, PictureMetadata>;
   collection: Collection;
   routeUrl: string;
+  history: History;
 };
 
 class CollectionViewComponent extends React.Component<Props> {
   render() {
-    const picturesMetadatas = this.props.collection.hashes.map((hash, index) => {
-      const pictureMetadata = this.props.picturesMetadatasMap.get(hash);
+    const { history, collection, picturesMetadatasMap, routeUrl } = this.props;
+
+    const picturesMetadatas = collection.fileHashes.map((hash, index) => {
+      const pictureMetadata = picturesMetadatasMap.get(hash);
       if (!pictureMetadata) {
         throw new Error(`couldn't find picture metadata for ${hash}`);
       }
@@ -21,11 +29,16 @@ class CollectionViewComponent extends React.Component<Props> {
 
     const galleryProps = {
       picturesMetadatas,
-      pictureModalUrlbase: `${this.props.routeUrl}/picture`,
+      pictureModalUrlbase: `${routeUrl}/picture`,
     };
+
+    const encodedType = encodeURIComponent(collection.type);
+    const encodedIdentifier = encodeURIComponent(collection.identifier());
+    const editUrl = `/collections/${encodedType}/${encodedIdentifier}/edit`;
 
     return (
       <div>
+        <button style={themeStyles.button} onClick={() => history.push(editUrl)}>Edit</button>
         {this.props.collection.name}
         <Gallery {...galleryProps} />
       </div>
@@ -33,4 +46,7 @@ class CollectionViewComponent extends React.Component<Props> {
   }
 }
 
-export default CollectionViewComponent;
+export default compose(
+  withRouter,
+  connect(state => state),
+)(CollectionViewComponent);

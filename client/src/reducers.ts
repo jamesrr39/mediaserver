@@ -12,8 +12,8 @@ import {
  } from './actions';
 import { DebouncedObservable, Observable } from './util/Observable';
 import { GalleryNotification } from './ui/NotificationBarComponent';
-import { Collection } from './domain/Collection';
-import { CollectionsAction, COLLECTIONS_FETCHED } from './collectionsActions';
+import { CustomCollection } from './domain/Collection';
+import { CollectionsAction, COLLECTIONS_FETCHED, COLLECTION_SAVED } from './collectionsActions';
 import { FileQueue } from './fileQueue';
 
 const scrollObservable = new DebouncedObservable(150);
@@ -22,6 +22,7 @@ window.addEventListener('scroll', () => scrollObservable.triggerEvent());
 window.addEventListener('resize', () => scrollObservable.triggerEvent());
 
 type PicturesMetadataState = {
+  isReady: boolean,
   isFetching: boolean,
   picturesMetadatas: PictureMetadata[],
   scrollObservable: Observable,
@@ -36,6 +37,7 @@ export type State = {
 };
 
 const picturesMetadatasInitialState = {
+  isReady: false,
   isFetching: false,
   picturesMetadatas: [],
   scrollObservable,
@@ -58,6 +60,7 @@ function picturesMetadatas(state: PicturesMetadataState = picturesMetadatasIniti
       });
       return {
         ...state,
+        isReady: true,
         isFetching: false,
         picturesMetadatas: action.picturesMetadatas,
         picturesMetadatasMap,
@@ -96,11 +99,13 @@ function picturesMetadatas(state: PicturesMetadataState = picturesMetadatasIniti
 }
 
 type CollectionReducerState = {
-  collections: Collection[];
+  isReady: boolean;
+  customCollections: CustomCollection[];
 };
 
 const collectionInitialState = {
-  collections: [],
+  isReady: false,
+  customCollections: [],
 };
 
 function collections(state: CollectionReducerState = collectionInitialState, action: CollectionsAction) {
@@ -108,7 +113,17 @@ function collections(state: CollectionReducerState = collectionInitialState, act
     case COLLECTIONS_FETCHED:
       return {
         ...state,
-        collections: action.collections,
+        isReady: true,
+        customCollections: action.customCollections,
+      };
+    case COLLECTION_SAVED:
+      const collectionsWithoutUpdated = state.customCollections.filter(
+        customCollection => customCollection.id !== action.collection.id);
+      collectionsWithoutUpdated.push(action.collection);
+
+      return {
+        ...state,
+        customCollections: collectionsWithoutUpdated,
       };
     default:
       return state;

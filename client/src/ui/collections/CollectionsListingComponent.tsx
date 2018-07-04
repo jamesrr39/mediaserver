@@ -1,12 +1,12 @@
 import * as React from 'react';
 import { State } from '../../reducers';
 import { connect } from 'react-redux';
-import { Collection, extractFolderCollectionsFromPicturesMetadatas } from '../../domain/Collection';
+import { extractFolderCollectionsFromPicturesMetadatas, CustomCollection } from '../../domain/Collection';
 import { PictureMetadata } from '../../domain/PictureMetadata';
 import CollectionGroupListingComponent from './CollectionGroupListingComponent';
 
 type Props = {
-  collections: Collection[];
+  collections: CustomCollection[];
   picturesMetadatas: PictureMetadata[];
 };
 
@@ -23,6 +23,7 @@ class CollectionsComponent extends React.Component<Props> {
     const props = {
       title: 'Your Collections',
       collections: this.props.collections,
+      canAddCollection: true,
     };
 
     return <CollectionGroupListingComponent {...props} />;
@@ -40,7 +41,7 @@ class CollectionsComponent extends React.Component<Props> {
 
 function mapStateToProps(state: State) {
   return {
-    collections: state.collections.collections,
+    collections: state.collections.customCollections,
     picturesMetadatas: state.picturesMetadatas.picturesMetadatas,
   };
 }

@@ -1,6 +1,7 @@
 import { SERVER_BASE_URL } from './configs';
 import { Action } from 'redux';
-import { Collection } from './domain/Collection';
+import { Collection, CustomCollection } from './domain/Collection';
+import { NOTIFY, NotifyAction } from './actions';
 
 export const FETCH_COLLECTIONS = 'FETCH_COLLECTIONS';
 
@@ -12,10 +13,22 @@ export const COLLECTIONS_FETCHED = 'COLLECTIONS_FETCHED';
 
 export interface CollectionsFetchedAction extends Action {
   type: 'COLLECTIONS_FETCHED';
-  collections: Collection[];
+  customCollections: CustomCollection[];
 }
 
-export type CollectionsAction = CollectionsFetchedAction | FetchCollectionsAction;
+export const COLLECTION_SAVED = 'COLLECTION_SAVED';
+// FIXME: use enum for action
+
+export type CollectionSavedAction = {
+  type: 'COLLECTION_SAVED';
+  collection: CustomCollection;
+};
+
+export type CollectionsAction = CollectionsFetchedAction | FetchCollectionsAction | CollectionSavedAction;
+
+type CustomCollectionJSON = {
+  id: number;
+} & Collection;
 
 export function fetchCollections() {
   return (dispatch: (action: CollectionsAction) => void) => {
@@ -24,9 +37,49 @@ export function fetchCollections() {
     });
     return fetch(`${SERVER_BASE_URL}/api/collections/`)
       .then(response => response.json())
-      .then((collections: Collection[]) => dispatch({
-        type: COLLECTIONS_FETCHED,
-        collections,
-      }));
+      .then((collectionsJSON: CustomCollectionJSON[]) => {
+        const customCollections = collectionsJSON.map(collectionJSON => new CustomCollection(
+          collectionJSON.id,
+          collectionJSON.name,
+          collectionJSON.fileHashes,
+        ));
+        dispatch({
+          type: COLLECTIONS_FETCHED,
+          customCollections,
+        });
+      });
+  };
+}
+
+export function saveCollection(collection: CustomCollection, onSuccess: () => void) {
+  return (dispatch: (action: CollectionsAction | NotifyAction) => void) => {
+    const url = (collection.id === 0)
+      ? `${SERVER_BASE_URL}/api/collections/`
+      : `${SERVER_BASE_URL}/api/collections/${collection.id}`;
+    const method = (collection.id === 0) ? 'POST' : 'PUT';
+    fetch(url, {
+      method,
+      body: JSON.stringify(collection),
+    }).then((response: Response) => {
+      response.json().then((collectionJSON: CustomCollectionJSON) => {
+        const returnedCollection = new CustomCollection(
+          collectionJSON.id,
+          collectionJSON.name,
+          collectionJSON.fileHashes
+        );
+        dispatch({
+          type: NOTIFY,
+          notification: {
+            level: 'info',
+            text: response.status + '',
+          },
+        } as NotifyAction);
+        dispatch({
+          type: COLLECTION_SAVED,
+          collection: returnedCollection,
+        });
+        onSuccess();
+      });
+    });
   };
 }

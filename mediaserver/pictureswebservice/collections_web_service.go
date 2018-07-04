@@ -53,6 +53,12 @@ func (ws *CollectionsWebService) handleGetAll(w http.ResponseWriter, r *http.Req
 		collectionList = []*collections.Collection{}
 	}
 
+	for _, collection := range collectionList {
+		if len(collection.FileHashes) == 0 {
+			collection.FileHashes = []pictures.HashValue{}
+		}
+	}
+
 	render.JSON(w, r, collectionList)
 }
 

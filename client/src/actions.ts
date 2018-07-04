@@ -45,14 +45,14 @@ export interface RemoveNotificationAction extends Action {
   notification: GalleryNotification;
 }
 
-export type MediaserverAction =
+export type MediaserverAction = (
   NotifyAction |
   RemoveNotificationAction |
   UploadFileAction |
   PicturesMetadataFetchedAction |
   UploadFileAction |
   PictureSuccessfullyUploadedAction |
-  FetchPicturesMetadataAction;
+  FetchPicturesMetadataAction);
 
 export function fetchPicturesMetadata() {
   return (dispatch: (action: FetchPicturesMetadataAction | PicturesMetadataFetchedAction) => void) => {
@@ -130,55 +130,6 @@ export function queueFileForUpload(file: File) {
     } as UploadFileAction);
   };
 }
-
-//
-// export function uploadFile(file: File) {
-//   return (dispatch: (action:
-//     RemoveNotificationAction | UploadFileAction | PictureSuccessfullyUploadedAction | NotifyAction) => void) => {
-//     dispatch({
-//       type: UPLOAD_FILE,
-//     });
-//     const formData = new FormData();
-//     formData.append('file', file);
-//     return fetch(`${SERVER_BASE_URL}/picture/`, {
-//         method: 'POST',
-//         body: formData,
-//       })
-//       .then(response => {
-//         if (!response.ok) {
-//           throw Error(response.statusText);
-//         }
-//         return response.json();
-//       })
-//       .then((pictureMetadata: PictureMetadata) => {
-//         dispatch({
-//           type: PICTURE_SUCCESSFULLY_UPLOADED,
-//           pictureMetadata,
-//         });
-//         const notification = {
-//           level: 'info',
-//           text: `uploaded '${file.name}'`,
-//         } as GalleryNotification;
-//         dispatch({
-//           type: NOTIFY,
-//           notification,
-//         });
-//         const cb = () => dispatch({
-//           type: REMOVE_NOTIFICATION,
-//           notification,
-//         });
-//         setTimeout(cb, 3000);
-//       })
-//       .catch((error: Error) => dispatch({
-//             type: NOTIFY,
-//             notification: {
-//               level: 'error',
-//               text: `error uploading '${file.name}': ${error.message}`,
-//             },
-//           })
-//       );
-//   };
-// }
 
 export function notify(notification: GalleryNotification) {
   return (dispatch: (action: NotifyAction | RemoveNotificationAction) => void) => {
