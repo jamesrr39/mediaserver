@@ -1,7 +1,8 @@
 import { SERVER_BASE_URL } from './configs';
 import { Action } from 'redux';
 import { Collection, CustomCollection } from './domain/Collection';
-import { NOTIFY, NotifyAction } from './actions';
+import { NotifyAction, newNotificationAction } from './actions/notificationActions';
+import { NotificationLevel } from './ui/NotificationBarComponent';
 
 export const FETCH_COLLECTIONS = 'FETCH_COLLECTIONS';
 
@@ -61,25 +62,24 @@ export function saveCollection(collection: CustomCollection, onSuccess: () => vo
       method,
       body: JSON.stringify(collection),
     }).then((response: Response) => {
+      if (!response.ok) {
+        throw new Error(`${response.statusText} (${response.status})`);
+      }
       response.json().then((collectionJSON: CustomCollectionJSON) => {
         const returnedCollection = new CustomCollection(
           collectionJSON.id,
           collectionJSON.name,
           collectionJSON.fileHashes
         );
-        dispatch({
-          type: NOTIFY,
-          notification: {
-            level: 'info',
-            text: response.status + '',
-          },
-        } as NotifyAction);
+        dispatch(newNotificationAction(NotificationLevel.INFO, 'Saved!'));
         dispatch({
           type: COLLECTION_SAVED,
           collection: returnedCollection,
         });
         onSuccess();
       });
+    }).catch((errMessage: string) => {
+      dispatch(newNotificationAction(NotificationLevel.ERROR, `error saving: '${errMessage}'`));
     });
   };
 }

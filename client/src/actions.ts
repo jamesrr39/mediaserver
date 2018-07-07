@@ -1,53 +1,39 @@
 import { PictureMetadata } from './domain/PictureMetadata';
 import { Action } from 'redux';
 import { SERVER_BASE_URL } from './configs';
-import { GalleryNotification } from './ui/NotificationBarComponent';
+import { NotificationLevel } from './ui/NotificationBarComponent';
 import { QueuedFile } from './fileQueue';
+import { newNotificationAction, NotifyAction } from './actions/notificationActions';
 
-export const FETCH_PICTURES_METADATA = 'FETCH_PICTURES_METADATA';
+// export const FETCH_PICTURES_METADATA = 'FETCH_PICTURES_METADATA';
 
-export interface FetchPicturesMetadataAction extends Action {
-  type: 'FETCH_PICTURES_METADATA';
+export enum FilesActionTypes {
+  FETCH_PICTURES_METADATA = 'FETCH_PICTURES_METADATA',
+  PICTURES_METADATA_FETCHED = 'PICTURES_METADATA_FETCHED',
+  UPLOAD_FILE = 'UPLOAD_FILE',
+  PICTURE_SUCCESSFULLY_UPLOADED = 'PICTURE_SUCCESSFULLY_UPLOADED',
 }
 
-export const PICTURES_METADATA_FETCHED = 'PICTURES_METADATA_FETCHED';
+export interface FetchPicturesMetadataAction extends Action {
+  type: FilesActionTypes.FETCH_PICTURES_METADATA;
+}
 
 export interface PicturesMetadataFetchedAction extends Action {
-  type: 'PICTURES_METADATA_FETCHED';
+  type: FilesActionTypes.PICTURES_METADATA_FETCHED;
   picturesMetadatas: PictureMetadata[];
 }
 
-export const UPLOAD_FILE = 'UPLOAD_FILE';
-
 export interface UploadFileAction extends Action {
-  type: 'UPLOAD_FILE';
+  type: FilesActionTypes.UPLOAD_FILE;
   file: QueuedFile;
 }
 
-export const PICTURE_SUCCESSFULLY_UPLOADED = 'PICTURE_SUCCESSFULLY_UPLOADED';
-
 export interface PictureSuccessfullyUploadedAction extends Action {
-  type: 'PICTURE_SUCCESSFULLY_UPLOADED';
+  type: FilesActionTypes.PICTURE_SUCCESSFULLY_UPLOADED;
   pictureMetadata: PictureMetadata;
 }
 
-export const NOTIFY = 'NOTIFY';
-
-export interface NotifyAction extends Action {
-  type: 'NOTIFY';
-  notification: GalleryNotification;
-}
-
-export const REMOVE_NOTIFICATION = 'REMOVE_NOTIFICATION';
-
-export interface RemoveNotificationAction extends Action {
-  type: 'REMOVE_NOTIFICATION';
-  notification: GalleryNotification;
-}
-
 export type MediaserverAction = (
-  NotifyAction |
-  RemoveNotificationAction |
   UploadFileAction |
   PicturesMetadataFetchedAction |
   UploadFileAction |
@@ -57,94 +43,47 @@ export type MediaserverAction = (
 export function fetchPicturesMetadata() {
   return (dispatch: (action: FetchPicturesMetadataAction | PicturesMetadataFetchedAction) => void) => {
     dispatch({
-      type: FETCH_PICTURES_METADATA,
+      type: FilesActionTypes.FETCH_PICTURES_METADATA,
     } as FetchPicturesMetadataAction);
     return fetch(`${SERVER_BASE_URL}/api/pictureMetadata/`)
       .then(response => response.json())
       .then((picturesMetadatas: PictureMetadata[]) => dispatch({
-        type: PICTURES_METADATA_FETCHED,
+        type: FilesActionTypes.PICTURES_METADATA_FETCHED,
         picturesMetadatas,
       }));
   };
 }
 
 export function queueFileForUpload(file: File) {
-  return (dispatch: (action: MediaserverAction) => void) => {
+  return (dispatch: (action: MediaserverAction | NotifyAction) => void) => {
     const onSuccess = (pictureMetadata: PictureMetadata) => {
       dispatch({
-        type: PICTURE_SUCCESSFULLY_UPLOADED,
+        type: FilesActionTypes.PICTURE_SUCCESSFULLY_UPLOADED,
         pictureMetadata,
       } as PictureSuccessfullyUploadedAction);
 
-      const notification = {
-        level: 'info',
-        text: `uploaded '${file.name}'`,
-      };
-      dispatch({
-        type: NOTIFY,
-        notification,
-      } as NotifyAction);
-
-      const cb = () => dispatch({
-        type: REMOVE_NOTIFICATION,
-        notification,
-      } as RemoveNotificationAction);
-      setTimeout(cb, 3000);
+      dispatch(newNotificationAction(NotificationLevel.INFO, `uploaded '${file.name}'`));
     };
 
     const onFailure = (response: Response) => {
       if (response.status === 409) {
-        const notification = {
-          level: 'info',
-          text: `'${file.name}' already uploaded`,
-        };
-        dispatch({
-          type: NOTIFY,
-          notification,
-        } as NotifyAction);
-
-        const cb = () => dispatch({
-          type: REMOVE_NOTIFICATION,
-          notification,
-        } as RemoveNotificationAction);
-        setTimeout(cb, 3000);
+        dispatch(newNotificationAction(NotificationLevel.INFO, `'${file.name}' already uploaded`));
         return;
       }
 
-      dispatch({
-        type: NOTIFY,
-        notification: {
-          level: 'error',
-          text: `error uploading '${file.name}': ${response.statusText}`,
-        },
-      } as NotifyAction);
+      dispatch(newNotificationAction(
+        NotificationLevel.ERROR,
+        `error uploading '${file.name}': ${response.statusText}`));
+
     };
 
     dispatch({
-      type: UPLOAD_FILE,
+      type: FilesActionTypes.UPLOAD_FILE,
       file: {
         file,
         onSuccess,
         onFailure,
       }
     } as UploadFileAction);
-  };
-}
-
-export function notify(notification: GalleryNotification) {
-  return (dispatch: (action: NotifyAction | RemoveNotificationAction) => void) => {
-    dispatch({
-      type: NOTIFY,
-      notification,
-    });
-  };
-}
-
-export function removeNotification(notification: GalleryNotification) {
-  return (dispatch: (action: RemoveNotificationAction) => void) => {
-    dispatch({
-      type: REMOVE_NOTIFICATION,
-      notification,
-    });
   };
 }

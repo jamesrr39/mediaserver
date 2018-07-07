@@ -1,13 +1,20 @@
 import * as React from 'react';
 import { connect, Dispatch } from 'react-redux';
 import { State } from '../reducers';
-import { removeNotification } from '../actions';
 import { Action } from 'redux';
+import { removeNotification } from '../actions/notificationActions';
 
-export type GalleryNotification = {
-  text: string,
-  level: 'info' | 'error'
-};
+export enum NotificationLevel {
+  INFO,
+  ERROR,
+}
+
+export class GalleryNotification {
+  constructor(
+    public readonly text: string,
+    public readonly level: NotificationLevel,
+  ) {}
+}
 
 type Props = {
   notifications: GalleryNotification[]
@@ -48,7 +55,9 @@ class NotificationBar extends React.Component<Props> {
 
   render() {
     const notificationContainers = this.props.notifications.map((notification, index) => {
-      const notificationStyle = (notification.level === 'info') ? styles.infoNotification : styles.errorNotification;
+      const notificationStyle = (notification.level === NotificationLevel.INFO)
+        ? styles.infoNotification
+        : styles.errorNotification;
       return (
         <div key={index} style={notificationStyle}>
           {notification.text}&nbsp;
@@ -74,7 +83,7 @@ class NotificationBar extends React.Component<Props> {
 
 function mapStateToProps(state: State) {
   return {
-    notifications: state.picturesMetadatas.notifications,
+    notifications: state.notificationsReducer.notifications,
   };
 }
 

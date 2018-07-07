@@ -1,20 +1,14 @@
 import { combineReducers } from 'redux';
 import { PictureMetadata } from './domain/PictureMetadata';
 import {
-  FETCH_PICTURES_METADATA,
-  PICTURES_METADATA_FETCHED,
   MediaserverAction,
-  NOTIFY,
-  REMOVE_NOTIFICATION,
-  PICTURE_SUCCESSFULLY_UPLOADED,
-  UPLOAD_FILE,
-  // FILE_UPLOAD_FINISHED,
+  FilesActionTypes,
  } from './actions';
 import { DebouncedObservable, Observable } from './util/Observable';
-import { GalleryNotification } from './ui/NotificationBarComponent';
 import { CustomCollection } from './domain/Collection';
 import { CollectionsAction, COLLECTIONS_FETCHED, COLLECTION_SAVED } from './collectionsActions';
 import { FileQueue } from './fileQueue';
+import { notificationsReducer, NotificationsState } from './reducers/notificationReducer';
 
 const scrollObservable = new DebouncedObservable(150);
 
@@ -26,7 +20,6 @@ type PicturesMetadataState = {
   isFetching: boolean,
   picturesMetadatas: PictureMetadata[],
   scrollObservable: Observable,
-  notifications: GalleryNotification[],
   picturesMetadatasMap: Map<string, PictureMetadata>,
   uploadQueue: FileQueue,
 };
@@ -34,6 +27,7 @@ type PicturesMetadataState = {
 export type State = {
   picturesMetadatas: PicturesMetadataState,
   collections: CollectionReducerState,
+  notificationsReducer: NotificationsState,
 };
 
 const picturesMetadatasInitialState = {
@@ -41,19 +35,18 @@ const picturesMetadatasInitialState = {
   isFetching: false,
   picturesMetadatas: [],
   scrollObservable,
-  notifications: [],
   picturesMetadatasMap: new Map<string, PictureMetadata>(),
   uploadQueue: new FileQueue(4),
 };
 
 function picturesMetadatas(state: PicturesMetadataState = picturesMetadatasInitialState, action: MediaserverAction) {
   switch (action.type) {
-    case FETCH_PICTURES_METADATA:
+    case FilesActionTypes.FETCH_PICTURES_METADATA:
       return {
         ...state,
         isFetching: true,
       };
-    case PICTURES_METADATA_FETCHED:
+    case FilesActionTypes.PICTURES_METADATA_FETCHED:
       const picturesMetadatasMap = new Map<string, PictureMetadata>();
       action.picturesMetadatas.forEach(pictureMetadata => {
         picturesMetadatasMap.set(pictureMetadata.hashValue, pictureMetadata);
@@ -65,29 +58,12 @@ function picturesMetadatas(state: PicturesMetadataState = picturesMetadatasIniti
         picturesMetadatas: action.picturesMetadatas,
         picturesMetadatasMap,
       };
-    case NOTIFY:
-      return {
-        ...state,
-        notifications: state.notifications.concat([action.notification]),
-      };
-    case REMOVE_NOTIFICATION:
-      const notifications = state.notifications.concat([]); // copy
-      const index = notifications.indexOf(action.notification);
-      if (index === -1) {
-        return state;
-      }
-
-      notifications.splice(index, 1);
-      return {
-        ...state,
-        notifications,
-      };
-    case PICTURE_SUCCESSFULLY_UPLOADED:
+    case FilesActionTypes.PICTURE_SUCCESSFULLY_UPLOADED:
       return {
         ...state,
         picturesMetadatas: state.picturesMetadatas.concat([action.pictureMetadata])
       };
-    case UPLOAD_FILE:
+    case FilesActionTypes.UPLOAD_FILE:
       state.uploadQueue.uploadOrQueue(action.file);
 
       return {
@@ -133,4 +109,5 @@ function collections(state: CollectionReducerState = collectionInitialState, act
 export default combineReducers({
   picturesMetadatas,
   collections,
+  notificationsReducer,
 });

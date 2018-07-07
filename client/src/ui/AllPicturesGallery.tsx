@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { PictureMetadata, createCompareTimeTakenFunc } from '../domain/PictureMetadata';
+import { PictureMetadata } from '../domain/PictureMetadata';
 
 import { State } from '../reducers';
 import { connect } from 'react-redux';
@@ -9,11 +9,8 @@ export interface GalleryProps {
   picturesMetadatas: PictureMetadata[];
 }
 
-const gallerySortingFunc = createCompareTimeTakenFunc(true);
-
 class AllPicturesGallery extends React.Component<GalleryProps> {
   render() {
-    this.props.picturesMetadatas.sort(gallerySortingFunc);
     const props = {
       picturesMetadatas: this.props.picturesMetadatas,
       pictureModalUrlbase: '/gallery/picture',

@@ -38,7 +38,7 @@ class CollectionViewComponent extends React.Component<Props> {
 
     return (
       <div>
-        <button style={themeStyles.button} onClick={() => history.push(editUrl)}>Edit</button>
+        <button style={themeStyles.button} onClick={() => history.push(editUrl)}>&#9998; Edit</button>
         {this.props.collection.name}
         <Gallery {...galleryProps} />
       </div>
