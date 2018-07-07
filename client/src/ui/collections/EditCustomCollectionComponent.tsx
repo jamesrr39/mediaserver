@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { CustomCollection } from '../../domain/Collection';
+import { CustomCollection, Collection } from '../../domain/Collection';
 import { ChangeEvent } from 'react';
 import Gallery from '../Gallery';
 import { State } from '../../reducers';
@@ -79,10 +79,10 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
       this.state.name,
       Array.from(this.state.hashesInCollectionSet),
     );
-    const encodedType = encodeURIComponent(newCollection.type);
-    const encodedIdentifier = encodeURIComponent(newCollection.identifier());
-    const successUrl = `/collections/${encodedType}/${encodedIdentifier}`;
-    const onSuccess = () => {
+    const onSuccess = (returnedCollection: Collection) => {
+      const encodedType = encodeURIComponent(returnedCollection.type);
+      const encodedIdentifier = encodeURIComponent(returnedCollection.identifier());
+      const successUrl = `/collections/${encodedType}/${encodedIdentifier}`;
       history.push(successUrl);
     };
 

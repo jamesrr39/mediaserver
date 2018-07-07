@@ -52,7 +52,7 @@ export function fetchCollections() {
   };
 }
 
-export function saveCollection(collection: CustomCollection, onSuccess: () => void) {
+export function saveCollection(collection: CustomCollection, onSuccess: (returnedCollection: Collection) => void) {
   return (dispatch: (action: CollectionsAction | NotifyAction) => void) => {
     const url = (collection.id === 0)
       ? `${SERVER_BASE_URL}/api/collections/`
@@ -76,7 +76,7 @@ export function saveCollection(collection: CustomCollection, onSuccess: () => vo
           type: COLLECTION_SAVED,
           collection: returnedCollection,
         });
-        onSuccess();
+        onSuccess(returnedCollection);
       });
     }).catch((errMessage: string) => {
       dispatch(newNotificationAction(NotificationLevel.ERROR, `error saving: '${errMessage}'`));
