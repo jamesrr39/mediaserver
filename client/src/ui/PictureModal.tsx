@@ -54,6 +54,9 @@ const styles = {
     textAlign: 'center',
     verticalAlign: 'middle',
   },
+  topBar: {
+    position: 'fixed',
+  } as React.CSSProperties,
 };
 
 class PictureModal extends React.Component<Props> {
@@ -116,7 +119,7 @@ class PictureModal extends React.Component<Props> {
 
       const pictureMetadata = this.pictureMetadata as PictureMetadata;
 
-      const idealHeight = (el.clientHeight - 100);
+      const idealHeight = (el.clientHeight);
       const idealWidth = (el.clientWidth - 100);
 
       const aspectRatio = pictureMetadata.rawSize.width / pictureMetadata.rawSize.height;
@@ -164,7 +167,7 @@ class PictureModal extends React.Component<Props> {
 
     return (
       <div style={styles.modal} ref={refCb}>
-        <div>
+        <div style={styles.topBar}>
           <Link to={this.props.baseUrl} style={styles.navigationButton}>&#x274C;</Link>
         </div>
         <div style={styles.pictureContainer}>
