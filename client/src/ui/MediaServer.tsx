@@ -74,8 +74,8 @@ class MediaServer extends React.Component<MediaServerProps> {
   }
 
   renderCollectionView = (routeInfo: RouteComponentProps<CollectionViewRouteParams>) => {
-    const identifier = routeInfo.match.params.identifier;
-    const type = routeInfo.match.params.type;
+    const identifier = decodeURIComponent(routeInfo.match.params.identifier);
+    const type = decodeURIComponent(routeInfo.match.params.type);
 
     if (type === CollectionType.Custom && identifier === 'new') {
       const newCollectionComponentProps = {
@@ -134,7 +134,7 @@ class MediaServer extends React.Component<MediaServerProps> {
   renderAllPicturesPictureModal = (routeInfo: RouteComponentProps<AllPicturesPictureModalRouteParams>) => {
     const props = {
       picturesMetadatas: this.props.picturesMetadatas,
-      hash: routeInfo.match.params.hash,
+      hash: decodeURIComponent(routeInfo.match.params.hash),
       baseUrl: '/gallery',
     };
 
@@ -157,7 +157,6 @@ class MediaServer extends React.Component<MediaServerProps> {
     });
 
     const props = {
-      // collection,
       picturesMetadatas,
       hash,
       baseUrl: `/collections/${routeInfo.match.params.type}/${routeInfo.match.params.identifier}`,
