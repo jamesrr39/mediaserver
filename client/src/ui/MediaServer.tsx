@@ -165,6 +165,24 @@ class MediaServer extends React.Component<MediaServerProps> {
     return <PictureModal {...props}/>;
   }
 
+  renderCollectionsComponent = () => {
+    return (
+      <React.Fragment>
+        <MediaserverTopBar />
+        <CollectionsComponent />
+      </React.Fragment>
+    );
+  }
+
+  renderAllPicturesGallery = () => {
+    return (
+      <React.Fragment>
+        <MediaserverTopBar />
+        <AllPicturesGallery />
+      </React.Fragment>
+    );
+  }
+
   render() {
     if (!this.props.isReady) {
       return <p>Loading...</p>;
@@ -174,8 +192,6 @@ class MediaServer extends React.Component<MediaServerProps> {
       <div>
         <HashRouter>
           <div>
-            <MediaserverTopBar />
-            <Route path="/collections" exact={true} component={CollectionsComponent} />
             <Switch>
               <Route path="/collections/:type/:identifier/edit" render={this.renderEditCollectionView} />
               <React.Fragment>
@@ -183,8 +199,12 @@ class MediaServer extends React.Component<MediaServerProps> {
                 <Route path="/collections/:type/:identifier/picture/:hash" render={this.renderCollectionPicture} />
               </React.Fragment>
             </Switch>
-            <Route path="/gallery" component={AllPicturesGallery} />
-            <Route path="/gallery/picture/:hash" render={this.renderAllPicturesPictureModal} />
+            <Route path="/collections" exact={true} render={this.renderCollectionsComponent} />
+            <Route path="/gallery" component={this.renderAllPicturesGallery} />
+            <Route
+              path="/gallery/picture/:hash"
+              render={this.renderAllPicturesPictureModal}
+            />
             <Route path="/" exact={true} render={() => (<Redirect to="/gallery" />)} />
             <div style={styles.notificationsComponent}>
               <NotificationBarComponent />
