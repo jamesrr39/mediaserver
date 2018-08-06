@@ -3,8 +3,8 @@ import { PictureMetadata } from './domain/PictureMetadata';
 
 export type QueuedFile = {
   file: File,
-  onSuccess: (pictureMetadata: PictureMetadata) => void,
-  onFailure: (response: Response) => void;
+  onSuccess: (pictureMetadata: PictureMetadata, remainingLeftInQueue: number) => void,
+  onFailure: (response: Response, remainingLeftInQueue: number) => void;
 };
 
 export class FileQueue {
@@ -35,12 +35,12 @@ export class FileQueue {
         this.onUploadFinished();
 
         if (!response.ok) {
-          queuedFile.onFailure(response);
+          queuedFile.onFailure(response, this.currentUploads);
           return;
         }
 
         response.json().then((pictureMetadata) => {
-          queuedFile.onSuccess(pictureMetadata);
+          queuedFile.onSuccess(pictureMetadata, this.currentUploads);
         });
       });
   }

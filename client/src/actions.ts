@@ -56,18 +56,20 @@ export function fetchPicturesMetadata() {
 
 export function queueFileForUpload(file: File) {
   return (dispatch: (action: MediaserverAction | NotifyAction) => void) => {
-    const onSuccess = (pictureMetadata: PictureMetadata) => {
+    const onSuccess = (pictureMetadata: PictureMetadata, uploadsRemaining: number) => {
       dispatch({
         type: FilesActionTypes.PICTURE_SUCCESSFULLY_UPLOADED,
         pictureMetadata,
       } as PictureSuccessfullyUploadedAction);
 
-      dispatch(newNotificationAction(NotificationLevel.INFO, `uploaded '${file.name}'`));
+      const message = `uploaded '${file.name}'. ${uploadsRemaining} uploads left.`;
+      dispatch(newNotificationAction(NotificationLevel.INFO, message));
     };
 
-    const onFailure = (response: Response) => {
+    const onFailure = (response: Response, uploadsRemaining: number) => {
       if (response.status === 409) {
-        dispatch(newNotificationAction(NotificationLevel.INFO, `'${file.name}' already uploaded`));
+        const message = `'${file.name}' already uploaded. ${uploadsRemaining} uploads left.`;
+        dispatch(newNotificationAction(NotificationLevel.INFO, message));
         return;
       }
 
