@@ -11,8 +11,8 @@ export enum NotificationLevel {
 
 export class GalleryNotification {
   constructor(
-    public readonly text: string,
     public readonly level: NotificationLevel,
+    public readonly text: string,
   ) {}
 }
 

@@ -1,5 +1,5 @@
 import { Action } from 'redux';
-import { GalleryNotification, NotificationLevel } from '../ui/NotificationBarComponent';
+import { GalleryNotification } from '../ui/NotificationBarComponent';
 
 export enum NotificationActionTypes {
   NOTIFY = 'NOTIFY',
@@ -18,21 +18,16 @@ export interface RemoveNotificationAction extends Action {
 
 export type NotificationAction = NotifyAction | RemoveNotificationAction;
 
-export function newNotificationAction(level: NotificationLevel, text: string): NotifyAction {
+export function newNotificationAction(notification: GalleryNotification): NotifyAction {
   return {
     type: NotificationActionTypes.NOTIFY,
-    notification: {
-      level,
-      text,
-    },
+    notification,
   };
 }
 
 export function removeNotification(notification: GalleryNotification) {
-  return (dispatch: (action: RemoveNotificationAction) => void) => {
-    dispatch({
-      type: NotificationActionTypes.REMOVE_NOTIFICATION,
-      notification,
-    });
+  return {
+    type: NotificationActionTypes.REMOVE_NOTIFICATION,
+    notification,
   };
 }

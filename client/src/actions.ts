@@ -1,11 +1,11 @@
 import { PictureMetadata } from './domain/PictureMetadata';
 import { Action } from 'redux';
 import { SERVER_BASE_URL } from './configs';
-import { NotificationLevel } from './ui/NotificationBarComponent';
+import { NotificationLevel, GalleryNotification } from './ui/NotificationBarComponent';
 import { QueuedFile } from './fileQueue';
-import { newNotificationAction, NotifyAction } from './actions/notificationActions';
-
-// export const FETCH_PICTURES_METADATA = 'FETCH_PICTURES_METADATA';
+import {
+  newNotificationAction, NotifyAction, removeNotification, RemoveNotificationAction
+ } from './actions/notificationActions';
 
 export enum FilesActionTypes {
   FETCH_PICTURES_METADATA = 'FETCH_PICTURES_METADATA',
@@ -54,8 +54,10 @@ export function fetchPicturesMetadata() {
   };
 }
 
+const REMOVE_INFO_NOTIFICATION_AFTER_MS = 3000; // 3s
+
 export function queueFileForUpload(file: File) {
-  return (dispatch: (action: MediaserverAction | NotifyAction) => void) => {
+  return (dispatch: (action: MediaserverAction | NotifyAction | RemoveNotificationAction) => void) => {
     const onSuccess = (pictureMetadata: PictureMetadata, uploadsRemaining: number) => {
       dispatch({
         type: FilesActionTypes.PICTURE_SUCCESSFULLY_UPLOADED,
@@ -63,20 +65,27 @@ export function queueFileForUpload(file: File) {
       } as PictureSuccessfullyUploadedAction);
 
       const message = `uploaded '${file.name}'. ${uploadsRemaining} uploads left.`;
-      dispatch(newNotificationAction(NotificationLevel.INFO, message));
+      const notification = new GalleryNotification(NotificationLevel.INFO, message);
+      dispatch(newNotificationAction(notification));
+      setTimeout(
+        () => dispatch(removeNotification(notification) as RemoveNotificationAction),
+        REMOVE_INFO_NOTIFICATION_AFTER_MS);
     };
 
     const onFailure = (response: Response, uploadsRemaining: number) => {
       if (response.status === 409) {
         const message = `'${file.name}' already uploaded. ${uploadsRemaining} uploads left.`;
-        dispatch(newNotificationAction(NotificationLevel.INFO, message));
+        const notification = new GalleryNotification(NotificationLevel.INFO, message);
+        dispatch(newNotificationAction(notification));
+        setTimeout(
+          () => dispatch(removeNotification(notification) as RemoveNotificationAction),
+          REMOVE_INFO_NOTIFICATION_AFTER_MS);
         return;
       }
 
-      dispatch(newNotificationAction(
+      dispatch(newNotificationAction(new GalleryNotification(
         NotificationLevel.ERROR,
-        `error uploading '${file.name}': ${response.statusText}`));
-
+        `error uploading '${file.name}': ${response.statusText}`)));
     };
 
     dispatch({

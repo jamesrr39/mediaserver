@@ -33,14 +33,15 @@ export class FileQueue {
       })
       .then(response => {
         this.onUploadFinished();
+        const uploadsRemaining = this.currentUploads + this.queue.length;
 
         if (!response.ok) {
-          queuedFile.onFailure(response, this.currentUploads);
+          queuedFile.onFailure(response, uploadsRemaining);
           return;
         }
 
         response.json().then((pictureMetadata) => {
-          queuedFile.onSuccess(pictureMetadata, this.currentUploads);
+          queuedFile.onSuccess(pictureMetadata, uploadsRemaining);
         });
       });
   }

@@ -2,7 +2,7 @@ import { SERVER_BASE_URL } from './configs';
 import { Action } from 'redux';
 import { Collection, CustomCollection } from './domain/Collection';
 import { NotifyAction, newNotificationAction } from './actions/notificationActions';
-import { NotificationLevel } from './ui/NotificationBarComponent';
+import { NotificationLevel, GalleryNotification } from './ui/NotificationBarComponent';
 
 export const FETCH_COLLECTIONS = 'FETCH_COLLECTIONS';
 
@@ -71,7 +71,7 @@ export function saveCollection(collection: CustomCollection, onSuccess: (returne
           collectionJSON.name,
           collectionJSON.fileHashes
         );
-        dispatch(newNotificationAction(NotificationLevel.INFO, 'Saved!'));
+        dispatch(newNotificationAction(new GalleryNotification(NotificationLevel.INFO, 'Saved!')));
         dispatch({
           type: COLLECTION_SAVED,
           collection: returnedCollection,
@@ -79,7 +79,8 @@ export function saveCollection(collection: CustomCollection, onSuccess: (returne
         onSuccess(returnedCollection);
       });
     }).catch((errMessage: string) => {
-      dispatch(newNotificationAction(NotificationLevel.ERROR, `error saving: '${errMessage}'`));
+      dispatch(newNotificationAction(
+        new GalleryNotification(NotificationLevel.ERROR, `error saving: '${errMessage}'`)));
     });
   };
 }
