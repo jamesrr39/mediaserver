@@ -1,2 +1,5 @@
-// export const SERVER_BASE_URL = '//localhost:9050';
-export const SERVER_BASE_URL = '';
+declare global {
+    interface Window { env: {serverUrl: string}; }
+}
+
+export const SERVER_BASE_URL = window.env.serverUrl || '/';

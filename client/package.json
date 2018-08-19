@@ -19,7 +19,7 @@
     "redux-thunk": "^2.2.0"
   },
   "scripts": {
-    "start": "react-scripts-ts start",
+    "start": "REACT_APP_SERVER_URL=http://localhost:9050 react-scripts-ts start",
     "build": "react-scripts-ts build",
     "test": "react-scripts-ts test --env=jsdom",
     "eject": "react-scripts-ts eject",
@@ -30,6 +30,5 @@
     "@types/node": "^9.4.6",
     "react-test-renderer": "^16.4.0",
     "typescript": "^2.7.2"
-  },
-  "proxy": "http://localhost:9050"
+  }
 }
