@@ -10,9 +10,10 @@ const generateThumbnailStyle = (pictureMetadata: PictureMetadata, isLoaded: bool
 
   if (isLoaded) {
     return {
-      backgroundColor: 'transparent',
-      maxWidth: width,
-      maxHeight: '200px',
+      width: `${width}px`,
+      height: '200px',
+      backgroundImage: '',
+      backgroundRepeat: 'no-repeat',
     };
   }
 
@@ -29,13 +30,13 @@ export interface ThumbnailProps {
 }
 
 type ThumbnailState = {
-  isImageQueuedOrLoaded: boolean;
+  isImageQueued: boolean;
   isImageLoaded: boolean;
 };
 
 export class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
   state = {
-    isImageQueuedOrLoaded: false,
+    isImageQueued: false,
     isImageLoaded: false,
   };
 
@@ -60,25 +61,24 @@ export class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
   render() {
     const imgSrc = `${SERVER_BASE_URL}/picture/${this.props.pictureMetadata.hashValue}?h=200`;
 
-    let img;
-    if (this.state.isImageQueuedOrLoaded) {
-      const onload = () => {
+    const thumbnailStyle = generateThumbnailStyle(this.props.pictureMetadata, this.state.isImageLoaded);
+
+    if (this.state.isImageLoaded) {
+      thumbnailStyle.backgroundImage = `url(${imgSrc})`;
+    } else if (this.state.isImageQueued) {
+      const image = new Image();
+      image.onload = () => {
         this.setState(state => ({
           ...state,
+          isImageQueued: false,
           isImageLoaded: true,
         }));
       };
-      img = <img src={imgSrc} onLoad={onload} />;
-    } else {
-      img = '';
+      image.src = imgSrc;
     }
 
-    const thumbnailStyle = generateThumbnailStyle(this.props.pictureMetadata, this.state.isImageLoaded);
-
     return (
-      <div style={thumbnailStyle} ref={el => this.element = el}>
-        {img}
-      </div>
+      <div style={thumbnailStyle} ref={el => this.element = el} />
     );
   }
 
@@ -88,7 +88,7 @@ export class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
     }
 
     this.setState({
-      isImageQueuedOrLoaded: true,
+      isImageQueued: true,
     });
   }
 

@@ -39,7 +39,21 @@ class Gallery extends React.Component<GalleryProps> {
   render() {
     this.props.picturesMetadatas.sort(gallerySortingFunc);
 
-    const pictures = this.props.picturesMetadatas.map((pictureMetadata, index) => {
+    // const thumbnails = (window.innerWidth > 400)
+    //   ? this.renderWideScreenThumbnails()
+    //   : this.renderNarrowScreenThumbnails();
+
+    const thumbnails = this.renderWideScreenThumbnails();
+
+    return (
+      <div style={styles.gallery}>
+        {thumbnails}
+      </div>
+    );
+  }
+
+  renderWideScreenThumbnails = () => {
+    return this.props.picturesMetadatas.map((pictureMetadata, index) => {
       const thumbnailProps = {
         scrollObservable: this.props.scrollObservable,
         pictureMetadata,
@@ -72,14 +86,9 @@ class Gallery extends React.Component<GalleryProps> {
       return (
         <div key={index} style={styles.thumbnail}>
           {innerHtml}
-        </div>);
+        </div>
+      );
     });
-
-    return (
-      <div style={styles.gallery}>
-        {pictures}
-      </div>
-    );
   }
 }
 
