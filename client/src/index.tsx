@@ -3,6 +3,7 @@ import * as ReactDOM from 'react-dom';
 
 import registerServiceWorker from './registerServiceWorker';
 import './index.css';
+import '../node_modules/font-awesome/css/font-awesome.css';
 
 import { Provider } from 'react-redux';
 import configureStore from './configureStore';
