@@ -174,7 +174,7 @@ class PictureModal extends React.Component<Props> {
           <Link to={this.props.baseUrl} style={styles.navigationButton}>&#x274C;</Link>
           <a
             href={pictureURL}
-            download={true}
+            download={encodeURIComponent(this.pictureMetadata.getName())}
             style={styles.navigationButton}
             className="fa fa-download"
             aria-label="Download"

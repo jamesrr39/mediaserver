@@ -3,22 +3,55 @@ import { PictureMetadata } from '../domain/PictureMetadata';
 
 import { Observable } from '../util/Observable';
 import { SERVER_BASE_URL } from '../configs';
+import { isNarrowScreen } from '../util/screen_size';
+import { THUMBNAIL_HEIGHTS } from '../generated/thumbnail_sizes';
 
-const generateThumbnailStyle = (pictureMetadata: PictureMetadata, isLoaded: boolean) => {
-  const ratio = 200 / pictureMetadata.rawSize.height;
-  const width = pictureMetadata.rawSize.width * ratio;
+const WIDE_SCREEN_THUMBNAIL_HEIGHT = 200;
+const NARROW_SCREEN_THUMBNAIL_HEIGHT = 100;
+const NARROW_SCREEN_THUMBNAIL_WIDTH = 100;
+
+function getImageHeightToRequest(narrowScreen: boolean, pictureMetadata: PictureMetadata) {
+  const { height, width } = pictureMetadata.rawSize;
+
+  if (!narrowScreen) {
+    if (height > WIDE_SCREEN_THUMBNAIL_HEIGHT) {
+      return WIDE_SCREEN_THUMBNAIL_HEIGHT;
+    }
+    return height;
+  }
+
+  if (height > width) {
+    const ratio = width / height;
+    const thumbnailHeight = THUMBNAIL_HEIGHTS.find((thumbnailHeightSetting) => {
+      return (ratio * thumbnailHeightSetting) > NARROW_SCREEN_THUMBNAIL_WIDTH;
+    });
+    if (thumbnailHeight) {
+      return thumbnailHeight;
+    }
+    return height;
+  }
+  return NARROW_SCREEN_THUMBNAIL_HEIGHT;
+}
+
+const generateThumbnailStyle = (pictureMetadata: PictureMetadata, isLoaded: boolean, narrowScreen: boolean) => {
+  // const height = narrowScreen ? NARROW_SCREEN_THUMBNAIL_HEIGHT : WIDE_SCREEN_THUMBNAIL_HEIGHT;
+  const heightToRequest = getImageHeightToRequest(narrowScreen, pictureMetadata);
+  const ratio = heightToRequest / pictureMetadata.rawSize.height;
+  const width = narrowScreen ? NARROW_SCREEN_THUMBNAIL_WIDTH : (pictureMetadata.rawSize.width * ratio);
+  const height = narrowScreen ? NARROW_SCREEN_THUMBNAIL_HEIGHT : WIDE_SCREEN_THUMBNAIL_HEIGHT;
 
   if (isLoaded) {
     return {
       width: `${width}px`,
-      height: '200px',
+      height: `${height}px`,
       backgroundImage: '',
       backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'center',
     };
   }
 
   return {
-    height: '200px',
+    height: `${height}px`,
     backgroundColor: '#bbb',
     width,
   };
@@ -59,9 +92,13 @@ export class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
   }
 
   render() {
-    const imgSrc = `${SERVER_BASE_URL}/picture/${this.props.pictureMetadata.hashValue}?h=200`;
+    const { pictureMetadata } = this.props;
+    const narrowScreen = isNarrowScreen();
+    const thumbnailHeight = getImageHeightToRequest(narrowScreen, pictureMetadata);
+    const imgSrc = `${SERVER_BASE_URL}/picture/${pictureMetadata.hashValue}?h=${thumbnailHeight}`;
 
-    const thumbnailStyle = generateThumbnailStyle(this.props.pictureMetadata, this.state.isImageLoaded);
+    const thumbnailStyle = generateThumbnailStyle(
+      this.props.pictureMetadata, this.state.isImageLoaded, narrowScreen);
 
     if (this.state.isImageLoaded) {
       thumbnailStyle.backgroundImage = `url(${imgSrc})`;

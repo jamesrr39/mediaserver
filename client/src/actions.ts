@@ -1,4 +1,4 @@
-import { PictureMetadata } from './domain/PictureMetadata';
+import { PictureMetadata, ExifData, RawSize } from './domain/PictureMetadata';
 import { Action } from 'redux';
 import { SERVER_BASE_URL } from './configs';
 import { NotificationLevel, GalleryNotification } from './ui/NotificationBarComponent';
@@ -40,17 +40,38 @@ export type MediaserverAction = (
   PictureSuccessfullyUploadedAction |
   FetchPicturesMetadataAction);
 
+type PictureMetadataJSON = {
+    hashValue: string;
+    relativeFilePath: string;
+    fileSizeBytes: number;
+    exif: null|ExifData;
+    rawSize: RawSize;
+  };
+
 export function fetchPicturesMetadata() {
-  return (dispatch: (action: FetchPicturesMetadataAction | PicturesMetadataFetchedAction) => void) => {
+  return (dispatch: (action: FetchPicturesMetadataAction | PicturesMetadataFetchedAction | NotifyAction) => void) => {
     dispatch({
       type: FilesActionTypes.FETCH_PICTURES_METADATA,
     } as FetchPicturesMetadataAction);
     return fetch(`${SERVER_BASE_URL}/api/pictureMetadata/`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(response.statusText);
+        }
+        return response;
+      })
       .then(response => response.json())
-      .then((picturesMetadatas: PictureMetadata[]) => dispatch({
-        type: FilesActionTypes.PICTURES_METADATA_FETCHED,
-        picturesMetadatas,
-      }));
+      .then((picturesMetadatasJSON: PictureMetadataJSON[]) => {
+        const picturesMetadatas = picturesMetadatasJSON.map((json) => (
+          new PictureMetadata(json.hashValue, json.relativeFilePath, json.fileSizeBytes, json.exif, json.rawSize))
+        );
+        dispatch({
+          type: FilesActionTypes.PICTURES_METADATA_FETCHED,
+          picturesMetadatas,
+        });
+      }).catch((errMessage) => {
+        dispatch(newNotificationAction(new GalleryNotification(NotificationLevel.ERROR, errMessage)));
+      });
   };
 }
 

@@ -1,13 +1,19 @@
-export type PictureMetadata = {
-  hashValue: string;
-  relativeFilePath: string;
-  fileSizeBytes: number;
-  exif: null|ExifData;
-  rawSize: {
-    width: number;
-    height: number;
+export class PictureMetadata {
+  constructor(
+    public readonly hashValue: string,
+    public readonly relativeFilePath: string,
+    public readonly fileSizeBytes: number,
+    public readonly exif: null|ExifData,
+    public readonly rawSize: RawSize) {}
+
+  getName() {
+    const lastSlash = this.relativeFilePath.lastIndexOf('/');
+    if (lastSlash === -1) {
+      return this.relativeFilePath;
+    }
+    return this.relativeFilePath.substring(lastSlash + 1);
   }
-};
+}
 
 /**
  * sorts two dates, most recent first.
@@ -89,8 +95,13 @@ function parseExifDate(dateString: string) {
 //   asUTCTimestamp() {}
 // }
 
-type ExifData = {
+export type ExifData = {
   DateTime?: string;
   DateTimeDigitized?: string;
   DateTimeOriginal?: string;
+};
+
+export type RawSize = {
+  width: number,
+  height: number,
 };
