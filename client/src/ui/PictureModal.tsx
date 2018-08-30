@@ -9,12 +9,18 @@ import { THUMBNAIL_HEIGHTS } from '../generated/thumbnail_sizes';
 import { Observable } from '../util/Observable';
 import { compose } from 'redux';
 import { History } from 'history';
+import PictureInfoComponent from './PictureInfoComponent';
+import { SMALL_SCREEN_WIDTH } from '../util/screen_size';
 
 const KeyCodes = {
   ESCAPE: 27,
   LEFT_ARROW: 37,
   RIGHT_ARROW: 39,
 };
+
+enum Subview {
+  INFO = 'info'
+}
 
 type Props = {
   hash: string,
@@ -23,6 +29,7 @@ type Props = {
   dispatch: Dispatch<Action>,
   scrollObservable: Observable,
   baseUrl: string, // for example, /gallery
+  subview?: Subview,
 };
 
 const styles = {
@@ -37,6 +44,10 @@ const styles = {
     color: 'white',
     display: 'flex',
     flexDirection: 'column',
+  } as React.CSSProperties,
+  modalBody: {
+    display: 'flex',
+    alignItems: 'stretch',
   } as React.CSSProperties,
   pictureContainer: {
     display: 'flex',
@@ -53,6 +64,11 @@ const styles = {
     lineHeight: '50px',
     textAlign: 'center',
     verticalAlign: 'middle',
+    backgroundColor: 'transparent',
+    borderStyle: 'none',
+  },
+  pictureAndTopBarContainer: {
+    width: '100%',
   },
   topBar: {
     position: 'fixed',
@@ -60,9 +76,23 @@ const styles = {
     justifyContent: 'space-between',
     width: '100%',
   } as React.CSSProperties,
+  pictureInfoComponent: {
+    width: `${SMALL_SCREEN_WIDTH}px`,
+    backgroundColor: '#333',
+    height: '100%',
+    padding: '10px',
+  },
 };
 
-class PictureModal extends React.Component<Props> {
+type ComponentState = {
+  showInfo: boolean;
+};
+
+class PictureModal extends React.Component<Props, ComponentState> {
+  state = {
+    showInfo: false
+  };
+
   private pictureEl: HTMLImageElement|null;
 
   private pictureMetadata: PictureMetadata | null = null;
@@ -113,38 +143,94 @@ class PictureModal extends React.Component<Props> {
       return (<p>Image not found</p>);
     }
 
+    if (this.pictureMetadata.exif) {
+      const { exif } = this.pictureMetadata;
+      // tslint:disable-next-line
+      console.log(exif.GPSInfoIFDPointer, exif.GPSLatitude, exif.GPSLatitudeRef, exif.GPSLongitude, exif.GPSLongitudeRef)
+    }
+
     const pictureURL = `${SERVER_BASE_URL}/picture/${this.pictureMetadata.hashValue}`;
 
-    const refCb = (el: HTMLDivElement|null) => {
-      if (el === null || this.pictureEl === null) {
-        return;
+    const refCb = this.createRefCallback();
+
+    const previousLink = this.renderPreviousLink();
+
+    const nextLink = this.renderNextLink();
+
+    const infoComponent = this.state.showInfo
+      && (
+        <div style={styles.pictureInfoComponent}>
+          <PictureInfoComponent {...{pictureMetadata: this.pictureMetadata}} />
+        </div>
+      );
+
+    return (
+      <div style={styles.modal} ref={refCb}>
+        <div style={styles.modalBody}>
+          <div style={styles.pictureAndTopBarContainer}>
+            <div style={styles.topBar}>
+              <Link to={this.props.baseUrl} style={styles.navigationButton}>&#x274C;</Link>
+              <div>
+                <button
+                  onClick={() => this.setState((state) => ({...state, showInfo: !state.showInfo}))}
+                  style={styles.navigationButton}
+                  className="fa fa-info-circle"
+                  aria-label="Info"
+                />
+                <a
+                  href={pictureURL}
+                  download={encodeURIComponent(this.pictureMetadata.getName())}
+                  style={styles.navigationButton}
+                  className="fa fa-download"
+                  aria-label="Download"
+                />
+              </div>
+            </div>
+            <div style={styles.pictureContainer}>
+              <div>{previousLink}</div>
+              <div>
+                <img src={pictureURL} ref={(el) => {this.pictureEl = el; }} />
+              </div>
+              <div>{nextLink}</div>
+            </div>
+          </div>
+          {infoComponent}
+        </div>
+      </div>
+    );
+  }
+
+  private createRefCallback = () => (el: HTMLDivElement|null) => {
+    if (el === null || this.pictureEl === null) {
+      return;
+    }
+
+    const pictureMetadata = this.pictureMetadata as PictureMetadata;
+
+    const idealHeight = (el.clientHeight);
+    const idealWidth = (el.clientWidth - 100);
+
+    const aspectRatio = pictureMetadata.rawSize.width / pictureMetadata.rawSize.height;
+
+    let chosenHeight = THUMBNAIL_HEIGHTS.find((height) => {
+      const width = Math.round(height * aspectRatio);
+      if (height >= idealHeight || width >= idealWidth) {
+        return true;
       }
+      return false;
+    });
+    if (!chosenHeight) {
+      chosenHeight = pictureMetadata.rawSize.height;
+    }
 
-      const pictureMetadata = this.pictureMetadata as PictureMetadata;
+    const url = `${SERVER_BASE_URL}/picture/${pictureMetadata.hashValue}?h=${chosenHeight}`;
+    this.pictureEl.style.maxHeight = `${idealHeight}px`;
+    this.pictureEl.style.maxWidth = `${idealWidth}px`;
+    this.pictureEl.src = url;
+  }
 
-      const idealHeight = (el.clientHeight);
-      const idealWidth = (el.clientWidth - 100);
-
-      const aspectRatio = pictureMetadata.rawSize.width / pictureMetadata.rawSize.height;
-
-      let chosenHeight = THUMBNAIL_HEIGHTS.find((height) => {
-        const width = Math.round(height * aspectRatio);
-        if (height >= idealHeight || width >= idealWidth) {
-          return true;
-        }
-        return false;
-      });
-      if (!chosenHeight) {
-        chosenHeight = pictureMetadata.rawSize.height;
-      }
-
-      const url = `${SERVER_BASE_URL}/picture/${pictureMetadata.hashValue}?h=${chosenHeight}`;
-      this.pictureEl.style.maxHeight = `${idealHeight}px`;
-      this.pictureEl.style.maxWidth = `${idealWidth}px`;
-      this.pictureEl.src = url;
-    };
-
-    const previousLink = this.previousPictureMetadata
+  private renderPreviousLink = () => {
+    return this.previousPictureMetadata
       ? (
         <Link
           to={`${this.props.baseUrl}/picture/${this.previousPictureMetadata.hashValue}`}
@@ -154,8 +240,10 @@ class PictureModal extends React.Component<Props> {
         </Link>
       )
       : <span style={styles.navigationButton} />;
+  }
 
-    const nextLink = this.nextPictureMetadata
+  private renderNextLink = () => {
+    return this.nextPictureMetadata
       ? (
         <Link
           to={`${this.props.baseUrl}/picture/${this.nextPictureMetadata.hashValue}`}
@@ -165,30 +253,6 @@ class PictureModal extends React.Component<Props> {
         </Link>
       )
       : <span style={styles.navigationButton} />;
-
-    const imgStyle = {};
-
-    return (
-      <div style={styles.modal} ref={refCb}>
-        <div style={styles.topBar}>
-          <Link to={this.props.baseUrl} style={styles.navigationButton}>&#x274C;</Link>
-          <a
-            href={pictureURL}
-            download={encodeURIComponent(this.pictureMetadata.getName())}
-            style={styles.navigationButton}
-            className="fa fa-download"
-            aria-label="Download"
-          />
-        </div>
-        <div style={styles.pictureContainer}>
-          <div>{previousLink}</div>
-          <div>
-            <img src={pictureURL} style={imgStyle} ref={(el) => {this.pictureEl = el; }} />
-          </div>
-          <div>{nextLink}</div>
-        </div>
-      </div>
-    );
   }
 
   private goBack = () => {
