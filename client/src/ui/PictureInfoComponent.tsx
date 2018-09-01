@@ -1,13 +1,10 @@
 import * as React from 'react';
 import * as Leaflet from 'leaflet';
-import { PictureMetadata, Location } from '../domain/PictureMetadata';
+import { PictureMetadata } from '../domain/PictureMetadata';
+import { Location } from '../domain/PictureMetadata';
 
-// import '../images/marker-icon.png';
-// import '../images/shadow-icon.png';
-
-type Props = {
-  pictureMetadata: PictureMetadata;
-};
+const markerIcon = require('../../node_modules/leaflet/dist/images/marker-icon.png');
+const markerShadow = require('../../node_modules/leaflet/dist/images/marker-shadow.png');
 
 const styles = {
   mapContainer: {
@@ -16,7 +13,13 @@ const styles = {
   },
 };
 
+type Props = {
+  pictureMetadata: PictureMetadata;
+};
+
 class PictureInfoComponent extends React.Component<Props> {
+  private map: Leaflet.Map | null = null;
+
   render() {
     const { pictureMetadata } = this.props;
 
@@ -36,38 +39,39 @@ class PictureInfoComponent extends React.Component<Props> {
     );
   }
 
-  /* view-source:https://leafletjs.com/examples/quick-start/example.html */
   private renderMap = (element: HTMLElement|null, location: Location) => {
     if (element === null) {
       return;
     }
-    if (element.children.length > 0) {
-      return;
+
+    if (this.map) {
+      this.map.remove();
+      this.map = null;
     }
 
     const map = Leaflet.map(element);
     const osmUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-    const osmAttrib = 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors';
+    const attribution = 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors';
     const osm = new Leaflet.TileLayer(osmUrl, {
-      minZoom: 8, maxZoom: 12, attribution: osmAttrib
+      attribution,
     });
 
-    map.setView(new Leaflet.LatLng(location.lat, location.long), 12);
+    map.setView(new Leaflet.LatLng(location.lat, location.long), 13);
     map.addLayer(osm);
 
-    const marker = Leaflet.marker([60.432870, 6.850745], {
-//       {
-//     iconUrl: icon,
-//     shadowUrl: iconShadow
-// });
+    const marker = Leaflet.marker([location.lat, location.long], {
       icon: new Leaflet.Icon({
-        iconUrl: '/images/marker-icon.png',
-        shadowUrl: '/images/shadow-icon.png',
-      })
+        iconUrl: markerIcon,
+        shadowUrl: markerShadow,
+        iconSize: [24, 36],
+        iconAnchor: [12, 36],
+      }),
     });
-    // marker.icon()
+
     marker.addTo(map);
+    this.map = map;
   }
+
 }
 
 export default PictureInfoComponent;

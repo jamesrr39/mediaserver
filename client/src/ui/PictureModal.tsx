@@ -10,7 +10,7 @@ import { Observable } from '../util/Observable';
 import { compose } from 'redux';
 import { History } from 'history';
 import PictureInfoComponent from './PictureInfoComponent';
-import { SMALL_SCREEN_WIDTH } from '../util/screen_size';
+import { SMALL_SCREEN_WIDTH, isNarrowScreen } from '../util/screen_size';
 
 const KeyCodes = {
   ESCAPE: 27,
@@ -47,13 +47,22 @@ const styles = {
   } as React.CSSProperties,
   modalBody: {
     display: 'flex',
-    alignItems: 'stretch',
+    height: '100%',
+    // alignItems: 'stretch',
   } as React.CSSProperties,
+  pictureInfoContainer: {
+    width: `${SMALL_SCREEN_WIDTH}px`,
+    backgroundColor: '#333',
+    height: '100%',
+    padding: '40px 10px 0',
+    // flexShrink: 0,
+  },
   pictureContainer: {
+    width: '100%',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    flexGrow: 1,
+    // flexGrow: 1,
   } as React.CSSProperties,
   navigationButton: {
     color: 'white',
@@ -67,21 +76,12 @@ const styles = {
     backgroundColor: 'transparent',
     borderStyle: 'none',
   },
-  pictureAndTopBarContainer: {
-    width: '100%',
-  },
   topBar: {
     position: 'fixed',
     display: 'flex',
     justifyContent: 'space-between',
     width: '100%',
   } as React.CSSProperties,
-  pictureInfoComponent: {
-    width: `${SMALL_SCREEN_WIDTH}px`,
-    backgroundColor: '#333',
-    height: '100%',
-    padding: '10px',
-  },
 };
 
 type ComponentState = {
@@ -143,58 +143,75 @@ class PictureModal extends React.Component<Props, ComponentState> {
       return (<p>Image not found</p>);
     }
 
-    if (this.pictureMetadata.exif) {
-      const { exif } = this.pictureMetadata;
-      // tslint:disable-next-line
-      console.log(exif.GPSInfoIFDPointer, exif.GPSLatitude, exif.GPSLatitudeRef, exif.GPSLongitude, exif.GPSLongitudeRef)
+    return (
+      <div style={styles.modal}>
+        {this.renderTopBar(this.pictureMetadata)}
+        <div style={styles.modalBody}>
+          {this.renderModalBody(this.pictureMetadata)}
+        </div>
+      </div>
+    );
+  }
+
+  private renderModalBody = (pictureMetadata: PictureMetadata) => {
+    if (isNarrowScreen()) {
+      if (this.state.showInfo) {
+        return this.renderInfoContainer(pictureMetadata);
+      }
+      return this.renderPicture(pictureMetadata);
     }
+    return (
+      <React.Fragment>
+        {this.renderPicture(pictureMetadata)}
+        {this.state.showInfo && this.renderInfoContainer(pictureMetadata)}
+      </React.Fragment>
+    );
+  }
 
-    const pictureURL = `${SERVER_BASE_URL}/picture/${this.pictureMetadata.hashValue}`;
+  private renderInfoContainer = (pictureMetadata: PictureMetadata) => {
+    return (
+      <div style={styles.pictureInfoContainer}>
+        <PictureInfoComponent {...{pictureMetadata}} />
+      </div>
+    );
+  }
 
+  private renderPicture = (pictureMetadata: PictureMetadata) => {
+    const previousLink = this.renderPreviousLink();
+    const nextLink = this.renderNextLink();
     const refCb = this.createRefCallback();
 
-    const previousLink = this.renderPreviousLink();
-
-    const nextLink = this.renderNextLink();
-
-    const infoComponent = this.state.showInfo
-      && (
-        <div style={styles.pictureInfoComponent}>
-          <PictureInfoComponent {...{pictureMetadata: this.pictureMetadata}} />
+    return (
+      <div style={styles.pictureContainer} ref={refCb}>
+        <div>{previousLink}</div>
+        <div>
+          <img ref={(el) => {this.pictureEl = el; }} />
         </div>
-      );
+        <div>{nextLink}</div>
+      </div>
+    );
+  }
+
+  private renderTopBar = (pictureMetadata: PictureMetadata) => {
+    const pictureURL = `${SERVER_BASE_URL}/picture/${pictureMetadata.hashValue}`;
 
     return (
-      <div style={styles.modal} ref={refCb}>
-        <div style={styles.modalBody}>
-          <div style={styles.pictureAndTopBarContainer}>
-            <div style={styles.topBar}>
-              <Link to={this.props.baseUrl} style={styles.navigationButton}>&#x274C;</Link>
-              <div>
-                <button
-                  onClick={() => this.setState((state) => ({...state, showInfo: !state.showInfo}))}
-                  style={styles.navigationButton}
-                  className="fa fa-info-circle"
-                  aria-label="Info"
-                />
-                <a
-                  href={pictureURL}
-                  download={encodeURIComponent(this.pictureMetadata.getName())}
-                  style={styles.navigationButton}
-                  className="fa fa-download"
-                  aria-label="Download"
-                />
-              </div>
-            </div>
-            <div style={styles.pictureContainer}>
-              <div>{previousLink}</div>
-              <div>
-                <img src={pictureURL} ref={(el) => {this.pictureEl = el; }} />
-              </div>
-              <div>{nextLink}</div>
-            </div>
-          </div>
-          {infoComponent}
+      <div style={styles.topBar}>
+        <Link to={this.props.baseUrl} style={styles.navigationButton}>&#x274C;</Link>
+        <div>
+          <button
+            onClick={() => this.setState((state) => ({...state, showInfo: !state.showInfo}))}
+            style={styles.navigationButton}
+            className="fa fa-info-circle"
+            aria-label="Info"
+          />
+          <a
+            href={pictureURL}
+            download={encodeURIComponent(pictureMetadata.getName())}
+            style={styles.navigationButton}
+            className="fa fa-download"
+            aria-label="Download"
+          />
         </div>
       </div>
     );
