@@ -2,14 +2,17 @@ import * as React from 'react';
 import * as Leaflet from 'leaflet';
 import { PictureMetadata } from '../domain/PictureMetadata';
 import { Location } from '../domain/PictureMetadata';
+import { SMALL_SCREEN_WIDTH } from '../util/screen_size';
 
 const markerIcon = require('../../node_modules/leaflet/dist/images/marker-icon.png');
 const markerShadow = require('../../node_modules/leaflet/dist/images/marker-shadow.png');
 
+export const INFO_CONTAINER_WIDTH = SMALL_SCREEN_WIDTH;
+
 const styles = {
   mapContainer: {
-    width: '400px',
-    height: '400px',
+    width: `${INFO_CONTAINER_WIDTH}px`,
+    height: `${INFO_CONTAINER_WIDTH}px`,
   },
 };
 

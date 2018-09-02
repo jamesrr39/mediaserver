@@ -9,8 +9,8 @@ import { THUMBNAIL_HEIGHTS } from '../generated/thumbnail_sizes';
 import { Observable } from '../util/Observable';
 import { compose } from 'redux';
 import { History } from 'history';
-import PictureInfoComponent from './PictureInfoComponent';
-import { SMALL_SCREEN_WIDTH, isNarrowScreen } from '../util/screen_size';
+import PictureInfoComponent, { INFO_CONTAINER_WIDTH } from './PictureInfoComponent';
+import { isNarrowScreen } from '../util/screen_size';
 
 const KeyCodes = {
   ESCAPE: 27,
@@ -48,21 +48,19 @@ const styles = {
   modalBody: {
     display: 'flex',
     height: '100%',
-    // alignItems: 'stretch',
   } as React.CSSProperties,
   pictureInfoContainer: {
-    width: `${SMALL_SCREEN_WIDTH}px`,
     backgroundColor: '#333',
     height: '100%',
     padding: '40px 10px 0',
-    // flexShrink: 0,
+    flex: `0 0 ${INFO_CONTAINER_WIDTH}px`,
   },
   pictureContainer: {
     width: '100%',
+    height: '100%',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    // flexGrow: 1,
   } as React.CSSProperties,
   navigationButton: {
     color: 'white',
@@ -143,10 +141,12 @@ class PictureModal extends React.Component<Props, ComponentState> {
       return (<p>Image not found</p>);
     }
 
+    const refCb = this.createRefCallback();
+
     return (
       <div style={styles.modal}>
         {this.renderTopBar(this.pictureMetadata)}
-        <div style={styles.modalBody}>
+        <div style={styles.modalBody} ref={refCb}>
           {this.renderModalBody(this.pictureMetadata)}
         </div>
       </div>
@@ -179,10 +179,9 @@ class PictureModal extends React.Component<Props, ComponentState> {
   private renderPicture = (pictureMetadata: PictureMetadata) => {
     const previousLink = this.renderPreviousLink();
     const nextLink = this.renderNextLink();
-    const refCb = this.createRefCallback();
 
     return (
-      <div style={styles.pictureContainer} ref={refCb}>
+      <div style={styles.pictureContainer}>
         <div>{previousLink}</div>
         <div>
           <img ref={(el) => {this.pictureEl = el; }} />
@@ -217,15 +216,15 @@ class PictureModal extends React.Component<Props, ComponentState> {
     );
   }
 
-  private createRefCallback = () => (el: HTMLDivElement|null) => {
-    if (el === null || this.pictureEl === null) {
+  private createRefCallback = () => (divContainerEl: HTMLDivElement|null) => {
+    if (divContainerEl === null || this.pictureEl === null || this.pictureMetadata === null) {
       return;
     }
 
-    const pictureMetadata = this.pictureMetadata as PictureMetadata;
-
-    const idealHeight = (el.clientHeight);
-    const idealWidth = (el.clientWidth - 100);
+    const pictureMetadata = this.pictureMetadata;
+    const idealHeight = (divContainerEl.clientHeight);
+    const infoContainerWidth = this.state.showInfo ? INFO_CONTAINER_WIDTH : 0;
+    const idealWidth = (divContainerEl.clientWidth - 100) - infoContainerWidth;
 
     const aspectRatio = pictureMetadata.rawSize.width / pictureMetadata.rawSize.height;
 
