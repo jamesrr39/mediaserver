@@ -10,6 +10,12 @@ type Props = {
   picturesMetadatas: PictureMetadata[];
 };
 
+const styles = {
+  container: {
+    margin: '0 20px',
+  },
+};
+
 class CollectionsComponent extends React.Component<Props> {
   renderFolderCollections() {
     const props = {
@@ -30,8 +36,8 @@ class CollectionsComponent extends React.Component<Props> {
   }
   render() {
     return (
-      <div>
-        Collections
+      <div style={styles.container}>
+        <h1>Collections</h1>
         {this.renderCustomCollections()}
         {this.renderFolderCollections()}
       </div>

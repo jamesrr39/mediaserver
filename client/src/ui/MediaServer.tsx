@@ -12,11 +12,12 @@ import { Action } from 'redux';
 import MediaserverTopBar from './MediaserverTopBar';
 import { fetchCollections } from '../collectionsActions';
 import CollectionsComponent from './collections/CollectionsListingComponent';
-import CollectionViewComponent from './collections/CollectionViewComponent';
+import CollectionViewComponent, { CollectionViewNavBarComponent } from './collections/CollectionViewComponent';
 import { extractFolderCollectionsFromPicturesMetadatas, CollectionType, CustomCollection } from '../domain/Collection';
 import NotFoundComponent from './NotFoundComponent';
 import NotificationBarComponent from './NotificationBarComponent';
 import EditCustomCollectionComponent from './collections/EditCustomCollectionComponent';
+import UploadComponent from './UploadComponent';
 
 type CollectionViewRouteParams = {
   identifier: string;
@@ -59,6 +60,13 @@ function findCollectionFromTypeAndName(
     }
 }
 
+const withNavBar = (component: JSX.Element, navBarChild?: React.ReactNode) => (
+  <React.Fragment>
+    <MediaserverTopBar {...{child: navBarChild}} />
+    {component}
+  </React.Fragment>
+);
+
 const styles = {
   notificationsComponent: {
     position: 'fixed',
@@ -67,6 +75,16 @@ const styles = {
   } as React.CSSProperties,
 };
 
+function collectionIdentifierAndTypeFromRoute(routeInfo: RouteComponentProps<CollectionViewRouteParams>) {
+  const identifier = decodeURIComponent(routeInfo.match.params.identifier);
+  const type = decodeURIComponent(routeInfo.match.params.type);
+
+  return {
+    identifier,
+    type,
+  };
+}
+
 class MediaServer extends React.Component<MediaServerProps> {
   componentWillMount() {
     this.props.dispatch(fetchPicturesMetadata());
@@ -74,15 +92,14 @@ class MediaServer extends React.Component<MediaServerProps> {
   }
 
   renderCollectionView = (routeInfo: RouteComponentProps<CollectionViewRouteParams>) => {
-    const identifier = decodeURIComponent(routeInfo.match.params.identifier);
-    const type = decodeURIComponent(routeInfo.match.params.type);
+    const { type, identifier } = collectionIdentifierAndTypeFromRoute(routeInfo);
 
     if (type === CollectionType.Custom && identifier === 'new') {
       const newCollectionComponentProps = {
         collection: new CustomCollection(0, '', []),
       };
 
-      return <EditCustomCollectionComponent {...newCollectionComponentProps} />;
+      return withNavBar(<EditCustomCollectionComponent {...newCollectionComponentProps} />);
     }
 
     const { picturesMetadatas, customCollections } = this.props;
@@ -95,7 +112,7 @@ class MediaServer extends React.Component<MediaServerProps> {
     );
 
     if (!collection) {
-      return <NotFoundComponent message={'no collection found'} />;
+      return withNavBar(<NotFoundComponent message={'no collection found'} />);
     }
 
     const encodedType = encodeURIComponent(routeInfo.match.params.type);
@@ -106,12 +123,11 @@ class MediaServer extends React.Component<MediaServerProps> {
       routeUrl: `/collections/${encodedType}/${encodedIdentifier}`,
     };
 
-    return <CollectionViewComponent {...props} />;
+    return withNavBar(<CollectionViewComponent {...props} />, <CollectionViewNavBarComponent {...{collection}} />);
   }
 
   renderEditCollectionView = (routeInfo: RouteComponentProps<CollectionViewRouteParams>) => {
-    const identifier = decodeURIComponent(routeInfo.match.params.identifier);
-    const type = decodeURIComponent(routeInfo.match.params.type);
+    const { type, identifier } = collectionIdentifierAndTypeFromRoute(routeInfo);
 
     if (type !== CollectionType.Custom) {
       return <NotFoundComponent message={`can't edit type '${type}'`} />;
@@ -166,21 +182,11 @@ class MediaServer extends React.Component<MediaServerProps> {
   }
 
   renderCollectionsComponent = () => {
-    return (
-      <React.Fragment>
-        <MediaserverTopBar />
-        <CollectionsComponent />
-      </React.Fragment>
-    );
+    return <CollectionsComponent />;
   }
 
   renderAllPicturesGallery = () => {
-    return (
-      <React.Fragment>
-        <MediaserverTopBar />
-        <AllPicturesGallery />
-      </React.Fragment>
-    );
+    return <AllPicturesGallery />;
   }
 
   render() {
@@ -193,17 +199,33 @@ class MediaServer extends React.Component<MediaServerProps> {
         <HashRouter>
           <div>
             <Switch>
-              <Route path="/collections/:type/:identifier/edit" render={this.renderEditCollectionView} />
+              <Route
+                path="/collections/:type/:identifier/edit"
+                render={(route) => withNavBar(this.renderEditCollectionView(route))}
+              />
               <React.Fragment>
-                <Route path="/collections/:type/:identifier" render={this.renderCollectionView} />
-                <Route path="/collections/:type/:identifier/picture/:hash" render={this.renderCollectionPicture} />
+                <Route
+                  path="/collections/:type/:identifier"
+                  render={(route) => this.renderCollectionView(route)}
+                />
+                <Route
+                  path="/collections/:type/:identifier/picture/:hash"
+                  render={(route) => withNavBar(this.renderCollectionPicture(route))}
+                />
               </React.Fragment>
             </Switch>
-            <Route path="/collections" exact={true} render={this.renderCollectionsComponent} />
-            <Route path="/gallery" component={this.renderAllPicturesGallery} />
+            <Route
+              path="/collections"
+              exact={true}
+              render={() => withNavBar(this.renderCollectionsComponent(), <UploadComponent />)}
+            />
+            <Route
+              path="/gallery"
+              render={() => withNavBar(this.renderAllPicturesGallery(), <UploadComponent />)}
+            />
             <Route
               path="/gallery/picture/:hash"
-              render={this.renderAllPicturesPictureModal}
+              render={(route) => withNavBar(this.renderAllPicturesPictureModal(route), <UploadComponent />)}
             />
             <Route path="/" exact={true} render={() => (<Redirect to="/gallery" />)} />
             <div style={styles.notificationsComponent}>

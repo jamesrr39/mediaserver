@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Collection } from '../../domain/Collection';
 import { SERVER_BASE_URL } from '../../configs';
 
-export const collectionThumbnailStyles = {
+export const styles = {
   collectionBox: {
     border: '1px black dotted',
     margin: '10px',
@@ -16,6 +16,9 @@ export const collectionThumbnailStyles = {
     backgroundRepeat: 'no-repeat',
     backgroundPosition: 'center center',
   } as React.CSSProperties,
+  nameStyle: {
+    textOverflow: 'ellipsis',
+  },
 };
 
 type Props = {
@@ -30,7 +33,7 @@ class CollectionThumbnail extends React.Component<Props> {
     const linkUrl = `/collections/${encodeURIComponent(type)}/${encodeURIComponent(identifier)}`;
 
     const thumbnailStyle = {
-      ...collectionThumbnailStyles.thumbnailHtml,
+      ...styles.thumbnailHtml,
     };
 
     let thumbnailHtml = <span>?</span>;
@@ -41,10 +44,10 @@ class CollectionThumbnail extends React.Component<Props> {
     }
 
     return (
-      <div style={collectionThumbnailStyles.collectionBox}>
+      <div style={styles.collectionBox}>
         <Link to={linkUrl}>
           <div style={thumbnailStyle}>{thumbnailHtml}</div>
-          <p>{name}</p>
+          <p style={styles.nameStyle}>{name}</p>
         </Link>
       </div>
     );

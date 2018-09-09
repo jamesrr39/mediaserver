@@ -20,6 +20,9 @@ const styles = {
     margin: '0 10px',
     border: '1px dashed black',
   },
+  container: {
+    margin: '0 20px',
+  },
 };
 
 type Props = {
@@ -123,7 +126,7 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
     };
 
     return (
-      <div>
+      <div style={styles.container}>
         <form>
           <input
             type="text"

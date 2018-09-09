@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { Collection } from '../../domain/Collection';
-import CollectionThumbnail, { collectionThumbnailStyles } from './CollectionThumbnail';
+import CollectionThumbnail from './CollectionThumbnail';
 import { Link } from 'react-router-dom';
+import { themeStyles } from '../../theme/theme';
 
 const styles = {
   collectionsWrapper: {
@@ -30,33 +31,26 @@ class CollectionGroupListingComponent extends React.Component<Props> {
       );
     });
 
-    let addCollectionBtn = <span />;
-    if (this.props.canAddCollection) {
-      const addCollectionBtnThumbnailHtmlStyle = {
-        ...collectionThumbnailStyles.thumbnailHtml,
-        lineHeight: collectionThumbnailStyles.thumbnailHtml.height,
-        textAlign: 'center',
-      };
-
-      addCollectionBtn = (
-        <div style={collectionThumbnailStyles.collectionBox}>
-          <Link to="/collections/custom/new">
-            <div style={addCollectionBtnThumbnailHtmlStyle}>
-            + New
-            </div>
-          </Link>
-        </div>
-      );
-    }
-
     return (
       <div>
         <h2>{this.props.title}</h2>
+        {this.renderAddCollectionBtn()}
         <div style={styles.collectionsWrapper}>
-          {addCollectionBtn}
           {itemsHtml}
         </div>
       </div>
+    );
+  }
+
+  private renderAddCollectionBtn = () => {
+    if (!this.props.canAddCollection) {
+      return '';
+    }
+
+    return (
+      <Link style={themeStyles.button} to={'/collections/custom/new'}>
+        &#43; Add
+      </Link>
     );
   }
 }
