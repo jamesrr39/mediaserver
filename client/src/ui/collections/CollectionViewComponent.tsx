@@ -30,6 +30,7 @@ class CollectionViewComponent extends React.Component<Props> {
     const galleryProps = {
       picturesMetadatas,
       pictureModalUrlbase: `${routeUrl}/picture`,
+      showMap: true,
     };
 
     const encodedType = encodeURIComponent(collection.type);

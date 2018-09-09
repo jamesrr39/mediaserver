@@ -6,22 +6,31 @@ import { Thumbnail } from './Thumbnail';
 import { State } from '../reducers';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
+import MapComponent, { MapMarker } from './MapComponent';
+import { SERVER_BASE_URL } from '../configs';
 
 export interface GalleryProps {
   picturesMetadatas: PictureMetadata[];
   scrollObservable: Observable;
   pictureModalUrlbase?: string; // example: /gallery/picture
   onClickThumbnail?: (pictureMetadata: PictureMetadata) => void;
+  showMap?: boolean;
 }
 
 const styles = {
-  gallery: {
+  container: {
+    margin: '0 20px',
+  },
+  picturesContainer: {
     display: 'flex',
     flexDirection: 'row',
     flexWrap: 'wrap',
   } as React.CSSProperties,
   thumbnail: {
       margin: '0 10px 10px 0',
+  },
+  mapContainer: {
+    margin: '30px 0',
   },
 };
 
@@ -39,16 +48,40 @@ class Gallery extends React.Component<GalleryProps> {
   render() {
     this.props.picturesMetadatas.sort(gallerySortingFunc);
 
-    const thumbnails = this.renderThumbnails();
-
     return (
-      <div style={styles.gallery}>
-        {thumbnails}
+      <div style={styles.container}>
+        {this.props.showMap && this.renderMap()}
+        <div style={styles.picturesContainer}>
+          {this.renderThumbnails()}
+        </div>
       </div>
     );
   }
 
-  renderThumbnails = () => {
+  private renderMap = () => {
+    const markers = this.getMarkers(this.props.picturesMetadatas);
+
+    if (markers.length === 0) {
+      return '';
+    }
+
+    const mapProps = {
+      size: {
+        width: '100%',
+        height: '600px',
+      },
+      markers,
+      extraLatLongMapPadding: 0.001,
+    };
+
+    return (
+      <div style={styles.mapContainer}>
+        <MapComponent {...mapProps} />
+      </div>
+    );
+  }
+
+  private renderThumbnails = () => {
     return this.props.picturesMetadatas.map((pictureMetadata, index) => {
       const thumbnailProps = {
         scrollObservable: this.props.scrollObservable,
@@ -85,6 +118,34 @@ class Gallery extends React.Component<GalleryProps> {
         </div>
       );
     });
+  }
+
+  private getMarkers = (picturesMetadatas: PictureMetadata[]) => {
+    const markers: MapMarker[] = [];
+    picturesMetadatas.forEach((metadata) => {
+      const location = metadata.getLocation();
+      if (!location) {
+        return;
+      }
+
+      const markerData: MapMarker = {
+        location,
+      };
+
+      if (this.props.pictureModalUrlbase) {
+        const linkUrl = `#${this.props.pictureModalUrlbase}/${metadata.hashValue}`;
+
+        markerData.popupData = {
+          name: metadata.getName(),
+          imagePreviewUrl: `${SERVER_BASE_URL}/picture/${metadata.hashValue}`,
+          linkUrl,
+          pictureRawSize: metadata.rawSize,
+        };
+      }
+      markers.push(markerData);
+    });
+
+    return markers;
   }
 }
 
