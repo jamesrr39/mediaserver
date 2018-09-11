@@ -17,6 +17,10 @@ export interface GalleryProps {
   showMap?: boolean;
 }
 
+type GalleryState = {
+  showMap: boolean;
+};
+
 const styles = {
   container: {
     margin: '0 20px',
@@ -36,7 +40,11 @@ const styles = {
 
 const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
-class Gallery extends React.Component<GalleryProps> {
+class Gallery extends React.Component<GalleryProps, GalleryState> {
+  state = {
+    showMap: true,
+  };
+
   componentDidMount() {
     this.props.scrollObservable.triggerEvent();
   }
@@ -58,7 +66,31 @@ class Gallery extends React.Component<GalleryProps> {
     );
   }
 
+  private showMap = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    this.setState(state => ({
+      ...state,
+      showMap: true,
+    }));
+  }
+
+  private hideMap = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    this.setState(state => ({
+      ...state,
+      showMap: false,
+    }));
+  }
+
   private renderMap = () => {
+    if (!this.state.showMap) {
+      return (
+        <div style={styles.mapContainer}>
+          <a href="#" onClick={this.showMap}>Show Map</a>
+        </div>
+      );
+    }
+
     const markers = this.getMarkers(this.props.picturesMetadatas);
 
     if (markers.length === 0) {
@@ -76,6 +108,7 @@ class Gallery extends React.Component<GalleryProps> {
 
     return (
       <div style={styles.mapContainer}>
+        <a href="#" onClick={this.hideMap}>Hide Map</a>
         <MapComponent {...mapProps} />
       </div>
     );
