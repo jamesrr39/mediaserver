@@ -42,11 +42,11 @@ func (dal *PicturesDAL) GetPictureBytes(hash pictures.HashValue, size pictures.S
 
 	// picture not available in on-disk cache - fetch the image, perform transformations and save it to cache
 	pictureMetadata := dal.picturesMetadataDAL.Get(hash)
-	if pictureMetadata == nil {
+	if pictureMetadata == nil || pictureMetadata.GetMediaFileType() != pictures.MediaFileTypePicture {
 		return nil, "", ErrHashNotFound
 	}
 
-	picture, pictureFormat, err := dal.GetPicture(pictureMetadata)
+	picture, pictureFormat, err := dal.GetPicture(pictureMetadata.(*pictures.PictureMetadata))
 	if nil != err {
 		return nil, "", err
 	}

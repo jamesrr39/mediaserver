@@ -44,12 +44,12 @@ func (dal *PicturesMetadataDAL) add(pictureMetadata *pictures.PictureMetadata) e
 }
 
 // Get returns the picture metadata for a given hash. If the hash is not found, nil will be returned.
-func (dal *PicturesMetadataDAL) Get(hashValue pictures.HashValue) *pictures.PictureMetadata {
+func (dal *PicturesMetadataDAL) Get(hashValue pictures.HashValue) pictures.MediaFile {
 	return dal.cache.Get(hashValue)
 }
 
 func (dal *PicturesMetadataDAL) UpdatePicturesCache(tx *sql.Tx) error {
-	var picturesMetadatas []*pictures.PictureMetadata
+	var picturesMetadatas []pictures.MediaFile
 
 	walkFunc := func(path string, fileinfo os.FileInfo, err error) error {
 		if nil != err {
