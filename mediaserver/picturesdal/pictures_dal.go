@@ -16,13 +16,13 @@ import (
 var ErrHashNotFound = errors.New("hash not found")
 
 type PicturesDAL struct {
-	picturesBasePath    string
-	thumbnailsCache     *diskcache.ThumbnailsCache
-	picturesMetadataDAL *PicturesMetadataDAL
-	pictureResizer      *pictures.PictureResizer
+	picturesBasePath string
+	thumbnailsCache  *diskcache.ThumbnailsCache
+	MediaFilesDAL    *MediaFilesDAL
+	pictureResizer   *pictures.PictureResizer
 }
 
-func NewPicturesDAL(picturesBasePath, cachesBasePath string, picturesMetadataDAL *PicturesMetadataDAL, thumbnailsCache *diskcache.ThumbnailsCache, pictureResizer *pictures.PictureResizer) (*PicturesDAL, error) {
+func NewPicturesDAL(picturesBasePath, cachesBasePath string, picturesMetadataDAL *MediaFilesDAL, thumbnailsCache *diskcache.ThumbnailsCache, pictureResizer *pictures.PictureResizer) (*PicturesDAL, error) {
 	return &PicturesDAL{picturesBasePath, thumbnailsCache, picturesMetadataDAL, pictureResizer}, nil
 }
 
@@ -41,7 +41,7 @@ func (dal *PicturesDAL) GetPictureBytes(hash pictures.HashValue, size pictures.S
 	}
 
 	// picture not available in on-disk cache - fetch the image, perform transformations and save it to cache
-	pictureMetadata := dal.picturesMetadataDAL.Get(hash)
+	pictureMetadata := dal.MediaFilesDAL.Get(hash)
 	if pictureMetadata == nil || pictureMetadata.GetMediaFileType() != pictures.MediaFileTypePicture {
 		return nil, "", ErrHashNotFound
 	}

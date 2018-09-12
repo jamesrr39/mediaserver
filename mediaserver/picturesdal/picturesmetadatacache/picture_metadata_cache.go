@@ -10,54 +10,56 @@ import (
 	"sync"
 )
 
-type PicturesMetadataCache struct {
-	mu                *sync.Mutex
-	picturesMetadatas []pictures.MediaFile
-	mapByHash         map[pictures.HashValue]pictures.MediaFile
-	hashValue         pictures.HashValue
+type mapByHash map[pictures.HashValue]pictures.MediaFile
+
+type MediaFilesCache struct {
+	mu         *sync.Mutex
+	mediaFiles []pictures.MediaFile
+	mapByHash  mapByHash
+	hashValue  pictures.HashValue
 }
 
-func NewPicturesMetadataCache() *PicturesMetadataCache {
-	return &PicturesMetadataCache{mu: &sync.Mutex{}, mapByHash: make(map[pictures.HashValue]pictures.MediaFile)}
+func NewMediaFilesCache() *MediaFilesCache {
+	return &MediaFilesCache{mu: &sync.Mutex{}, mapByHash: make(mapByHash)}
 }
 
-func (cache *PicturesMetadataCache) Add(pictureMetadata *pictures.PictureMetadata) error {
+func (cache *MediaFilesCache) Add(mediaFile pictures.MediaFile) error {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
 
-	existingPicture := cache.mapByHash[pictureMetadata.HashValue]
+	existingPicture := cache.mapByHash[mediaFile.GetHashValue()]
 	if nil != existingPicture {
 		return ErrItemAlreadyExists
 	}
 
-	cache.mapByHash[pictureMetadata.HashValue] = pictureMetadata
-	cache.picturesMetadatas = append(cache.picturesMetadatas, pictureMetadata)
+	cache.mapByHash[mediaFile.GetHashValue()] = mediaFile
+	cache.mediaFiles = append(cache.mediaFiles, mediaFile)
 
 	return cache.setHashValue()
 }
 
-func (cache *PicturesMetadataCache) AddBatch(picturesMetadata ...pictures.MediaFile) {
+func (cache *MediaFilesCache) AddBatch(mediaFiles ...pictures.MediaFile) {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
 
-	for _, pictureMetadata := range picturesMetadata {
-		existingPicture := cache.mapByHash[pictureMetadata.GetHashValue()]
+	for _, mediaFile := range mediaFiles {
+		existingPicture := cache.mapByHash[mediaFile.GetHashValue()]
 		if nil != existingPicture {
 			log.Printf("Picture metadata already found for %s at %s. Skipping add to cache.\n", existingPicture.GetHashValue(), existingPicture.GetRelativePath())
 			continue
 		}
 
-		cache.mapByHash[pictureMetadata.GetHashValue()] = pictureMetadata
-		cache.picturesMetadatas = append(cache.picturesMetadatas, pictureMetadata)
+		cache.mapByHash[mediaFile.GetHashValue()] = mediaFile
+		cache.mediaFiles = append(cache.mediaFiles, mediaFile)
 	}
 
 	cache.setHashValue()
 }
 
-func (cache *PicturesMetadataCache) setHashValue() error {
+func (cache *MediaFilesCache) setHashValue() error {
 	var byteBuffer bytes.Buffer
 	encoder := gob.NewEncoder(&byteBuffer)
-	err := encoder.Encode(cache.picturesMetadatas)
+	err := encoder.Encode(cache.mediaFiles)
 	if nil != err {
 		return err
 	}
@@ -70,15 +72,15 @@ func (cache *PicturesMetadataCache) setHashValue() error {
 	return nil
 }
 
-func (cache *PicturesMetadataCache) GetHashValue() pictures.HashValue {
+func (cache *MediaFilesCache) GetHashValue() pictures.HashValue {
 	return cache.hashValue
 }
 
-func (cache *PicturesMetadataCache) GetAll() []pictures.MediaFile {
-	return cache.picturesMetadatas
+func (cache *MediaFilesCache) GetAll() []pictures.MediaFile {
+	return cache.mediaFiles
 }
 
 // can be nil if picture metadata not in cache
-func (cache *PicturesMetadataCache) Get(hashValue pictures.HashValue) pictures.MediaFile {
+func (cache *MediaFilesCache) Get(hashValue pictures.HashValue) pictures.MediaFile {
 	return cache.mapByHash[hashValue]
 }

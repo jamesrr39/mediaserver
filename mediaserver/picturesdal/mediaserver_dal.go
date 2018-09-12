@@ -23,10 +23,10 @@ var (
 )
 
 type MediaServerDAL struct {
-	rootpath            string
-	PicturesDAL         *PicturesDAL
-	PicturesMetadataDAL *PicturesMetadataDAL
-	CollectionsDAL      *diskstorage.CollectionsRepository
+	rootpath       string
+	PicturesDAL    *PicturesDAL
+	MediaFilesDAL  *MediaFilesDAL
+	CollectionsDAL *diskstorage.CollectionsRepository
 }
 
 func NewMediaServerDAL(picturesBasePath, cachesBasePath, dataDir string, maxConcurrentResizes uint) (*MediaServerDAL, error) {
@@ -37,9 +37,9 @@ func NewMediaServerDAL(picturesBasePath, cachesBasePath, dataDir string, maxConc
 		return nil, err
 	}
 
-	picturesMetadataDAL := NewPicturesMetadataDAL(picturesBasePath, thumbnailsCache)
+	mediaFilesDAL := NewMediaFilesDAL(picturesBasePath, thumbnailsCache)
 
-	picturesDAL, err := NewPicturesDAL(picturesBasePath, cachesBasePath, picturesMetadataDAL, thumbnailsCache, pictureResizer)
+	picturesDAL, err := NewPicturesDAL(picturesBasePath, cachesBasePath, mediaFilesDAL, thumbnailsCache, pictureResizer)
 	if nil != err {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func NewMediaServerDAL(picturesBasePath, cachesBasePath, dataDir string, maxConc
 	return &MediaServerDAL{
 		picturesBasePath,
 		picturesDAL,
-		picturesMetadataDAL,
+		mediaFilesDAL,
 		diskstorage.NewCollectionsRepository(),
 	}, nil
 }
@@ -82,7 +82,7 @@ func (dal *MediaServerDAL) Create(file io.Reader, filename, contentType string) 
 		return nil, err
 	}
 
-	if nil != dal.PicturesMetadataDAL.Get(pictureMetadata.HashValue) {
+	if nil != dal.MediaFilesDAL.Get(pictureMetadata.HashValue) {
 		return nil, ErrFileAlreadyExists
 	}
 
@@ -98,7 +98,7 @@ func (dal *MediaServerDAL) Create(file io.Reader, filename, contentType string) 
 		return nil, err
 	}
 
-	dal.PicturesMetadataDAL.add(pictureMetadata)
+	dal.MediaFilesDAL.add(pictureMetadata)
 
 	err = dal.PicturesDAL.EnsureAllThumbnailsForPictures([]*pictures.PictureMetadata{pictureMetadata})
 	if err != nil {

@@ -36,14 +36,14 @@ func (ms *PicturesMetadataService) serveAllPicturesMetadata(w http.ResponseWrite
 		}
 		defer mediaserverdb.CommitOrRollback(tx)
 
-		err = ms.picturesDAL.PicturesMetadataDAL.UpdatePicturesCache(tx)
+		err = ms.picturesDAL.MediaFilesDAL.UpdatePicturesCache(tx)
 		if nil != err {
 			http.Error(w, fmt.Sprintf("couldn't update pictures cache (refresh pictures library). Error: %s", err), 500)
 			return
 		}
 	}
 
-	mediaFiles := ms.picturesDAL.PicturesMetadataDAL.GetAll()
+	mediaFiles := ms.picturesDAL.MediaFilesDAL.GetAll()
 	if 0 == len(mediaFiles) {
 		mediaFiles = []pictures.MediaFile{}
 	}
@@ -55,6 +55,6 @@ func (ms *PicturesMetadataService) serveAllPicturesMetadata(w http.ResponseWrite
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("etag", string(ms.picturesDAL.PicturesMetadataDAL.GetStateHashCode()))
+	w.Header().Set("etag", string(ms.picturesDAL.MediaFilesDAL.GetStateHashCode()))
 	w.Write(jsonBytes)
 }

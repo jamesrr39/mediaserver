@@ -39,7 +39,7 @@ func (ps *PicturesService) servePicture(w http.ResponseWriter, r *http.Request) 
 	width := r.URL.Query().Get("w")
 	height := r.URL.Query().Get("h")
 
-	mediaFile := ps.mediaServerDAL.PicturesMetadataDAL.Get(pictures.HashValue(hash))
+	mediaFile := ps.mediaServerDAL.MediaFilesDAL.Get(pictures.HashValue(hash))
 	if mediaFile == nil || mediaFile.GetMediaFileType() != pictures.MediaFileTypePicture {
 		http.Error(w, "picture not found for this hash", 404)
 		return

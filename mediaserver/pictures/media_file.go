@@ -4,6 +4,7 @@ type MediaFileType int
 
 const (
 	MediaFileTypePicture MediaFileType = 1
+	MediaFileTypeVideo   MediaFileType = 2
 )
 
 type MediaFile interface {

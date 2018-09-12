@@ -53,13 +53,13 @@ func NewMediaServerAndScan(rootpath, cachesDir, dataDir string, maxConcurrentRes
 	}
 	defer mediaserverdb.CommitOrRollback(tx)
 
-	err = mediaServer.mediaServerDAL.PicturesMetadataDAL.UpdatePicturesCache(tx)
+	err = mediaServer.mediaServerDAL.MediaFilesDAL.UpdatePicturesCache(tx)
 	if nil != err {
 		return nil, err
 	}
 
 	// ensure thumbnails
-	mediaFiles := mediaServer.mediaServerDAL.PicturesMetadataDAL.GetAll()
+	mediaFiles := mediaServer.mediaServerDAL.MediaFilesDAL.GetAll()
 
 	err = mediaServer.mediaServerDAL.PicturesDAL.EnsureAllThumbnailsForPictures(pictures.GetPicturesMetadatasFromMediaFileList(mediaFiles))
 	if err != nil {
