@@ -11,6 +11,7 @@ import { compose } from 'redux';
 import { History } from 'history';
 import PictureInfoComponent, { INFO_CONTAINER_WIDTH } from './PictureInfoComponent';
 import { isNarrowScreen } from '../util/screen_size';
+import { MediaFile, MediaFileType } from '../domain/MediaFile';
 
 const KeyCodes = {
   ESCAPE: 27,
@@ -25,7 +26,7 @@ enum Subview {
 type Props = {
   hash: string,
   history: History,
-  picturesMetadatas: PictureMetadata[],
+  picturesMetadatas: MediaFile[],
   dispatch: Dispatch<Action>,
   scrollObservable: Observable,
   baseUrl: string, // for example, /gallery
@@ -93,9 +94,9 @@ class PictureModal extends React.Component<Props, ComponentState> {
 
   private pictureEl: HTMLImageElement|null;
 
-  private pictureMetadata: PictureMetadata | null = null;
-  private previousPictureMetadata: PictureMetadata | null = null;
-  private nextPictureMetadata: PictureMetadata | null = null;
+  private pictureMetadata: MediaFile | null = null;
+  private previousPictureMetadata: MediaFile | null = null;
+  private nextPictureMetadata: MediaFile | null = null;
 
   setRenderData() {
     const { picturesMetadatas, hash } = this.props;
@@ -153,7 +154,7 @@ class PictureModal extends React.Component<Props, ComponentState> {
     );
   }
 
-  private renderModalBody = (pictureMetadata: PictureMetadata) => {
+  private renderModalBody = (pictureMetadata: MediaFile) => {
     if (isNarrowScreen()) {
       if (this.state.showInfo) {
         return this.renderInfoContainer(pictureMetadata);
@@ -168,7 +169,7 @@ class PictureModal extends React.Component<Props, ComponentState> {
     );
   }
 
-  private renderInfoContainer = (pictureMetadata: PictureMetadata) => {
+  private renderInfoContainer = (pictureMetadata: MediaFile) => {
     return (
       <div style={styles.pictureInfoContainer}>
         <PictureInfoComponent {...{pictureMetadata}} />
@@ -176,7 +177,7 @@ class PictureModal extends React.Component<Props, ComponentState> {
     );
   }
 
-  private renderPicture = (pictureMetadata: PictureMetadata) => {
+  private renderPicture = (pictureMetadata: MediaFile) => {
     const previousLink = this.renderPreviousLink();
     const nextLink = this.renderNextLink();
 
@@ -184,14 +185,31 @@ class PictureModal extends React.Component<Props, ComponentState> {
       <div style={styles.pictureContainer}>
         <div>{previousLink}</div>
         <div>
-          <img ref={(el) => {this.pictureEl = el; }} />
+          {this.renderPictureContent(pictureMetadata)}
         </div>
         <div>{nextLink}</div>
       </div>
     );
   }
 
-  private renderTopBar = (pictureMetadata: PictureMetadata) => {
+  private renderPictureContent = (mediaFile: MediaFile) => {
+    switch (mediaFile.fileType) {
+      case MediaFileType.Picture:
+        return <img ref={(el) => {this.pictureEl = el; }} />;
+      case MediaFileType.Video:
+        const videoUrl = `${SERVER_BASE_URL}/file/${mediaFile.hashValue}`;
+        return (
+          <video width="100%" controls={true}>
+            <source src={videoUrl} type="video/quicktime" />
+            Your browser does not support HTML5 video.
+          </video>
+        );
+      default:
+        return <p>Unknown format</p>;
+    }
+  }
+
+  private renderTopBar = (pictureMetadata: MediaFile) => {
     const pictureURL = `${SERVER_BASE_URL}/picture/${pictureMetadata.hashValue}`;
 
     return (
@@ -222,6 +240,18 @@ class PictureModal extends React.Component<Props, ComponentState> {
     }
 
     const pictureMetadata = this.pictureMetadata;
+    switch (pictureMetadata.fileType) {
+      case MediaFileType.Picture:
+        this.createRefCallbackForPicture(
+          divContainerEl, this.pictureEl, pictureMetadata as PictureMetadata); // todo remove cast
+        break;
+      default:
+        return;
+    }
+  }
+
+  private createRefCallbackForPicture = (
+    divContainerEl: HTMLDivElement, pictureEl: HTMLImageElement, pictureMetadata: PictureMetadata) => {
     const idealHeight = (divContainerEl.clientHeight);
     const infoContainerWidth = this.state.showInfo ? INFO_CONTAINER_WIDTH : 0;
     const idealWidth = (divContainerEl.clientWidth - 100) - infoContainerWidth;
@@ -240,9 +270,9 @@ class PictureModal extends React.Component<Props, ComponentState> {
     }
 
     const url = `${SERVER_BASE_URL}/picture/${pictureMetadata.hashValue}?h=${chosenHeight}`;
-    this.pictureEl.style.maxHeight = `${idealHeight}px`;
-    this.pictureEl.style.maxWidth = `${idealWidth}px`;
-    this.pictureEl.src = url;
+    pictureEl.style.maxHeight = `${idealHeight}px`;
+    pictureEl.style.maxWidth = `${idealWidth}px`;
+    pictureEl.src = url;
   }
 
   private renderPreviousLink = () => {

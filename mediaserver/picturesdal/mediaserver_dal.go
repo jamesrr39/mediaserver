@@ -23,7 +23,7 @@ var (
 )
 
 type MediaServerDAL struct {
-	rootpath       string
+	Rootpath       string
 	PicturesDAL    *PicturesDAL
 	MediaFilesDAL  *MediaFilesDAL
 	CollectionsDAL *diskstorage.CollectionsRepository
@@ -121,7 +121,7 @@ func (dal *MediaServerDAL) getPathForNewFile(folder, filename string) (string, s
 		name += fileExtension
 
 		relativePath := filepath.Join(folder, name)
-		path := filepath.Join(dal.rootpath, relativePath)
+		path := filepath.Join(dal.Rootpath, relativePath)
 		_, err := os.Stat(path)
 		if nil != err {
 			if os.IsNotExist(err) {

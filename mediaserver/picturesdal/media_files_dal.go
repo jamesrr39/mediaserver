@@ -48,6 +48,29 @@ func (dal *MediaFilesDAL) Get(hashValue pictures.HashValue) pictures.MediaFile {
 	return dal.cache.Get(hashValue)
 }
 
+func (dal *MediaFilesDAL) processVideoFile(tx *sql.Tx, path string, fileInfo os.FileInfo) (*pictures.VideoFileMetadata, error) {
+
+	file, err := os.Open(path)
+	if nil != err {
+		return nil, err
+	}
+	defer file.Close()
+
+	relativeFilePath := strings.TrimPrefix(path, dal.picturesBasePath)
+
+	hashValue, err := pictures.NewHash(file)
+	if nil != err {
+		return nil, err
+	}
+
+	_, err = file.Seek(0, 0)
+	if nil != err {
+		return nil, err
+	}
+
+	return pictures.NewVideoFileMetadata(hashValue, relativeFilePath, fileInfo.Size()), nil
+}
+
 func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string) (*pictures.PictureMetadata, error) {
 
 	fileBytes, err := ioutil.ReadFile(path)
@@ -105,7 +128,10 @@ func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx) error {
 			}
 		case ".mov":
 			log.Printf("found .mov file at %s\n", path)
-			return nil
+			mediaFile, err = dal.processVideoFile(tx, path, fileinfo)
+			if err != nil {
+				return err
+			}
 		default:
 			log.Println("skipping " + path + ", file extension (lower case) '" + fileExtensionLower + " not recognised")
 			return nil

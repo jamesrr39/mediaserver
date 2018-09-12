@@ -6,7 +6,8 @@ import { QueuedFile } from './fileQueue';
 import {
   newNotificationAction, NotifyAction, removeNotification, RemoveNotificationAction
  } from './actions/notificationActions';
-import { MediaFileType } from './domain/MediaFile';
+import { MediaFileType, MediaFile } from './domain/MediaFile';
+import { VideoMetadata } from './domain/VideoMetadata';
 
 export enum FilesActionTypes {
   FETCH_PICTURES_METADATA = 'FETCH_PICTURES_METADATA',
@@ -21,7 +22,7 @@ export interface FetchPicturesMetadataAction extends Action {
 
 export interface PicturesMetadataFetchedAction extends Action {
   type: FilesActionTypes.PICTURES_METADATA_FETCHED;
-  picturesMetadatas: PictureMetadata[];
+  mediaFiles: MediaFile[];
 }
 
 export interface UploadFileAction extends Action {
@@ -50,9 +51,16 @@ type PictureMetadataJSON = {
   rawSize: RawSize;
 };
 
+type VideoMetadataJSON = {
+  fileType: MediaFileType.Video;
+  hashValue: string;
+  relativeFilePath: string;
+  fileSizeBytes: number;
+};
+
 type MediaFileJSON = {
   fileType: MediaFileType;
-} & PictureMetadataJSON;
+} & (PictureMetadataJSON | VideoMetadataJSON);
 
 export function fetchPicturesMetadata() {
   return (dispatch: (action: FetchPicturesMetadataAction | PicturesMetadataFetchedAction | NotifyAction) => void) => {
@@ -68,12 +76,17 @@ export function fetchPicturesMetadata() {
       })
       .then(response => response.json())
       .then((mediaFilesJSON: MediaFileJSON[]) => {
-        const picturesMetadatas: PictureMetadata[] = [];
+        const mediaFiles: MediaFile[] = [];
         mediaFilesJSON.forEach(json => {
           switch (json.fileType) {
           case MediaFileType.Picture:
-            picturesMetadatas.push(
+            mediaFiles.push(
               new PictureMetadata(json.hashValue, json.relativeFilePath, json.fileSizeBytes, json.exif, json.rawSize));
+            break;
+          case MediaFileType.Video:
+            mediaFiles.push(
+              new VideoMetadata(json.hashValue, json.relativeFilePath, json.fileSizeBytes)
+            );
             break;
           default:
             // do nothing
@@ -82,7 +95,7 @@ export function fetchPicturesMetadata() {
         });
         dispatch({
           type: FilesActionTypes.PICTURES_METADATA_FETCHED,
-          picturesMetadatas,
+          mediaFiles,
         });
       }).catch((errMessage) => {
         dispatch(newNotificationAction(new GalleryNotification(NotificationLevel.ERROR, errMessage)));

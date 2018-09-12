@@ -9,6 +9,7 @@ import { CustomCollection } from './domain/Collection';
 import { CollectionsAction, COLLECTIONS_FETCHED, COLLECTION_SAVED } from './collectionsActions';
 import { FileQueue } from './fileQueue';
 import { notificationsReducer, NotificationsState } from './reducers/notificationReducer';
+import { MediaFile } from './domain/MediaFile';
 
 const scrollObservable = new DebouncedObservable(150);
 
@@ -47,15 +48,15 @@ function picturesMetadatas(state: PicturesMetadataState = picturesMetadatasIniti
         isFetching: true,
       };
     case FilesActionTypes.PICTURES_METADATA_FETCHED:
-      const picturesMetadatasMap = new Map<string, PictureMetadata>();
-      action.picturesMetadatas.forEach(pictureMetadata => {
+      const picturesMetadatasMap = new Map<string, MediaFile>();
+      action.mediaFiles.forEach(pictureMetadata => {
         picturesMetadatasMap.set(pictureMetadata.hashValue, pictureMetadata);
       });
       return {
         ...state,
         isReady: true,
         isFetching: false,
-        picturesMetadatas: action.picturesMetadatas,
+        picturesMetadatas: action.mediaFiles,
         picturesMetadatasMap,
       };
     case FilesActionTypes.PICTURE_SUCCESSFULLY_UPLOADED:

@@ -5,6 +5,7 @@ import { Observable } from '../util/Observable';
 import { SERVER_BASE_URL } from '../configs';
 import { isNarrowScreen } from '../util/screen_size';
 import { THUMBNAIL_HEIGHTS } from '../generated/thumbnail_sizes';
+import { MediaFile, MediaFileType } from '../domain/MediaFile';
 
 const WIDE_SCREEN_THUMBNAIL_HEIGHT = 200;
 const NARROW_SCREEN_THUMBNAIL_HEIGHT = 100;
@@ -58,7 +59,7 @@ const generateThumbnailStyle = (pictureMetadata: PictureMetadata, isLoaded: bool
 };
 
 export interface ThumbnailProps {
-  pictureMetadata: PictureMetadata;
+  pictureMetadata: MediaFile;
   scrollObservable: Observable;
 }
 
@@ -93,12 +94,23 @@ export class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
 
   render() {
     const { pictureMetadata } = this.props;
+
+    switch (pictureMetadata.fileType) {
+      case MediaFileType.Picture:
+        return this.generateImageThumbnailHtml(pictureMetadata as PictureMetadata); // TODO: remove cast
+      default:
+        return <div>{pictureMetadata.getName()}</div>;
+    }
+
+  }
+
+  private generateImageThumbnailHtml = (pictureMetadata: PictureMetadata) => {
     const narrowScreen = isNarrowScreen();
     const thumbnailHeight = getImageHeightToRequest(narrowScreen, pictureMetadata);
     const imgSrc = `${SERVER_BASE_URL}/picture/${pictureMetadata.hashValue}?h=${thumbnailHeight}`;
 
     const thumbnailStyle = generateThumbnailStyle(
-      this.props.pictureMetadata, this.state.isImageLoaded, narrowScreen);
+      pictureMetadata, this.state.isImageLoaded, narrowScreen);
 
     if (this.state.isImageLoaded) {
       thumbnailStyle.backgroundImage = `url(${imgSrc})`;

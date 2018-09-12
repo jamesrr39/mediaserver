@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { PictureMetadata, createCompareTimeTakenFunc } from '../domain/PictureMetadata';
+import { createCompareTimeTakenFunc, PictureMetadata } from '../domain/PictureMetadata';
 
 import { Observable } from '../util/Observable';
 import { Thumbnail } from './Thumbnail';
@@ -8,12 +8,13 @@ import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import MapComponent, { MapMarker } from './MapComponent';
 import { SERVER_BASE_URL } from '../configs';
+import { MediaFile } from '../domain/MediaFile';
 
 export interface GalleryProps {
-  picturesMetadatas: PictureMetadata[];
+  picturesMetadatas: MediaFile[];
   scrollObservable: Observable;
   pictureModalUrlbase?: string; // example: /gallery/picture
-  onClickThumbnail?: (pictureMetadata: PictureMetadata) => void;
+  onClickThumbnail?: (pictureMetadata: MediaFile) => void;
   showMap?: boolean;
 }
 
@@ -153,7 +154,7 @@ class Gallery extends React.Component<GalleryProps, GalleryState> {
     });
   }
 
-  private getMarkers = (picturesMetadatas: PictureMetadata[]) => {
+  private getMarkers = (picturesMetadatas: MediaFile[]) => {
     const markers: MapMarker[] = [];
     picturesMetadatas.forEach((metadata) => {
       const location = metadata.getLocation();
@@ -172,7 +173,7 @@ class Gallery extends React.Component<GalleryProps, GalleryState> {
           name: metadata.getName(),
           imagePreviewUrl: `${SERVER_BASE_URL}/picture/${metadata.hashValue}`,
           linkUrl,
-          pictureRawSize: metadata.rawSize,
+          pictureRawSize: (metadata as PictureMetadata).rawSize, // TODO remove cast
         };
       }
       markers.push(markerData);

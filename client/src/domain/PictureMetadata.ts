@@ -1,18 +1,17 @@
-export class PictureMetadata {
+import { MediaFileType, MediaFile } from './MediaFile';
+import { Location } from './Location';
+
+export class PictureMetadata extends MediaFile {
+  public readonly fileType = MediaFileType.Picture;
+
   constructor(
     public readonly hashValue: string,
     public readonly relativeFilePath: string,
     public readonly fileSizeBytes: number,
     public readonly exif: null|ExifData,
-    public readonly rawSize: RawSize) {}
-
-  getName() {
-    const lastSlash = this.relativeFilePath.lastIndexOf('/');
-    if (lastSlash === -1) {
-      return this.relativeFilePath;
+    public readonly rawSize: RawSize) {
+      super();
     }
-    return this.relativeFilePath.substring(lastSlash + 1);
-  }
 
   getTimeTaken() {
     if (this.exif === null) {
@@ -155,11 +154,6 @@ function parseExifDate(dateString: string) {
 export type RawSize = {
   width: number,
   height: number,
-};
-
-export type Location = {
-  lat: number,
-  long: number,
 };
 
 export type ExifData = {

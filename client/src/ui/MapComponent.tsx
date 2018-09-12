@@ -1,6 +1,7 @@
 import * as React from 'react';
 import * as Leaflet from 'leaflet';
-import { Location, RawSize } from '../domain/PictureMetadata';
+import { RawSize } from '../domain/PictureMetadata';
+import { Location } from '../domain/Location';
 import { escapeHtml } from '../util/html';
 
 const markerIcon = require('../../node_modules/leaflet/dist/images/marker-icon.png');

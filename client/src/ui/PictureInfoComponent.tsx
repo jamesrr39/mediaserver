@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { PictureMetadata } from '../domain/PictureMetadata';
 import { SMALL_SCREEN_WIDTH } from '../util/screen_size';
 import MapComponent from './MapComponent';
+import { MediaFile } from '../domain/MediaFile';
 
 export const INFO_CONTAINER_WIDTH = SMALL_SCREEN_WIDTH;
 
@@ -11,7 +11,7 @@ const mapContainerSize = {
 };
 
 type Props = {
-  pictureMetadata: PictureMetadata;
+  pictureMetadata: MediaFile;
 };
 
 class PictureInfoComponent extends React.Component<Props> {

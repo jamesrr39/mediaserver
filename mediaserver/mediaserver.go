@@ -8,6 +8,7 @@ import (
 	"mediaserverapp/mediaserver/picturesdal/diskstorage/mediaserverdb"
 	"mediaserverapp/mediaserver/pictureswebservice"
 	"mediaserverapp/mediaserver/static_assets_handler"
+	"net/http"
 	"os"
 	"path/filepath"
 
@@ -23,6 +24,7 @@ type MediaServer struct {
 	mediaServerDAL          *picturesdal.MediaServerDAL
 	picturesService         *pictureswebservice.PicturesService
 	picturesMetadataService *pictureswebservice.PicturesMetadataService
+	filesWebService         *pictureswebservice.FileWebService
 	collectionsService      *pictureswebservice.CollectionsWebService
 	dbConn                  *mediaserverdb.DBConn
 }
@@ -44,6 +46,7 @@ func NewMediaServerAndScan(rootpath, cachesDir, dataDir string, maxConcurrentRes
 		mediaServerDAL:          mediaServerDAL,
 		picturesService:         pictureswebservice.NewPicturesService(mediaServerDAL),
 		picturesMetadataService: pictureswebservice.NewPicturesMetadataService(dbConn, mediaServerDAL),
+		filesWebService:         pictureswebservice.NewFileWebService(mediaServerDAL),
 		collectionsService:      pictureswebservice.NewCollectionsWebService(dbConn, mediaServerDAL.CollectionsDAL),
 	}
 
@@ -86,6 +89,7 @@ func (ms *MediaServer) ListenAndServe(addr string) error {
 		r.Mount("/collections/", ms.collectionsService)
 	})
 
+	mainRouter.Mount("/file/", http.StripPrefix("/file/", ms.filesWebService))
 	mainRouter.Mount("/picture/", ms.picturesService)
 	mainRouter.Mount("/", statichandlers.NewClientHandler())
 

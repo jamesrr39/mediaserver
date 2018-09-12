@@ -26,19 +26,27 @@ func NewPicturesMetadataService(dbConn *mediaserverdb.DBConn, picturesDAL *pictu
 	return picturesService
 }
 
+func (ms *PicturesMetadataService) refresh() error {
+	tx, err := ms.dbConn.Begin()
+	if nil != err {
+		return fmt.Errorf("couldn't open transaction to database. Error: %s", err)
+	}
+	defer mediaserverdb.CommitOrRollback(tx)
+
+	err = ms.picturesDAL.MediaFilesDAL.UpdatePicturesCache(tx)
+	if nil != err {
+		return fmt.Errorf("couldn't update pictures cache (refresh pictures library). Error: %s", err)
+	}
+
+	return nil
+}
+
 func (ms *PicturesMetadataService) serveAllPicturesMetadata(w http.ResponseWriter, r *http.Request) {
 	shouldRefresh := ("true" == r.URL.Query().Get("refresh"))
 	if shouldRefresh {
-		tx, err := ms.dbConn.Begin()
-		if nil != err {
-			http.Error(w, fmt.Sprintf("couldn't open transaction to database. Error: %s", err), 500)
-			return
-		}
-		defer mediaserverdb.CommitOrRollback(tx)
-
-		err = ms.picturesDAL.MediaFilesDAL.UpdatePicturesCache(tx)
-		if nil != err {
-			http.Error(w, fmt.Sprintf("couldn't update pictures cache (refresh pictures library). Error: %s", err), 500)
+		err := ms.refresh()
+		if err != nil {
+			http.Error(w, err.Error(), 500)
 			return
 		}
 	}

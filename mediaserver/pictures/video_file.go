@@ -18,7 +18,7 @@ func (pm *VideoFileMetadata) GetHashValue() HashValue {
 	return pm.HashValue
 }
 func (pm *VideoFileMetadata) GetMediaFileType() MediaFileType {
-	return MediaFileTypePicture
+	return MediaFileTypeVideo
 }
 func (pm *VideoFileMetadata) GetFileSizeBytes() int64 {
 	return pm.FileSizeBytes
