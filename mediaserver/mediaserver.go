@@ -3,6 +3,7 @@ package mediaserver
 import (
 	//	"log"
 
+	"mediaserverapp/mediaserver/pictures"
 	"mediaserverapp/mediaserver/picturesdal"
 	"mediaserverapp/mediaserver/picturesdal/diskstorage/mediaserverdb"
 	"mediaserverapp/mediaserver/pictureswebservice"
@@ -58,7 +59,9 @@ func NewMediaServerAndScan(rootpath, cachesDir, dataDir string, maxConcurrentRes
 	}
 
 	// ensure thumbnails
-	err = mediaServer.mediaServerDAL.PicturesDAL.EnsureAllThumbnailsForPictures(mediaServer.mediaServerDAL.PicturesMetadataDAL.GetAll())
+	mediaFiles := mediaServer.mediaServerDAL.PicturesMetadataDAL.GetAll()
+
+	err = mediaServer.mediaServerDAL.PicturesDAL.EnsureAllThumbnailsForPictures(pictures.GetPicturesMetadatasFromMediaFileList(mediaFiles))
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +82,7 @@ func (ms *MediaServer) ListenAndServe(addr string) error {
 	}).Handler)
 
 	mainRouter.Route("/api/", func(r chi.Router) {
-		r.Mount("/pictureMetadata/", ms.picturesMetadataService)
+		r.Mount("/files/", ms.picturesMetadataService)
 		r.Mount("/collections/", ms.collectionsService)
 	})
 

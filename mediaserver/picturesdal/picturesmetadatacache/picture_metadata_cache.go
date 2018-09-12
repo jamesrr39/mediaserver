@@ -12,7 +12,7 @@ import (
 
 type PicturesMetadataCache struct {
 	mu                *sync.Mutex
-	picturesMetadatas []*pictures.PictureMetadata
+	picturesMetadatas []pictures.MediaFile
 	mapByHash         map[pictures.HashValue]*pictures.PictureMetadata
 	hashValue         pictures.HashValue
 }
@@ -74,7 +74,7 @@ func (cache *PicturesMetadataCache) GetHashValue() pictures.HashValue {
 	return cache.hashValue
 }
 
-func (cache *PicturesMetadataCache) GetAll() []*pictures.PictureMetadata {
+func (cache *PicturesMetadataCache) GetAll() []pictures.MediaFile {
 	return cache.picturesMetadatas
 }
 

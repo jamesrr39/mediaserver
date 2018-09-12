@@ -29,7 +29,7 @@ func NewPicturesMetadataDAL(picturesBasePath string, thumbnailsCache *diskcache.
 	return &PicturesMetadataDAL{picturesBasePath, picturesmetadatacache.NewPicturesMetadataCache(), diskstorage.NewPicturesMetadataRepository(), thumbnailsCache}
 }
 
-func (dal *PicturesMetadataDAL) GetAll() []*pictures.PictureMetadata {
+func (dal *PicturesMetadataDAL) GetAll() []pictures.MediaFile {
 	return dal.cache.GetAll()
 }
 

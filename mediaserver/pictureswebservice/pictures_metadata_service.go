@@ -43,12 +43,12 @@ func (ms *PicturesMetadataService) serveAllPicturesMetadata(w http.ResponseWrite
 		}
 	}
 
-	picturesMetadata := ms.picturesDAL.PicturesMetadataDAL.GetAll()
-	if 0 == len(picturesMetadata) {
-		picturesMetadata = []*pictures.PictureMetadata{}
+	mediaFiles := ms.picturesDAL.PicturesMetadataDAL.GetAll()
+	if 0 == len(mediaFiles) {
+		mediaFiles = []pictures.MediaFile{}
 	}
 
-	jsonBytes, err := json.Marshal(picturesMetadata)
+	jsonBytes, err := json.Marshal(mediaFiles)
 	if nil != err {
 		http.Error(w, err.Error(), 500)
 		return

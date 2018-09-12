@@ -6,6 +6,7 @@ import { QueuedFile } from './fileQueue';
 import {
   newNotificationAction, NotifyAction, removeNotification, RemoveNotificationAction
  } from './actions/notificationActions';
+import { MediaFileType } from './domain/MediaFile';
 
 export enum FilesActionTypes {
   FETCH_PICTURES_METADATA = 'FETCH_PICTURES_METADATA',
@@ -41,19 +42,24 @@ export type MediaserverAction = (
   FetchPicturesMetadataAction);
 
 type PictureMetadataJSON = {
-    hashValue: string;
-    relativeFilePath: string;
-    fileSizeBytes: number;
-    exif: null|ExifData;
-    rawSize: RawSize;
-  };
+  fileType: MediaFileType.Picture;
+  hashValue: string;
+  relativeFilePath: string;
+  fileSizeBytes: number;
+  exif: null|ExifData;
+  rawSize: RawSize;
+};
+
+type MediaFileJSON = {
+  fileType: MediaFileType;
+} & PictureMetadataJSON;
 
 export function fetchPicturesMetadata() {
   return (dispatch: (action: FetchPicturesMetadataAction | PicturesMetadataFetchedAction | NotifyAction) => void) => {
     dispatch({
       type: FilesActionTypes.FETCH_PICTURES_METADATA,
     } as FetchPicturesMetadataAction);
-    return fetch(`${SERVER_BASE_URL}/api/pictureMetadata/`)
+    return fetch(`${SERVER_BASE_URL}/api/files/`)
       .then(response => {
         if (!response.ok) {
           throw new Error(response.statusText);
@@ -61,10 +67,19 @@ export function fetchPicturesMetadata() {
         return response;
       })
       .then(response => response.json())
-      .then((picturesMetadatasJSON: PictureMetadataJSON[]) => {
-        const picturesMetadatas = picturesMetadatasJSON.map((json) => (
-          new PictureMetadata(json.hashValue, json.relativeFilePath, json.fileSizeBytes, json.exif, json.rawSize))
-        );
+      .then((mediaFilesJSON: MediaFileJSON[]) => {
+        const picturesMetadatas: PictureMetadata[] = [];
+        mediaFilesJSON.forEach(json => {
+          switch (json.fileType) {
+          case MediaFileType.Picture:
+            picturesMetadatas.push(
+              new PictureMetadata(json.hashValue, json.relativeFilePath, json.fileSizeBytes, json.exif, json.rawSize));
+            break;
+          default:
+            // do nothing
+            break;
+          }
+        });
         dispatch({
           type: FilesActionTypes.PICTURES_METADATA_FETCHED,
           picturesMetadatas,
