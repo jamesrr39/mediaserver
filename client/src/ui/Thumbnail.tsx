@@ -6,10 +6,19 @@ import { SERVER_BASE_URL } from '../configs';
 import { isNarrowScreen } from '../util/screen_size';
 import { THUMBNAIL_HEIGHTS } from '../generated/thumbnail_sizes';
 import { MediaFile, MediaFileType } from '../domain/MediaFile';
+import { VideoMetadata } from '../domain/VideoMetadata';
 
 const WIDE_SCREEN_THUMBNAIL_HEIGHT = 200;
 const NARROW_SCREEN_THUMBNAIL_HEIGHT = 100;
 const NARROW_SCREEN_THUMBNAIL_WIDTH = 100;
+
+const styles = {
+  playButton: {
+    backgroundColor: 'white',
+    borderRadius: '2px',
+    position: 'absolute',
+  } as React.CSSProperties,
+};
 
 function getImageHeightToRequest(narrowScreen: boolean, pictureMetadata: PictureMetadata) {
   const { height, width } = pictureMetadata.rawSize;
@@ -35,7 +44,6 @@ function getImageHeightToRequest(narrowScreen: boolean, pictureMetadata: Picture
 }
 
 const generateThumbnailStyle = (pictureMetadata: PictureMetadata, isLoaded: boolean, narrowScreen: boolean) => {
-  // const height = narrowScreen ? NARROW_SCREEN_THUMBNAIL_HEIGHT : WIDE_SCREEN_THUMBNAIL_HEIGHT;
   const heightToRequest = getImageHeightToRequest(narrowScreen, pictureMetadata);
   const ratio = heightToRequest / pictureMetadata.rawSize.height;
   const width = narrowScreen ? NARROW_SCREEN_THUMBNAIL_WIDTH : (pictureMetadata.rawSize.width * ratio);
@@ -98,10 +106,29 @@ export class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
     switch (pictureMetadata.fileType) {
       case MediaFileType.Picture:
         return this.generateImageThumbnailHtml(pictureMetadata as PictureMetadata); // TODO: remove cast
+      case MediaFileType.Video:
+        return this.generateVideoThumbnailHtml(pictureMetadata as VideoMetadata);
       default:
         return <div>{pictureMetadata.getName()}</div>;
     }
 
+  }
+
+  private generateVideoThumbnailHtml = (mediaFile: VideoMetadata) => {
+    const videoUrl = `${SERVER_BASE_URL}/video/${mediaFile.hashValue}`;
+    const narrowScreen = isNarrowScreen();
+    const thumbnailHeight = narrowScreen ? NARROW_SCREEN_THUMBNAIL_HEIGHT : WIDE_SCREEN_THUMBNAIL_HEIGHT;
+    const thumbnailWidth = narrowScreen ? NARROW_SCREEN_THUMBNAIL_WIDTH : undefined;
+
+    return (
+      <div>
+        <span style={styles.playButton}>&#9658;</span>
+        <video height={thumbnailHeight} width={thumbnailWidth} controls={false}>
+          <source src={videoUrl} />
+          Your browser does not support HTML5 video.
+        </video>
+      </div>
+    );
   }
 
   private generateImageThumbnailHtml = (pictureMetadata: PictureMetadata) => {

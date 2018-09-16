@@ -7,6 +7,7 @@ import (
 	"mediaserverapp/mediaserver/picturesdal/videodal"
 	"net/http"
 	"os"
+	"strings"
 )
 
 type fileWebFileServer struct {
@@ -16,6 +17,8 @@ type fileWebFileServer struct {
 
 // Open looks up the converted video, then looks up the original video
 func (fwfs *fileWebFileServer) Open(hashValue string) (http.File, error) {
+	hashValue = strings.TrimPrefix(hashValue, "/")
+
 	convertedVideo, err := fwfs.videosDAL.GetFile(pictures.HashValue(hashValue))
 	if err != nil && !os.IsNotExist(err) {
 		log.Printf("couldn't open file with hash value %q. Error: %q\n", hashValue, err)

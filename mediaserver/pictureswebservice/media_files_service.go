@@ -82,17 +82,16 @@ func (ps *MediaFilesService) servePictureUpload(w http.ResponseWriter, r *http.R
 
 	pictureMetadata, err := ps.mediaServerDAL.Create(file, fileHandler.Filename, contentType)
 	if nil != err {
-		if picturesdal.ErrFileAlreadyExists == err {
+		switch err {
+		case picturesdal.ErrFileAlreadyExists:
 			http.Error(w, err.Error(), 409)
-			return
-		}
-
-		if picturesdal.ErrIllegalPathTraversingUp == err {
+		case picturesdal.ErrIllegalPathTraversingUp:
 			http.Error(w, err.Error(), 400)
-			return
+		case picturesdal.ErrContentTypeNotSupported:
+			http.Error(w, err.Error(), 400)
+		default:
+			http.Error(w, err.Error(), 500)
 		}
-
-		http.Error(w, err.Error(), 500)
 		return
 	}
 

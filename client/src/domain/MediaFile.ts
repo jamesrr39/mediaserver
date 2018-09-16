@@ -6,8 +6,9 @@ export enum MediaFileType {
 }
 
 export abstract class MediaFile {
+  public abstract readonly fileType: MediaFileType;
+
   constructor(
-    public readonly fileType: MediaFileType,
     public readonly hashValue: string,
     public readonly relativeFilePath: string,
     public readonly  fileSizeBytes: number) {}

@@ -41,8 +41,8 @@ func (dal *MediaFilesDAL) GetStateHashCode() pictures.HashValue {
 	return dal.cache.GetHashValue()
 }
 
-func (dal *MediaFilesDAL) add(pictureMetadata pictures.MediaFile) error {
-	return dal.cache.Add(pictureMetadata)
+func (dal *MediaFilesDAL) add(mediaFile pictures.MediaFile) error {
+	return dal.cache.Add(mediaFile)
 }
 
 // Get returns the picture metadata for a given hash. If the hash is not found, nil will be returned.
@@ -139,8 +139,7 @@ func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx) error {
 			if err != nil {
 				return err
 			}
-		case ".mov", ".ogv":
-			log.Printf("found .mov file at %s\n", path)
+		case ".ogv":
 			mediaFile, err = dal.processVideoFile(tx, path, fileinfo)
 			if err != nil {
 				return err

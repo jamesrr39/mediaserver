@@ -2,13 +2,14 @@ import { MediaFileType, MediaFile } from './MediaFile';
 import { MapLocation } from './Location';
 
 export class PictureMetadata extends MediaFile {
+  public fileType = MediaFileType.Picture;
   constructor(
     public readonly hashValue: string,
     public readonly relativeFilePath: string,
     public readonly fileSizeBytes: number,
     public readonly exif: null|ExifData,
     public readonly rawSize: RawSize) {
-      super(MediaFileType.Picture, hashValue, relativeFilePath, fileSizeBytes);
+      super(hashValue, relativeFilePath, fileSizeBytes);
     }
 
   getTimeTaken(): Date | null {

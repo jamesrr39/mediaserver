@@ -40,10 +40,7 @@ func NewMediaServerDAL(picturesBasePath, cachesBasePath, dataDir string, maxConc
 		return nil, err
 	}
 
-	videosDAL, err := videodal.NewFFMPEGDAL(filepath.Join(cachesBasePath, "videos"), picturesBasePath, maxConcurrentVideoConversions)
-	if nil != err {
-		return nil, err
-	}
+	videosDAL := videodal.NewNoActionVideoDAL()
 
 	mediaFilesDAL := NewMediaFilesDAL(picturesBasePath, thumbnailsCache, videosDAL)
 
@@ -69,8 +66,6 @@ func NewMediaServerDAL(picturesBasePath, cachesBasePath, dataDir string, maxConc
 var ErrContentTypeNotSupported = errors.New("content type not supported")
 
 // Create adds a new picture to the collection
-// TODO: is contentType needed?
-// FIXME is this function needed
 func (dal *MediaServerDAL) Create(file io.Reader, filename, contentType string) (pictures.MediaFile, error) {
 
 	if dirtraversal.IsTryingToTraverseUp(filename) {
@@ -101,7 +96,7 @@ func (dal *MediaServerDAL) Create(file io.Reader, filename, contentType string) 
 		doAtEnd = func() error {
 			return dal.PicturesDAL.EnsureAllThumbnailsForPictures([]*pictures.PictureMetadata{pictureMetadata})
 		}
-	case "video/quicktime": // TODO add ogg
+	case "video/ogg":
 		hashValue, err := pictures.NewHash(bytes.NewBuffer(fileBytes))
 		if nil != err {
 			return nil, err
