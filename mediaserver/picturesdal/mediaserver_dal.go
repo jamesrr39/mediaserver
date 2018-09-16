@@ -8,6 +8,7 @@ import (
 	"mediaserverapp/mediaserver/pictures"
 	"mediaserverapp/mediaserver/picturesdal/diskcache"
 	"mediaserverapp/mediaserver/picturesdal/diskstorage"
+	"mediaserverapp/mediaserver/picturesdal/videodal"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -27,9 +28,10 @@ type MediaServerDAL struct {
 	PicturesDAL    *PicturesDAL
 	MediaFilesDAL  *MediaFilesDAL
 	CollectionsDAL *diskstorage.CollectionsRepository
+	VideosDAL      videodal.VideoDAL
 }
 
-func NewMediaServerDAL(picturesBasePath, cachesBasePath, dataDir string, maxConcurrentResizes uint) (*MediaServerDAL, error) {
+func NewMediaServerDAL(picturesBasePath, cachesBasePath, dataDir string, maxConcurrentResizes, maxConcurrentVideoConversions uint) (*MediaServerDAL, error) {
 	pictureResizer := pictures.NewPictureResizer(maxConcurrentResizes)
 
 	thumbnailsCache, err := diskcache.NewThumbnailsCache(filepath.Join(cachesBasePath, "thumbnails"), pictureResizer)
@@ -37,7 +39,12 @@ func NewMediaServerDAL(picturesBasePath, cachesBasePath, dataDir string, maxConc
 		return nil, err
 	}
 
-	mediaFilesDAL := NewMediaFilesDAL(picturesBasePath, thumbnailsCache)
+	videosDAL, err := videodal.NewFFMPEGDAL(filepath.Join(cachesBasePath, "videos"), picturesBasePath, maxConcurrentVideoConversions)
+	if nil != err {
+		return nil, err
+	}
+
+	mediaFilesDAL := NewMediaFilesDAL(picturesBasePath, thumbnailsCache, videosDAL)
 
 	picturesDAL, err := NewPicturesDAL(picturesBasePath, cachesBasePath, mediaFilesDAL, thumbnailsCache, pictureResizer)
 	if nil != err {
@@ -54,6 +61,7 @@ func NewMediaServerDAL(picturesBasePath, cachesBasePath, dataDir string, maxConc
 		picturesDAL,
 		mediaFilesDAL,
 		diskstorage.NewCollectionsRepository(),
+		videosDAL,
 	}, nil
 }
 

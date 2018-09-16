@@ -10,6 +10,7 @@ import (
 	"mediaserverapp/mediaserver/picturesdal/diskcache"
 	"mediaserverapp/mediaserver/picturesdal/diskstorage"
 	"mediaserverapp/mediaserver/picturesdal/picturesmetadatacache"
+	"mediaserverapp/mediaserver/picturesdal/videodal"
 	"os"
 	"path/filepath"
 	"strings"
@@ -23,10 +24,11 @@ type MediaFilesDAL struct {
 	cache            *picturesmetadatacache.MediaFilesCache
 	dbDAL            *diskstorage.PicturesMetadataRepository // FIXME rename
 	thumbnailsCache  *diskcache.ThumbnailsCache
+	videosDAL        videodal.VideoDAL
 }
 
-func NewMediaFilesDAL(picturesBasePath string, thumbnailsCache *diskcache.ThumbnailsCache) *MediaFilesDAL {
-	return &MediaFilesDAL{picturesBasePath, picturesmetadatacache.NewMediaFilesCache(), diskstorage.NewPicturesMetadataRepository(), thumbnailsCache}
+func NewMediaFilesDAL(picturesBasePath string, thumbnailsCache *diskcache.ThumbnailsCache, videosDAL videodal.VideoDAL) *MediaFilesDAL {
+	return &MediaFilesDAL{picturesBasePath, picturesmetadatacache.NewMediaFilesCache(), diskstorage.NewPicturesMetadataRepository(), thumbnailsCache, videosDAL}
 }
 
 func (dal *MediaFilesDAL) GetAll() []pictures.MediaFile {
@@ -46,6 +48,10 @@ func (dal *MediaFilesDAL) add(pictureMetadata pictures.MediaFile) error {
 // Get returns the picture metadata for a given hash. If the hash is not found, nil will be returned.
 func (dal *MediaFilesDAL) Get(hashValue pictures.HashValue) pictures.MediaFile {
 	return dal.cache.Get(hashValue)
+}
+
+func (dal *MediaFilesDAL) GetFullPath(mediaFile pictures.MediaFile) string {
+	return filepath.Join(dal.picturesBasePath, mediaFile.GetRelativePath())
 }
 
 func (dal *MediaFilesDAL) processVideoFile(tx *sql.Tx, path string, fileInfo os.FileInfo) (*pictures.VideoFileMetadata, error) {
@@ -68,7 +74,14 @@ func (dal *MediaFilesDAL) processVideoFile(tx *sql.Tx, path string, fileInfo os.
 		return nil, err
 	}
 
-	return pictures.NewVideoFileMetadata(hashValue, relativeFilePath, fileInfo.Size()), nil
+	videoFileMetadata := pictures.NewVideoFileMetadata(hashValue, relativeFilePath, fileInfo.Size())
+
+	err = dal.videosDAL.AddFile(videoFileMetadata)
+	if nil != err {
+		return nil, err
+	}
+
+	return videoFileMetadata, nil
 }
 
 func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string) (*pictures.PictureMetadata, error) {
@@ -126,7 +139,7 @@ func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx) error {
 			if err != nil {
 				return err
 			}
-		case ".mov":
+		case ".mov", ".ogv":
 			log.Printf("found .mov file at %s\n", path)
 			mediaFile, err = dal.processVideoFile(tx, path, fileinfo)
 			if err != nil {

@@ -24,14 +24,14 @@ type MediaServer struct {
 	mediaServerDAL          *picturesdal.MediaServerDAL
 	picturesService         *pictureswebservice.PicturesService
 	picturesMetadataService *pictureswebservice.PicturesMetadataService
-	filesWebService         *pictureswebservice.FileWebService
+	videosWebService        *pictureswebservice.VideoWebService
 	collectionsService      *pictureswebservice.CollectionsWebService
 	dbConn                  *mediaserverdb.DBConn
 }
 
 // NewMediaServerAndScan creates a new MediaServer and builds a cache of pictures by scanning the rootpath
-func NewMediaServerAndScan(rootpath, cachesDir, dataDir string, maxConcurrentResizes uint) (*MediaServer, error) {
-	mediaServerDAL, err := picturesdal.NewMediaServerDAL(rootpath, cachesDir, dataDir, maxConcurrentResizes)
+func NewMediaServerAndScan(rootpath, cachesDir, dataDir string, maxConcurrentResizes, maxConcurrentVideoConversions uint) (*MediaServer, error) {
+	mediaServerDAL, err := picturesdal.NewMediaServerDAL(rootpath, cachesDir, dataDir, maxConcurrentResizes, maxConcurrentVideoConversions)
 	if nil != err {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func NewMediaServerAndScan(rootpath, cachesDir, dataDir string, maxConcurrentRes
 		mediaServerDAL:          mediaServerDAL,
 		picturesService:         pictureswebservice.NewPicturesService(mediaServerDAL),
 		picturesMetadataService: pictureswebservice.NewPicturesMetadataService(dbConn, mediaServerDAL),
-		filesWebService:         pictureswebservice.NewFileWebService(mediaServerDAL),
+		videosWebService:        pictureswebservice.NewVideoWebService(mediaServerDAL.VideosDAL),
 		collectionsService:      pictureswebservice.NewCollectionsWebService(dbConn, mediaServerDAL.CollectionsDAL),
 	}
 
@@ -89,7 +89,7 @@ func (ms *MediaServer) ListenAndServe(addr string) error {
 		r.Mount("/collections/", ms.collectionsService)
 	})
 
-	mainRouter.Mount("/file/", http.StripPrefix("/file/", ms.filesWebService))
+	mainRouter.Mount("/video/", http.StripPrefix("/video/", ms.videosWebService))
 	mainRouter.Mount("/picture/", ms.picturesService)
 	mainRouter.Mount("/", statichandlers.NewClientHandler())
 

@@ -197,10 +197,10 @@ class PictureModal extends React.Component<Props, ComponentState> {
       case MediaFileType.Picture:
         return <img ref={(el) => {this.pictureEl = el; }} />;
       case MediaFileType.Video:
-        const videoUrl = `${SERVER_BASE_URL}/file/${mediaFile.hashValue}`;
+        const videoUrl = `${SERVER_BASE_URL}/video/${mediaFile.hashValue}`;
         return (
           <video width="100%" controls={true}>
-            <source src={videoUrl} type="video/quicktime" />
+            <source src={videoUrl} />
             Your browser does not support HTML5 video.
           </video>
         );
