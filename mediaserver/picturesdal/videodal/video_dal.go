@@ -7,5 +7,5 @@ import (
 
 type VideoDAL interface {
 	GetFile(hash pictures.HashValue) (*os.File, error)
-	AddFile(mediaFile pictures.MediaFile) error
+	EnsureSupportedFile(mediaFile pictures.MediaFile) error
 }

@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/jamesrr39/semaphore"
 )
@@ -34,21 +35,22 @@ func (dal *FFMPEGDAL) GetFile(hash pictures.HashValue) (*os.File, error) {
 	return os.Open(dal.buildPath(hash))
 }
 
-func (dal *FFMPEGDAL) AddFile(mediaFile pictures.MediaFile) error {
+func (dal *FFMPEGDAL) EnsureSupportedFile(mediaFile pictures.MediaFile) error {
 	if mediaFile.GetMediaFileType() != pictures.MediaFileTypeVideo {
 		return ErrWrongFileType
 	}
 
-	// FIXME check if it's a supported format
-	toPath := filepath.Join(dal.videosBasePath, fmt.Sprintf("%s.ogv", mediaFile.GetHashValue()))
-	_, err := os.Stat(toPath)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			return err
+	if !strings.HasSuffix(mediaFile.GetRelativePath(), ".ogv") {
+		toPath := filepath.Join(dal.videosBasePath, fmt.Sprintf("%s.ogv", mediaFile.GetHashValue()))
+		_, err := os.Stat(toPath)
+		if err != nil {
+			if !os.IsNotExist(err) {
+				return err
+			}
+			dal.sema.Add()
+			defer dal.sema.Done()
+			return dal.convertToOgv(filepath.Join(dal.picturesBasePath, mediaFile.GetRelativePath()), toPath)
 		}
-		dal.sema.Add()
-		defer dal.sema.Done()
-		return dal.convertToOgv(filepath.Join(dal.picturesBasePath, mediaFile.GetRelativePath()), toPath)
 	}
 	return nil
 }

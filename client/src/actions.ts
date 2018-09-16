@@ -1,4 +1,4 @@
-import { PictureMetadata, ExifData, RawSize } from './domain/PictureMetadata';
+import { PictureMetadata } from './domain/PictureMetadata';
 import { Action } from 'redux';
 import { SERVER_BASE_URL } from './configs';
 import { NotificationLevel, GalleryNotification } from './ui/NotificationBarComponent';
@@ -6,8 +6,8 @@ import { QueuedFile } from './fileQueue';
 import {
   newNotificationAction, NotifyAction, removeNotification, RemoveNotificationAction
  } from './actions/notificationActions';
-import { MediaFileType, MediaFile } from './domain/MediaFile';
-import { VideoMetadata } from './domain/VideoMetadata';
+import { MediaFile } from './domain/MediaFile';
+import { MediaFileJSON, fromJSON } from './domain/deserialise';
 
 export enum FilesActionTypes {
   FETCH_PICTURES_METADATA = 'FETCH_PICTURES_METADATA',
@@ -42,26 +42,6 @@ export type MediaserverAction = (
   PictureSuccessfullyUploadedAction |
   FetchPicturesMetadataAction);
 
-type PictureMetadataJSON = {
-  fileType: MediaFileType.Picture;
-  hashValue: string;
-  relativeFilePath: string;
-  fileSizeBytes: number;
-  exif: null|ExifData;
-  rawSize: RawSize;
-};
-
-type VideoMetadataJSON = {
-  fileType: MediaFileType.Video;
-  hashValue: string;
-  relativeFilePath: string;
-  fileSizeBytes: number;
-};
-
-type MediaFileJSON = {
-  fileType: MediaFileType;
-} & (PictureMetadataJSON | VideoMetadataJSON);
-
 export function fetchPicturesMetadata() {
   return (dispatch: (action: FetchPicturesMetadataAction | PicturesMetadataFetchedAction | NotifyAction) => void) => {
     dispatch({
@@ -76,23 +56,7 @@ export function fetchPicturesMetadata() {
       })
       .then(response => response.json())
       .then((mediaFilesJSON: MediaFileJSON[]) => {
-        const mediaFiles: MediaFile[] = [];
-        mediaFilesJSON.forEach(json => {
-          switch (json.fileType) {
-          case MediaFileType.Picture:
-            mediaFiles.push(
-              new PictureMetadata(json.hashValue, json.relativeFilePath, json.fileSizeBytes, json.exif, json.rawSize));
-            break;
-          case MediaFileType.Video:
-            mediaFiles.push(
-              new VideoMetadata(json.hashValue, json.relativeFilePath, json.fileSizeBytes)
-            );
-            break;
-          default:
-            // do nothing
-            break;
-          }
-        });
+        const mediaFiles = mediaFilesJSON.map(json => fromJSON(json));
         dispatch({
           type: FilesActionTypes.PICTURES_METADATA_FETCHED,
           mediaFiles,

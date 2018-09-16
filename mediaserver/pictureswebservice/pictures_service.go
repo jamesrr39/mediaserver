@@ -10,7 +10,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
-	"github.com/go-chi/render"
 )
 
 type PicturesService struct {
@@ -24,7 +23,6 @@ func NewPicturesService(mediaServerDAL *picturesdal.MediaServerDAL) *PicturesSer
 	picturesService := &PicturesService{mediaServerDAL, router}
 
 	router.Get("/{hash}", picturesService.servePicture)
-	router.Post("/", picturesService.servePictureUpload)
 
 	return picturesService
 }
@@ -89,32 +87,4 @@ func (ps *PicturesService) servePicture(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, errMessage.Error(), 500)
 		return
 	}
-}
-
-func (ps *PicturesService) servePictureUpload(w http.ResponseWriter, r *http.Request) {
-
-	file, fileHandler, err := r.FormFile("file")
-	if nil != err {
-		http.Error(w, err.Error(), 400)
-		return
-	}
-	defer file.Close()
-
-	pictureMetadata, err := ps.mediaServerDAL.Create(file, fileHandler.Filename, fileHandler.Header.Get("Content-Type"))
-	if nil != err {
-		if picturesdal.ErrFileAlreadyExists == err {
-			http.Error(w, err.Error(), 409)
-			return
-		}
-
-		if picturesdal.ErrIllegalPathTraversingUp == err {
-			http.Error(w, err.Error(), 400)
-			return
-		}
-
-		http.Error(w, err.Error(), 500)
-		return
-	}
-
-	render.JSON(w, r, pictureMetadata)
 }

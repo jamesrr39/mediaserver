@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as Leaflet from 'leaflet';
 import { RawSize } from '../domain/PictureMetadata';
-import { Location } from '../domain/Location';
+import { MapLocation } from '../domain/Location';
 import { escapeHtml } from '../util/html';
 
 const markerIcon = require('../../node_modules/leaflet/dist/images/marker-icon.png');
@@ -47,7 +47,7 @@ export type PopupData = {
 };
 
 export type MapMarker = {
-  location: Location,
+  location: MapLocation,
   popupData?: PopupData,
 };
 

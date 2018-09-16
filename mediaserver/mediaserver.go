@@ -23,7 +23,7 @@ type MediaServer struct {
 	Rootpath                string
 	mediaServerDAL          *picturesdal.MediaServerDAL
 	picturesService         *pictureswebservice.PicturesService
-	picturesMetadataService *pictureswebservice.PicturesMetadataService
+	picturesMetadataService *pictureswebservice.MediaFilesService
 	videosWebService        *pictureswebservice.VideoWebService
 	collectionsService      *pictureswebservice.CollectionsWebService
 	dbConn                  *mediaserverdb.DBConn
@@ -45,8 +45,8 @@ func NewMediaServerAndScan(rootpath, cachesDir, dataDir string, maxConcurrentRes
 		Rootpath:                rootpath,
 		mediaServerDAL:          mediaServerDAL,
 		picturesService:         pictureswebservice.NewPicturesService(mediaServerDAL),
-		picturesMetadataService: pictureswebservice.NewPicturesMetadataService(dbConn, mediaServerDAL),
-		videosWebService:        pictureswebservice.NewVideoWebService(mediaServerDAL.VideosDAL),
+		picturesMetadataService: pictureswebservice.NewMediaFilesService(dbConn, mediaServerDAL),
+		videosWebService:        pictureswebservice.NewVideoWebService(mediaServerDAL.VideosDAL, mediaServerDAL.MediaFilesDAL),
 		collectionsService:      pictureswebservice.NewCollectionsWebService(dbConn, mediaServerDAL.CollectionsDAL),
 	}
 

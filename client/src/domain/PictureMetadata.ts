@@ -1,19 +1,17 @@
 import { MediaFileType, MediaFile } from './MediaFile';
-import { Location } from './Location';
+import { MapLocation } from './Location';
 
 export class PictureMetadata extends MediaFile {
-  public readonly fileType = MediaFileType.Picture;
-
   constructor(
     public readonly hashValue: string,
     public readonly relativeFilePath: string,
     public readonly fileSizeBytes: number,
     public readonly exif: null|ExifData,
     public readonly rawSize: RawSize) {
-      super();
+      super(MediaFileType.Picture, hashValue, relativeFilePath, fileSizeBytes);
     }
 
-  getTimeTaken() {
+  getTimeTaken(): Date | null {
     if (this.exif === null) {
       return null;
     }
@@ -33,7 +31,7 @@ export class PictureMetadata extends MediaFile {
     return null;
   }
 
-  getLocation(): Location|null {
+  getLocation(): MapLocation|null {
     const {exif} = this;
     if (exif === null) {
       return null;
@@ -51,6 +49,7 @@ export class PictureMetadata extends MediaFile {
         }
         return parseWGS84ToLocation(GPSLatitude, GPSLatitudeRef, GPSLongitude, GPSLongitudeRef);
       default:
+        // TODO: log this info
         return null;
     }
   }
@@ -60,7 +59,7 @@ function parseWGS84ToLocation(
   GPSLatitude: string[],
   GPSLatitudeRef: string,
   GPSLongitude: string[],
-  GPSLongitudeRef: string): Location|null {
+  GPSLongitudeRef: string): MapLocation|null {
   const latDegs = asDecimal(GPSLatitude[0]);
   const latMins = asDecimal(GPSLatitude[1]);
   const latSecs = asDecimal(GPSLatitude[2]);

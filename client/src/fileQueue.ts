@@ -1,9 +1,10 @@
 import { SERVER_BASE_URL } from './configs';
-import { PictureMetadata } from './domain/PictureMetadata';
+import { MediaFile } from './domain/MediaFile';
+import { MediaFileJSON, fromJSON } from './domain/deserialise';
 
 export type QueuedFile = {
   file: File,
-  onSuccess: (pictureMetadata: PictureMetadata, remainingLeftInQueue: number) => void,
+  onSuccess: (pictureMetadata: MediaFile, remainingLeftInQueue: number) => void,
   onFailure: (response: Response, remainingLeftInQueue: number) => void;
 };
 
@@ -27,7 +28,7 @@ export class FileQueue {
     this.currentUploads++;
     const formData = new FormData();
     formData.append('file', queuedFile.file);
-    fetch(`${SERVER_BASE_URL}/picture/`, {
+    fetch(`${SERVER_BASE_URL}/api/files/`, {
         method: 'POST',
         body: formData,
       })
@@ -40,8 +41,8 @@ export class FileQueue {
           return;
         }
 
-        response.json().then((pictureMetadata) => {
-          queuedFile.onSuccess(pictureMetadata, uploadsRemaining);
+        response.json().then((pictureMetadata: MediaFileJSON) => {
+          queuedFile.onSuccess(fromJSON(pictureMetadata), uploadsRemaining);
         });
       });
   }

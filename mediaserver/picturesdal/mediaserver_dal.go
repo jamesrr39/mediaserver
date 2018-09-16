@@ -1,6 +1,7 @@
 package picturesdal
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"io/ioutil"
@@ -65,10 +66,12 @@ func NewMediaServerDAL(picturesBasePath, cachesBasePath, dataDir string, maxConc
 	}, nil
 }
 
+var ErrContentTypeNotSupported = errors.New("content type not supported")
+
 // Create adds a new picture to the collection
 // TODO: is contentType needed?
 // FIXME is this function needed
-func (dal *MediaServerDAL) Create(file io.Reader, filename, contentType string) (*pictures.PictureMetadata, error) {
+func (dal *MediaServerDAL) Create(file io.Reader, filename, contentType string) (pictures.MediaFile, error) {
 
 	if dirtraversal.IsTryingToTraverseUp(filename) {
 		return nil, ErrIllegalPathTraversingUp
@@ -85,12 +88,37 @@ func (dal *MediaServerDAL) Create(file io.Reader, filename, contentType string) 
 		return nil, err
 	}
 
-	pictureMetadata, _, err := pictures.NewPictureMetadataAndPictureFromBytes(fileBytes, relativeFilePath)
-	if nil != err {
-		return nil, err
+	doAtEnd := func() error { return nil }
+	var mediaFile pictures.MediaFile
+	switch contentType {
+	case "image/jpg", "image/jpeg", "image/png":
+		pictureMetadata, _, err := pictures.NewPictureMetadataAndPictureFromBytes(fileBytes, relativeFilePath)
+		if nil != err {
+			return nil, err
+		}
+		mediaFile = pictureMetadata
+
+		doAtEnd = func() error {
+			return dal.PicturesDAL.EnsureAllThumbnailsForPictures([]*pictures.PictureMetadata{pictureMetadata})
+		}
+	case "video/quicktime": // TODO add ogg
+		hashValue, err := pictures.NewHash(bytes.NewBuffer(fileBytes))
+		if nil != err {
+			return nil, err
+		}
+
+		videoFile := pictures.NewVideoFileMetadata(hashValue, relativeFilePath, int64(len(fileBytes)))
+		mediaFile = videoFile
+
+		doAtEnd = func() error {
+			return dal.VideosDAL.EnsureSupportedFile(videoFile)
+		}
+
+	default:
+		return nil, ErrContentTypeNotSupported
 	}
 
-	if nil != dal.MediaFilesDAL.Get(pictureMetadata.HashValue) {
+	if nil != dal.MediaFilesDAL.Get(mediaFile.GetHashValue()) {
 		return nil, ErrFileAlreadyExists
 	}
 
@@ -106,14 +134,14 @@ func (dal *MediaServerDAL) Create(file io.Reader, filename, contentType string) 
 		return nil, err
 	}
 
-	dal.MediaFilesDAL.add(pictureMetadata)
-
-	err = dal.PicturesDAL.EnsureAllThumbnailsForPictures([]*pictures.PictureMetadata{pictureMetadata})
-	if err != nil {
+	err = doAtEnd()
+	if nil != err {
 		return nil, err
 	}
 
-	return pictureMetadata, nil
+	dal.MediaFilesDAL.add(mediaFile)
+
+	return mediaFile, nil
 }
 
 func (dal *MediaServerDAL) getPathForNewFile(folder, filename string) (string, string, error) {

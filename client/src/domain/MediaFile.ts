@@ -1,4 +1,4 @@
-import { Location } from './Location';
+import { MapLocation } from './Location';
 
 export enum MediaFileType {
   Picture = 1,
@@ -6,10 +6,11 @@ export enum MediaFileType {
 }
 
 export abstract class MediaFile {
-  abstract fileType: MediaFileType;
-  abstract hashValue: string;
-  abstract relativeFilePath: string;
-  abstract fileSizeBytes: number;
+  constructor(
+    public readonly fileType: MediaFileType,
+    public readonly hashValue: string,
+    public readonly relativeFilePath: string,
+    public readonly  fileSizeBytes: number) {}
   getName() {
     const lastSlash = this.relativeFilePath.lastIndexOf('/');
     if (lastSlash === -1) {
@@ -18,5 +19,5 @@ export abstract class MediaFile {
     return this.relativeFilePath.substring(lastSlash + 1);
   }
   abstract getTimeTaken(): Date | null;
-  abstract getLocation(): Location | null;
+  abstract getLocation(): MapLocation | null;
 }

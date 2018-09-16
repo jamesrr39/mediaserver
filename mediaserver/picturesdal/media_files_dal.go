@@ -76,7 +76,7 @@ func (dal *MediaFilesDAL) processVideoFile(tx *sql.Tx, path string, fileInfo os.
 
 	videoFileMetadata := pictures.NewVideoFileMetadata(hashValue, relativeFilePath, fileInfo.Size())
 
-	err = dal.videosDAL.AddFile(videoFileMetadata)
+	err = dal.videosDAL.EnsureSupportedFile(videoFileMetadata)
 	if nil != err {
 		return nil, err
 	}
