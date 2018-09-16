@@ -20,7 +20,7 @@ func (fwfs *fileWebFileServer) Open(hashValue string) (http.File, error) {
 	if err != nil && !os.IsNotExist(err) {
 		log.Printf("couldn't open file with hash value %q. Error: %q\n", hashValue, err)
 	}
-	if convertedVideo != nil {
+	if err == nil {
 		return convertedVideo, nil
 	}
 
