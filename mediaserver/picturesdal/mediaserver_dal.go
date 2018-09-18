@@ -96,7 +96,7 @@ func (dal *MediaServerDAL) Create(file io.Reader, filename, contentType string) 
 		doAtEnd = func() error {
 			return dal.PicturesDAL.EnsureAllThumbnailsForPictures([]*pictures.PictureMetadata{pictureMetadata})
 		}
-	case "video/ogg":
+	case "video/mp4":
 		hashValue, err := pictures.NewHash(bytes.NewBuffer(fileBytes))
 		if nil != err {
 			return nil, err

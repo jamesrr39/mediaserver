@@ -72,6 +72,7 @@ const styles = {
     position: 'fixed',
     left: '30px',
     bottom: '30px',
+    zIndex: 1000,
   } as React.CSSProperties,
 };
 

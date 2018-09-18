@@ -139,7 +139,7 @@ func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx) error {
 			if err != nil {
 				return err
 			}
-		case ".ogv":
+		case ".mp4":
 			mediaFile, err = dal.processVideoFile(tx, path, fileinfo)
 			if err != nil {
 				return err
