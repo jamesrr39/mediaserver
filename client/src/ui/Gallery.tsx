@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import MapComponent, { MapMarker } from './MapComponent';
 import { SERVER_BASE_URL } from '../configs';
 import { MediaFile } from '../domain/MediaFile';
+import { isNarrowScreen } from '../util/screen_size';
 
 export interface GalleryProps {
   picturesMetadatas: MediaFile[];
@@ -23,7 +24,7 @@ type GalleryState = {
 };
 
 const styles = {
-  container: {
+  wideScreenContainer: {
     margin: '0 20px',
   },
   picturesContainer: {
@@ -35,7 +36,7 @@ const styles = {
       margin: '0 10px 10px 0',
   },
   mapContainer: {
-    margin: '30px 0',
+    margin: '30px 20px',
   },
 };
 
@@ -56,11 +57,14 @@ class Gallery extends React.Component<GalleryProps, GalleryState> {
 
   render() {
     this.props.picturesMetadatas.sort(gallerySortingFunc);
+    const pictureContainerStyle = isNarrowScreen()
+      ? styles.picturesContainer
+      : {...styles.picturesContainer, ...styles.wideScreenContainer};
 
     return (
-      <div style={styles.container}>
+      <div>
         {this.props.showMap && this.renderMap()}
-        <div style={styles.picturesContainer}>
+        <div style={pictureContainerStyle}>
           {this.renderThumbnails()}
         </div>
       </div>

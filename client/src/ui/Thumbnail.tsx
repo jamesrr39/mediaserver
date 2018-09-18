@@ -116,6 +116,7 @@ export class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
 
   private generateVideoThumbnailHtml = (mediaFile: VideoMetadata) => {
     const videoUrl = `${SERVER_BASE_URL}/video/${mediaFile.hashValue}`;
+
     const narrowScreen = isNarrowScreen();
     const thumbnailHeight = narrowScreen ? NARROW_SCREEN_THUMBNAIL_HEIGHT : WIDE_SCREEN_THUMBNAIL_HEIGHT;
     const thumbnailWidth = narrowScreen ? NARROW_SCREEN_THUMBNAIL_WIDTH : undefined;
@@ -123,7 +124,7 @@ export class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
     return (
       <div>
         <span style={styles.playButton}>&#9658;</span>
-        <video height={thumbnailHeight} width={thumbnailWidth} controls={false}>
+        <video height={thumbnailHeight} width={thumbnailWidth} controls={true}>
           <source src={videoUrl} />
           Your browser does not support HTML5 video.
         </video>

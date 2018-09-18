@@ -115,7 +115,7 @@ export function createCompareTimeTakenFunc(sortNullAfter: boolean) {
     const aTime = aTaken.getTime();
     const bTime = bTaken.getTime();
     if (aTime === bTime) {
-      return 0;
+      return a.relativeFilePath > b.relativeFilePath ? 1 : -1;
     }
 
     return (bTime > aTime) ? 1 : -1;
