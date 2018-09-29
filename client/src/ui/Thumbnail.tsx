@@ -13,11 +13,9 @@ const NARROW_SCREEN_THUMBNAIL_HEIGHT = 100;
 const NARROW_SCREEN_THUMBNAIL_WIDTH = 100;
 
 const styles = {
-  playButton: {
-    backgroundColor: 'white',
-    borderRadius: '2px',
-    position: 'absolute',
-  } as React.CSSProperties,
+  video: {
+    pointerEvents: 'none',
+  },
 };
 
 function getImageHeightToRequest(narrowScreen: boolean, pictureMetadata: PictureMetadata) {
@@ -123,8 +121,7 @@ export class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
 
     return (
       <div>
-        <span style={styles.playButton}>&#9658;</span>
-        <video height={thumbnailHeight} width={thumbnailWidth} controls={true}>
+        <video height={thumbnailHeight} width={thumbnailWidth} controls={true} style={styles.video}>
           <source src={videoUrl} />
           Your browser does not support HTML5 video.
         </video>
