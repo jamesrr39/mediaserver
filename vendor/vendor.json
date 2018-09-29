@@ -180,6 +180,12 @@
 			"revisionTime": "2017-12-08T16:08:15Z"
 		},
 		{
+			"checksumSHA1": "0hZUXKGcKlC9vU8rMudEJj8a6yQ=",
+			"path": "github.com/jamesrr39/goutil/dbstatetracker",
+			"revision": "72241063256602010edba7ecc3658b99b8b77794",
+			"revisionTime": "2018-09-29T13:08:56Z"
+		},
+		{
 			"checksumSHA1": "7r5C6WKt0hlMnGQncfWGBbrbBXk=",
 			"path": "github.com/jamesrr39/goutil/dirtraversal",
 			"revision": "81fefce615d2ddb531b04162fbdc1acc4244f5f5",

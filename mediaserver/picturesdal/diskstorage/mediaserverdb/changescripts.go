@@ -1,11 +1,5 @@
 package mediaserverdb
 
-var createDBSQL = `
-CREATE TABLE IF NOT EXISTS db_state (
-  version int
-);
-`
-
 var changescripts = []string{`
 CREATE TABLE IF NOT EXISTS pictures_metadatas (
   hash string,
