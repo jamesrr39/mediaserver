@@ -11,6 +11,7 @@ import { themeStyles } from '../../theme/theme';
 import { withRouter } from 'react-router-dom';
 import { compose } from 'redux';
 import { History } from 'history';
+import { queueFileForUpload } from '../../actions';
 
 const styles = {
   nameInput: {
@@ -22,6 +23,9 @@ const styles = {
   },
   container: {
     margin: '0 20px',
+  },
+  uploadInput: {
+    display: 'none',
   },
 };
 
@@ -136,6 +140,10 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
             onChange={event => this.onNameChange(event)}
           />
           <button type="submit" onClick={this.onSubmit} style={themeStyles.button}>Save</button>
+          <label style={themeStyles.button}>
+            Upload
+            <input style={styles.uploadInput} type="file" multiple={true} onChange={this.onFileUploadSelected} />
+          </label>
           <h3>Items in collection</h3>
           <Gallery {...itemsInCollectionGalleryProps} />
           <h3>Items out of collection</h3>
@@ -143,6 +151,29 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
         </form>
       </div>
     );
+  }
+
+  private onFileUploadSelected = (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files === null) {
+      return;
+    }
+    this.setState(state => {
+      return {
+        isUploadingEnabled: false,
+        ...state,
+      };
+    });
+    for (let i = 0; i < event.target.files.length; i++) {
+        const file = event.target.files[i];
+        this.props.dispatch(queueFileForUpload(file, (mediaFile) => {
+          const hashesInCollectionSet = this.state.hashesInCollectionSet;
+          hashesInCollectionSet.add(mediaFile.hashValue);
+          this.setState(state => ({
+            ...state,
+            hashesInCollectionSet,
+          }));
+        }));
+    }
   }
 }
 

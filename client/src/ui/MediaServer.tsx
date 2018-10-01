@@ -95,14 +95,6 @@ class MediaServer extends React.Component<MediaServerProps> {
   renderCollectionView = (routeInfo: RouteComponentProps<CollectionViewRouteParams>) => {
     const { type, identifier } = collectionIdentifierAndTypeFromRoute(routeInfo);
 
-    if (type === CollectionType.Custom && identifier === 'new') {
-      const newCollectionComponentProps = {
-        collection: new CustomCollection(0, '', []),
-      };
-
-      return withNavBar(<EditCustomCollectionComponent {...newCollectionComponentProps} />);
-    }
-
     const { picturesMetadatas, customCollections } = this.props;
 
     const collection = findCollectionFromTypeAndName(

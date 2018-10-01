@@ -1,8 +1,14 @@
 import * as React from 'react';
-import { Collection } from '../../domain/Collection';
+import { Collection, CustomCollection } from '../../domain/Collection';
 import CollectionThumbnail from './CollectionThumbnail';
-import { Link } from 'react-router-dom';
 import { themeStyles } from '../../theme/theme';
+import AddCollectionModal from './AddCollectionModal';
+import { saveCollection } from '../../collectionsActions';
+import { Dispatch, connect } from 'react-redux';
+import { Action } from 'redux';
+import { History } from 'history';
+import { withRouter } from 'react-router';
+import { compose } from 'redux';
 
 const styles = {
   collectionsWrapper: {
@@ -12,12 +18,22 @@ const styles = {
 };
 
 type Props = {
+  dispatch: Dispatch<Action>;
+  history: History;
   title: string,
   collections: Collection[],
   canAddCollection?: boolean,
 };
 
-class CollectionGroupListingComponent extends React.Component<Props> {
+type State = {
+  showAddCollectionModal: boolean,
+};
+
+class CollectionGroupListingComponent extends React.Component<Props, State> {
+  state = {
+    showAddCollectionModal: false,
+  };
+
   render() {
     const itemsHtml = this.props.collections.map((collection, index) => {
       const props = {
@@ -31,6 +47,15 @@ class CollectionGroupListingComponent extends React.Component<Props> {
       );
     });
 
+    const addCollectionModal = this.state.showAddCollectionModal
+      ? (
+        <AddCollectionModal
+          onSubmit={(name) => this.onAddCollectionModalSubmit(name)}
+          onCancel={() => this.onAddCollectionModalCancel()}
+        />
+      )
+      : null;
+
     return (
       <div>
         <h2>{this.props.title}</h2>
@@ -38,21 +63,60 @@ class CollectionGroupListingComponent extends React.Component<Props> {
         <div style={styles.collectionsWrapper}>
           {itemsHtml}
         </div>
+        {addCollectionModal}
       </div>
     );
   }
 
   private renderAddCollectionBtn = () => {
     if (!this.props.canAddCollection) {
-      return '';
+      return null;
     }
 
     return (
-      <Link style={themeStyles.button} to={'/collections/custom/new'}>
+      <button
+        type="button"
+        style={themeStyles.button}
+        onClick={() => {this.setState(state => ({...state, showAddCollectionModal: true})); }}
+      >
         &#43; Add
-      </Link>
+      </button>
+    );
+  }
+
+  private onAddCollectionModalCancel = () => {
+    this.setState(state => ({
+      ...state,
+      showAddCollectionModal: false,
+    }));
+  }
+
+  private onAddCollectionModalSubmit = (name: string) => {
+
+    const { dispatch, history } = this.props;
+
+    const newCollection = new CustomCollection(0, name, []);
+    const onSuccess = (returnedCollection: Collection) => {
+      const encodedType = encodeURIComponent(returnedCollection.type);
+      const encodedIdentifier = encodeURIComponent(returnedCollection.identifier());
+      const successUrl = `/collections/${encodedType}/${encodedIdentifier}/edit`;
+      history.push(successUrl);
+    };
+
+    dispatch(
+      saveCollection(
+        newCollection,
+        onSuccess,
+      ),
     );
   }
 }
 
-export default CollectionGroupListingComponent;
+function mapStateToProps(state: State) {
+  return {};
+}
+
+export default compose(
+  withRouter,
+  connect(mapStateToProps)
+)(CollectionGroupListingComponent);

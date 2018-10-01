@@ -12,6 +12,7 @@ import { History } from 'history';
 import PictureInfoComponent, { INFO_CONTAINER_WIDTH } from './PictureInfoComponent';
 import { isNarrowScreen } from '../util/screen_size';
 import { MediaFile, MediaFileType } from '../domain/MediaFile';
+import Modal from './Modal';
 
 const KeyCodes = {
   ESCAPE: 27,
@@ -34,18 +35,6 @@ type Props = {
 };
 
 const styles = {
-  modal: {
-    position: 'fixed',
-    height: '100%',
-    width: '100%',
-    top: 0,
-    left: 0,
-    backgroundColor: 'black',
-    zIndex: 10000,
-    color: 'white',
-    display: 'flex',
-    flexDirection: 'column',
-  } as React.CSSProperties,
   modalBody: {
     display: 'flex',
     height: '100%',
@@ -145,12 +134,12 @@ class PictureModal extends React.Component<Props, ComponentState> {
     const refCb = this.createRefCallback();
 
     return (
-      <div style={styles.modal}>
+      <Modal>
         {this.renderTopBar(this.pictureMetadata)}
         <div style={styles.modalBody} ref={refCb}>
           {this.renderModalBody(this.pictureMetadata)}
         </div>
-      </div>
+      </Modal>
     );
   }
 

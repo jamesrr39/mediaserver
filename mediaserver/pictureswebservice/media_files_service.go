@@ -23,7 +23,7 @@ func NewMediaFilesService(dbConn *mediaserverdb.DBConn, picturesDAL *picturesdal
 	picturesService := &MediaFilesService{picturesDAL, dbConn, router}
 
 	router.Get("/", picturesService.serveAllPicturesMetadata)
-	router.Post("/", picturesService.servePictureUpload)
+	router.Post("/", picturesService.serveFileUpload)
 
 	return picturesService
 }
@@ -69,7 +69,7 @@ func (ms *MediaFilesService) serveAllPicturesMetadata(w http.ResponseWriter, r *
 	w.Write(jsonBytes)
 }
 
-func (ps *MediaFilesService) servePictureUpload(w http.ResponseWriter, r *http.Request) {
+func (ps *MediaFilesService) serveFileUpload(w http.ResponseWriter, r *http.Request) {
 
 	file, fileHandler, err := r.FormFile("file")
 	if nil != err {

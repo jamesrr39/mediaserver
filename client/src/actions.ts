@@ -8,6 +8,7 @@ import {
  } from './actions/notificationActions';
 import { MediaFile } from './domain/MediaFile';
 import { MediaFileJSON, fromJSON } from './domain/deserialise';
+import { CustomCollection } from './domain/Collection';
 
 export enum FilesActionTypes {
   FETCH_PICTURES_METADATA = 'FETCH_PICTURES_METADATA',
@@ -69,7 +70,7 @@ export function fetchPicturesMetadata() {
 
 const REMOVE_INFO_NOTIFICATION_AFTER_MS = 3000; // 3s
 
-export function queueFileForUpload(file: File) {
+export function queueFileForUpload(file: File, onSuccessCb?: (mediaFile: MediaFile) => void) {
   return (dispatch: (action: MediaserverAction | NotifyAction | RemoveNotificationAction) => void) => {
     const onSuccess = (pictureMetadata: PictureMetadata, uploadsRemaining: number) => {
       dispatch({
@@ -83,6 +84,10 @@ export function queueFileForUpload(file: File) {
       setTimeout(
         () => dispatch(removeNotification(notification) as RemoveNotificationAction),
         REMOVE_INFO_NOTIFICATION_AFTER_MS);
+
+      if (onSuccessCb) {
+        onSuccessCb(pictureMetadata);
+      }
     };
 
     const onFailure = (response: Response, uploadsRemaining: number) => {
