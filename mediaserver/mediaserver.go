@@ -7,13 +7,13 @@ import (
 	"mediaserverapp/mediaserver/picturesdal"
 	"mediaserverapp/mediaserver/picturesdal/diskstorage/mediaserverdb"
 	"mediaserverapp/mediaserver/pictureswebservice"
+	"mediaserverapp/mediaserver/pictureswebservice/mediaservermiddleware"
 	"mediaserverapp/mediaserver/static_assets_handler"
 	"net/http"
 	"os"
 	"path/filepath"
 
 	"github.com/go-chi/chi"
-	"github.com/go-chi/cors"
 	"github.com/jamesrr39/goutil/httpextra"
 	"github.com/jamesrr39/goutil/logger"
 )
@@ -80,9 +80,8 @@ func (ms *MediaServer) Close() error {
 func (ms *MediaServer) ListenAndServe(addr string) error {
 
 	mainRouter := chi.NewRouter()
-	mainRouter.Use(cors.New(cors.Options{
-		AllowedOrigins: []string{"*"},
-	}).Handler)
+
+	mediaservermiddleware.ApplyCorsMiddleware(mainRouter)
 
 	mainRouter.Route("/api/", func(r chi.Router) {
 		r.Mount("/files/", ms.picturesMetadataService)

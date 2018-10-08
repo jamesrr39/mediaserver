@@ -8,7 +8,6 @@ import {
  } from './actions/notificationActions';
 import { MediaFile } from './domain/MediaFile';
 import { MediaFileJSON, fromJSON } from './domain/deserialise';
-import { CustomCollection } from './domain/Collection';
 
 export enum FilesActionTypes {
   FETCH_PICTURES_METADATA = 'FETCH_PICTURES_METADATA',
