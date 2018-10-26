@@ -2,8 +2,8 @@ package pictureswebservice
 
 import (
 	"log"
-	"mediaserverapp/mediaserver/pictures"
-	"mediaserverapp/mediaserver/picturesdal"
+	"mediaserverapp/mediaserver/domain"
+	picturesdal "mediaserverapp/mediaserver/picturesdal"
 	"mediaserverapp/mediaserver/picturesdal/videodal"
 	"net/http"
 	"os"
@@ -19,7 +19,7 @@ type fileWebFileServer struct {
 func (fwfs *fileWebFileServer) Open(hashValue string) (http.File, error) {
 	hashValue = strings.TrimPrefix(hashValue, "/")
 
-	convertedVideo, err := fwfs.videosDAL.GetFile(pictures.HashValue(hashValue))
+	convertedVideo, err := fwfs.videosDAL.GetFile(domain.HashValue(hashValue))
 	if err != nil && !os.IsNotExist(err) {
 		log.Printf("couldn't open file with hash value %q. Error: %q\n", hashValue, err)
 	}
@@ -27,7 +27,7 @@ func (fwfs *fileWebFileServer) Open(hashValue string) (http.File, error) {
 		return convertedVideo, nil
 	}
 
-	mediaFile := fwfs.mediaFilesDAL.Get(pictures.HashValue(hashValue))
+	mediaFile := fwfs.mediaFilesDAL.Get(domain.HashValue(hashValue))
 	if mediaFile == nil {
 		return nil, os.ErrNotExist
 	}

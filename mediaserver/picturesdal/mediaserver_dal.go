@@ -6,7 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"mediaserverapp/mediaserver/pictures"
+	"mediaserverapp/mediaserver/domain"
 	"mediaserverapp/mediaserver/picturesdal/diskcache"
 	"mediaserverapp/mediaserver/picturesdal/diskstorage"
 	"mediaserverapp/mediaserver/picturesdal/videodal"
@@ -33,7 +33,7 @@ type MediaServerDAL struct {
 }
 
 func NewMediaServerDAL(picturesBasePath, cachesBasePath, dataDir string, maxConcurrentResizes, maxConcurrentVideoConversions uint) (*MediaServerDAL, error) {
-	pictureResizer := pictures.NewPictureResizer(maxConcurrentResizes)
+	pictureResizer := domain.NewPictureResizer(maxConcurrentResizes)
 
 	thumbnailsCache, err := diskcache.NewThumbnailsCache(filepath.Join(cachesBasePath, "thumbnails"), pictureResizer)
 	if nil != err {
@@ -66,7 +66,7 @@ func NewMediaServerDAL(picturesBasePath, cachesBasePath, dataDir string, maxConc
 var ErrContentTypeNotSupported = errors.New("content type not supported")
 
 // Create adds a new picture to the collection
-func (dal *MediaServerDAL) Create(file io.Reader, filename, contentType string) (pictures.MediaFile, error) {
+func (dal *MediaServerDAL) Create(file io.Reader, filename, contentType string) (domain.MediaFile, error) {
 
 	if dirtraversal.IsTryingToTraverseUp(filename) {
 		return nil, ErrIllegalPathTraversingUp
@@ -84,32 +84,35 @@ func (dal *MediaServerDAL) Create(file io.Reader, filename, contentType string) 
 	}
 
 	doAtEnd := func() error { return nil }
-	var mediaFile pictures.MediaFile
+	var mediaFile domain.MediaFile
 	switch contentType {
 	case "image/jpg", "image/jpeg", "image/png":
-		pictureMetadata, _, err := pictures.NewPictureMetadataAndPictureFromBytes(fileBytes, relativeFilePath)
+		pictureMetadata, _, err := domain.NewPictureMetadataAndPictureFromBytes(fileBytes, relativeFilePath)
 		if nil != err {
 			return nil, err
 		}
 		mediaFile = pictureMetadata
 
 		doAtEnd = func() error {
-			return dal.PicturesDAL.EnsureAllThumbnailsForPictures([]*pictures.PictureMetadata{pictureMetadata})
+			return dal.PicturesDAL.EnsureAllThumbnailsForPictures([]*domain.PictureMetadata{pictureMetadata})
 		}
 	case "video/mp4":
-		hashValue, err := pictures.NewHash(bytes.NewBuffer(fileBytes))
+		hashValue, err := domain.NewHash(bytes.NewBuffer(fileBytes))
 		if nil != err {
 			return nil, err
 		}
 
-		videoFile := pictures.NewVideoFileMetadata(hashValue, relativeFilePath, int64(len(fileBytes)))
+		videoFile := domain.NewVideoFileMetadata(hashValue, relativeFilePath, int64(len(fileBytes)))
 		mediaFile = videoFile
 
 		doAtEnd = func() error {
 			return dal.VideosDAL.EnsureSupportedFile(videoFile)
 		}
+	case "application/octet-stream":
+		// try parsing fit file
 
 	default:
+		log.Printf("content type not supported: %q\n", contentType)
 		return nil, ErrContentTypeNotSupported
 	}
 

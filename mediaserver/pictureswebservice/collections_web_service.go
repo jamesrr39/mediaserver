@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"mediaserverapp/mediaserver/collections"
-	"mediaserverapp/mediaserver/pictures"
+	"mediaserverapp/mediaserver/domain"
 	"mediaserverapp/mediaserver/picturesdal/diskstorage"
 	"mediaserverapp/mediaserver/picturesdal/diskstorage/mediaserverdb"
 	"net/http"
@@ -55,7 +55,7 @@ func (ws *CollectionsWebService) handleGetAll(w http.ResponseWriter, r *http.Req
 
 	for _, collection := range collectionList {
 		if len(collection.FileHashes) == 0 {
-			collection.FileHashes = []pictures.HashValue{}
+			collection.FileHashes = []domain.HashValue{}
 		}
 	}
 
@@ -90,7 +90,7 @@ func (ws *CollectionsWebService) handleCreate(w http.ResponseWriter, r *http.Req
 	}
 
 	if len(collection.FileHashes) == 0 {
-		collection.FileHashes = []pictures.HashValue{}
+		collection.FileHashes = []domain.HashValue{}
 	}
 
 	render.JSON(w, r, collection)
@@ -131,7 +131,7 @@ func (ws *CollectionsWebService) handleUpdate(w http.ResponseWriter, r *http.Req
 	}
 
 	if len(collection.FileHashes) == 0 {
-		collection.FileHashes = []pictures.HashValue{}
+		collection.FileHashes = []domain.HashValue{}
 	}
 
 	render.JSON(w, r, collection)

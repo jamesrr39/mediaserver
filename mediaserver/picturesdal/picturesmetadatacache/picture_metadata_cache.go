@@ -6,24 +6,24 @@ import (
 	"encoding/gob"
 	"encoding/hex"
 	"log"
-	"mediaserverapp/mediaserver/pictures"
+	"mediaserverapp/mediaserver/domain"
 	"sync"
 )
 
-type mapByHash map[pictures.HashValue]pictures.MediaFile
+type mapByHash map[domain.HashValue]domain.MediaFile
 
 type MediaFilesCache struct {
 	mu         *sync.Mutex
-	mediaFiles []pictures.MediaFile
+	mediaFiles []domain.MediaFile
 	mapByHash  mapByHash
-	hashValue  pictures.HashValue
+	hashValue  domain.HashValue
 }
 
 func NewMediaFilesCache() *MediaFilesCache {
 	return &MediaFilesCache{mu: &sync.Mutex{}, mapByHash: make(mapByHash)}
 }
 
-func (cache *MediaFilesCache) Add(mediaFile pictures.MediaFile) error {
+func (cache *MediaFilesCache) Add(mediaFile domain.MediaFile) error {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
 
@@ -38,7 +38,7 @@ func (cache *MediaFilesCache) Add(mediaFile pictures.MediaFile) error {
 	return cache.setHashValue()
 }
 
-func (cache *MediaFilesCache) AddBatch(mediaFiles ...pictures.MediaFile) {
+func (cache *MediaFilesCache) AddBatch(mediaFiles ...domain.MediaFile) {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
 
@@ -67,20 +67,20 @@ func (cache *MediaFilesCache) setHashValue() error {
 	hash.Write(byteBuffer.Bytes())
 	hashValue := hex.EncodeToString(hash.Sum(nil))
 	log.Println("setting hashvalue to " + hashValue)
-	cache.hashValue = pictures.HashValue(hashValue)
+	cache.hashValue = domain.HashValue(hashValue)
 
 	return nil
 }
 
-func (cache *MediaFilesCache) GetHashValue() pictures.HashValue {
+func (cache *MediaFilesCache) GetHashValue() domain.HashValue {
 	return cache.hashValue
 }
 
-func (cache *MediaFilesCache) GetAll() []pictures.MediaFile {
+func (cache *MediaFilesCache) GetAll() []domain.MediaFile {
 	return cache.mediaFiles
 }
 
 // can be nil if picture metadata not in cache
-func (cache *MediaFilesCache) Get(hashValue pictures.HashValue) pictures.MediaFile {
+func (cache *MediaFilesCache) Get(hashValue domain.HashValue) domain.MediaFile {
 	return cache.mapByHash[hashValue]
 }

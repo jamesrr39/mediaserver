@@ -2,7 +2,7 @@ package diskstorage
 
 import (
 	"mediaserverapp/mediaserver/collections"
-	"mediaserverapp/mediaserver/pictures"
+	"mediaserverapp/mediaserver/domain"
 	"mediaserverapp/mediaserver/testutil"
 	"testing"
 
@@ -24,7 +24,7 @@ func Test_CrudCollection(t *testing.T) {
 	}
 	collection2 := &collections.Collection{
 		Name:       "test 2",
-		FileHashes: []pictures.HashValue{"hash1", "hash2"},
+		FileHashes: []domain.HashValue{"hash1", "hash2"},
 	}
 
 	t.Run("test create", func(t *testing.T) {
@@ -55,7 +55,7 @@ func Test_CrudCollection(t *testing.T) {
 	changedCollection2 := &collections.Collection{
 		ID:         collection2.ID,
 		Name:       "updated name",
-		FileHashes: []pictures.HashValue{"hash 3"},
+		FileHashes: []domain.HashValue{"hash 3"},
 	}
 	t.Run("test update", func(t *testing.T) {
 		err := collectionsRepo.Update(tx, changedCollection2)

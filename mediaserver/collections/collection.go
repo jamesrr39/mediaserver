@@ -2,13 +2,13 @@ package collections
 
 import (
 	"errors"
-	"mediaserverapp/mediaserver/pictures"
+	"mediaserverapp/mediaserver/domain"
 )
 
 type Collection struct {
-	ID         int64                `json:"id"`
-	Name       string               `json:"name"`
-	FileHashes []pictures.HashValue `json:"fileHashes"`
+	ID         int64              `json:"id"`
+	Name       string             `json:"name"`
+	FileHashes []domain.HashValue `json:"fileHashes"`
 }
 
 var ErrNoName = errors.New("no name supplied for the collection")

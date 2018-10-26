@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"mediaserverapp/mediaserver/pictures"
+	"mediaserverapp/mediaserver/domain"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -31,12 +31,12 @@ func NewFFMPEGDAL(videosBathPath, picturesBasePath string, maxConcurrentVideoCon
 	return &FFMPEGDAL{videosBathPath, picturesBasePath, semaphore.NewSemaphore(maxConcurrentVideoConversions)}, nil
 }
 
-func (dal *FFMPEGDAL) GetFile(hash pictures.HashValue) (*os.File, error) {
+func (dal *FFMPEGDAL) GetFile(hash domain.HashValue) (*os.File, error) {
 	return os.Open(dal.buildPath(hash))
 }
 
-func (dal *FFMPEGDAL) EnsureSupportedFile(mediaFile pictures.MediaFile) error {
-	if mediaFile.GetMediaFileType() != pictures.MediaFileTypeVideo {
+func (dal *FFMPEGDAL) EnsureSupportedFile(mediaFile domain.MediaFile) error {
+	if mediaFile.GetMediaFileType() != domain.MediaFileTypeVideo {
 		return ErrWrongFileType
 	}
 
@@ -55,7 +55,7 @@ func (dal *FFMPEGDAL) EnsureSupportedFile(mediaFile pictures.MediaFile) error {
 	return nil
 }
 
-func (dal *FFMPEGDAL) buildPath(hash pictures.HashValue) string {
+func (dal *FFMPEGDAL) buildPath(hash domain.HashValue) string {
 	return filepath.Join(dal.videosBasePath, string(hash)+".ogv")
 }
 

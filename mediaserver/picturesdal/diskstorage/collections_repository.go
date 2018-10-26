@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"mediaserverapp/mediaserver/collections"
-	"mediaserverapp/mediaserver/pictures"
+	"mediaserverapp/mediaserver/domain"
 )
 
 type CollectionsRepository struct {
@@ -162,8 +162,8 @@ DELETE FROM collections WHERE id() = $1;
 	return nil
 }
 
-func hashesToMap(hashes []pictures.HashValue) map[pictures.HashValue]bool {
-	hashInCollectionMap := make(map[pictures.HashValue]bool)
+func hashesToMap(hashes []domain.HashValue) map[domain.HashValue]bool {
+	hashInCollectionMap := make(map[domain.HashValue]bool)
 	for _, hash := range hashes {
 		hashInCollectionMap[hash] = true
 	}
@@ -181,8 +181,8 @@ func setFileHashesForCollection(tx *sql.Tx, collection *collections.Collection) 
 
 	hashInDBMap := hashesToMap(hashesInDB)
 
-	var hashesToInsert []pictures.HashValue
-	var hashesToDelete []pictures.HashValue
+	var hashesToInsert []domain.HashValue
+	var hashesToDelete []domain.HashValue
 
 	// figure out which to delete (in DB, not in collection)
 	for _, hashInDB := range hashesInDB {
@@ -222,7 +222,7 @@ VALUES($1, $2);
 	return nil
 }
 
-func getPictureHashesForCollectionId(tx *sql.Tx, collectionID int64) ([]pictures.HashValue, error) {
+func getPictureHashesForCollectionId(tx *sql.Tx, collectionID int64) ([]domain.HashValue, error) {
 	result, err := tx.Query(`
 SELECT picture_hash FROM join_pictures_hash_collections WHERE collection_id = $1;
     `, collectionID)
@@ -235,9 +235,9 @@ SELECT picture_hash FROM join_pictures_hash_collections WHERE collection_id = $1
 		return nil, err
 	}
 
-	var hashes []pictures.HashValue
+	var hashes []domain.HashValue
 	for result.Next() {
-		var hash pictures.HashValue
+		var hash domain.HashValue
 		err = result.Scan(&hash)
 		if err != nil {
 			return nil, err

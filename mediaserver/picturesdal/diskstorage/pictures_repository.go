@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"mediaserverapp/mediaserver/pictures"
+	"mediaserverapp/mediaserver/domain"
 )
 
 type PicturesMetadataRepository struct {
@@ -17,7 +17,7 @@ func NewPicturesMetadataRepository() *PicturesMetadataRepository {
 
 var ErrNotFound = errors.New("not found")
 
-func (pr *PicturesMetadataRepository) GetPictureMetadata(tx *sql.Tx, hash pictures.HashValue, relativeFilePath string) (*pictures.PictureMetadata, error) {
+func (pr *PicturesMetadataRepository) GetPictureMetadata(tx *sql.Tx, hash domain.HashValue, relativeFilePath string) (*domain.PictureMetadata, error) {
 
 	row := tx.QueryRow(`
 SELECT file_size_bytes, exif_data_json, raw_size_width, raw_size_height, format
@@ -37,7 +37,7 @@ WHERE hash == $1
 		return nil, err
 	}
 
-	var exifData *pictures.ExifData
+	var exifData *domain.ExifData
 	if exifDataJSON != "" {
 		err = json.NewDecoder(bytes.NewBuffer([]byte(exifDataJSON))).Decode(&exifData)
 		if nil != err {
@@ -45,15 +45,15 @@ WHERE hash == $1
 		}
 	}
 
-	rawSize := pictures.RawSize{
+	rawSize := domain.RawSize{
 		Width:  rawSizeWidth,
 		Height: rawSizeHeight,
 	}
 
-	return pictures.NewPictureMetadata(hash, relativeFilePath, fileSizeBytes, exifData, rawSize, format), nil
+	return domain.NewPictureMetadata(hash, relativeFilePath, fileSizeBytes, exifData, rawSize, format), nil
 }
 
-func (pr *PicturesMetadataRepository) CreatePictureMetadata(tx *sql.Tx, pictureMetadata *pictures.PictureMetadata) error {
+func (pr *PicturesMetadataRepository) CreatePictureMetadata(tx *sql.Tx, pictureMetadata *domain.PictureMetadata) error {
 	var exifDataJSON string
 	if nil != pictureMetadata.ExifData {
 		byteBuffer := bytes.NewBuffer(nil)

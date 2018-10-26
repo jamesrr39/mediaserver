@@ -1,4 +1,4 @@
-package pictures
+package domain
 
 type VideoFileMetadata struct {
 	HashValue        `json:"hashValue"`

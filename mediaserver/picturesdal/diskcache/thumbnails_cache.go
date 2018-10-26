@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"image"
 	"io"
+	"mediaserverapp/mediaserver/domain"
 	"mediaserverapp/mediaserver/generated"
-	"mediaserverapp/mediaserver/pictures"
 	"os"
 	"path/filepath"
 	"sync"
@@ -16,7 +16,7 @@ import (
 type ThumbnailsCache struct {
 	BasePath       string
 	mu             *sync.Mutex
-	pictureResizer *pictures.PictureResizer
+	pictureResizer *domain.PictureResizer
 }
 
 type serializedThumbnail struct {
@@ -24,7 +24,7 @@ type serializedThumbnail struct {
 	GzippedThumbnailBytes []byte
 }
 
-func NewThumbnailsCache(basePath string, pictureResizer *pictures.PictureResizer) (*ThumbnailsCache, error) {
+func NewThumbnailsCache(basePath string, pictureResizer *domain.PictureResizer) (*ThumbnailsCache, error) {
 	err := os.MkdirAll(basePath, 0700)
 	if nil != err {
 		return nil, err
@@ -33,7 +33,7 @@ func NewThumbnailsCache(basePath string, pictureResizer *pictures.PictureResizer
 }
 
 // Get fetches the gzipped thumbnail file bytes and the mime type it's saved in
-func (c *ThumbnailsCache) Get(hash pictures.HashValue, size pictures.Size) (io.Reader, string, error) {
+func (c *ThumbnailsCache) Get(hash domain.HashValue, size domain.Size) (io.Reader, string, error) {
 	file, err := os.Open(c.getFilePath(hash, size.Height))
 	if nil != err {
 		if os.IsNotExist(err) {
@@ -53,16 +53,16 @@ func (c *ThumbnailsCache) Get(hash pictures.HashValue, size pictures.Size) (io.R
 	return bytes.NewBuffer(thumbnail.GzippedThumbnailBytes), thumbnail.PictureFormat, nil
 }
 
-type GetPictureFunc func(pictureMetadata *pictures.PictureMetadata) (image.Image, string, error)
+type GetPictureFunc func(pictureMetadata *domain.PictureMetadata) (image.Image, string, error)
 
-func (c *ThumbnailsCache) EnsureAllThumbnailsForPicture(pictureMetadata *pictures.PictureMetadata, getPictureFunc GetPictureFunc) error {
-	var requiredSizes []pictures.Size
+func (c *ThumbnailsCache) EnsureAllThumbnailsForPicture(pictureMetadata *domain.PictureMetadata, getPictureFunc GetPictureFunc) error {
+	var requiredSizes []domain.Size
 	for _, thumbnailHeight := range generated.ThumbnailHeights {
 		if pictureMetadata.RawSize.Height < thumbnailHeight {
 			continue
 		}
 		aspectRatio := pictureMetadata.RawSize.AspectRatio()
-		resizeSize := pictures.Size{
+		resizeSize := domain.Size{
 			Height: thumbnailHeight,
 			Width:  uint(float64(thumbnailHeight) * aspectRatio),
 		}
@@ -97,7 +97,7 @@ func (c *ThumbnailsCache) EnsureAllThumbnailsForPicture(pictureMetadata *picture
 
 	for _, resizeSize := range requiredSizes {
 		newPicture := c.pictureResizer.ResizePicture(picture, resizeSize)
-		pictureBytes, err := pictures.EncodePicture(newPicture, pictureMetadata.Format)
+		pictureBytes, err := domain.EncodePicture(newPicture, pictureMetadata.Format)
 		if err != nil {
 			return err
 		}
@@ -113,7 +113,7 @@ func (c *ThumbnailsCache) EnsureAllThumbnailsForPicture(pictureMetadata *picture
 }
 
 // Save persists a gzipped thumbnail bytes to disk
-func (c *ThumbnailsCache) Save(hash pictures.HashValue, size pictures.Size, pictureFormat string, gzippedThumbnailBytes []byte) error {
+func (c *ThumbnailsCache) Save(hash domain.HashValue, size domain.Size, pictureFormat string, gzippedThumbnailBytes []byte) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -144,7 +144,7 @@ func (c *ThumbnailsCache) Save(hash pictures.HashValue, size pictures.Size, pict
 	return nil
 }
 
-func (c *ThumbnailsCache) IsSizeCacheable(size pictures.Size) bool {
+func (c *ThumbnailsCache) IsSizeCacheable(size domain.Size) bool {
 	for _, thumbnailHeight := range generated.ThumbnailHeights {
 		if size.Height == thumbnailHeight {
 			return true
@@ -153,7 +153,7 @@ func (c *ThumbnailsCache) IsSizeCacheable(size pictures.Size) bool {
 	return false
 }
 
-func (c *ThumbnailsCache) getFilePath(hash pictures.HashValue, height uint) string {
+func (c *ThumbnailsCache) getFilePath(hash domain.HashValue, height uint) string {
 	firstPart := string(hash)[0:2]
 	rest := string(hash)[2:]
 	return filepath.Join(c.BasePath, firstPart, fmt.Sprintf("%s_h%d", rest, height))

@@ -3,10 +3,10 @@ package mediaserver
 import (
 	//	"log"
 
-	"mediaserverapp/mediaserver/pictures"
+	"mediaserverapp/mediaserver/domain"
 	"mediaserverapp/mediaserver/picturesdal"
 	"mediaserverapp/mediaserver/picturesdal/diskstorage/mediaserverdb"
-	"mediaserverapp/mediaserver/pictureswebservice"
+	pictureswebservice "mediaserverapp/mediaserver/pictureswebservice"
 	"mediaserverapp/mediaserver/pictureswebservice/mediaservermiddleware"
 	"mediaserverapp/mediaserver/static_assets_handler"
 	"net/http"
@@ -64,7 +64,7 @@ func NewMediaServerAndScan(rootpath, cachesDir, dataDir string, maxConcurrentRes
 	// ensure thumbnails
 	mediaFiles := mediaServer.mediaServerDAL.MediaFilesDAL.GetAll()
 
-	err = mediaServer.mediaServerDAL.PicturesDAL.EnsureAllThumbnailsForPictures(pictures.GetPicturesMetadatasFromMediaFileList(mediaFiles))
+	err = mediaServer.mediaServerDAL.PicturesDAL.EnsureAllThumbnailsForPictures(domain.GetPicturesMetadatasFromMediaFileList(mediaFiles))
 	if err != nil {
 		return nil, err
 	}

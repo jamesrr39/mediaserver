@@ -1,11 +1,11 @@
 package videodal
 
 import (
-	"mediaserverapp/mediaserver/pictures"
+	"mediaserverapp/mediaserver/domain"
 	"os"
 )
 
 type VideoDAL interface {
-	GetFile(hash pictures.HashValue) (*os.File, error)
-	EnsureSupportedFile(mediaFile pictures.MediaFile) error
+	GetFile(hash domain.HashValue) (*os.File, error)
+	EnsureSupportedFile(mediaFile domain.MediaFile) error
 }

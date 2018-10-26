@@ -3,7 +3,7 @@ package pictureswebservice
 import (
 	"encoding/json"
 	"fmt"
-	"mediaserverapp/mediaserver/pictures"
+	"mediaserverapp/mediaserver/domain"
 	"mediaserverapp/mediaserver/picturesdal"
 	"mediaserverapp/mediaserver/picturesdal/diskstorage/mediaserverdb"
 	"net/http"
@@ -55,7 +55,7 @@ func (ms *MediaFilesService) serveAllPicturesMetadata(w http.ResponseWriter, r *
 
 	mediaFiles := ms.mediaServerDAL.MediaFilesDAL.GetAll()
 	if 0 == len(mediaFiles) {
-		mediaFiles = []pictures.MediaFile{}
+		mediaFiles = []domain.MediaFile{}
 	}
 
 	jsonBytes, err := json.Marshal(mediaFiles)
@@ -80,7 +80,7 @@ func (ps *MediaFilesService) serveFileUpload(w http.ResponseWriter, r *http.Requ
 
 	contentType := fileHandler.Header.Get("Content-Type")
 
-	pictureMetadata, err := ps.mediaServerDAL.Create(file, fileHandler.Filename, contentType)
+	mediaFile, err := ps.mediaServerDAL.Create(file, fileHandler.Filename, contentType)
 	if nil != err {
 		switch err {
 		case picturesdal.ErrFileAlreadyExists:
@@ -95,6 +95,6 @@ func (ps *MediaFilesService) serveFileUpload(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	render.JSON(w, r, pictureMetadata)
+	render.JSON(w, r, mediaFile)
 	return
 }

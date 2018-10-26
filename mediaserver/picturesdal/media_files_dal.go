@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"mediaserverapp/mediaserver/pictures"
+	"mediaserverapp/mediaserver/domain"
 	"mediaserverapp/mediaserver/picturesdal/diskcache"
 	"mediaserverapp/mediaserver/picturesdal/diskstorage"
 	"mediaserverapp/mediaserver/picturesdal/picturesmetadatacache"
@@ -31,30 +31,30 @@ func NewMediaFilesDAL(picturesBasePath string, thumbnailsCache *diskcache.Thumbn
 	return &MediaFilesDAL{picturesBasePath, picturesmetadatacache.NewMediaFilesCache(), diskstorage.NewPicturesMetadataRepository(), thumbnailsCache, videosDAL}
 }
 
-func (dal *MediaFilesDAL) GetAll() []pictures.MediaFile {
+func (dal *MediaFilesDAL) GetAll() []domain.MediaFile {
 	return dal.cache.GetAll()
 }
 
 // GetStateHashCode returns a hash that identifies the cache's current state
 // TODO: is this needed?
-func (dal *MediaFilesDAL) GetStateHashCode() pictures.HashValue {
+func (dal *MediaFilesDAL) GetStateHashCode() domain.HashValue {
 	return dal.cache.GetHashValue()
 }
 
-func (dal *MediaFilesDAL) add(mediaFile pictures.MediaFile) error {
+func (dal *MediaFilesDAL) add(mediaFile domain.MediaFile) error {
 	return dal.cache.Add(mediaFile)
 }
 
 // Get returns the picture metadata for a given hash. If the hash is not found, nil will be returned.
-func (dal *MediaFilesDAL) Get(hashValue pictures.HashValue) pictures.MediaFile {
+func (dal *MediaFilesDAL) Get(hashValue domain.HashValue) domain.MediaFile {
 	return dal.cache.Get(hashValue)
 }
 
-func (dal *MediaFilesDAL) GetFullPath(mediaFile pictures.MediaFile) string {
+func (dal *MediaFilesDAL) GetFullPath(mediaFile domain.MediaFile) string {
 	return filepath.Join(dal.picturesBasePath, mediaFile.GetRelativePath())
 }
 
-func (dal *MediaFilesDAL) processVideoFile(tx *sql.Tx, path string, fileInfo os.FileInfo) (*pictures.VideoFileMetadata, error) {
+func (dal *MediaFilesDAL) processVideoFile(tx *sql.Tx, path string, fileInfo os.FileInfo) (*domain.VideoFileMetadata, error) {
 
 	file, err := os.Open(path)
 	if nil != err {
@@ -64,7 +64,7 @@ func (dal *MediaFilesDAL) processVideoFile(tx *sql.Tx, path string, fileInfo os.
 
 	relativeFilePath := strings.TrimPrefix(path, dal.picturesBasePath)
 
-	hashValue, err := pictures.NewHash(file)
+	hashValue, err := domain.NewHash(file)
 	if nil != err {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (dal *MediaFilesDAL) processVideoFile(tx *sql.Tx, path string, fileInfo os.
 		return nil, err
 	}
 
-	videoFileMetadata := pictures.NewVideoFileMetadata(hashValue, relativeFilePath, fileInfo.Size())
+	videoFileMetadata := domain.NewVideoFileMetadata(hashValue, relativeFilePath, fileInfo.Size())
 
 	err = dal.videosDAL.EnsureSupportedFile(videoFileMetadata)
 	if nil != err {
@@ -84,7 +84,7 @@ func (dal *MediaFilesDAL) processVideoFile(tx *sql.Tx, path string, fileInfo os.
 	return videoFileMetadata, nil
 }
 
-func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string) (*pictures.PictureMetadata, error) {
+func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string) (*domain.PictureMetadata, error) {
 
 	fileBytes, err := ioutil.ReadFile(path)
 	if nil != err {
@@ -94,7 +94,7 @@ func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string) (*pictures
 	relativeFilePath := strings.TrimPrefix(path, dal.picturesBasePath)
 
 	// look from DB cache
-	hash, err := pictures.NewHash(bytes.NewBuffer(fileBytes))
+	hash, err := domain.NewHash(bytes.NewBuffer(fileBytes))
 	if nil != err {
 		return nil, err
 	}
@@ -104,7 +104,7 @@ func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string) (*pictures
 		if err != diskstorage.ErrNotFound {
 			return nil, fmt.Errorf("unexpected error getting picture metadata from database for relative path '%s': '%s'", relativeFilePath, err)
 		}
-		pictureMetadata, _, err = pictures.NewPictureMetadataAndPictureFromBytes(fileBytes, relativeFilePath)
+		pictureMetadata, _, err = domain.NewPictureMetadataAndPictureFromBytes(fileBytes, relativeFilePath)
 		if nil != err {
 			return nil, err
 		}
@@ -119,7 +119,7 @@ func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string) (*pictures
 }
 
 func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx) error {
-	var mediaFiles []pictures.MediaFile
+	var mediaFiles []domain.MediaFile
 
 	walkFunc := func(path string, fileinfo os.FileInfo, err error) error {
 		if nil != err {
@@ -131,7 +131,7 @@ func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx) error {
 			return nil
 		}
 
-		var mediaFile pictures.MediaFile
+		var mediaFile domain.MediaFile
 		fileExtensionLower := strings.ToLower(filepath.Ext(path))
 		switch fileExtensionLower {
 		case ".jpg", ".jpeg", ".png":

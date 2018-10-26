@@ -1,7 +1,7 @@
 package diskstorage
 
 import (
-	"mediaserverapp/mediaserver/pictures"
+	"mediaserverapp/mediaserver/domain"
 	"mediaserverapp/mediaserver/testutil"
 	"testing"
 
@@ -18,11 +18,11 @@ func Test_CrudPictureMetadataNoExif(t *testing.T) {
 	tx, err := dbConn.Begin()
 	require.Nil(t, err)
 
-	pictureMetadata := pictures.NewPictureMetadata(
+	pictureMetadata := domain.NewPictureMetadata(
 		"abcdef123456", "/a/b/c.jpg",
 		12345,
 		nil,
-		pictures.RawSize{Width: 400, Height: 400}, "jpeg")
+		domain.RawSize{Width: 400, Height: 400}, "jpeg")
 
 	err = picturesMetadataRepository.CreatePictureMetadata(tx, pictureMetadata)
 	require.Nil(t, err)

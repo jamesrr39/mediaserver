@@ -5,8 +5,8 @@ import (
 	"io"
 	"log"
 
-	"mediaserverapp/mediaserver/pictures"
-	"mediaserverapp/mediaserver/picturesdal"
+	"mediaserverapp/mediaserver/domain"
+	picturesdal "mediaserverapp/mediaserver/picturesdal"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -37,17 +37,17 @@ func (ps *PicturesService) servePicture(w http.ResponseWriter, r *http.Request) 
 	width := r.URL.Query().Get("w")
 	height := r.URL.Query().Get("h")
 
-	mediaFile := ps.mediaServerDAL.MediaFilesDAL.Get(pictures.HashValue(hash))
-	if mediaFile == nil || mediaFile.GetMediaFileType() != pictures.MediaFileTypePicture {
+	mediaFile := ps.mediaServerDAL.MediaFilesDAL.Get(domain.HashValue(hash))
+	if mediaFile == nil || mediaFile.GetMediaFileType() != domain.MediaFileTypePicture {
 		http.Error(w, "picture not found for this hash", 404)
 		return
 	}
-	pictureMetadata := mediaFile.(*pictures.PictureMetadata)
+	pictureMetadata := mediaFile.(*domain.PictureMetadata)
 
-	sizeToResizeTo, err := pictures.WidthAndHeightStringsToSize(
+	sizeToResizeTo, err := domain.WidthAndHeightStringsToSize(
 		width,
 		height,
-		pictures.Size{
+		domain.Size{
 			Width:  uint(pictureMetadata.RawSize.Width),
 			Height: uint(pictureMetadata.RawSize.Height),
 		})
@@ -56,7 +56,7 @@ func (ps *PicturesService) servePicture(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	pictureReader, pictureFormat, err := ps.mediaServerDAL.PicturesDAL.GetPictureBytes(pictures.HashValue(hash), sizeToResizeTo)
+	pictureReader, pictureFormat, err := ps.mediaServerDAL.PicturesDAL.GetPictureBytes(domain.HashValue(hash), sizeToResizeTo)
 	if nil != err {
 		switch err {
 		case picturesdal.ErrHashNotFound:

@@ -1,7 +1,7 @@
 package videodal
 
 import (
-	"mediaserverapp/mediaserver/pictures"
+	"mediaserverapp/mediaserver/domain"
 	"os"
 )
 
@@ -12,10 +12,10 @@ func NewNoActionVideoDAL() *NoActionVideoDAL {
 	return &NoActionVideoDAL{}
 }
 
-func (dal *NoActionVideoDAL) GetFile(hash pictures.HashValue) (*os.File, error) {
+func (dal *NoActionVideoDAL) GetFile(hash domain.HashValue) (*os.File, error) {
 	return nil, os.ErrNotExist
 }
 
-func (dal *NoActionVideoDAL) EnsureSupportedFile(mediaFile pictures.MediaFile) error {
+func (dal *NoActionVideoDAL) EnsureSupportedFile(mediaFile domain.MediaFile) error {
 	return nil
 }
