@@ -3,9 +3,9 @@ package mediaserver
 import (
 	//	"log"
 
+	"mediaserverapp/mediaserver/dal"
+	"mediaserverapp/mediaserver/dal/diskstorage/mediaserverdb"
 	"mediaserverapp/mediaserver/domain"
-	"mediaserverapp/mediaserver/picturesdal"
-	"mediaserverapp/mediaserver/picturesdal/diskstorage/mediaserverdb"
 	pictureswebservice "mediaserverapp/mediaserver/pictureswebservice"
 	"mediaserverapp/mediaserver/pictureswebservice/mediaservermiddleware"
 	"mediaserverapp/mediaserver/static_assets_handler"
@@ -21,7 +21,7 @@ import (
 // MediaServer is a server used for showing pieces of media
 type MediaServer struct {
 	Rootpath                string
-	mediaServerDAL          *picturesdal.MediaServerDAL
+	mediaServerDAL          *dal.MediaServerDAL
 	picturesService         *pictureswebservice.PicturesService
 	picturesMetadataService *pictureswebservice.MediaFilesService
 	videosWebService        *pictureswebservice.VideoWebService
@@ -31,7 +31,7 @@ type MediaServer struct {
 
 // NewMediaServerAndScan creates a new MediaServer and builds a cache of pictures by scanning the rootpath
 func NewMediaServerAndScan(rootpath, cachesDir, dataDir string, maxConcurrentResizes, maxConcurrentVideoConversions uint) (*MediaServer, error) {
-	mediaServerDAL, err := picturesdal.NewMediaServerDAL(rootpath, cachesDir, dataDir, maxConcurrentResizes, maxConcurrentVideoConversions)
+	mediaServerDAL, err := dal.NewMediaServerDAL(rootpath, cachesDir, dataDir, maxConcurrentResizes, maxConcurrentVideoConversions)
 	if nil != err {
 		return nil, err
 	}

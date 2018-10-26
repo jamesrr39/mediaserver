@@ -5,8 +5,8 @@ import (
 	"io"
 	"log"
 
+	picturesdal "mediaserverapp/mediaserver/dal"
 	"mediaserverapp/mediaserver/domain"
-	picturesdal "mediaserverapp/mediaserver/picturesdal"
 	"net/http"
 
 	"github.com/go-chi/chi"

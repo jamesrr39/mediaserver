@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"mediaserverapp/mediaserver/collections"
+	"mediaserverapp/mediaserver/dal/diskstorage"
+	"mediaserverapp/mediaserver/dal/diskstorage/mediaserverdb"
 	"mediaserverapp/mediaserver/domain"
-	"mediaserverapp/mediaserver/picturesdal/diskstorage"
-	"mediaserverapp/mediaserver/picturesdal/diskstorage/mediaserverdb"
 	"net/http"
 	"strconv"
 

@@ -1,4 +1,4 @@
-package picturesdal
+package dal
 
 import (
 	"bytes"
@@ -6,10 +6,10 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"mediaserverapp/mediaserver/dal/diskcache"
+	"mediaserverapp/mediaserver/dal/diskstorage"
+	"mediaserverapp/mediaserver/dal/videodal"
 	"mediaserverapp/mediaserver/domain"
-	"mediaserverapp/mediaserver/picturesdal/diskcache"
-	"mediaserverapp/mediaserver/picturesdal/diskstorage"
-	"mediaserverapp/mediaserver/picturesdal/videodal"
 	"os"
 	"path/filepath"
 	"strconv"

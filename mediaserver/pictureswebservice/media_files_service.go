@@ -3,9 +3,9 @@ package pictureswebservice
 import (
 	"encoding/json"
 	"fmt"
+	"mediaserverapp/mediaserver/dal"
+	"mediaserverapp/mediaserver/dal/diskstorage/mediaserverdb"
 	"mediaserverapp/mediaserver/domain"
-	"mediaserverapp/mediaserver/picturesdal"
-	"mediaserverapp/mediaserver/picturesdal/diskstorage/mediaserverdb"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -13,12 +13,12 @@ import (
 )
 
 type MediaFilesService struct {
-	mediaServerDAL *picturesdal.MediaServerDAL
+	mediaServerDAL *dal.MediaServerDAL
 	dbConn         *mediaserverdb.DBConn
 	chi.Router
 }
 
-func NewMediaFilesService(dbConn *mediaserverdb.DBConn, picturesDAL *picturesdal.MediaServerDAL) *MediaFilesService {
+func NewMediaFilesService(dbConn *mediaserverdb.DBConn, picturesDAL *dal.MediaServerDAL) *MediaFilesService {
 	router := chi.NewRouter()
 	picturesService := &MediaFilesService{picturesDAL, dbConn, router}
 
@@ -83,11 +83,11 @@ func (ps *MediaFilesService) serveFileUpload(w http.ResponseWriter, r *http.Requ
 	mediaFile, err := ps.mediaServerDAL.Create(file, fileHandler.Filename, contentType)
 	if nil != err {
 		switch err {
-		case picturesdal.ErrFileAlreadyExists:
+		case dal.ErrFileAlreadyExists:
 			http.Error(w, err.Error(), 409)
-		case picturesdal.ErrIllegalPathTraversingUp:
+		case dal.ErrIllegalPathTraversingUp:
 			http.Error(w, err.Error(), 400)
-		case picturesdal.ErrContentTypeNotSupported:
+		case dal.ErrContentTypeNotSupported:
 			http.Error(w, err.Error(), 400)
 		default:
 			http.Error(w, err.Error(), 500)

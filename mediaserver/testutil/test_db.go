@@ -2,7 +2,7 @@ package testutil
 
 import (
 	"fmt"
-	"mediaserverapp/mediaserver/picturesdal/diskstorage/mediaserverdb"
+	"mediaserverapp/mediaserver/dal/diskstorage/mediaserverdb"
 	"sync/atomic"
 	"testing"
 
