@@ -1,4 +1,4 @@
-package pictureswebservice
+package webservice
 
 import (
 	"fmt"
