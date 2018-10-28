@@ -24,16 +24,16 @@ class CollectionViewComponent extends React.Component<Props> {
   render() {
     const { collection, picturesMetadatasMap, routeUrl } = this.props;
 
-    const picturesMetadatas = collection.fileHashes.map((hash, index) => {
-      const pictureMetadata = picturesMetadatasMap.get(hash);
-      if (!pictureMetadata) {
+    const mediaFiles = collection.fileHashes.map((hash, index) => {
+      const mediaFile = picturesMetadatasMap.get(hash);
+      if (!mediaFile) {
         throw new Error(`couldn't find picture metadata for ${hash}`);
       }
-      return pictureMetadata;
+      return mediaFile;
     });
 
     const galleryProps = {
-      picturesMetadatas,
+      mediaFiles,
       pictureModalUrlbase: `${routeUrl}/picture`,
       showMap: true,
     };

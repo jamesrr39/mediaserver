@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { FitTrack, Record, getLapsFromRecords } from '../domain/FitTrack';
 import MapComponent from './MapComponent';
-import { SERVER_BASE_URL } from '../configs';
+import { fetchRecordsForTrack } from '../actions/trackActions';
 
 const styles = {
   container: {
@@ -23,18 +23,15 @@ export class TrackModalContent extends React.Component<Props, State> {
   };
 
   componentDidMount() {
-    fetch(`${SERVER_BASE_URL}/api/tracks/${this.props.trackSummary.hashValue}/records`).then(response => {
-      if (!response.ok) {
-        throw new Error(response.statusText);
-      }
+    this.fetchRecords();
+  }
 
-      response.json().then((trackRecords: Record[]) => {
-        this.setState(state => ({
-          ...state,
-          trackRecords
-        }));
-      });
-    });
+  fetchRecords = async () => {
+    const trackRecords = await fetchRecordsForTrack(this.props.trackSummary);
+    this.setState(state => ({
+      ...state,
+      trackRecords
+    }));
   }
 
   render() {
@@ -73,19 +70,19 @@ export class TrackModalContent extends React.Component<Props, State> {
         width: '100%',
         height: '400px'
       },
-      track: {
+      tracks: [{
         points: trackRecords.map(record => ({
           lat: record.posLat,
           long: record.posLong,
         })),
         activityBounds: this.props.trackSummary.activityBounds,
-      },
+      }],
     };
 
     const lapIntervalDistance = 1000;
     const laps = getLapsFromRecords(trackRecords, lapIntervalDistance);
     const lapsRows = laps.map((lap, index) => (
-      <tr>
+      <tr key={index}>
         <td>{index}</td>
         <td>{lap.time.getDisplayString()}</td>
       </tr>

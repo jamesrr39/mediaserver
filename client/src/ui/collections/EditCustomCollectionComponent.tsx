@@ -120,12 +120,12 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
     };
 
     const itemsInCollectionGalleryProps = {
-      picturesMetadatas: filesInCollection,
+      mediaFiles: filesInCollection,
       onClickThumbnail: onClickFilesInCollectionThumbnail,
     };
 
     const itemsOutOfCollectionGalleryProps = {
-      picturesMetadatas: filesOutOfCollection,
+      mediaFiles: filesOutOfCollection,
       onClickThumbnail: onClickFilesOutOfCollectionThumbnail,
     };
 

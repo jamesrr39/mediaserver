@@ -8,7 +8,7 @@ import { ActivityBounds } from '../domain/FitTrack';
 const markerIcon = require('../../node_modules/leaflet/dist/images/marker-icon.png');
 const markerShadow = require('../../node_modules/leaflet/dist/images/marker-shadow.png');
 
-function getBounds(markers?: MapMarker[], track?: TrackMapData) {
+function getBounds(markers?: MapMarker[], tracks?: TrackMapData[]) {
   let n = -90;
   let e = -180;
   let s = 90;
@@ -34,22 +34,24 @@ function getBounds(markers?: MapMarker[], track?: TrackMapData) {
     });
   }
 
-  if (track) {
-    if (track.activityBounds.latMax > n) {
-      n = track.activityBounds.latMax;
-    }
+  if (tracks) {
+    tracks.forEach(track => {
+      if (track.activityBounds.latMax > n) {
+        n = track.activityBounds.latMax;
+      }
 
-    if (track.activityBounds.latMin < s) {
-      s = track.activityBounds.latMin;
-    }
+      if (track.activityBounds.latMin < s) {
+        s = track.activityBounds.latMin;
+      }
 
-    if (track.activityBounds.longMax > e) {
-      e = track.activityBounds.longMax;
-    }
+      if (track.activityBounds.longMax > e) {
+        e = track.activityBounds.longMax;
+      }
 
-    if (track.activityBounds.longMin < w) {
-      w = track.activityBounds.longMin;
-    }
+      if (track.activityBounds.longMin < w) {
+        w = track.activityBounds.longMin;
+      }
+    });
   }
 
   return {
@@ -83,7 +85,7 @@ type Props = {
     height: string,
   },
   markers?: MapMarker[],
-  track?: TrackMapData,
+  tracks?: TrackMapData[],
   extraLatLongMapPadding?: number,
 };
 
@@ -91,12 +93,12 @@ export default class MapComponent extends React.Component<Props> {
   private map: Leaflet.Map | null = null;
 
   render() {
-    const { size, markers, track } = this.props;
+    const { size, markers, tracks } = this.props;
 
-    return (<div style={size} ref={(el) => this.renderMap(el, markers, track)} />);
+    return (<div style={size} ref={(el) => this.renderMap(el, markers, tracks)} />);
   }
 
-  private renderMap = (element: HTMLElement|null, markers?: MapMarker[], track?: TrackMapData) => {
+  private renderMap = (element: HTMLElement|null, markers?: MapMarker[], tracks?: TrackMapData[]) => {
     if (element === null) {
       return;
     }
@@ -115,7 +117,7 @@ export default class MapComponent extends React.Component<Props> {
       attribution,
     });
 
-    const bounds = getBounds(markers, track);
+    const bounds = getBounds(markers, tracks);
     if (extraLatLongMapPadding) {
       bounds.n += extraLatLongMapPadding;
       bounds.s -= extraLatLongMapPadding;
@@ -131,12 +133,21 @@ export default class MapComponent extends React.Component<Props> {
     );
     map.addLayer(osm);
 
-    if (track) {
-      const points = track.points.map(point => {
-        return new Leaflet.LatLng(point.lat, point.long);
-      });
+    if (tracks) {
+      tracks.forEach((track, index) => {
+        const points = track.points.map(point => {
+          return new Leaflet.LatLng(point.lat, point.long);
+        });
 
-      Leaflet.polyline(points).addTo(map);
+        const color = `#${index.toString(16).substring(0, 1).repeat(3)}`;
+
+        // tslint:disable-next-line
+        console.log(color);
+
+        Leaflet.polyline(points, {
+          color,
+        }).addTo(map);
+      });
     }
 
     if (markers) {

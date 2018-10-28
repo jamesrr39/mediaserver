@@ -12,7 +12,7 @@ export interface GalleryProps {
 class AllPicturesGallery extends React.Component<GalleryProps> {
   render() {
     const props = {
-      picturesMetadatas: this.props.picturesMetadatas,
+      mediaFiles: this.props.picturesMetadatas,
       pictureModalUrlbase: '/gallery/picture',
       showMap: true,
     };

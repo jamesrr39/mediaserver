@@ -12,7 +12,7 @@ import { MediaFile } from '../domain/MediaFile';
 import { isNarrowScreen } from '../util/screen_size';
 
 export interface GalleryProps {
-  picturesMetadatas: MediaFile[];
+  mediaFiles: MediaFile[];
   scrollObservable: Observable;
   pictureModalUrlbase?: string; // example: /gallery/picture
   onClickThumbnail?: (pictureMetadata: MediaFile) => void;
@@ -56,7 +56,7 @@ class Gallery extends React.Component<GalleryProps, GalleryState> {
   }
 
   render() {
-    this.props.picturesMetadatas.sort(gallerySortingFunc);
+    this.props.mediaFiles.sort(gallerySortingFunc);
     const pictureContainerStyle = isNarrowScreen()
       ? styles.picturesContainer
       : {...styles.picturesContainer, ...styles.wideScreenContainer};
@@ -96,7 +96,7 @@ class Gallery extends React.Component<GalleryProps, GalleryState> {
       );
     }
 
-    const markers = this.getMarkers(this.props.picturesMetadatas);
+    const markers = this.getMarkers(this.props.mediaFiles);
 
     if (markers.length === 0) {
       return '';
@@ -120,7 +120,7 @@ class Gallery extends React.Component<GalleryProps, GalleryState> {
   }
 
   private renderThumbnails = () => {
-    return this.props.picturesMetadatas.map((mediaFile, index) => {
+    return this.props.mediaFiles.map((mediaFile, index) => {
       const thumbnailProps = {
         scrollObservable: this.props.scrollObservable,
         mediaFile,
