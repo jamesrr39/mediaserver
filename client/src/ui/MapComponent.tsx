@@ -74,7 +74,7 @@ export type MapMarker = {
   popupData?: PopupData,
 };
 
-type TrackMapData = {
+export type TrackMapData = {
   points: MapLocation[],
   activityBounds: ActivityBounds,
 };

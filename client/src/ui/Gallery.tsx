@@ -6,10 +6,12 @@ import { Thumbnail } from './Thumbnail';
 import { State } from '../reducers';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
-import MapComponent, { MapMarker } from './MapComponent';
+import MapComponent, { MapMarker, TrackMapData } from './MapComponent';
 import { SERVER_BASE_URL } from '../configs';
-import { MediaFile } from '../domain/MediaFile';
+import { MediaFile, MediaFileType } from '../domain/MediaFile';
+import { FitTrack } from '../domain/FitTrack';
 import { isNarrowScreen } from '../util/screen_size';
+import { fetchRecordsForTrack } from '../actions/trackActions';
 
 export interface GalleryProps {
   mediaFiles: MediaFile[];
@@ -21,6 +23,7 @@ export interface GalleryProps {
 
 type GalleryState = {
   showMap: boolean;
+  tracks: TrackMapData[];
 };
 
 const styles = {
@@ -45,10 +48,19 @@ const gallerySortingFunc = createCompareTimeTakenFunc(true);
 class Gallery extends React.Component<GalleryProps, GalleryState> {
   state = {
     showMap: true,
+    tracks: [],
   };
 
   componentDidMount() {
     this.props.scrollObservable.triggerEvent();
+    this.props.mediaFiles.forEach(mediaFile => {
+      if (mediaFile.fileType !== MediaFileType.FitTrack) {
+        return;
+      }
+
+      const trackSummary = mediaFile as FitTrack;
+      this.fetchRecords(trackSummary);
+    });
   }
 
   componentDidUpdate() {
@@ -69,6 +81,23 @@ class Gallery extends React.Component<GalleryProps, GalleryState> {
         </div>
       </div>
     );
+  }
+
+  private fetchRecords = async (trackSummary: FitTrack) => {
+    const records = await fetchRecordsForTrack(trackSummary);
+
+    const trackData = {
+      activityBounds: trackSummary.activityBounds,
+      points: records.map(record => ({
+        lat: record.posLat,
+        long: record.posLong,
+      }))
+    };
+
+    this.setState(state => ({
+      ...state,
+      tracks: state.tracks.concat([trackData]),
+    }));
   }
 
   private showMap = (event: React.MouseEvent<HTMLAnchorElement>) => {
@@ -108,6 +137,7 @@ class Gallery extends React.Component<GalleryProps, GalleryState> {
         height: '600px',
       },
       markers,
+      tracks: this.state.tracks,
       extraLatLongMapPadding: 0.001,
     };
 
