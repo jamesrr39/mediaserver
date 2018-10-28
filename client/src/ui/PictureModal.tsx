@@ -175,9 +175,9 @@ class PictureModal extends React.Component<Props, ComponentState> {
     return (
       <div style={styles.pictureContainer}>
         <div>{previousLink}</div>
-        <div>
+        <React.Fragment>
           {this.renderPictureContent(pictureMetadata)}
-        </div>
+        </React.Fragment>
         <div>{nextLink}</div>
       </div>
     );
@@ -197,7 +197,7 @@ class PictureModal extends React.Component<Props, ComponentState> {
         );
       case MediaFileType.FitTrack:
         const props = {
-          mediaFile: mediaFile as FitTrack,
+          trackSummary: mediaFile as FitTrack,
         };
         return <TrackModalContent {...props} />;
       default:

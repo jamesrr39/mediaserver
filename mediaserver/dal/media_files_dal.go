@@ -50,8 +50,8 @@ func (dal *MediaFilesDAL) Get(hashValue domain.HashValue) domain.MediaFile {
 	return dal.cache.Get(hashValue)
 }
 
-func (dal *MediaFilesDAL) GetFullPath(mediaFile domain.MediaFile) string {
-	return filepath.Join(dal.picturesBasePath, mediaFile.GetMediaFileInfo().RelativePath)
+func (dal *MediaFilesDAL) OpenFile(mediaFile domain.MediaFile) (*os.File, error) {
+	return os.Open(filepath.Join(dal.picturesBasePath, mediaFile.GetMediaFileInfo().RelativePath))
 }
 
 func (dal *MediaFilesDAL) processFitFile(tx *sql.Tx, path string, fileInfo os.FileInfo) (*domain.FitFileSummary, error) {

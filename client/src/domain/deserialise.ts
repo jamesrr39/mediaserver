@@ -27,7 +27,7 @@ type FitFileMetadataJSON = {
   deviceManufacturer: string;
   deviceProduct: string;
   totalDistance: number;
-  activityBounds: ActivityBounds[];
+  activityBounds: ActivityBounds;
 } & BaseMediaFileJSON;
 
 export type MediaFileJSON = {

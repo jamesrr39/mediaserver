@@ -30,6 +30,7 @@ type MediaServerDAL struct {
 	MediaFilesDAL  *MediaFilesDAL
 	CollectionsDAL *diskstorage.CollectionsRepository
 	VideosDAL      videodal.VideoDAL
+	TracksDAL      *TracksDAL
 }
 
 func NewMediaServerDAL(picturesBasePath, cachesBasePath, dataDir string, maxConcurrentResizes, maxConcurrentVideoConversions uint) (*MediaServerDAL, error) {
@@ -60,6 +61,7 @@ func NewMediaServerDAL(picturesBasePath, cachesBasePath, dataDir string, maxConc
 		mediaFilesDAL,
 		diskstorage.NewCollectionsRepository(),
 		videosDAL,
+		NewTracksDAL(mediaFilesDAL),
 	}, nil
 }
 

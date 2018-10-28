@@ -3,33 +3,54 @@ import * as Leaflet from 'leaflet';
 import { RawSize } from '../domain/PictureMetadata';
 import { MapLocation } from '../domain/Location';
 import { escapeHtml } from '../util/html';
+import { ActivityBounds } from '../domain/FitTrack';
 
 const markerIcon = require('../../node_modules/leaflet/dist/images/marker-icon.png');
 const markerShadow = require('../../node_modules/leaflet/dist/images/marker-shadow.png');
 
-function getBounds(markers: MapMarker[]) {
+function getBounds(markers?: MapMarker[], track?: TrackMapData) {
   let n = -90;
   let e = -180;
   let s = 90;
   let w = 180;
 
-  markers.forEach(marker => {
-    if (marker.location.lat > n) {
-      n = marker.location.lat;
+  if (markers) {
+    markers.forEach(marker => {
+      if (marker.location.lat > n) {
+        n = marker.location.lat;
+      }
+
+      if (marker.location.lat < s) {
+        s = marker.location.lat;
+      }
+
+      if (marker.location.long > e) {
+        e = marker.location.long;
+      }
+
+      if (marker.location.long < w) {
+        w = marker.location.long;
+      }
+    });
+  }
+
+  if (track) {
+    if (track.activityBounds.latMax > n) {
+      n = track.activityBounds.latMax;
     }
 
-    if (marker.location.lat < s) {
-      s = marker.location.lat;
+    if (track.activityBounds.latMin < s) {
+      s = track.activityBounds.latMin;
     }
 
-    if (marker.location.long > e) {
-      e = marker.location.long;
+    if (track.activityBounds.longMax > e) {
+      e = track.activityBounds.longMax;
     }
 
-    if (marker.location.long < w) {
-      w = marker.location.long;
+    if (track.activityBounds.longMin < w) {
+      w = track.activityBounds.longMin;
     }
-  });
+  }
 
   return {
     n,
@@ -51,12 +72,18 @@ export type MapMarker = {
   popupData?: PopupData,
 };
 
+type TrackMapData = {
+  points: MapLocation[],
+  activityBounds: ActivityBounds,
+};
+
 type Props = {
   size: {
     width: string,
     height: string,
   },
-  markers: MapMarker[],
+  markers?: MapMarker[],
+  track?: TrackMapData,
   extraLatLongMapPadding?: number,
 };
 
@@ -64,12 +91,12 @@ export default class MapComponent extends React.Component<Props> {
   private map: Leaflet.Map | null = null;
 
   render() {
-    const { size, markers } = this.props;
+    const { size, markers, track } = this.props;
 
-    return (<div style={size} ref={(el) => this.renderMap(el, markers)} />);
+    return (<div style={size} ref={(el) => this.renderMap(el, markers, track)} />);
   }
 
-  private renderMap = (element: HTMLElement|null, markers: MapMarker[]) => {
+  private renderMap = (element: HTMLElement|null, markers?: MapMarker[], track?: TrackMapData) => {
     if (element === null) {
       return;
     }
@@ -88,7 +115,7 @@ export default class MapComponent extends React.Component<Props> {
       attribution,
     });
 
-    const bounds = getBounds(markers);
+    const bounds = getBounds(markers, track);
     if (extraLatLongMapPadding) {
       bounds.n += extraLatLongMapPadding;
       bounds.s -= extraLatLongMapPadding;
@@ -104,27 +131,38 @@ export default class MapComponent extends React.Component<Props> {
     );
     map.addLayer(osm);
 
-    markers.forEach(marker => {
-      const { lat, long } = marker.location;
+    if (track) {
+      const points = track.points.map(point => {
+        return new Leaflet.LatLng(point.lat, point.long);
+      });
 
-      const leafletMarker = Leaflet.marker([lat, long], {
-        icon: new Leaflet.Icon({
-          iconUrl: markerIcon,
-          shadowUrl: markerShadow,
-          iconSize: [24, 36],
-          iconAnchor: [12, 36],
-        }),
-      })
-      .addTo(map);
+      Leaflet.polyline(points).addTo(map);
+    }
 
-      if (marker.popupData) {
-        leafletMarker.bindPopup(this.createPopupHtml(marker.popupData));
+    if (markers) {
+      markers.forEach(marker => {
+        const { lat, long } = marker.location;
 
-        leafletMarker.addEventListener('click', (event) => {
-          leafletMarker.openPopup();
-        });
-      }
-    });
+        const leafletMarker = Leaflet.marker([lat, long], {
+          icon: new Leaflet.Icon({
+            iconUrl: markerIcon,
+            shadowUrl: markerShadow,
+            iconSize: [24, 36],
+            iconAnchor: [12, 36],
+          }),
+        })
+        .addTo(map);
+
+        if (marker.popupData) {
+          leafletMarker.bindPopup(this.createPopupHtml(marker.popupData));
+
+          leafletMarker.addEventListener('click', (event) => {
+            leafletMarker.openPopup();
+          });
+        }
+      });
+    }
+
     this.map = map;
   }
 

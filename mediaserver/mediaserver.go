@@ -26,6 +26,7 @@ type MediaServer struct {
 	picturesMetadataService *pictureswebservice.MediaFilesService
 	videosWebService        *pictureswebservice.VideoWebService
 	collectionsService      *pictureswebservice.CollectionsWebService
+	tracksService           *pictureswebservice.TracksWebService
 	dbConn                  *mediaserverdb.DBConn
 }
 
@@ -48,6 +49,7 @@ func NewMediaServerAndScan(rootpath, cachesDir, dataDir string, maxConcurrentRes
 		picturesMetadataService: pictureswebservice.NewMediaFilesService(dbConn, mediaServerDAL),
 		videosWebService:        pictureswebservice.NewVideoWebService(mediaServerDAL.VideosDAL, mediaServerDAL.MediaFilesDAL),
 		collectionsService:      pictureswebservice.NewCollectionsWebService(dbConn, mediaServerDAL.CollectionsDAL),
+		tracksService:           pictureswebservice.NewTracksWebService(mediaServerDAL.TracksDAL, mediaServerDAL.MediaFilesDAL),
 	}
 
 	tx, err := dbConn.Begin()
@@ -86,6 +88,7 @@ func (ms *MediaServer) ListenAndServe(addr string) error {
 	mainRouter.Route("/api/", func(r chi.Router) {
 		r.Mount("/files/", ms.picturesMetadataService)
 		r.Mount("/collections/", ms.collectionsService)
+		r.Mount("/tracks/", ms.tracksService)
 	})
 
 	mainRouter.Mount("/video/", http.StripPrefix("/video/", ms.videosWebService))

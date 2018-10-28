@@ -1,4 +1,5 @@
 import { MediaFile, MediaFileType } from './MediaFile';
+import { Duration } from './duration';
 
 /*
 Fit file summary
@@ -39,7 +40,7 @@ export class FitTrack extends MediaFile {
     public readonly deviceManufacturer: string,
     public readonly deviceProduct: string,
     public readonly totalDistance: number,
-    public readonly activityBounds: ActivityBounds[]) {
+    public readonly activityBounds: ActivityBounds) {
       super(hashValue, relativePath, fileSizeBytes);
     }
 
@@ -49,4 +50,51 @@ export class FitTrack extends MediaFile {
     getTimeTaken() {
       return this.startTime;
     }
+    getDuration() {
+      return new Duration(this.startTime, this.endTime);
+    }
+}
+
+export type Record = {
+  timestamp: Date,
+  posLat: number,
+  posLong: number,
+  distance: number,
+  altitude: number
+};
+
+export type Lap = {
+  time: Duration,
+  distance: number,
+};
+
+export function getLapsFromRecords(records: Record[], interval: number) {
+  if (records.length === 0) {
+    return [];
+  }
+
+  const laps: Lap[] = [];
+  let nextInterval = interval;
+  let timestampOfLastInterval = records[0].timestamp;
+  let lastIntervalDistance = 0;
+
+  for (let i = 0; i < records.length; i++) {
+    const record = records[i];
+
+    const hasReachedNextInterval = record.distance >= nextInterval;
+    const isLastRecord = i === (records.length - 1);
+    if (!hasReachedNextInterval && !isLastRecord) {
+      continue;
+    }
+
+    laps.push({
+      time: new Duration(new Date(timestampOfLastInterval), new Date(record.timestamp)),
+      distance: record.distance - lastIntervalDistance,
+    });
+    nextInterval += interval;
+    timestampOfLastInterval = record.timestamp;
+    lastIntervalDistance = record.distance;
+  }
+
+  return laps;
 }

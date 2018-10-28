@@ -32,7 +32,7 @@ func (fwfs *fileWebFileServer) Open(hashValue string) (http.File, error) {
 		return nil, os.ErrNotExist
 	}
 
-	return os.Open(fwfs.mediaFilesDAL.GetFullPath(mediaFile))
+	return fwfs.mediaFilesDAL.OpenFile(mediaFile)
 }
 
 type VideoWebService struct {
