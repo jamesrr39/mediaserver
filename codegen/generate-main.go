@@ -74,9 +74,9 @@ func writeGeneratedCode(generatedCode GeneratedCode) error {
 	return ioutil.WriteFile(tsPath, []byte(comment+generatedCode.TypescriptCode), 0644)
 }
 
-func generateComment(relativeFilePath string) string {
+func generateComment(relativePath string) string {
 	return fmt.Sprintf(`// generated code - DO NOT EDIT!
 // to change this file, change '%s'
 
-`, relativeFilePath)
+`, relativePath)
 }

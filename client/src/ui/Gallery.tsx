@@ -120,13 +120,13 @@ class Gallery extends React.Component<GalleryProps, GalleryState> {
   }
 
   private renderThumbnails = () => {
-    return this.props.picturesMetadatas.map((pictureMetadata, index) => {
+    return this.props.picturesMetadatas.map((mediaFile, index) => {
       const thumbnailProps = {
         scrollObservable: this.props.scrollObservable,
-        pictureMetadata,
+        mediaFile,
       };
 
-      const linkUrl = `${this.props.pictureModalUrlbase}/${pictureMetadata.hashValue}`;
+      const linkUrl = `${this.props.pictureModalUrlbase}/${mediaFile.hashValue}`;
 
       let innerHtml = <Thumbnail {...thumbnailProps} />;
       if (this.props.pictureModalUrlbase) {
@@ -141,7 +141,7 @@ class Gallery extends React.Component<GalleryProps, GalleryState> {
         const onClickThumbnail = (event: React.MouseEvent<HTMLAnchorElement>) => {
           event.preventDefault();
           if (this.props.onClickThumbnail) {
-            this.props.onClickThumbnail(pictureMetadata);
+            this.props.onClickThumbnail(mediaFile);
           }
         };
 

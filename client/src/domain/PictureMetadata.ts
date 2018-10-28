@@ -5,11 +5,11 @@ export class PictureMetadata extends MediaFile {
   public fileType = MediaFileType.Picture;
   constructor(
     public readonly hashValue: string,
-    public readonly relativeFilePath: string,
+    public readonly relativePath: string,
     public readonly fileSizeBytes: number,
     public readonly exif: null|ExifData,
     public readonly rawSize: RawSize) {
-      super(hashValue, relativeFilePath, fileSizeBytes);
+      super(hashValue, relativePath, fileSizeBytes);
     }
 
   getTimeTaken(): Date | null {
@@ -115,7 +115,7 @@ export function createCompareTimeTakenFunc(sortNullAfter: boolean) {
     const aTime = aTaken.getTime();
     const bTime = bTaken.getTime();
     if (aTime === bTime) {
-      return a.relativeFilePath > b.relativeFilePath ? 1 : -1;
+      return a.relativePath > b.relativePath ? 1 : -1;
     }
 
     return (bTime > aTime) ? 1 : -1;

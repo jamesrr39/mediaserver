@@ -51,7 +51,31 @@ func (dal *MediaFilesDAL) Get(hashValue domain.HashValue) domain.MediaFile {
 }
 
 func (dal *MediaFilesDAL) GetFullPath(mediaFile domain.MediaFile) string {
-	return filepath.Join(dal.picturesBasePath, mediaFile.GetRelativePath())
+	return filepath.Join(dal.picturesBasePath, mediaFile.GetMediaFileInfo().RelativePath)
+}
+
+func (dal *MediaFilesDAL) processFitFile(tx *sql.Tx, path string, fileInfo os.FileInfo) (*domain.FitFileSummary, error) {
+	file, err := os.Open(path)
+	if nil != err {
+		return nil, err
+	}
+	defer file.Close()
+
+	relativePath := strings.TrimPrefix(path, dal.picturesBasePath)
+
+	hashValue, err := domain.NewHash(file)
+	if nil != err {
+		return nil, err
+	}
+
+	mediaFileInfo := domain.NewMediaFileInfo(relativePath, hashValue, domain.MediaFileTypeFitTrack, fileInfo.Size())
+
+	_, err = file.Seek(0, 0)
+	if nil != err {
+		return nil, err
+	}
+
+	return domain.NewFitFileSummaryFromReader(mediaFileInfo, file)
 }
 
 func (dal *MediaFilesDAL) processVideoFile(tx *sql.Tx, path string, fileInfo os.FileInfo) (*domain.VideoFileMetadata, error) {
@@ -62,7 +86,7 @@ func (dal *MediaFilesDAL) processVideoFile(tx *sql.Tx, path string, fileInfo os.
 	}
 	defer file.Close()
 
-	relativeFilePath := strings.TrimPrefix(path, dal.picturesBasePath)
+	relativePath := strings.TrimPrefix(path, dal.picturesBasePath)
 
 	hashValue, err := domain.NewHash(file)
 	if nil != err {
@@ -74,7 +98,7 @@ func (dal *MediaFilesDAL) processVideoFile(tx *sql.Tx, path string, fileInfo os.
 		return nil, err
 	}
 
-	videoFileMetadata := domain.NewVideoFileMetadata(hashValue, relativeFilePath, fileInfo.Size())
+	videoFileMetadata := domain.NewVideoFileMetadata(hashValue, relativePath, fileInfo.Size())
 
 	err = dal.videosDAL.EnsureSupportedFile(videoFileMetadata)
 	if nil != err {
@@ -91,7 +115,7 @@ func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string) (*domain.P
 		return nil, err
 	}
 
-	relativeFilePath := strings.TrimPrefix(path, dal.picturesBasePath)
+	relativePath := strings.TrimPrefix(path, dal.picturesBasePath)
 
 	// look from DB cache
 	hash, err := domain.NewHash(bytes.NewBuffer(fileBytes))
@@ -99,19 +123,19 @@ func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string) (*domain.P
 		return nil, err
 	}
 
-	pictureMetadata, err := dal.dbDAL.GetPictureMetadata(tx, hash, relativeFilePath)
+	pictureMetadata, err := dal.dbDAL.GetPictureMetadata(tx, hash, relativePath)
 	if nil != err {
 		if err != diskstorage.ErrNotFound {
-			return nil, fmt.Errorf("unexpected error getting picture metadata from database for relative path '%s': '%s'", relativeFilePath, err)
+			return nil, fmt.Errorf("unexpected error getting picture metadata from database for relative path '%s': '%s'", relativePath, err)
 		}
-		pictureMetadata, _, err = domain.NewPictureMetadataAndPictureFromBytes(fileBytes, relativeFilePath)
+		pictureMetadata, _, err = domain.NewPictureMetadataAndPictureFromBytes(fileBytes, relativePath)
 		if nil != err {
 			return nil, err
 		}
 
 		err = dal.dbDAL.CreatePictureMetadata(tx, pictureMetadata)
 		if nil != err {
-			return nil, fmt.Errorf("unexpected error setting picture metadata to database for relative file path '%s': '%s'", relativeFilePath, err)
+			return nil, fmt.Errorf("unexpected error setting picture metadata to database for relative file path '%s': '%s'", relativePath, err)
 		}
 	}
 
@@ -141,6 +165,11 @@ func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx) error {
 			}
 		case ".mp4":
 			mediaFile, err = dal.processVideoFile(tx, path, fileinfo)
+			if err != nil {
+				return err
+			}
+		case ".fit":
+			mediaFile, err = dal.processFitFile(tx, path, fileinfo)
 			if err != nil {
 				return err
 			}

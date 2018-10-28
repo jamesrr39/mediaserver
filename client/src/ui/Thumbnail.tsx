@@ -65,7 +65,7 @@ const generateThumbnailStyle = (pictureMetadata: PictureMetadata, isLoaded: bool
 };
 
 export interface ThumbnailProps {
-  pictureMetadata: MediaFile;
+  mediaFile: MediaFile;
   scrollObservable: Observable;
 }
 
@@ -99,15 +99,15 @@ export class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
   }
 
   render() {
-    const { pictureMetadata } = this.props;
+    const { mediaFile } = this.props;
 
-    switch (pictureMetadata.fileType) {
+    switch (mediaFile.fileType) {
       case MediaFileType.Picture:
-        return this.generateImageThumbnailHtml(pictureMetadata as PictureMetadata); // TODO: remove cast
+        return this.generateImageThumbnailHtml(mediaFile as PictureMetadata); // TODO: remove cast
       case MediaFileType.Video:
-        return this.generateVideoThumbnailHtml(pictureMetadata as VideoMetadata);
+        return this.generateVideoThumbnailHtml(mediaFile as VideoMetadata);
       default:
-        return <div>{pictureMetadata.getName()}</div>;
+        return <div>{mediaFile.getName()}</div>;
     }
 
   }

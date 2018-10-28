@@ -34,33 +34,21 @@ func RawSizeFromImage(picture image.Image) RawSize {
 }
 
 type PictureMetadata struct {
-	HashValue        `json:"hashValue"`
-	MediaFileType    `json:"fileType"`
-	RelativeFilePath string    `json:"relativeFilePath"`
-	FileSizeBytes    int64     `json:"fileSizeBytes"`
-	ExifData         *ExifData `json:"exif"`
-	RawSize          RawSize   `json:"rawSize"`
-	Format           string    `json:"format"`
+	MediaFileInfo
+	ExifData *ExifData `json:"exif"`
+	RawSize  RawSize   `json:"rawSize"`
+	Format   string    `json:"format"`
 }
 
-func (pm *PictureMetadata) GetRelativePath() string {
-	return pm.RelativeFilePath
-}
-func (pm *PictureMetadata) GetHashValue() HashValue {
-	return pm.HashValue
-}
-func (pm *PictureMetadata) GetMediaFileType() MediaFileType {
-	return MediaFileTypePicture
-}
-func (pm *PictureMetadata) GetFileSizeBytes() int64 {
-	return pm.FileSizeBytes
+func (pm *PictureMetadata) GetMediaFileInfo() MediaFileInfo {
+	return pm.MediaFileInfo
 }
 
-func NewPictureMetadata(hashValue HashValue, relativeFilePath string, fileSizeBytes int64, exifData *ExifData, rawSize RawSize, format string) *PictureMetadata {
-	return &PictureMetadata{hashValue, MediaFileTypePicture, relativeFilePath, fileSizeBytes, exifData, rawSize, format}
+func NewPictureMetadata(hashValue HashValue, relativePath string, fileSizeBytes int64, exifData *ExifData, rawSize RawSize, format string) *PictureMetadata {
+	return &PictureMetadata{MediaFileInfo{relativePath, hashValue, MediaFileTypePicture, fileSizeBytes}, exifData, rawSize, format}
 }
 
-func NewPictureMetadataAndPictureFromBytes(fileBytes []byte, relativeFilePath string) (*PictureMetadata, image.Image, error) {
+func NewPictureMetadataAndPictureFromBytes(fileBytes []byte, relativePath string) (*PictureMetadata, image.Image, error) {
 	hash, err := NewHash(bytes.NewBuffer(fileBytes))
 	if nil != err {
 		return nil, nil, err
@@ -79,17 +67,17 @@ func NewPictureMetadataAndPictureFromBytes(fileBytes []byte, relativeFilePath st
 	if exifData != nil {
 		orientation, err := exifData.GetOrientation()
 		if err != nil {
-			log.Printf("couldn't get exif orientation information for picture with hash '%s' and relative path '%s'. Error: '%s'\n", hash, relativeFilePath, err)
+			log.Printf("couldn't get exif orientation information for picture with hash '%s' and relative path '%s'. Error: '%s'\n", hash, relativePath, err)
 		} else {
 			picture = imageprocessingutil.FlipAndRotatePictureByExif(picture, orientation)
 		}
 	}
 
-	return NewPictureMetadata(hash, relativeFilePath, int64(len(fileBytes)), exifData, RawSizeFromImage(picture), format), picture, nil
+	return NewPictureMetadata(hash, relativePath, int64(len(fileBytes)), exifData, RawSizeFromImage(picture), format), picture, nil
 }
 
 func (pictureMetadata *PictureMetadata) String() string {
-	return string(pictureMetadata.HashValue) + " (" + pictureMetadata.RelativeFilePath + ")"
+	return string(pictureMetadata.HashValue) + " (" + pictureMetadata.RelativePath + ")"
 }
 
 func NewHash(file io.Reader) (HashValue, error) {

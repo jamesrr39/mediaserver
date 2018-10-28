@@ -38,7 +38,7 @@ func (ps *PicturesService) servePicture(w http.ResponseWriter, r *http.Request) 
 	height := r.URL.Query().Get("h")
 
 	mediaFile := ps.mediaServerDAL.MediaFilesDAL.Get(domain.HashValue(hash))
-	if mediaFile == nil || mediaFile.GetMediaFileType() != domain.MediaFileTypePicture {
+	if mediaFile == nil || mediaFile.GetMediaFileInfo().MediaFileType != domain.MediaFileTypePicture {
 		http.Error(w, "picture not found for this hash", 404)
 		return
 	}

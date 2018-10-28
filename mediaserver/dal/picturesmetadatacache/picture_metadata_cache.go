@@ -27,12 +27,12 @@ func (cache *MediaFilesCache) Add(mediaFile domain.MediaFile) error {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
 
-	existingPicture := cache.mapByHash[mediaFile.GetHashValue()]
+	existingPicture := cache.mapByHash[mediaFile.GetMediaFileInfo().HashValue]
 	if nil != existingPicture {
 		return ErrItemAlreadyExists
 	}
 
-	cache.mapByHash[mediaFile.GetHashValue()] = mediaFile
+	cache.mapByHash[mediaFile.GetMediaFileInfo().HashValue] = mediaFile
 	cache.mediaFiles = append(cache.mediaFiles, mediaFile)
 
 	return cache.setHashValue()
@@ -43,13 +43,13 @@ func (cache *MediaFilesCache) AddBatch(mediaFiles ...domain.MediaFile) {
 	defer cache.mu.Unlock()
 
 	for _, mediaFile := range mediaFiles {
-		existingPicture := cache.mapByHash[mediaFile.GetHashValue()]
+		existingPicture := cache.mapByHash[mediaFile.GetMediaFileInfo().HashValue]
 		if nil != existingPicture {
-			log.Printf("Picture metadata already found for %s at %s. Skipping add to cache.\n", existingPicture.GetHashValue(), existingPicture.GetRelativePath())
+			log.Printf("Picture metadata already found for %s at %s. Skipping add to cache.\n", existingPicture.GetMediaFileInfo().HashValue, existingPicture.GetMediaFileInfo().RelativePath)
 			continue
 		}
 
-		cache.mapByHash[mediaFile.GetHashValue()] = mediaFile
+		cache.mapByHash[mediaFile.GetMediaFileInfo().HashValue] = mediaFile
 		cache.mediaFiles = append(cache.mediaFiles, mediaFile)
 	}
 

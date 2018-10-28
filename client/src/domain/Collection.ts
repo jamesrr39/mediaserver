@@ -55,7 +55,7 @@ export class CustomCollection implements Collection {
 export function extractFolderCollectionsFromPicturesMetadatas(picturesMetadatas: PictureMetadata[]) {
   const collectionsMap = new Map<string, string[]>();
   picturesMetadatas.forEach((pictureMetadata) => {
-    const filepathFragments = pictureMetadata.relativeFilePath.split('/');
+    const filepathFragments = pictureMetadata.relativePath.split('/');
     filepathFragments.splice(filepathFragments.length - 1, 1);
     filepathFragments.splice(0, 1);
     for (let i = 0; i < filepathFragments.length; i++) {

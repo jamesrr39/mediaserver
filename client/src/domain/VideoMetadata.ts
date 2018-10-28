@@ -5,10 +5,10 @@ export class VideoMetadata extends MediaFile {
 
   constructor(
     public readonly hashValue: string,
-    public readonly relativeFilePath: string,
+    public readonly relativePath: string,
     public readonly fileSizeBytes: number,
   ) {
-    super(hashValue, relativeFilePath, fileSizeBytes);
+    super(hashValue, relativePath, fileSizeBytes);
   }
 
   getTimeTaken() {

@@ -78,7 +78,7 @@ func (dal *MediaServerDAL) Create(file io.Reader, filename, contentType string) 
 	}
 
 	relativeFolderPath := filepath.Join("uploads", strings.Split(time.Now().Format(time.RFC3339), "T")[0])
-	absoluteFilePath, relativeFilePath, err := dal.getPathForNewFile(relativeFolderPath, filename)
+	absoluteFilePath, relativePath, err := dal.getPathForNewFile(relativeFolderPath, filename)
 	if nil != err {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ func (dal *MediaServerDAL) Create(file io.Reader, filename, contentType string) 
 	var mediaFile domain.MediaFile
 	switch contentType {
 	case "image/jpg", "image/jpeg", "image/png":
-		pictureMetadata, _, err := domain.NewPictureMetadataAndPictureFromBytes(fileBytes, relativeFilePath)
+		pictureMetadata, _, err := domain.NewPictureMetadataAndPictureFromBytes(fileBytes, relativePath)
 		if nil != err {
 			return nil, err
 		}
@@ -102,7 +102,7 @@ func (dal *MediaServerDAL) Create(file io.Reader, filename, contentType string) 
 			return nil, err
 		}
 
-		videoFile := domain.NewVideoFileMetadata(hashValue, relativeFilePath, int64(len(fileBytes)))
+		videoFile := domain.NewVideoFileMetadata(hashValue, relativePath, int64(len(fileBytes)))
 		mediaFile = videoFile
 
 		doAtEnd = func() error {
@@ -110,13 +110,24 @@ func (dal *MediaServerDAL) Create(file io.Reader, filename, contentType string) 
 		}
 	case "application/octet-stream":
 		// try parsing fit file
+		hashValue, err := domain.NewHash(bytes.NewBuffer(fileBytes))
+		if err != nil {
+			return nil, err
+		}
+
+		mediaFileInfo := domain.NewMediaFileInfo(relativePath, hashValue, domain.MediaFileTypeFitTrack, int64(len(fileBytes)))
+
+		mediaFile, err = domain.NewFitFileSummaryFromReader(mediaFileInfo, bytes.NewReader(fileBytes))
+		if err != nil {
+			return nil, err
+		}
 
 	default:
 		log.Printf("content type not supported: %q\n", contentType)
 		return nil, ErrContentTypeNotSupported
 	}
 
-	if nil != dal.MediaFilesDAL.Get(mediaFile.GetHashValue()) {
+	if nil != dal.MediaFilesDAL.Get(mediaFile.GetMediaFileInfo().HashValue) {
 		return nil, ErrFileAlreadyExists
 	}
 

@@ -13,6 +13,8 @@ import PictureInfoComponent, { INFO_CONTAINER_WIDTH } from './PictureInfoCompone
 import { isNarrowScreen } from '../util/screen_size';
 import { MediaFile, MediaFileType } from '../domain/MediaFile';
 import Modal from './Modal';
+import { TrackModalContent } from './TrackModalContent';
+import { FitTrack } from '../domain/FitTrack';
 
 const KeyCodes = {
   ESCAPE: 27,
@@ -193,6 +195,11 @@ class PictureModal extends React.Component<Props, ComponentState> {
             Your browser does not support HTML5 video.
           </video>
         );
+      case MediaFileType.FitTrack:
+        const props = {
+          mediaFile: mediaFile as FitTrack,
+        };
+        return <TrackModalContent {...props} />;
       default:
         return <p>Unknown format</p>;
     }

@@ -40,7 +40,13 @@ func main() {
 		log.Fatalf("Couldn't expand the data directory path from '%s'. Error: %s\n", *metadataDir, err)
 	}
 
-	mediaServer, err := mediaserver.NewMediaServerAndScan(fullpath, expandedCacheDir, expandedMetadataDir, *maxConcurrentResizes, *maxConcurrentVideoConversions)
+	mediaServer, err := mediaserver.NewMediaServerAndScan(
+		fullpath,
+		expandedCacheDir,
+		expandedMetadataDir,
+		*maxConcurrentResizes,
+		*maxConcurrentVideoConversions,
+	)
 	if nil != err {
 		log.Fatalf("couldn't create a new media server and scan the pictures directory. Error: %s", err)
 	}

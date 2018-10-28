@@ -3,6 +3,7 @@ import { MapLocation } from './Location';
 export enum MediaFileType {
   Picture = 1,
   Video = 2,
+  FitTrack = 3,
 }
 
 export abstract class MediaFile {
@@ -10,14 +11,14 @@ export abstract class MediaFile {
 
   constructor(
     public readonly hashValue: string,
-    public readonly relativeFilePath: string,
+    public readonly relativePath: string,
     public readonly  fileSizeBytes: number) {}
   getName() {
-    const lastSlash = this.relativeFilePath.lastIndexOf('/');
+    const lastSlash = this.relativePath.lastIndexOf('/');
     if (lastSlash === -1) {
-      return this.relativeFilePath;
+      return this.relativePath;
     }
-    return this.relativeFilePath.substring(lastSlash + 1);
+    return this.relativePath.substring(lastSlash + 1);
   }
   abstract getTimeTaken(): Date | null;
   abstract getLocation(): MapLocation | null;

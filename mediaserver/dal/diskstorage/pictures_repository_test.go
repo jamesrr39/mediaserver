@@ -27,7 +27,7 @@ func Test_CrudPictureMetadataNoExif(t *testing.T) {
 	err = picturesMetadataRepository.CreatePictureMetadata(tx, pictureMetadata)
 	require.Nil(t, err)
 
-	fetchedPictureMetadata, err := picturesMetadataRepository.GetPictureMetadata(tx, pictureMetadata.HashValue, pictureMetadata.RelativeFilePath)
+	fetchedPictureMetadata, err := picturesMetadataRepository.GetPictureMetadata(tx, pictureMetadata.HashValue, pictureMetadata.RelativePath)
 	require.Nil(t, err)
 
 	assert.Equal(t, pictureMetadata, fetchedPictureMetadata)

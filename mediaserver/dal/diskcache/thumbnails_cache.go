@@ -88,7 +88,7 @@ func (c *ThumbnailsCache) EnsureAllThumbnailsForPicture(pictureMetadata *domain.
 		// skip getting the picture, if there are no sizes required
 		return nil
 	}
-	println("required sizes for", fmt.Sprintf("%v", requiredSizes), pictureMetadata.RelativeFilePath, pictureMetadata.HashValue)
+	println("required sizes for", fmt.Sprintf("%v", requiredSizes), pictureMetadata.RelativePath, pictureMetadata.HashValue)
 
 	picture, _, err := getPictureFunc(pictureMetadata)
 	if err != nil {
@@ -101,7 +101,7 @@ func (c *ThumbnailsCache) EnsureAllThumbnailsForPicture(pictureMetadata *domain.
 		if err != nil {
 			return err
 		}
-		println("resizing to", resizeSize.Width, resizeSize.Height, pictureMetadata.RelativeFilePath, pictureMetadata.HashValue)
+		println("resizing to", resizeSize.Width, resizeSize.Height, pictureMetadata.RelativePath, pictureMetadata.HashValue)
 
 		err = c.Save(pictureMetadata.HashValue, resizeSize, pictureMetadata.Format, pictureBytes)
 		if err != nil {

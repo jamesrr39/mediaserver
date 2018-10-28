@@ -3,21 +3,35 @@ package domain
 type MediaFileType int
 
 const (
-	MediaFileTypePicture MediaFileType = 1
-	MediaFileTypeVideo   MediaFileType = 2
+	MediaFileTypePicture  MediaFileType = 1
+	MediaFileTypeVideo    MediaFileType = 2
+	MediaFileTypeFitTrack MediaFileType = 3
 )
 
+type MediaFileInfo struct {
+	RelativePath  string        `json:"relativePath"`
+	HashValue     HashValue     `json:"hashValue"`
+	MediaFileType MediaFileType `json:"fileType"`
+	FileSizeBytes int64         `json:"fileSizeBytes"`
+}
+
+func NewMediaFileInfo(
+	relativePath string,
+	hashValue HashValue,
+	mediaFileType MediaFileType,
+	fileSizeBytes int64,
+) MediaFileInfo {
+	return MediaFileInfo{relativePath, hashValue, mediaFileType, fileSizeBytes}
+}
+
 type MediaFile interface {
-	GetRelativePath() string
-	GetHashValue() HashValue
-	GetMediaFileType() MediaFileType
-	GetFileSizeBytes() int64
+	GetMediaFileInfo() MediaFileInfo
 }
 
 func GetPicturesMetadatasFromMediaFileList(mediaFiles []MediaFile) []*PictureMetadata {
 	var picturesMetadatas []*PictureMetadata
 	for _, mediaFile := range mediaFiles {
-		if mediaFile.GetMediaFileType() == MediaFileTypePicture {
+		if mediaFile.GetMediaFileInfo().MediaFileType == MediaFileTypePicture {
 			picturesMetadatas = append(picturesMetadatas, mediaFile.(*PictureMetadata))
 		}
 	}

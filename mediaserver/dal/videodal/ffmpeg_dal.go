@@ -36,12 +36,12 @@ func (dal *FFMPEGDAL) GetFile(hash domain.HashValue) (*os.File, error) {
 }
 
 func (dal *FFMPEGDAL) EnsureSupportedFile(mediaFile domain.MediaFile) error {
-	if mediaFile.GetMediaFileType() != domain.MediaFileTypeVideo {
+	if mediaFile.GetMediaFileInfo().MediaFileType != domain.MediaFileTypeVideo {
 		return ErrWrongFileType
 	}
 
-	if !strings.HasSuffix(mediaFile.GetRelativePath(), ".ogv") {
-		toPath := filepath.Join(dal.videosBasePath, fmt.Sprintf("%s.ogv", mediaFile.GetHashValue()))
+	if !strings.HasSuffix(mediaFile.GetMediaFileInfo().RelativePath, ".ogv") {
+		toPath := filepath.Join(dal.videosBasePath, fmt.Sprintf("%s.ogv", mediaFile.GetMediaFileInfo().HashValue))
 		_, err := os.Stat(toPath)
 		if err != nil {
 			if !os.IsNotExist(err) {
@@ -49,7 +49,7 @@ func (dal *FFMPEGDAL) EnsureSupportedFile(mediaFile domain.MediaFile) error {
 			}
 			dal.sema.Add()
 			defer dal.sema.Done()
-			return dal.convertToOgv(filepath.Join(dal.picturesBasePath, mediaFile.GetRelativePath()), toPath)
+			return dal.convertToOgv(filepath.Join(dal.picturesBasePath, mediaFile.GetMediaFileInfo().RelativePath), toPath)
 		}
 	}
 	return nil
