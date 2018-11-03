@@ -185,15 +185,15 @@ export default class MapComponent extends React.Component<Props> {
           color,
         }).addTo(map);
 
-        Leaflet.marker(points[0], {
+        const startMarker = Leaflet.marker(points[0], {
           icon: new StartIcon(),
-        })
-        .addTo(map);
+        });
+        startMarker.addTo(map);
 
-        Leaflet.marker(points[points.length - 1], {
+        const finishMarker = Leaflet.marker(points[points.length - 1], {
           icon: new FinishIcon(),
-        })
-        .addTo(map);
+        });
+        finishMarker.addTo(map);
       });
     }
 
