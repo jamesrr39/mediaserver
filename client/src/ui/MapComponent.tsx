@@ -8,6 +8,39 @@ import { ActivityBounds } from '../domain/FitTrack';
 const markerIcon = require('../../node_modules/leaflet/dist/images/marker-icon.png');
 const markerShadow = require('../../node_modules/leaflet/dist/images/marker-shadow.png');
 
+const StartIcon = Leaflet.Icon.extend({
+  createIcon: () => {
+    const el = document.createElement('div');
+    el.style.width = '21px';
+    el.style.height = '24px';
+    el.style.marginTop = '-24px';
+    el.style.marginLeft = '-10.5px';
+    el.style.color = '#33aa66';
+
+    const i = document.createElement('i');
+    i.className = `fa fa-2x fa-play-circle`;
+    el.appendChild(i);
+
+    return el;
+  }
+});
+
+const FinishIcon = Leaflet.Icon.extend({
+  createIcon: () => {
+    const el = document.createElement('div');
+    el.style.width = '21px';
+    el.style.height = '24px';
+    el.style.marginTop = '-24px';
+    el.style.color = '#33aa66';
+
+    const i = document.createElement('i');
+    i.className = `fa fa-2x fa-flag-checkered`;
+    el.appendChild(i);
+
+    return el;
+  }
+});
+
 function getBounds(markers?: MapMarker[], tracks?: TrackMapData[]) {
   let n = -90;
   let e = -180;
@@ -135,6 +168,10 @@ export default class MapComponent extends React.Component<Props> {
 
     if (tracks) {
       tracks.forEach((track, index) => {
+        if (track.points.length === 0) {
+          return;
+        }
+
         const points = track.points.map(point => {
           return new Leaflet.LatLng(point.lat, point.long);
         });
@@ -147,6 +184,16 @@ export default class MapComponent extends React.Component<Props> {
         Leaflet.polyline(points, {
           color,
         }).addTo(map);
+
+        Leaflet.marker(points[0], {
+          icon: new StartIcon(),
+        })
+        .addTo(map);
+
+        Leaflet.marker(points[points.length - 1], {
+          icon: new FinishIcon(),
+        })
+        .addTo(map);
       });
     }
 
