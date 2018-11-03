@@ -74,6 +74,14 @@ const styles = {
   } as React.CSSProperties,
 };
 
+const navButtonStyle = {
+  ...styles.navigationButton,
+  position: 'absolute',
+  backgroundColor: '#666',
+  opacity: 0.8,
+  zIndex: 1000,
+} as React.CSSProperties;
+
 type ComponentState = {
   showInfo: boolean;
 };
@@ -250,7 +258,7 @@ class PictureModal extends React.Component<Props, ComponentState> {
     divContainerEl: HTMLDivElement, pictureEl: HTMLImageElement, pictureMetadata: PictureMetadata) => {
     const idealHeight = (divContainerEl.clientHeight);
     const infoContainerWidth = this.state.showInfo ? INFO_CONTAINER_WIDTH : 0;
-    const idealWidth = (divContainerEl.clientWidth - 100) - infoContainerWidth;
+    const idealWidth = divContainerEl.clientWidth - infoContainerWidth;
 
     const aspectRatio = pictureMetadata.rawSize.width / pictureMetadata.rawSize.height;
 
@@ -276,25 +284,30 @@ class PictureModal extends React.Component<Props, ComponentState> {
       ? (
         <Link
           to={`${this.props.baseUrl}/picture/${this.previousPictureMetadata.hashValue}`}
-          style={styles.navigationButton}
+          style={navButtonStyle}
         >
           &larr;
         </Link>
       )
-      : <span style={styles.navigationButton} />;
+      : null;
   }
 
   private renderNextLink = () => {
+    const style = {
+      ...navButtonStyle,
+      right: '0px',
+    };
+
     return this.nextPictureMetadata
       ? (
         <Link
           to={`${this.props.baseUrl}/picture/${this.nextPictureMetadata.hashValue}`}
-          style={styles.navigationButton}
+          style={style}
         >
           &rarr;
         </Link>
       )
-      : <span style={styles.navigationButton} />;
+      : null;
   }
 
   private goBack = () => {
