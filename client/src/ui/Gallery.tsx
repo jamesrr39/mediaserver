@@ -15,13 +15,18 @@ import { fetchRecordsForTrack } from '../actions/trackActions';
 import { FilterComponent } from './gallery/FilterComponent';
 import { Filter } from '../domain/Filter';
 
-export interface GalleryProps {
+export type GalleryProps = {
   mediaFiles: MediaFile[];
   scrollObservable: Observable;
   pictureModalUrlbase?: string; // example: /gallery/picture
   onClickThumbnail?: (pictureMetadata: MediaFile) => void;
   showMap?: boolean;
-}
+};
+
+export type InnerGalleryProps = {
+  showMap: boolean;
+  tracks: TrackMapData[];
+} & GalleryProps;
 
 type GalleryState = {
   showMap: boolean;
@@ -47,22 +52,9 @@ const styles = {
 
 const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
-class Gallery extends React.Component<GalleryProps, GalleryState> {
-  state = {
-    showMap: true,
-    tracks: [],
-  };
-
+class InnerGallery extends React.Component<InnerGalleryProps> {
   componentDidMount() {
     this.props.scrollObservable.triggerEvent();
-    this.props.mediaFiles.forEach(mediaFile => {
-      if (mediaFile.fileType !== MediaFileType.FitTrack) {
-        return;
-      }
-
-      const trackSummary = mediaFile as FitTrack;
-      this.fetchRecords(trackSummary);
-    });
   }
 
   componentDidUpdate() {
@@ -75,36 +67,14 @@ class Gallery extends React.Component<GalleryProps, GalleryState> {
       ? styles.picturesContainer
       : {...styles.picturesContainer, ...styles.wideScreenContainer};
 
-    const filterComponentProps = {
-      onFilterChange: (filter: Filter) => { /* no-op */},
-    };
-
     return (
-      <div>
-        <FilterComponent {...filterComponentProps} />
+      <React.Fragment>
         {this.props.showMap && this.renderMap()}
         <div style={pictureContainerStyle}>
           {this.renderThumbnails()}
         </div>
-      </div>
+      </React.Fragment>
     );
-  }
-
-  private fetchRecords = async (trackSummary: FitTrack) => {
-    const records = await fetchRecordsForTrack(trackSummary);
-
-    const trackData = {
-      activityBounds: trackSummary.activityBounds,
-      points: records.map(record => ({
-        lat: record.posLat,
-        long: record.posLong,
-      }))
-    };
-
-    this.setState(state => ({
-      ...state,
-      tracks: state.tracks.concat([trackData]),
-    }));
   }
 
   private showMap = (event: React.MouseEvent<HTMLAnchorElement>) => {
@@ -124,7 +94,9 @@ class Gallery extends React.Component<GalleryProps, GalleryState> {
   }
 
   private renderMap = () => {
-    if (!this.state.showMap) {
+    const { showMap, mediaFiles, tracks } = this.props;
+
+    if (!showMap) {
       return (
         <div style={styles.mapContainer}>
           <a href="#" onClick={this.showMap}>Show Map</a>
@@ -132,7 +104,7 @@ class Gallery extends React.Component<GalleryProps, GalleryState> {
       );
     }
 
-    const markers = this.getMarkers(this.props.mediaFiles);
+    const markers = this.getMarkers(mediaFiles);
 
     if (markers.length === 0) {
       return '';
@@ -144,7 +116,7 @@ class Gallery extends React.Component<GalleryProps, GalleryState> {
         height: '600px',
       },
       markers,
-      tracks: this.state.tracks,
+      tracks: tracks,
       extraLatLongMapPadding: 0.001,
     };
 
@@ -221,6 +193,63 @@ class Gallery extends React.Component<GalleryProps, GalleryState> {
     });
 
     return markers;
+  }
+}
+
+class Gallery extends React.Component<GalleryProps, GalleryState> {
+  state = {
+    showMap: true,
+    tracks: [],
+  };
+
+  componentDidMount() {
+    this.props.mediaFiles.forEach(mediaFile => {
+      if (mediaFile.fileType !== MediaFileType.FitTrack) {
+        return;
+      }
+
+      const trackSummary = mediaFile as FitTrack;
+      this.fetchRecords(trackSummary);
+    });
+  }
+
+  render() {
+    const innerGalleryProps = {
+      ...this.props,
+      ...this.state,
+    };
+
+    return (
+      <div>
+        {this.renderFilterComponent()}
+        <InnerGallery {...innerGalleryProps} />
+      </div>
+    );
+  }
+
+  private fetchRecords = async (trackSummary: FitTrack) => {
+    const records = await fetchRecordsForTrack(trackSummary);
+
+    const trackData = {
+      activityBounds: trackSummary.activityBounds,
+      points: records.map(record => ({
+        lat: record.posLat,
+        long: record.posLong,
+      }))
+    };
+
+    this.setState(state => ({
+      ...state,
+      tracks: state.tracks.concat([trackData]),
+    }));
+  }
+
+  private renderFilterComponent = () => {
+    const filterComponentProps = {
+      onFilterChange: (filter: Filter) => { /* no-op */},
+    };
+
+    return <FilterComponent {...filterComponentProps} />;
   }
 }
 
