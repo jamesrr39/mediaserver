@@ -12,6 +12,8 @@ import { MediaFile, MediaFileType } from '../domain/MediaFile';
 import { FitTrack } from '../domain/FitTrack';
 import { isNarrowScreen } from '../util/screen_size';
 import { fetchRecordsForTrack } from '../actions/trackActions';
+import { FilterComponent } from './gallery/FilterComponent';
+import { Filter } from '../domain/Filter';
 
 export interface GalleryProps {
   mediaFiles: MediaFile[];
@@ -73,8 +75,13 @@ class Gallery extends React.Component<GalleryProps, GalleryState> {
       ? styles.picturesContainer
       : {...styles.picturesContainer, ...styles.wideScreenContainer};
 
+    const filterComponentProps = {
+      onFilterChange: (filter: Filter) => { /* no-op */},
+    };
+
     return (
       <div>
+        <FilterComponent {...filterComponentProps} />
         {this.props.showMap && this.renderMap()}
         <div style={pictureContainerStyle}>
           {this.renderThumbnails()}
