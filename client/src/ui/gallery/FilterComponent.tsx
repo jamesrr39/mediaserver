@@ -1,8 +1,17 @@
 import * as React from 'react';
-import { Filter } from '../../domain/Filter';
+import { GalleryFilter } from '../../domain/Filter';
+
+const styles = {
+  container: {
+    padding: '10px',
+    background: 'lightgreen',
+    margin: '10px',
+  },
+};
 
 type Props = {
-  onFilterChange: (filter: Filter) => void;
+  initialFilter: GalleryFilter;
+  onFilterChange: (filter: GalleryFilter) => void;
 };
 
 type ComponentState = {
@@ -18,16 +27,16 @@ function dateToISODateString(date: Date) {
 
 export class FilterComponent extends React.Component<Props, ComponentState> {
   state = {
-    startDateValue: new Date(0),
-    endDateValue: new Date(),
-    startDateEnabled: true,
-    endDateEnabled: true,
+    startDateValue: this.props.initialFilter.startDate || new Date(0),
+    endDateValue: this.props.initialFilter.endDate || new Date(),
+    startDateEnabled: Boolean(this.props.initialFilter.startDate),
+    endDateEnabled: Boolean(this.props.initialFilter.endDate),
   };
 
   componentWillUpdate() {
     const { startDateValue, endDateValue, startDateEnabled, endDateEnabled } = this.state;
 
-    const filter = new Filter(
+    const filter = new GalleryFilter(
       startDateEnabled ? startDateValue : undefined,
       endDateEnabled ? endDateValue : undefined,
     );
@@ -41,7 +50,7 @@ export class FilterComponent extends React.Component<Props, ComponentState> {
     const minEndDate = startDateEnabled ? startDateValue : new Date(0);
 
     return (
-      <div>
+      <div style={styles.container}>
         <div>
           <input
             type="checkbox"
@@ -82,9 +91,11 @@ export class FilterComponent extends React.Component<Props, ComponentState> {
   }
 
   private onStartDateCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const startDateEnabled = event.target.checked;
+
     this.setState(state => ({
       ...state,
-      startDateEnabled: event.target.checked,
+      startDateEnabled,
     }));
   }
 
@@ -102,9 +113,11 @@ export class FilterComponent extends React.Component<Props, ComponentState> {
   }
 
   private onEndDateCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const endDateEnabled = event.target.checked;
+
     this.setState(state => ({
       ...state,
-      endDateEnabled: event.target.checked,
+      endDateEnabled,
     }));
   }
 

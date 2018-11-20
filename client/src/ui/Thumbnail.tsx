@@ -66,7 +66,7 @@ const generateThumbnailStyle = (pictureMetadata: PictureMetadata, isLoaded: bool
 
 export interface ThumbnailProps {
   mediaFile: MediaFile;
-  scrollObservable: Observable;
+  scrollObservable: Observable<{}>;
 }
 
 type ThumbnailState = {

@@ -1,13 +1,13 @@
-export type Callback = () => void;
+export type Callback<T> = (arg: T) => void;
 
-export interface Observable {
-  addListener(cb: Callback): void;
-  removeListener(cb: Callback): void;
-  triggerEvent(): void;
+export interface Observable<T> {
+  addListener(cb: Callback<T>): void;
+  removeListener(cb: Callback<T>): void;
+  triggerEvent(thing: T): void;
 }
 
-export class DebouncedObservable {
-  private callbacks: Callback[] = [];
+export class DebouncedObservable<T> {
+  private callbacks: Callback<T>[] = [];
   private debounceTimeMs: number;
   private emptyObject = {};
 
@@ -15,17 +15,17 @@ export class DebouncedObservable {
     this.debounceTimeMs = debounceTimeMs;
   }
 
-  addListener(cb: Callback) {
+  addListener(cb: Callback<T>) {
     this.callbacks.push(cb);
   }
 
-  removeListener(cb: Callback) {
+  removeListener(cb: Callback<T>) {
     const i = this.callbacks.indexOf(cb);
 
     this.callbacks.splice(i, 1);
   }
 
-  triggerEvent() {
+  triggerEvent(thing: T) {
     const emptyObject = {};
     this.emptyObject = emptyObject;
     const timeoutCallback = () => {
@@ -34,7 +34,7 @@ export class DebouncedObservable {
         return;
       }
       this.callbacks.forEach(listener => {
-        listener();
+        listener(thing);
       });
     };
     setTimeout(timeoutCallback, this.debounceTimeMs);

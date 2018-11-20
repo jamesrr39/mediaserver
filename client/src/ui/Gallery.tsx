@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { createCompareTimeTakenFunc, PictureMetadata } from '../domain/PictureMetadata';
 
-import { Observable } from '../util/Observable';
+import { Observable, DebouncedObservable } from '../util/Observable';
 import { Thumbnail } from './Thumbnail';
 import { State } from '../reducers';
 import { connect } from 'react-redux';
@@ -13,17 +13,19 @@ import { FitTrack } from '../domain/FitTrack';
 import { isNarrowScreen } from '../util/screen_size';
 import { fetchRecordsForTrack } from '../actions/trackActions';
 import { FilterComponent } from './gallery/FilterComponent';
-import { Filter } from '../domain/Filter';
+import { GalleryFilter } from '../domain/Filter';
 
 export type GalleryProps = {
   mediaFiles: MediaFile[];
-  scrollObservable: Observable;
+  scrollObservable: Observable<{}>;
   pictureModalUrlbase?: string; // example: /gallery/picture
   onClickThumbnail?: (pictureMetadata: MediaFile) => void;
   showMap?: boolean;
 };
 
-export type InnerGalleryProps = {
+const gallerySortingFunc = createCompareTimeTakenFunc(true);
+
+export type StatelessGalleryProps = {
   showMap: boolean;
   tracks: TrackMapData[];
 } & GalleryProps;
@@ -31,6 +33,7 @@ export type InnerGalleryProps = {
 type GalleryState = {
   showMap: boolean;
   tracks: TrackMapData[];
+  galleryFilter: GalleryFilter;
 };
 
 const styles = {
@@ -50,19 +53,19 @@ const styles = {
   },
 };
 
-const gallerySortingFunc = createCompareTimeTakenFunc(true);
-
-class InnerGallery extends React.Component<InnerGalleryProps> {
+class StatelessGallery extends React.Component<StatelessGalleryProps> {
   componentDidMount() {
-    this.props.scrollObservable.triggerEvent();
+    this.props.scrollObservable.triggerEvent({});
   }
 
   componentDidUpdate() {
-    this.props.scrollObservable.triggerEvent();
+    this.props.scrollObservable.triggerEvent({});
   }
 
   render() {
-    this.props.mediaFiles.sort(gallerySortingFunc);
+    // tslint:disable-next-line
+    console.log('rendering stateless gallery')
+
     const pictureContainerStyle = isNarrowScreen()
       ? styles.picturesContainer
       : {...styles.picturesContainer, ...styles.wideScreenContainer};
@@ -129,16 +132,23 @@ class InnerGallery extends React.Component<InnerGalleryProps> {
   }
 
   private renderThumbnails = () => {
-    return this.props.mediaFiles.map((mediaFile, index) => {
+    const {
+      mediaFiles,
+      scrollObservable,
+      pictureModalUrlbase,
+      onClickThumbnail
+    } = this.props;
+
+    return mediaFiles.map((mediaFile, index) => {
       const thumbnailProps = {
-        scrollObservable: this.props.scrollObservable,
+        scrollObservable,
         mediaFile,
       };
 
-      const linkUrl = `${this.props.pictureModalUrlbase}/${mediaFile.hashValue}`;
+      const linkUrl = `${pictureModalUrlbase}/${mediaFile.hashValue}`;
 
       let innerHtml = <Thumbnail {...thumbnailProps} />;
-      if (this.props.pictureModalUrlbase) {
+      if (pictureModalUrlbase) {
         innerHtml = (
           <Link to={linkUrl}>
             {innerHtml}
@@ -146,16 +156,16 @@ class InnerGallery extends React.Component<InnerGalleryProps> {
         );
       }
 
-      if (this.props.onClickThumbnail) {
-        const onClickThumbnail = (event: React.MouseEvent<HTMLAnchorElement>) => {
+      if (onClickThumbnail) {
+        const onClickThumbnailCb = (event: React.MouseEvent<HTMLAnchorElement>) => {
           event.preventDefault();
-          if (this.props.onClickThumbnail) {
-            this.props.onClickThumbnail(mediaFile);
+          if (onClickThumbnail) {
+            onClickThumbnail(mediaFile);
           }
         };
 
         innerHtml = (
-          <a href="#" onClick={onClickThumbnail}>{innerHtml}</a>
+          <a href="#" onClick={onClickThumbnailCb}>{innerHtml}</a>
         );
       }
 
@@ -196,14 +206,21 @@ class InnerGallery extends React.Component<InnerGalleryProps> {
   }
 }
 
-class Gallery extends React.Component<GalleryProps, GalleryState> {
+type InnerGalleryProps = {
+  onFilterChangeObservable: Observable<GalleryFilter>;
+} & GalleryProps;
+
+class InnerGallery extends React.Component<InnerGalleryProps, GalleryState> {
   state = {
     showMap: true,
     tracks: [],
+    galleryFilter: new GalleryFilter(),
   };
 
   componentDidMount() {
-    this.props.mediaFiles.forEach(mediaFile => {
+    const { mediaFiles, onFilterChangeObservable } = this.props;
+
+    mediaFiles.forEach(mediaFile => {
       if (mediaFile.fileType !== MediaFileType.FitTrack) {
         return;
       }
@@ -211,19 +228,32 @@ class Gallery extends React.Component<GalleryProps, GalleryState> {
       const trackSummary = mediaFile as FitTrack;
       this.fetchRecords(trackSummary);
     });
+
+    onFilterChangeObservable.addListener(this.filterChangeCallback);
+  }
+
+  componentDidUnmount() {
+    this.props.onFilterChangeObservable.removeListener(this.filterChangeCallback);
   }
 
   render() {
-    const innerGalleryProps = {
+    // tslint:disable-next-line
+    console.log('rendering outer gallery')
+
+    const { showMap, tracks, galleryFilter } = this.state;
+    const mediaFiles = this.props.mediaFiles.filter(galleryFilter.filter);
+
+    mediaFiles.sort(gallerySortingFunc);
+
+    const statelessGalleryProps = {
       ...this.props,
-      ...this.state,
+      mediaFiles,
+      tracks,
+      showMap,
     };
 
     return (
-      <div>
-        {this.renderFilterComponent()}
-        <InnerGallery {...innerGalleryProps} />
-      </div>
+      <StatelessGallery {...statelessGalleryProps} />
     );
   }
 
@@ -238,18 +268,49 @@ class Gallery extends React.Component<GalleryProps, GalleryState> {
       }))
     };
 
+    // tslint:disable-next-line
+    console.log('fetched track data')
     this.setState(state => ({
       ...state,
       tracks: state.tracks.concat([trackData]),
     }));
   }
 
-  private renderFilterComponent = () => {
+  private filterChangeCallback = (galleryFilter: GalleryFilter) => {
+    this.setState(state => ({
+      ...state,
+      galleryFilter,
+    }));
+  }
+}
+
+class Gallery extends React.Component<GalleryProps> {
+
+  private onFilterChangeObservable = new DebouncedObservable<GalleryFilter>(50);
+
+  render() {
     const filterComponentProps = {
-      onFilterChange: (filter: Filter) => { /* no-op */},
+      initialFilter: new GalleryFilter(),
+      onFilterChange: (filter: GalleryFilter) => {
+        // tslint:disable-next-line
+        console.log('filter change')
+        this.onFilterChangeObservable.triggerEvent(filter);
+
+        // this.setState(state => ({...state, filter}));
+      },
     };
 
-    return <FilterComponent {...filterComponentProps} />;
+    const innerGalleryProps = {
+      ...this.props,
+      onFilterChangeObservable: this.onFilterChangeObservable,
+    };
+
+    return (
+      <div>
+        <FilterComponent {...filterComponentProps} />
+        <InnerGallery {...innerGalleryProps} />
+      </div>
+    );
   }
 }
 

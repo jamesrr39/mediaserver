@@ -31,7 +31,7 @@ type Props = {
   history: History,
   picturesMetadatas: MediaFile[],
   dispatch: Dispatch<Action>,
-  scrollObservable: Observable,
+  scrollObservable: Observable<{}>,
   baseUrl: string, // for example, /gallery
   subview?: Subview,
 };

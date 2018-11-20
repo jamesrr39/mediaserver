@@ -1,7 +1,7 @@
 import { MediaFile, MediaFileType } from './MediaFile';
 import { FitTrack } from './FitTrack';
 
-export class Filter {
+export class GalleryFilter {
   constructor(
     public readonly startDate?: Date,
     public readonly endDate?: Date
@@ -11,7 +11,7 @@ export class Filter {
     }
   }
 
-  filter(mediaFile: MediaFile): boolean {
+  public filter = (mediaFile: MediaFile): boolean => {
     switch (mediaFile.fileType) {
       case MediaFileType.FitTrack:
         const track = mediaFile as FitTrack;

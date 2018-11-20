@@ -37,7 +37,7 @@ type AllPicturesPictureModalRouteParams = {
 type MediaServerProps = {
   isReady: boolean,
   picturesMetadatas: PictureMetadata[];
-  scrollObservable: Observable;
+  scrollObservable: Observable<{}>;
   picturesMetadatasMap: Map<string, PictureMetadata>;
   customCollections: CustomCollection[];
   dispatch: Dispatch<Action>;

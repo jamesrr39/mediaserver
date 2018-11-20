@@ -13,14 +13,14 @@ import { MediaFile } from './domain/MediaFile';
 
 const scrollObservable = new DebouncedObservable(150);
 
-window.addEventListener('scroll', () => scrollObservable.triggerEvent());
-window.addEventListener('resize', () => scrollObservable.triggerEvent());
+window.addEventListener('scroll', (thing) => scrollObservable.triggerEvent(thing));
+window.addEventListener('resize', (thing) => scrollObservable.triggerEvent(thing));
 
 type PicturesMetadataState = {
   isReady: boolean,
   isFetching: boolean,
   picturesMetadatas: PictureMetadata[],
-  scrollObservable: Observable,
+  scrollObservable: Observable<{}>,
   picturesMetadatasMap: Map<string, PictureMetadata>,
   uploadQueue: FileQueue,
 };
