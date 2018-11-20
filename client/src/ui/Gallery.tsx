@@ -63,9 +63,6 @@ class StatelessGallery extends React.Component<StatelessGalleryProps> {
   }
 
   render() {
-    // tslint:disable-next-line
-    console.log('rendering stateless gallery')
-
     const pictureContainerStyle = isNarrowScreen()
       ? styles.picturesContainer
       : {...styles.picturesContainer, ...styles.wideScreenContainer};
@@ -237,9 +234,6 @@ class InnerGallery extends React.Component<InnerGalleryProps, GalleryState> {
   }
 
   render() {
-    // tslint:disable-next-line
-    console.log('rendering outer gallery')
-
     const { showMap, tracks, galleryFilter } = this.state;
     const mediaFiles = this.props.mediaFiles.filter(galleryFilter.filter);
 
@@ -268,8 +262,6 @@ class InnerGallery extends React.Component<InnerGalleryProps, GalleryState> {
       }))
     };
 
-    // tslint:disable-next-line
-    console.log('fetched track data')
     this.setState(state => ({
       ...state,
       tracks: state.tracks.concat([trackData]),
@@ -284,19 +276,36 @@ class InnerGallery extends React.Component<InnerGalleryProps, GalleryState> {
   }
 }
 
+function buildInitialFilter(mediaFiles: MediaFile[]): GalleryFilter {
+  let first: Date|undefined;
+  let last: Date|undefined;
+  mediaFiles.forEach(mediaFile => {
+    const date = mediaFile.getTimeTaken();
+    if (date === null) {
+      return;
+    }
+
+    if (!first || date < first) {
+      first = date;
+    }
+
+    if (!last || date > last) {
+      last = date;
+    }
+  });
+
+  return new GalleryFilter(first, last);
+}
+
 class Gallery extends React.Component<GalleryProps> {
 
   private onFilterChangeObservable = new DebouncedObservable<GalleryFilter>(50);
 
   render() {
     const filterComponentProps = {
-      initialFilter: new GalleryFilter(),
+      initialFilter: buildInitialFilter(this.props.mediaFiles),
       onFilterChange: (filter: GalleryFilter) => {
-        // tslint:disable-next-line
-        console.log('filter change')
         this.onFilterChangeObservable.triggerEvent(filter);
-
-        // this.setState(state => ({...state, filter}));
       },
     };
 
