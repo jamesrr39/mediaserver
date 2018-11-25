@@ -5,7 +5,8 @@ import { Observable } from '../util/Observable';
 import { SERVER_BASE_URL } from '../configs';
 import { isNarrowScreen } from '../util/screen_size';
 import { THUMBNAIL_HEIGHTS } from '../generated/thumbnail_sizes';
-import { MediaFile, MediaFileType } from '../domain/MediaFile';
+import { MediaFile } from '../domain/MediaFile';
+import { MediaFileType } from '../domain/MediaFileType';
 import { VideoMetadata } from '../domain/VideoMetadata';
 
 const WIDE_SCREEN_THUMBNAIL_HEIGHT = 200;
@@ -103,9 +104,9 @@ export class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
 
     switch (mediaFile.fileType) {
       case MediaFileType.Picture:
-        return this.generateImageThumbnailHtml(mediaFile as PictureMetadata); // TODO: remove cast
+        return this.generateImageThumbnailHtml(mediaFile);
       case MediaFileType.Video:
-        return this.generateVideoThumbnailHtml(mediaFile as VideoMetadata);
+        return this.generateVideoThumbnailHtml(mediaFile);
       default:
         return <div>{mediaFile.getName()}</div>;
     }

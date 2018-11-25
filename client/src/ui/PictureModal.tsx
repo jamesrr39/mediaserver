@@ -11,7 +11,8 @@ import { compose } from 'redux';
 import { History } from 'history';
 import PictureInfoComponent, { INFO_CONTAINER_WIDTH } from './PictureInfoComponent';
 import { isNarrowScreen } from '../util/screen_size';
-import { MediaFile, MediaFileType } from '../domain/MediaFile';
+import { MediaFile } from '../domain/MediaFile';
+import { MediaFileType } from '../domain/MediaFileType';
 import Modal from './Modal';
 import { TrackModalContent } from './TrackModalContent';
 import { FitTrack } from '../domain/FitTrack';
@@ -247,7 +248,7 @@ class PictureModal extends React.Component<Props, ComponentState> {
     switch (pictureMetadata.fileType) {
       case MediaFileType.Picture:
         this.createRefCallbackForPicture(
-          divContainerEl, this.pictureEl, pictureMetadata as PictureMetadata); // todo remove cast
+          divContainerEl, this.pictureEl, pictureMetadata);
         break;
       default:
         return;

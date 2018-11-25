@@ -1,5 +1,5 @@
-import { MediaFile, MediaFileType } from './MediaFile';
-import { FitTrack } from './FitTrack';
+import { MediaFile } from './MediaFile';
+import { MediaFileType } from './MediaFileType';
 
 export class GalleryFilter {
   constructor(
@@ -14,11 +14,10 @@ export class GalleryFilter {
   public filter = (mediaFile: MediaFile): boolean => {
     switch (mediaFile.fileType) {
       case MediaFileType.FitTrack:
-        const track = mediaFile as FitTrack;
-        if (this.endDate && this.endDate < track.startTime) {
+        if (this.endDate && this.endDate < mediaFile.startTime) {
           return false;
         }
-        if (this.startDate && this.startDate > track.endTime) {
+        if (this.startDate && this.startDate > mediaFile.endTime) {
           return false;
         }
         break;

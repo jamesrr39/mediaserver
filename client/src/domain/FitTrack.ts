@@ -1,5 +1,6 @@
-import { MediaFile, MediaFileType } from './MediaFile';
+import { MediaFileType } from './MediaFileType';
 import { Duration } from './duration';
+import { AbstractMediaFile } from './AbstractMediaFile';
 
 /*
 Fit file summary
@@ -29,8 +30,8 @@ export type ActivityBounds = {
   longMax: number,
 };
 
-export class FitTrack extends MediaFile {
-  public fileType = MediaFileType.FitTrack;
+export class FitTrack extends AbstractMediaFile {
+  public readonly fileType = MediaFileType.FitTrack;
   constructor(
     public readonly hashValue: string,
     public readonly relativePath: string,

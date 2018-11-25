@@ -1,8 +1,9 @@
-import { MediaFileType, MediaFile } from './MediaFile';
+import { AbstractMediaFile } from './AbstractMediaFile';
 import { MapLocation } from './Location';
+import { MediaFileType } from './MediaFileType';
 
-export class PictureMetadata extends MediaFile {
-  public fileType = MediaFileType.Picture;
+export class PictureMetadata extends AbstractMediaFile {
+  public readonly fileType = MediaFileType.Picture;
   constructor(
     public readonly hashValue: string,
     public readonly relativePath: string,

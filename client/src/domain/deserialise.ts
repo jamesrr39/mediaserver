@@ -1,4 +1,4 @@
-import { MediaFileType } from './MediaFile';
+import { MediaFileType } from './MediaFileType';
 import { ExifData, RawSize, PictureMetadata } from './PictureMetadata';
 import { VideoMetadata } from './VideoMetadata';
 import { ActivityBounds, FitTrack } from './FitTrack';

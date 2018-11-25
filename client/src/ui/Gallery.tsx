@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { createCompareTimeTakenFunc, PictureMetadata } from '../domain/PictureMetadata';
+import { createCompareTimeTakenFunc } from '../domain/PictureMetadata';
 
 import { Observable, DebouncedObservable } from '../util/Observable';
 import { Thumbnail } from './Thumbnail';
@@ -8,7 +8,8 @@ import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import MapComponent, { MapMarker, TrackMapData } from './MapComponent';
 import { SERVER_BASE_URL } from '../configs';
-import { MediaFile, MediaFileType } from '../domain/MediaFile';
+import { MediaFile } from '../domain/MediaFile';
+import { MediaFileType } from '../domain/MediaFileType';
 import { FitTrack } from '../domain/FitTrack';
 import { isNarrowScreen } from '../util/screen_size';
 import { fetchRecordsForTrack } from '../actions/trackActions';
@@ -187,14 +188,20 @@ class StatelessGallery extends React.Component<StatelessGalleryProps> {
       };
 
       if (this.props.pictureModalUrlbase) {
-        const linkUrl = `#${this.props.pictureModalUrlbase}/${metadata.hashValue}`;
+        switch (metadata.fileType) {
+          case MediaFileType.Picture:
+            const linkUrl = `#${this.props.pictureModalUrlbase}/${metadata.hashValue}`;
 
-        markerData.popupData = {
-          name: metadata.getName(),
-          imagePreviewUrl: `${SERVER_BASE_URL}/picture/${metadata.hashValue}`,
-          linkUrl,
-          pictureRawSize: (metadata as PictureMetadata).rawSize, // TODO remove cast
-        };
+            markerData.popupData = {
+              name: metadata.getName(),
+              imagePreviewUrl: `${SERVER_BASE_URL}/picture/${metadata.hashValue}`,
+              linkUrl,
+              pictureRawSize: metadata.rawSize,
+            };
+            break;
+          default:
+            // do nothing
+        }
       }
       markers.push(markerData);
     });

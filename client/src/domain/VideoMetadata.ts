@@ -1,6 +1,7 @@
-import { MediaFileType, MediaFile } from './MediaFile';
+import { AbstractMediaFile } from './AbstractMediaFile';
+import { MediaFileType } from './MediaFileType';
 
-export class VideoMetadata extends MediaFile {
+export class VideoMetadata extends AbstractMediaFile {
   public readonly fileType = MediaFileType.Video;
 
   constructor(
