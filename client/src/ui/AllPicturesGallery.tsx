@@ -13,7 +13,7 @@ class AllPicturesGallery extends React.Component<GalleryProps> {
   render() {
     const props = {
       mediaFiles: this.props.picturesMetadatas,
-      pictureModalUrlbase: '/gallery/picture',
+      pictureModalUrlbase: '/gallery/detail',
       showMap: true,
     };
 

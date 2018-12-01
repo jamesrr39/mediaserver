@@ -15,11 +15,12 @@ import { isNarrowScreen } from '../util/screen_size';
 import { fetchRecordsForTrack } from '../actions/trackActions';
 import { FilterComponent } from './gallery/FilterComponent';
 import { GalleryFilter } from '../domain/Filter';
+import { joinUrlFragments } from 'src/util/url';
 
 export type GalleryProps = {
   mediaFiles: MediaFile[];
   scrollObservable: Observable<{}>;
-  pictureModalUrlbase?: string; // example: `/gallery/picture`. If undefined, no link should be added.
+  pictureModalUrlbase?: string; // example: `/gallery/detail`. If undefined, no link should be added.
   onClickThumbnail?: (pictureMetadata: MediaFile) => void;
   showMap?: boolean;
 };
@@ -194,7 +195,7 @@ class StatelessGallery extends React.Component<StatelessGalleryProps> {
 
             markerData.popupData = {
               name: metadata.getName(),
-              imagePreviewUrl: `${SERVER_BASE_URL}/picture/${metadata.hashValue}`,
+              imagePreviewUrl: joinUrlFragments(SERVER_BASE_URL, 'picture', metadata.hashValue),
               linkUrl,
               pictureRawSize: metadata.rawSize,
             };
@@ -236,7 +237,7 @@ class InnerGallery extends React.Component<InnerGalleryProps, GalleryState> {
     onFilterChangeObservable.addListener(this.filterChangeCallback);
   }
 
-  componentDidUnmount() {
+  componentWillUnmount() {
     this.props.onFilterChangeObservable.removeListener(this.filterChangeCallback);
   }
 

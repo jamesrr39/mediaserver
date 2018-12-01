@@ -8,6 +8,7 @@ import { THUMBNAIL_HEIGHTS } from '../generated/thumbnail_sizes';
 import { MediaFile } from '../domain/MediaFile';
 import { MediaFileType } from '../domain/MediaFileType';
 import { VideoMetadata } from '../domain/VideoMetadata';
+import { joinUrlFragments } from 'src/util/url';
 
 const WIDE_SCREEN_THUMBNAIL_HEIGHT = 200;
 const NARROW_SCREEN_THUMBNAIL_HEIGHT = 100;
@@ -133,7 +134,7 @@ export class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
   private generateImageThumbnailHtml = (pictureMetadata: PictureMetadata) => {
     const narrowScreen = isNarrowScreen();
     const thumbnailHeight = getImageHeightToRequest(narrowScreen, pictureMetadata);
-    const imgSrc = `${SERVER_BASE_URL}/picture/${pictureMetadata.hashValue}?h=${thumbnailHeight}`;
+    const imgSrc = joinUrlFragments(SERVER_BASE_URL, 'picture', `${pictureMetadata.hashValue}?h=${thumbnailHeight}`);
 
     const thumbnailStyle = generateThumbnailStyle(
       pictureMetadata, this.state.isImageLoaded, narrowScreen);

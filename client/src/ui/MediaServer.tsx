@@ -202,7 +202,7 @@ class MediaServer extends React.Component<MediaServerProps> {
                   render={(route) => this.renderCollectionView(route)}
                 />
                 <Route
-                  path="/collections/:type/:identifier/picture/:hash"
+                  path="/collections/:type/:identifier/detail/:hash"
                   render={(route) => withNavBar(this.renderCollectionPicture(route))}
                 />
               </React.Fragment>
@@ -217,7 +217,7 @@ class MediaServer extends React.Component<MediaServerProps> {
               render={() => withNavBar(this.renderAllPicturesGallery(), <UploadComponent />)}
             />
             <Route
-              path="/gallery/picture/:hash"
+              path="/gallery/detail/:hash"
               render={(route) => withNavBar(this.renderAllPicturesPictureModal(route), <UploadComponent />)}
             />
             <Route path="/" exact={true} render={() => (<Redirect to="/gallery" />)} />

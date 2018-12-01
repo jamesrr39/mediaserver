@@ -16,6 +16,7 @@ import { MediaFileType } from '../domain/MediaFileType';
 import Modal from './Modal';
 import { TrackModalContent } from './TrackModalContent';
 import { FitTrack } from '../domain/FitTrack';
+import { joinUrlFragments } from 'src/util/url';
 
 const KeyCodes = {
   ESCAPE: 27,
@@ -215,7 +216,7 @@ class PictureModal extends React.Component<Props, ComponentState> {
   }
 
   private renderTopBar = (pictureMetadata: MediaFile) => {
-    const pictureURL = `${SERVER_BASE_URL}/picture/${pictureMetadata.hashValue}`;
+    const pictureURL = joinUrlFragments(SERVER_BASE_URL, 'picture', pictureMetadata.hashValue);
 
     return (
       <div style={styles.topBar}>
@@ -274,7 +275,7 @@ class PictureModal extends React.Component<Props, ComponentState> {
       chosenHeight = pictureMetadata.rawSize.height;
     }
 
-    const url = `${SERVER_BASE_URL}/picture/${pictureMetadata.hashValue}?h=${chosenHeight}`;
+    const url = joinUrlFragments(SERVER_BASE_URL, 'picture', `${pictureMetadata.hashValue}?h=${chosenHeight}`);
     pictureEl.style.maxHeight = `${idealHeight}px`;
     pictureEl.style.maxWidth = `${idealWidth}px`;
     pictureEl.src = url;
@@ -284,7 +285,7 @@ class PictureModal extends React.Component<Props, ComponentState> {
     return this.previousPictureMetadata
       ? (
         <Link
-          to={`${this.props.baseUrl}/picture/${this.previousPictureMetadata.hashValue}`}
+          to={`${this.props.baseUrl}/detail/${this.previousPictureMetadata.hashValue}`}
           style={navButtonStyle}
         >
           &larr;
@@ -302,7 +303,7 @@ class PictureModal extends React.Component<Props, ComponentState> {
     return this.nextPictureMetadata
       ? (
         <Link
-          to={`${this.props.baseUrl}/picture/${this.nextPictureMetadata.hashValue}`}
+          to={`${this.props.baseUrl}/detail/${this.nextPictureMetadata.hashValue}`}
           style={style}
         >
           &rarr;
@@ -317,13 +318,13 @@ class PictureModal extends React.Component<Props, ComponentState> {
 
   private goToPrevious = () => {
     if (this.previousPictureMetadata !== null) {
-      this.props.history.push(`${this.props.baseUrl}/picture/${this.previousPictureMetadata.hashValue}`);
+      this.props.history.push(`${this.props.baseUrl}/detail/${this.previousPictureMetadata.hashValue}`);
     }
   }
 
   private goToNext = () => {
     if (this.nextPictureMetadata !== null) {
-      this.props.history.push(`${this.props.baseUrl}/picture/${this.nextPictureMetadata.hashValue}`);
+      this.props.history.push(`${this.props.baseUrl}/detail/${this.nextPictureMetadata.hashValue}`);
     }
   }
 

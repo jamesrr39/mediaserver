@@ -7,6 +7,7 @@ import { compose } from 'redux';
 import { connect } from 'react-redux';
 import { themeStyles } from '../../theme/theme';
 import { Link } from 'react-router-dom';
+import { joinUrlFragments } from 'src/util/url';
 
 type Props = {
   picturesMetadatasMap: Map<string, PictureMetadata>;
@@ -34,7 +35,7 @@ class CollectionViewComponent extends React.Component<Props> {
 
     const galleryProps = {
       mediaFiles,
-      pictureModalUrlbase: `${routeUrl}/picture`,
+      pictureModalUrlbase: joinUrlFragments(routeUrl, 'detail'),
       showMap: true,
     };
 
@@ -58,10 +59,13 @@ type CollectionViewNavBarProps = {
 
 export const CollectionViewNavBarComponent = (props: CollectionViewNavBarProps) => {
   const { collection } = props;
-
-  const encodedType = encodeURIComponent(collection.type);
-  const encodedIdentifier = encodeURIComponent(collection.identifier());
-  const editUrl = `/collections/${encodedType}/${encodedIdentifier}/edit`;
+  
+  const editUrl = '/' + joinUrlFragments(
+    'collections', 
+    encodeURIComponent(collection.type), 
+    encodeURIComponent(collection.identifier()), 
+    'edit'
+  );
 
   return (
     <Link style={themeStyles.button} to={editUrl}>

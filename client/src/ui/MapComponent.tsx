@@ -112,7 +112,7 @@ export type TrackMapData = {
   trackSummary: FitTrack,
   points: MapLocation[],
   activityBounds: ActivityBounds,
-  openTrackUrl?: string, // ex: #/gallery/picture
+  openTrackUrl?: string, // ex: #/gallery/detail
 };
 
 type Props = {
