@@ -59,23 +59,20 @@ export class TrackModalContent extends React.Component<Props, State> {
   }
 
   private renderMap(trackRecords: Record[]) {
-    // size: {
-    //   width: string,
-    //   height: string,
-    // },
-    // markers: MapMarker[],
-    // extraLatLongMapPadding?: number,
+    const { trackSummary } = this.props;
+
     const mapProps = {
       size: {
         width: '100%',
         height: '400px'
       },
       tracks: [{
+        trackSummary,
         points: trackRecords.map(record => ({
           lat: record.posLat,
           long: record.posLong,
         })),
-        activityBounds: this.props.trackSummary.activityBounds,
+        activityBounds: trackSummary.activityBounds,
       }],
     };
 

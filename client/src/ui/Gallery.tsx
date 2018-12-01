@@ -19,7 +19,7 @@ import { GalleryFilter } from '../domain/Filter';
 export type GalleryProps = {
   mediaFiles: MediaFile[];
   scrollObservable: Observable<{}>;
-  pictureModalUrlbase?: string; // example: /gallery/picture
+  pictureModalUrlbase?: string; // example: `/gallery/picture`. If undefined, no link should be added.
   onClickThumbnail?: (pictureMetadata: MediaFile) => void;
   showMap?: boolean;
 };
@@ -262,11 +262,13 @@ class InnerGallery extends React.Component<InnerGalleryProps, GalleryState> {
     const records = await fetchRecordsForTrack(trackSummary);
 
     const trackData = {
+      trackSummary,
       activityBounds: trackSummary.activityBounds,
       points: records.map(record => ({
         lat: record.posLat,
         long: record.posLong,
-      }))
+      })),
+      openTrackUrl: this.props.pictureModalUrlbase,
     };
 
     this.setState(state => ({

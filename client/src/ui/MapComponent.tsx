@@ -3,7 +3,8 @@ import * as Leaflet from 'leaflet';
 import { RawSize } from '../domain/PictureMetadata';
 import { MapLocation } from '../domain/Location';
 import { escapeHtml } from '../util/html';
-import { ActivityBounds } from '../domain/FitTrack';
+import { ActivityBounds, FitTrack } from '../domain/FitTrack';
+import { joinUrlFragments } from 'src/util/url';
 
 const markerIcon = require('../../node_modules/leaflet/dist/images/marker-icon.png');
 const markerShadow = require('../../node_modules/leaflet/dist/images/marker-shadow.png');
@@ -108,8 +109,10 @@ export type MapMarker = {
 };
 
 export type TrackMapData = {
+  trackSummary: FitTrack,
   points: MapLocation[],
   activityBounds: ActivityBounds,
+  openTrackUrl?: string, // ex: #/gallery/picture
 };
 
 type Props = {
@@ -176,7 +179,7 @@ export default class MapComponent extends React.Component<Props> {
           return new Leaflet.LatLng(point.lat, point.long);
         });
 
-        const color = `#${index.toString(16).substring(0, 1).repeat(3)}`;
+        const color = `#${(index * 3).toString(16).substring(0, 1).repeat(3)}`;
 
         // tslint:disable-next-line
         console.log(color);
@@ -194,6 +197,20 @@ export default class MapComponent extends React.Component<Props> {
           icon: new FinishIcon(),
         });
         finishMarker.addTo(map);
+        
+        if (track.openTrackUrl) {
+          const link = joinUrlFragments('#', track.openTrackUrl, track.trackSummary.hashValue);
+
+          startMarker.bindPopup(`<a href='${link}'>Track</a>`);
+          startMarker.addEventListener('click', (event) => {
+            startMarker.openPopup();
+          });
+
+          finishMarker.bindPopup(`<a href='${link}'>Track</a>`);
+          finishMarker.addEventListener('click', (event) => {
+            finishMarker.openPopup();
+          });
+        }
       });
     }
 
