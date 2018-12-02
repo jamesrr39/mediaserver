@@ -22,6 +22,9 @@ run_dev_server:
 	mkdir -p ~/tmp/mediaserver/data ~/tmp/mediaserver/metadata ~/tmp/mediaserver/cache
 	go run cmd/media-server-main.go ~/tmp/mediaserver/data --metadata-dir=~/tmp/mediaserver/metadata --cache-dir=~/tmp/mediaserver/cache
 
+clean_dev_metadata:
+	rm -rf ~/tmp/mediaserver/metadata/*
+
 test:
 	go vet -all ./...
 	go test ./...
