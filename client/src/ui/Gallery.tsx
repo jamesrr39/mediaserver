@@ -219,7 +219,7 @@ class InnerGallery extends React.Component<InnerGalleryProps, GalleryState> {
   state = {
     showMap: true,
     tracks: [],
-    galleryFilter: new GalleryFilter(),
+    galleryFilter: new GalleryFilter(null),
   };
 
   componentDidMount() {
@@ -286,25 +286,31 @@ class InnerGallery extends React.Component<InnerGalleryProps, GalleryState> {
   }
 }
 
-function buildInitialFilter(mediaFiles: MediaFile[]): GalleryFilter {
-  let first: Date|undefined;
-  let last: Date|undefined;
+type DateRange = {
+  start?: Date,
+  end?: Date,
+};
+
+function getDateRange(mediaFiles: MediaFile[]): DateRange {
+  let start: Date|undefined = undefined;
+  let end: Date|undefined = undefined;
+
   mediaFiles.forEach(mediaFile => {
-    const date = mediaFile.getTimeTaken();
-    if (date === null) {
+    const timeTaken = mediaFile.getTimeTaken();
+    if (timeTaken === null) {
       return;
     }
 
-    if (!first || date < first) {
-      first = date;
+    if (!start || timeTaken < start) {
+      start = timeTaken;
     }
 
-    if (!last || date > last) {
-      last = date;
+    if (!end || timeTaken > end) {
+      end = timeTaken;
     }
   });
 
-  return new GalleryFilter(first, last);
+  return { start, end };
 }
 
 class Gallery extends React.Component<GalleryProps> {
@@ -312,8 +318,12 @@ class Gallery extends React.Component<GalleryProps> {
   private onFilterChangeObservable = new DebouncedObservable<GalleryFilter>(50);
 
   render() {
+    const dateRange = getDateRange(this.props.mediaFiles);
+
     const filterComponentProps = {
-      initialFilter: buildInitialFilter(this.props.mediaFiles),
+      initialFilter: new GalleryFilter(null),
+      initialStartDateValue: dateRange.start,
+      initialEndDateValue: dateRange.end,
       onFilterChange: (filter: GalleryFilter) => {
         this.onFilterChangeObservable.triggerEvent(filter);
       },
