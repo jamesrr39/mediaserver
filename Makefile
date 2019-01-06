@@ -28,6 +28,7 @@ clean_dev_metadata:
 test:
 	go vet -all ./...
 	go test ./...
+	cd client && yarn test:ci
 
 bundle_static_assets:
 	cd client && yarn build

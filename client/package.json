@@ -24,6 +24,7 @@
     "start": "REACT_APP_SERVER_URL=http://localhost:9050 react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
+    "test:ci": "CI=true react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
     "tslint-fix": "tslint --fix src/**/*"
   },
@@ -31,6 +32,6 @@
     "@types/jest": "^22.1.3",
     "@types/node": "^9.4.6",
     "react-test-renderer": "^16.4.0",
-    "typescript": "^2.7.2"
+    "typescript": "^3.2.2"
   }
 }
