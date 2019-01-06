@@ -162,7 +162,12 @@ class MediaServer extends React.Component<MediaServerProps> {
     }
 
     const picturesMetadatas = collection.fileHashes.map(hashInCollection => {
-      return this.props.picturesMetadatasMap.get(hashInCollection);
+      const pictureMetadata = this.props.picturesMetadatasMap.get(hashInCollection);
+      if (!pictureMetadata) {
+        throw new Error(`unexpected error: could not find picture metadata for hash ${hashInCollection}`);
+      }
+
+      return pictureMetadata;
     });
 
     const props = {
@@ -232,10 +237,10 @@ class MediaServer extends React.Component<MediaServerProps> {
 }
 
 function mapStateToProps(state: State) {
-  const { picturesMetadatas, scrollObservable, picturesMetadatasMap } = state.picturesMetadatas;
-  const { customCollections } = state.collections;
+  const { picturesMetadatas, scrollObservable, picturesMetadatasMap } = state.picturesMetadatasReducer;
+  const { customCollections } = state.collectionsReducer;
 
-  const isReady = state.picturesMetadatas.isReady && state.collections.isReady;
+  const isReady = state.picturesMetadatasReducer.isReady && state.collectionsReducer.isReady;
 
   return {
     isReady,

@@ -8,7 +8,7 @@ import { THUMBNAIL_HEIGHTS } from '../generated/thumbnail_sizes';
 import { MediaFile } from '../domain/MediaFile';
 import { MediaFileType } from '../domain/MediaFileType';
 import { VideoMetadata } from '../domain/VideoMetadata';
-import { joinUrlFragments } from 'src/util/url';
+import { joinUrlFragments } from '../util/url';
 
 const WIDE_SCREEN_THUMBNAIL_HEIGHT = 200;
 const NARROW_SCREEN_THUMBNAIL_HEIGHT = 100;

@@ -16,7 +16,14 @@ export interface RemoveNotificationAction extends Action {
   notification: GalleryNotification;
 }
 
-export type NotificationAction = NotifyAction | RemoveNotificationAction;
+// Added to fix 'Property 'notification' is missing in type 'AnyAction' but required in type 'RemoveNotificationAction'
+// TODO remove this?
+export interface NoopNotifyAction extends Action {
+  type: 'NO-OP';
+}
+
+export type NotificationAction = NotifyAction | RemoveNotificationAction | NoopNotifyAction;
+// export type NotificationAction = Action;
 
 export function newNotificationAction(notification: GalleryNotification): NotifyAction {
   return {

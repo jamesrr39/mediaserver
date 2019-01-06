@@ -24,7 +24,7 @@ class AllPicturesGallery extends React.Component<GalleryProps> {
 }
 
 function mapStateToProps(state: State) {
-  const { picturesMetadatas } = state.picturesMetadatas;
+  const { picturesMetadatas } = state.picturesMetadatasReducer;
 
   return {
     picturesMetadatas,

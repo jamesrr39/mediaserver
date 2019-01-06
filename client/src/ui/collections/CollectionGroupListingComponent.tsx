@@ -5,10 +5,12 @@ import { themeStyles } from '../../theme/theme';
 import AddCollectionModal from './AddCollectionModal';
 import { saveCollection } from '../../collectionsActions';
 import { Dispatch, connect } from 'react-redux';
+// import { Dispatch } from 'react-redux';
 import { Action } from 'redux';
 import { History } from 'history';
 import { withRouter } from 'react-router';
 import { compose } from 'redux';
+import { State } from '../../reducers';
 
 const styles = {
   collectionsWrapper: {
@@ -25,11 +27,11 @@ type Props = {
   canAddCollection?: boolean,
 };
 
-type State = {
+type ComponentState = {
   showAddCollectionModal: boolean,
 };
 
-class CollectionGroupListingComponent extends React.Component<Props, State> {
+class CollectionGroupListingComponent extends React.Component<Props, ComponentState> {
   state = {
     showAddCollectionModal: false,
   };
@@ -113,7 +115,7 @@ class CollectionGroupListingComponent extends React.Component<Props, State> {
 }
 
 function mapStateToProps(state: State) {
-  return {};
+  return undefined;
 }
 
 export default compose(

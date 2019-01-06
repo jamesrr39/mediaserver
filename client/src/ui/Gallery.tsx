@@ -15,7 +15,7 @@ import { isNarrowScreen } from '../util/screen_size';
 import { fetchRecordsForTrack } from '../actions/trackActions';
 import { FilterComponent } from './gallery/FilterComponent';
 import { GalleryFilter } from '../domain/Filter';
-import { joinUrlFragments } from 'src/util/url';
+import { joinUrlFragments } from '../util/url';
 
 export type GalleryProps = {
   mediaFiles: MediaFile[];
@@ -344,7 +344,7 @@ class Gallery extends React.Component<GalleryProps> {
 }
 
 function mapStateToProps(state: State) {
-  const { scrollObservable } = state.picturesMetadatas;
+  const { scrollObservable } = state.picturesMetadatasReducer;
 
   return {
     scrollObservable,

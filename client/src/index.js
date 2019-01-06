@@ -1,8 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import App from './App';
+import MediaServer from './ui/MediaServer';
 import registerServiceWorker from './registerServiceWorker';
 
-ReactDOM.render(<App />), document.getElementById('root'));
+ReactDOM.render(<MediaServer />, document.getElementById('root'));
 registerServiceWorker();

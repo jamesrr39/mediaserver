@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Collection } from '../../domain/Collection';
 import { SERVER_BASE_URL } from '../../configs';
-import { joinUrlFragments } from 'src/util/url';
+import { joinUrlFragments } from '../../util/url';
 
 export const styles = {
   collectionBox: {

@@ -7,7 +7,7 @@ import { compose } from 'redux';
 import { connect } from 'react-redux';
 import { themeStyles } from '../../theme/theme';
 import { Link } from 'react-router-dom';
-import { joinUrlFragments } from 'src/util/url';
+import { joinUrlFragments } from '../../util/url';
 
 type Props = {
   picturesMetadatasMap: Map<string, PictureMetadata>;

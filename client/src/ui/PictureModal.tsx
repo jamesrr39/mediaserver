@@ -16,7 +16,7 @@ import { MediaFileType } from '../domain/MediaFileType';
 import Modal from './Modal';
 import { TrackModalContent } from './TrackModalContent';
 import { FitTrack } from '../domain/FitTrack';
-import { joinUrlFragments } from 'src/util/url';
+import { joinUrlFragments } from '../util/url';
 
 const KeyCodes = {
   ESCAPE: 27,
@@ -93,7 +93,7 @@ class PictureModal extends React.Component<Props, ComponentState> {
     showInfo: false
   };
 
-  private pictureEl: HTMLImageElement|null;
+  private pictureEl: HTMLImageElement|null = null;
 
   private pictureMetadata: MediaFile | null = null;
   private previousPictureMetadata: MediaFile | null = null;

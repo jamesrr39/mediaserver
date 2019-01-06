@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { CustomCollection, Collection } from '../../domain/Collection';
+import { MediaFile } from '../../domain/MediaFile';
 import { ChangeEvent } from 'react';
 import Gallery from '../Gallery';
 import { State } from '../../reducers';
@@ -101,8 +102,8 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
     );
   }
   render() {
-    const filesInCollection: PictureMetadata[] = [];
-    const filesOutOfCollection: PictureMetadata[] = [];
+    const filesInCollection: MediaFile[] = [];
+    const filesOutOfCollection: MediaFile[] = [];
     this.props.picturesMetadatas.forEach((pictureMetadata) => {
       if (this.state.hashesInCollectionSet.has(pictureMetadata.hashValue)) {
         filesInCollection.push(pictureMetadata);
@@ -111,12 +112,12 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
       }
     });
 
-    const onClickFilesInCollectionThumbnail = (pictureMetadata: PictureMetadata) => {
-      this.removeFromFilesInCollection(pictureMetadata.hashValue);
+    const onClickFilesInCollectionThumbnail = (mediaFile: MediaFile) => {
+      this.removeFromFilesInCollection(mediaFile.hashValue);
     };
 
-    const onClickFilesOutOfCollectionThumbnail = (pictureMetadata: PictureMetadata) => {
-      this.addToFilesInCollection(pictureMetadata.hashValue);
+    const onClickFilesOutOfCollectionThumbnail = (mediaFile: MediaFile) => {
+      this.addToFilesInCollection(mediaFile.hashValue);
     };
 
     const itemsInCollectionGalleryProps = {
@@ -178,12 +179,15 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
 }
 
 function mapStateToProps(state: State) {
+  const { picturesMetadatas } = state.picturesMetadatasReducer;
+
   return {
-    picturesMetadatas: state.picturesMetadatas.picturesMetadatas,
+    picturesMetadatas,
   };
 }
 
 export default compose(
   withRouter,
   connect(mapStateToProps),
-)(EditCustomCollectionComponent);
+)(EditCustomCollectionComponent) as React.ComponentType<{collection: Collection}>;
+// https://stackoverflow.com/questions/48701121/jsx-element-type-does-not-have-any-construct-or-call-signatures-typescript

@@ -26,8 +26,8 @@ type PicturesMetadataState = {
 };
 
 export type State = {
-  picturesMetadatas: PicturesMetadataState,
-  collections: CollectionReducerState,
+  picturesMetadatasReducer: PicturesMetadataState,
+  collectionsReducer: CollectionReducerState,
   notificationsReducer: NotificationsState,
 };
 
@@ -40,7 +40,9 @@ const picturesMetadatasInitialState = {
   uploadQueue: new FileQueue(4),
 };
 
-function picturesMetadatas(state: PicturesMetadataState = picturesMetadatasInitialState, action: MediaserverAction) {
+function picturesMetadatasReducer(
+  state: PicturesMetadataState = picturesMetadatasInitialState, 
+  action: MediaserverAction) {
   switch (action.type) {
     case FilesActionTypes.FETCH_PICTURES_METADATA:
       return {
@@ -85,7 +87,7 @@ const collectionInitialState = {
   customCollections: [],
 };
 
-function collections(state: CollectionReducerState = collectionInitialState, action: CollectionsAction) {
+function collectionsReducer(state: CollectionReducerState = collectionInitialState, action: CollectionsAction) {
   switch (action.type) {
     case COLLECTIONS_FETCHED:
       return {
@@ -108,7 +110,7 @@ function collections(state: CollectionReducerState = collectionInitialState, act
 }
 
 export default combineReducers({
-  picturesMetadatas,
-  collections,
+  picturesMetadatasReducer,
+  collectionsReducer,
   notificationsReducer,
 });

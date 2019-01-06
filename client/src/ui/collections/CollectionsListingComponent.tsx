@@ -22,8 +22,8 @@ class CollectionsComponent extends React.Component<Props> {
       title: 'By Folder',
       collections: extractFolderCollectionsFromPicturesMetadatas(this.props.picturesMetadatas),
     };
-
-    return <CollectionGroupListingComponent {...props} />;
+    const comp = <CollectionGroupListingComponent {...props} />;
+    return comp;
   }
   renderCustomCollections() {
     const props = {
@@ -47,8 +47,8 @@ class CollectionsComponent extends React.Component<Props> {
 
 function mapStateToProps(state: State) {
   return {
-    collections: state.collections.customCollections,
-    picturesMetadatas: state.picturesMetadatas.picturesMetadatas,
+    collections: state.collectionsReducer.customCollections,
+    picturesMetadatas: state.picturesMetadatasReducer.picturesMetadatas,
   };
 }
 

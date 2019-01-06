@@ -4,7 +4,7 @@ import { RawSize } from '../domain/PictureMetadata';
 import { MapLocation } from '../domain/Location';
 import { escapeHtml } from '../util/html';
 import { ActivityBounds, FitTrack } from '../domain/FitTrack';
-import { joinUrlFragments } from 'src/util/url';
+import { joinUrlFragments } from '../util/url';
 
 const markerIcon = require('../../node_modules/leaflet/dist/images/marker-icon.png');
 const markerShadow = require('../../node_modules/leaflet/dist/images/marker-shadow.png');

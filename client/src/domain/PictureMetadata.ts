@@ -1,6 +1,7 @@
 import { AbstractMediaFile } from './AbstractMediaFile';
 import { MapLocation } from './Location';
 import { MediaFileType } from './MediaFileType';
+import { MediaFile } from './MediaFile';
 
 export class PictureMetadata extends AbstractMediaFile {
   public readonly fileType = MediaFileType.Picture;
@@ -97,7 +98,7 @@ function asDecimal(value: string): number {
  * sortNullAfter indicates whether a should be b sorted after b if a is null and b has a date
  */
 export function createCompareTimeTakenFunc(sortNullAfter: boolean) {
-  return (a: PictureMetadata, b: PictureMetadata) => {
+  return (a: MediaFile, b: MediaFile) => {
     const aTaken = a.getTimeTaken();
     const bTaken = b.getTimeTaken();
 
