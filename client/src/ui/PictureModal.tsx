@@ -74,12 +74,13 @@ const styles = {
   } as React.CSSProperties,
 };
 
-const navButtonStyle = {
+const navButtonTextStyle = {
   ...styles.navigationButton,
   position: 'absolute' as 'absolute',
   backgroundColor: '#666',
   opacity: 0.8,
   zIndex: 1000,
+  textAlign: 'center',
 };
 
 type ComponentState = {
@@ -281,7 +282,7 @@ class PictureModal extends React.Component<Props, ComponentState> {
 
   private renderPreviousLink = () => {
     const style = {
-      ...navButtonStyle,
+      ...navButtonTextStyle,
       left: '0px',
     };
 
@@ -300,7 +301,7 @@ class PictureModal extends React.Component<Props, ComponentState> {
 
   private renderNextLink = () => {
     const style = {
-      ...navButtonStyle,
+      ...navButtonTextStyle,
       right: '0px',
     };
 
