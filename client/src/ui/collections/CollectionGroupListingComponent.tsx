@@ -105,18 +105,6 @@ class CollectionGroupListingComponent extends React.Component<Props, ComponentSt
   }
 }
 
-// function mapStateToProps(state: State) {
-//   return undefined;
-// }
-
-const composedComponent = connect(
-  // withRouter, 
-  // state => undefined,
+export default connect(
   state => undefined,
 )(CollectionGroupListingComponent);
-// export default compose(
-//   withRouter,
-//   // connect(mapStateToProps),
-//   CollectionGroupListingComponent);
-
-export default composedComponent;

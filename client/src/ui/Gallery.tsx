@@ -20,7 +20,7 @@ import { joinUrlFragments } from '../util/url';
 export type GalleryProps = {
   mediaFiles: MediaFile[];
   scrollObservable: Observable<{}>;
-  pictureModalUrlbase?: string; // example: `/gallery/detail`. If undefined, no link should be added.
+  mediaFileUrlBase?: string; // example: `/gallery/detail`. If undefined, no link should be added.
   onClickThumbnail?: (pictureMetadata: MediaFile) => void;
   showMap?: boolean;
 };
@@ -134,7 +134,7 @@ class StatelessGallery extends React.Component<StatelessGalleryProps> {
     const {
       mediaFiles,
       scrollObservable,
-      pictureModalUrlbase,
+      mediaFileUrlBase,
       onClickThumbnail
     } = this.props;
 
@@ -144,10 +144,10 @@ class StatelessGallery extends React.Component<StatelessGalleryProps> {
         mediaFile,
       };
 
-      const linkUrl = `${pictureModalUrlbase}/${mediaFile.hashValue}`;
+      const linkUrl = `/${mediaFileUrlBase}/${mediaFile.hashValue}`;
 
       let innerHtml = <Thumbnail {...thumbnailProps} />;
-      if (pictureModalUrlbase) {
+      if (mediaFileUrlBase) {
         innerHtml = (
           <Link to={linkUrl}>
             {innerHtml}
@@ -188,10 +188,10 @@ class StatelessGallery extends React.Component<StatelessGalleryProps> {
         location,
       };
 
-      if (this.props.pictureModalUrlbase) {
+      if (this.props.mediaFileUrlBase) {
         switch (metadata.fileType) {
           case MediaFileType.Picture:
-            const linkUrl = `#${this.props.pictureModalUrlbase}/${metadata.hashValue}`;
+            const linkUrl = `#${this.props.mediaFileUrlBase}/${metadata.hashValue}`;
 
             markerData.popupData = {
               name: metadata.getName(),
@@ -269,7 +269,7 @@ class InnerGallery extends React.Component<InnerGalleryProps, GalleryState> {
         lat: record.posLat,
         long: record.posLong,
       })),
-      openTrackUrl: this.props.pictureModalUrlbase,
+      openTrackUrl: this.props.mediaFileUrlBase,
     };
 
     this.setState(state => ({
