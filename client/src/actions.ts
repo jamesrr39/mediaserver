@@ -1,4 +1,3 @@
-import { PictureMetadata } from './domain/PictureMetadata';
 import { Action } from 'redux';
 import { SERVER_BASE_URL } from './configs';
 import { NotificationLevel, GalleryNotification } from './ui/NotificationBarComponent';
@@ -7,24 +6,24 @@ import { MediaFile } from './domain/MediaFile';
 import { MediaFileJSON, fromJSON } from './domain/deserialise';
 
 export enum FilesActionTypes {
-  FETCH_PICTURES_METADATA = 'FETCH_PICTURES_METADATA',
-  PICTURES_METADATA_FETCHED = 'PICTURES_METADATA_FETCHED',
+  FETCH_MEDIA_FILES = 'FETCH_PICTURES_METADATA',
+  MEDIA_FILES_FETCHED = 'PICTURES_METADATA_FETCHED',
   UPLOAD_FILE = 'UPLOAD_FILE',
-  PICTURE_SUCCESSFULLY_UPLOADED = 'PICTURE_SUCCESSFULLY_UPLOADED',
+  FILE_SUCCESSFULLY_UPLOADED = 'PICTURE_SUCCESSFULLY_UPLOADED',
 }
 
 export interface FetchPicturesMetadataAction extends Action {
-  type: FilesActionTypes.FETCH_PICTURES_METADATA;
+  type: FilesActionTypes.FETCH_MEDIA_FILES;
 }
 
 export interface PicturesMetadataFetchedAction extends Action {
-  type: FilesActionTypes.PICTURES_METADATA_FETCHED;
+  type: FilesActionTypes.MEDIA_FILES_FETCHED;
   mediaFiles: MediaFile[];
 }
 
 export interface PictureSuccessfullyUploadedAction extends Action {
-  type: FilesActionTypes.PICTURE_SUCCESSFULLY_UPLOADED;
-  pictureMetadata: PictureMetadata;
+  type: FilesActionTypes.FILE_SUCCESSFULLY_UPLOADED;
+  mediaFile: MediaFile;
 }
 
 export type MediaserverAction = (
@@ -35,7 +34,7 @@ export type MediaserverAction = (
 export function fetchPicturesMetadata() {
   return (dispatch: (action: FetchPicturesMetadataAction | PicturesMetadataFetchedAction | NotifyAction) => void) => {
     dispatch({
-      type: FilesActionTypes.FETCH_PICTURES_METADATA,
+      type: FilesActionTypes.FETCH_MEDIA_FILES,
     } as FetchPicturesMetadataAction);
     return fetch(`${SERVER_BASE_URL}/api/files/`)
       .then(response => {
@@ -48,7 +47,7 @@ export function fetchPicturesMetadata() {
       .then((mediaFilesJSON: MediaFileJSON[]) => {
         const mediaFiles = mediaFilesJSON.map(json => fromJSON(json));
         dispatch({
-          type: FilesActionTypes.PICTURES_METADATA_FETCHED,
+          type: FilesActionTypes.MEDIA_FILES_FETCHED,
           mediaFiles,
         });
       }).catch((errMessage) => {
@@ -56,50 +55,3 @@ export function fetchPicturesMetadata() {
       });
   };
 }
-
-// const REMOVE_INFO_NOTIFICATION_AFTER_MS = 3000; // 3s
-
-// export function queueFileForUpload(file: File) {
-//   return async (dispatch: (action: MediaserverAction) => void) => {
-//     // const onSuccess = (pictureMetadata: PictureMetadata, uploadsRemaining: number) => {
-//     //   dispatch({
-//     //     type: FilesActionTypes.PICTURE_SUCCESSFULLY_UPLOADED,
-//     //     pictureMetadata,
-//     //   } as PictureSuccessfullyUploadedAction);
-
-//       // const message = `uploaded '${file.name}'. ${uploadsRemaining} uploads left.`;
-//       // const notification = new GalleryNotification(NotificationLevel.INFO, message);
-//       // dispatch(newNotificationAction(notification));
-//       // setTimeout(
-//       //   () => dispatch(removeNotification(notification) as RemoveNotificationAction),
-//       //   REMOVE_INFO_NOTIFICATION_AFTER_MS);
-
-//       // if (onSuccessCb) {
-//       //   onSuccessCb(pictureMetadata);
-//       // }
-//     // };
-
-//     // const onFailure = (response: Response, uploadsRemaining: number) => {
-//     //   if (response.status === 409) {
-//     //     const message = `'${file.name}' already uploaded. ${uploadsRemaining} uploads left.`;
-//     //     const notification = new GalleryNotification(NotificationLevel.INFO, message);
-//     //     dispatch(newNotificationAction(notification));
-//     //     setTimeout(
-//     //       () => dispatch(removeNotification(notification) as RemoveNotificationAction),
-//     //       REMOVE_INFO_NOTIFICATION_AFTER_MS);
-//     //     return;
-//     //   }
-
-//     //   dispatch(newNotificationAction(new GalleryNotification(
-//     //     NotificationLevel.ERROR,
-//     //     `error uploading '${file.name}': ${response.statusText}`)));
-//     // };
-
-//     dispatch({
-//       type: FilesActionTypes.UPLOAD_FILE,
-//       file: {
-//         file,
-//       }
-//     } as UploadFileAction);
-//   };
-// }

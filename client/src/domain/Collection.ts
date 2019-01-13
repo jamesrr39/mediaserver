@@ -23,13 +23,6 @@ export class FolderCollection implements Collection {
   identifier() {
     return this.name;
   }
-  // getNameFromIdentifier(identifier: string): string {
-  //   return this.
-  // }
-  // getIdFromIdentifier(identifier: string): number {
-  //   const indexOfDash = identifier.indexOf('-');
-  //   return parseInt(identifier.substring(0, indexOfDash), 10);
-  // }
 }
 
 export class CustomCollection implements Collection {
@@ -42,17 +35,9 @@ export class CustomCollection implements Collection {
   identifier() {
     return `${this.id}-${this.name}`;
   }
-  // getNameFromIdentifier(identifier: string): string {
-  //   const indexOfDash = identifier.indexOf('-');
-  //   return identifier.substring(indexOfDash + 1);
-  // }
-  // getIdFromIdentifier(identifier: string): number {
-  //   const indexOfDash = identifier.indexOf('-');
-  //   return parseInt(identifier.substring(0, indexOfDash), 10);
-  // }
 }
 
-export function extractFolderCollectionsFromPicturesMetadatas(mediaFiles: MediaFile[]) {
+export function extractFolderCollectionsFrommediaFiles(mediaFiles: MediaFile[]) {
   const collectionsMap = new Map<string, string[]>();
   mediaFiles.forEach((mediaFile) => {
     const filepathFragments = mediaFile.relativePath.split('/');

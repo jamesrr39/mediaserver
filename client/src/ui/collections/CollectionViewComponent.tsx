@@ -9,7 +9,7 @@ import { joinUrlFragments } from '../../util/url';
 import { MediaFile } from '../../domain/MediaFile';
 
 type Props = {
-  picturesMetadatasMap: Map<string, MediaFile>;
+  mediaFilesMap: Map<string, MediaFile>;
   collection: Collection;
   routeUrl: string;
 };
@@ -22,10 +22,10 @@ const styles = {
 
 class CollectionViewComponent extends React.Component<Props> {
   render() {
-    const { collection, picturesMetadatasMap, routeUrl } = this.props;
+    const { collection, mediaFilesMap, routeUrl } = this.props;
 
     const mediaFiles = collection.fileHashes.map((hash, index) => {
-      const mediaFile = picturesMetadatasMap.get(hash);
+      const mediaFile = mediaFilesMap.get(hash);
       if (!mediaFile) {
         throw new Error(`couldn't find picture metadata for ${hash}`);
       }

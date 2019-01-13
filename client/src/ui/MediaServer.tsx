@@ -12,7 +12,7 @@ import MediaserverTopBar from './MediaserverTopBar';
 import { fetchCollections } from '../collectionsActions';
 import CollectionsComponent from './collections/CollectionsListingComponent';
 import CollectionViewComponent, { CollectionViewNavBarComponent } from './collections/CollectionViewComponent';
-import { extractFolderCollectionsFromPicturesMetadatas, CollectionType, CustomCollection } from '../domain/Collection';
+import { extractFolderCollectionsFrommediaFiles, CollectionType, CustomCollection } from '../domain/Collection';
 import NotFoundComponent from './NotFoundComponent';
 import NotificationBarComponent from './NotificationBarComponent';
 import EditCustomCollectionComponent from './collections/EditCustomCollectionComponent';
@@ -36,21 +36,21 @@ type AllPicturesPictureModalRouteParams = {
 
 type MediaServerProps = {
   isReady: boolean,
-  picturesMetadatas: MediaFile[];
+  mediaFiles: MediaFile[];
   scrollObservable: Observable<{}>;
-  picturesMetadatasMap: Map<string, MediaFile>;
+  mediaFilesMap: Map<string, MediaFile>;
   customCollections: CustomCollection[];
   dispatch: Dispatch<Action>;
 };
 
 function findCollectionFromTypeAndName(
-  picturesMetadatas: MediaFile[],
+  mediaFiles: MediaFile[],
   collectionType: CollectionType,
   collectionIdentifier: string,
   customCollections: CustomCollection[]) {
   switch (collectionType) {
     case CollectionType.Folder:
-      const collection = extractFolderCollectionsFromPicturesMetadatas(picturesMetadatas)
+      const collection = extractFolderCollectionsFrommediaFiles(mediaFiles)
         .find(currentCollection => (currentCollection.name === collectionIdentifier));
       return collection;
     case CollectionType.Custom:
@@ -96,10 +96,10 @@ class MediaServer extends React.Component<MediaServerProps> {
   renderCollectionView = (routeInfo: RouteComponentProps<CollectionViewRouteParams>) => {
     const { type, identifier } = collectionIdentifierAndTypeFromRoute(routeInfo);
 
-    const { picturesMetadatas, customCollections } = this.props;
+    const { mediaFiles, customCollections } = this.props;
 
     const collection = findCollectionFromTypeAndName(
-      picturesMetadatas,
+      mediaFiles,
       type as CollectionType,
       identifier,
       customCollections
@@ -113,7 +113,7 @@ class MediaServer extends React.Component<MediaServerProps> {
     const encodedIdentifier = encodeURIComponent(routeInfo.match.params.identifier);
     const props = {
       collection,
-      picturesMetadatasMap: this.props.picturesMetadatasMap,
+      mediaFilesMap: this.props.mediaFilesMap,
       routeUrl: `/collections/${encodedType}/${encodedIdentifier}`,
     };
 
@@ -143,7 +143,7 @@ class MediaServer extends React.Component<MediaServerProps> {
 
   renderAllPicturesPictureModal = (routeInfo: RouteComponentProps<AllPicturesPictureModalRouteParams>) => {
     const props = {
-      picturesMetadatas: this.props.picturesMetadatas,
+      mediaFiles: this.props.mediaFiles,
       hash: decodeURIComponent(routeInfo.match.params.hash),
       baseUrl: '/gallery',
     };
@@ -157,22 +157,22 @@ class MediaServer extends React.Component<MediaServerProps> {
     const hash = decodeURIComponent(routeInfo.match.params.hash);
 
     const collection = findCollectionFromTypeAndName(
-      this.props.picturesMetadatas, type as CollectionType, name, this.props.customCollections);
+      this.props.mediaFiles, type as CollectionType, name, this.props.customCollections);
     if (!collection) {
       return <NotFoundComponent message={'no picture found'} />;
     }
 
-    const picturesMetadatas = collection.fileHashes.map(hashInCollection => {
-      const pictureMetadata = this.props.picturesMetadatasMap.get(hashInCollection);
-      if (!pictureMetadata) {
+    const mediaFiles = collection.fileHashes.map(hashInCollection => {
+      const mediaFile = this.props.mediaFilesMap.get(hashInCollection);
+      if (!mediaFile) {
         throw new Error(`unexpected error: could not find picture metadata for hash ${hashInCollection}`);
       }
 
-      return pictureMetadata;
+      return mediaFile;
     });
 
     const props = {
-      picturesMetadatas,
+      mediaFiles,
       hash,
       baseUrl: `/collections/${routeInfo.match.params.type}/${routeInfo.match.params.identifier}`,
     };
@@ -234,16 +234,16 @@ class MediaServer extends React.Component<MediaServerProps> {
 }
 
 function mapStateToProps(state: State) {
-  const { picturesMetadatas, scrollObservable, picturesMetadatasMap } = state.picturesMetadatasReducer;
+  const { mediaFiles, scrollObservable, mediaFilesMap: mediaFilesMap } = state.mediaFilesReducer;
   const { customCollections } = state.collectionsReducer;
 
-  const isReady = state.picturesMetadatasReducer.isReady && state.collectionsReducer.isReady;
+  const isReady = state.mediaFilesReducer.isReady && state.collectionsReducer.isReady;
 
   return {
     isReady,
-    picturesMetadatas,
+    mediaFiles,
     scrollObservable,
-    picturesMetadatasMap,
+    mediaFilesMap,
     customCollections,
   };
 }
@@ -252,12 +252,3 @@ export default connect(
   mapStateToProps,
   dispatch => ({dispatch}),
 )(MediaServer);
-
-/*
-isReady: boolean,
-picturesMetadatas: MediaFile[];
-scrollObservable: Observable<{}>;
-picturesMetadatasMap: Map<string, MediaFile>;
-customCollections: CustomCollection[];
-dispatch: Dispatch<Action>;
-*/

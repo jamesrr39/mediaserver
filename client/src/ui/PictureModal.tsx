@@ -29,7 +29,7 @@ enum Subview {
 
 type Props = {
   hash: string,
-  picturesMetadatas: MediaFile[],
+  mediaFiles: MediaFile[],
   dispatch: Dispatch<Action>,
   scrollObservable: Observable<{}>,
   baseUrl: string, // for example, /gallery
@@ -99,19 +99,19 @@ class PictureModal extends React.Component<Props, ComponentState> {
   private nextPictureMetadata: MediaFile | null = null;
 
   setRenderData() {
-    const { picturesMetadatas, hash } = this.props;
+    const { mediaFiles: mediaFiles, hash } = this.props;
     let i;
 
-    for (i = 0; i < picturesMetadatas.length; i++) {
-      if (picturesMetadatas[i].hashValue === hash) {
+    for (i = 0; i < mediaFiles.length; i++) {
+      if (mediaFiles[i].hashValue === hash) {
         if (i !== 0) {
-          this.previousPictureMetadata = picturesMetadatas[i - 1];
+          this.previousPictureMetadata = mediaFiles[i - 1];
         } else {
           this.previousPictureMetadata = null;
         }
-        this.pictureMetadata = picturesMetadatas[i];
-        if (i !== picturesMetadatas.length - 1) {
-          this.nextPictureMetadata = picturesMetadatas[i + 1];
+        this.pictureMetadata = mediaFiles[i];
+        if (i !== mediaFiles.length - 1) {
+          this.nextPictureMetadata = mediaFiles[i + 1];
         } else {
           this.nextPictureMetadata = null;
         }
@@ -352,7 +352,7 @@ class PictureModal extends React.Component<Props, ComponentState> {
 }
 
 function mapStateToProps(state: State) {
-  const { scrollObservable } = state.picturesMetadatasReducer;
+  const { scrollObservable } = state.mediaFilesReducer;
 
   return {
     scrollObservable,
@@ -360,6 +360,5 @@ function mapStateToProps(state: State) {
 }
 
 export default compose(
-  // withRouter,
   connect(mapStateToProps)
 )(PictureModal);

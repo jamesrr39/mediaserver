@@ -15,62 +15,56 @@ const scrollObservable = new DebouncedObservable(150);
 window.addEventListener('scroll', (thing) => scrollObservable.triggerEvent(thing));
 window.addEventListener('resize', (thing) => scrollObservable.triggerEvent(thing));
 
-type PicturesMetadataState = {
+type MediaFilesState = {
   isReady: boolean,
   isFetching: boolean,
-  picturesMetadatas: MediaFile[],
+  mediaFiles: MediaFile[],
   scrollObservable: Observable<{}>,
-  picturesMetadatasMap: Map<string, MediaFile>,
+  mediaFilesMap: Map<string, MediaFile>,
   uploadQueue: FileQueue,
 };
 
 export type State = {
-  picturesMetadatasReducer: PicturesMetadataState,
+  mediaFilesReducer: MediaFilesState,
   collectionsReducer: CollectionReducerState,
   notificationsReducer: NotificationsState,
 };
 
-const picturesMetadatasInitialState = {
+const mediaFilesInitialState = {
   isReady: false,
   isFetching: false,
-  picturesMetadatas: [],
+  mediaFiles: [],
   scrollObservable,
-  picturesMetadatasMap: new Map<string, MediaFile>(),
+  mediaFilesMap: new Map<string, MediaFile>(),
   uploadQueue: new FileQueue(4),
 };
 
-function picturesMetadatasReducer(
-  state: PicturesMetadataState = picturesMetadatasInitialState, 
+function mediaFilesReducer(
+  state: MediaFilesState = mediaFilesInitialState, 
   action: MediaserverAction) {
   switch (action.type) {
-    case FilesActionTypes.FETCH_PICTURES_METADATA:
+    case FilesActionTypes.FETCH_MEDIA_FILES:
       return {
         ...state,
         isFetching: true,
       };
-    case FilesActionTypes.PICTURES_METADATA_FETCHED:
-      const picturesMetadatasMap = new Map<string, MediaFile>();
-      action.mediaFiles.forEach(pictureMetadata => {
-        picturesMetadatasMap.set(pictureMetadata.hashValue, pictureMetadata);
+    case FilesActionTypes.MEDIA_FILES_FETCHED:
+      const mediaFilesMap = new Map<string, MediaFile>();
+      action.mediaFiles.forEach(mediaFile => {
+        mediaFilesMap.set(mediaFile.hashValue, mediaFile);
       });
       return {
         ...state,
         isReady: true,
         isFetching: false,
-        picturesMetadatas: action.mediaFiles,
-        picturesMetadatasMap,
+        mediaFiles: action.mediaFiles,
+        mediaFilesMap: mediaFilesMap,
       };
-    case FilesActionTypes.PICTURE_SUCCESSFULLY_UPLOADED:
+    case FilesActionTypes.FILE_SUCCESSFULLY_UPLOADED:
       return {
         ...state,
-        picturesMetadatas: state.picturesMetadatas.concat([action.pictureMetadata])
+        mediaFiles: state.mediaFiles.concat([action.mediaFile])
       };
-    // case FilesActionTypes.UPLOAD_FILE:
-    //   state.uploadQueue.uploadOrQueue(action.file);
-
-    //   return {
-    //     ...state,
-    //   };
     default:
       return state;
   }
@@ -109,7 +103,7 @@ function collectionsReducer(state: CollectionReducerState = collectionInitialSta
 }
 
 export default combineReducers({
-  picturesMetadatasReducer,
+  mediaFilesReducer,
   collectionsReducer,
   notificationsReducer,
 });

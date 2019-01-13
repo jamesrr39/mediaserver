@@ -176,9 +176,9 @@ class StatelessGallery extends React.Component<StatelessGalleryProps> {
     });
   }
 
-  private getMarkers = (picturesMetadatas: MediaFile[]) => {
+  private getMarkers = (mediaFiles: MediaFile[]) => {
     const markers: MapMarker[] = [];
-    picturesMetadatas.forEach((metadata) => {
+    mediaFiles.forEach((metadata) => {
       const location = metadata.getLocation();
       if (!location) {
         return;
@@ -344,7 +344,7 @@ class Gallery extends React.Component<GalleryProps> {
 }
 
 function mapStateToProps(state: State) {
-  const { scrollObservable } = state.picturesMetadatasReducer;
+  const { scrollObservable } = state.mediaFilesReducer;
 
   return {
     scrollObservable,

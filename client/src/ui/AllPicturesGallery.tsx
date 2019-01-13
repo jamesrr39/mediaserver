@@ -5,14 +5,14 @@ import { connect } from 'react-redux';
 import Gallery from './Gallery';
 import { MediaFile } from '../domain/MediaFile';
 
-export interface GalleryProps {
-  picturesMetadatas: MediaFile[];
-}
+type GalleryProps = {
+  mediaFiles: MediaFile[];
+};
 
 class AllPicturesGallery extends React.Component<GalleryProps> {
   render() {
     const props = {
-      mediaFiles: this.props.picturesMetadatas,
+      mediaFiles: this.props.mediaFiles,
       pictureModalUrlbase: '/gallery/detail',
       showMap: true,
     };
@@ -24,10 +24,10 @@ class AllPicturesGallery extends React.Component<GalleryProps> {
 }
 
 function mapStateToProps(state: State) {
-  const { picturesMetadatas } = state.picturesMetadatasReducer;
+  const { mediaFiles } = state.mediaFilesReducer;
 
   return {
-    picturesMetadatas,
+    mediaFiles,
   };
 }
 

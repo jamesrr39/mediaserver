@@ -80,19 +80,11 @@ export function saveCollection(collection: CustomCollection) {
       collectionJSON.name,
       collectionJSON.fileHashes
     );
-      // dispatch(newNotificationAction(new GalleryNotification(NotificationLevel.INFO, 'Saved!')));
     dispatch({
       type: CollectionActions.COLLECTION_SAVED,
       collection: returnedCollection,
     });
 
     return returnedCollection;
-    
-    // onSuccess(returnedCollection);
-    
-    // }).catch((errMessage: string) => {
-    //   dispatch(newNotificationAction(
-    //     new GalleryNotification(NotificationLevel.ERROR, `error saving: '${errMessage}'`)));
-    // });
   };
 }

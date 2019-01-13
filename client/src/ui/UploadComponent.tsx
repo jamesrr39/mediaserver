@@ -76,7 +76,7 @@ class UploadComponent extends React.Component<Props, ComponentState> {
 }
 
 function mapStateToProps(state: State) {
-  const { uploadQueue } = state.picturesMetadatasReducer;
+  const { uploadQueue } = state.mediaFilesReducer;
   return {
     uploadQueue,
   };

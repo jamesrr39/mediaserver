@@ -1,15 +1,13 @@
 import * as React from 'react';
 import { State } from '../../reducers';
 import { connect } from 'react-redux';
-import { extractFolderCollectionsFromPicturesMetadatas, CustomCollection } from '../../domain/Collection';
+import { extractFolderCollectionsFrommediaFiles, CustomCollection } from '../../domain/Collection';
 import CollectionGroupListingComponent from './CollectionGroupListingComponent';
 import { MediaFile } from '../../domain/MediaFile';
-// import { compose } from 'redux';
-// import { withRouter } from 'react-router';
 
 type Props = {
   collections: CustomCollection[];
-  picturesMetadatas: MediaFile[];
+  mediaFiles: MediaFile[];
 };
 
 const styles = {
@@ -22,7 +20,7 @@ class CollectionsComponent extends React.Component<Props> {
   renderFolderCollections() {
     const props = {
       title: 'By Folder',
-      collections: extractFolderCollectionsFromPicturesMetadatas(this.props.picturesMetadatas),
+      collections: extractFolderCollectionsFrommediaFiles(this.props.mediaFiles),
     };
 
     return <CollectionGroupListingComponent {...props} />;
@@ -50,7 +48,7 @@ class CollectionsComponent extends React.Component<Props> {
 function mapStateToProps(state: State) {
   return {
     collections: state.collectionsReducer.customCollections,
-    picturesMetadatas: state.picturesMetadatasReducer.picturesMetadatas,
+    mediaFiles: state.mediaFilesReducer.mediaFiles,
   };
 }
 

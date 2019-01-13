@@ -29,7 +29,7 @@ const styles = {
 };
 
 type Props = {
-  picturesMetadatas: MediaFile[],
+  mediaFiles: MediaFile[],
   collection: CustomCollection,
   dispatch: Dispatch<CollectionsAction | NotifyAction>;
   uploadQueue: FileQueue;
@@ -98,7 +98,7 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
   render() {
     const filesInCollection: MediaFile[] = [];
     const filesOutOfCollection: MediaFile[] = [];
-    this.props.picturesMetadatas.forEach((pictureMetadata) => {
+    this.props.mediaFiles.forEach((pictureMetadata) => {
       if (this.state.hashesInCollectionSet.has(pictureMetadata.hashValue)) {
         filesInCollection.push(pictureMetadata);
       } else {
@@ -179,10 +179,10 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
 }
 
 function mapStateToProps(state: State) {
-  const { picturesMetadatas, uploadQueue } = state.picturesMetadatasReducer;
+  const { mediaFiles: mediaFiles, uploadQueue } = state.mediaFilesReducer;
 
   return {
-    picturesMetadatas,
+    mediaFiles,
     uploadQueue,
   };
 }
