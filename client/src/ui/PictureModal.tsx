@@ -290,6 +290,7 @@ class PictureModal extends React.Component<Props, ComponentState> {
         <Link
           to={`${this.props.baseUrl}/detail/${this.previousPictureMetadata.hashValue}`}
           style={style}
+          aria-label="previous"
         >
           &larr;
         </Link>
@@ -308,6 +309,7 @@ class PictureModal extends React.Component<Props, ComponentState> {
         <Link
           to={`${this.props.baseUrl}/detail/${this.nextPictureMetadata.hashValue}`}
           style={style}
+          aria-label="next"
         >
           &rarr;
         </Link>
