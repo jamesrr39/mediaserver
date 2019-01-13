@@ -42,6 +42,15 @@ const FinishIcon = Leaflet.Icon.extend({
   }
 });
 
+function generateColorFromIndex(index: number): string {
+  let color = (index * 16).toString(16);
+  const paddingFieldsCount = 6 - color.length;
+  const padding = '2'.repeat(paddingFieldsCount);
+  const colorCode = `#${padding}${color}`;
+
+  return colorCode;
+}
+
 function getBounds(markers?: MapMarker[], tracks?: TrackMapData[]) {
   let n = -90;
   let e = -180;
@@ -179,10 +188,7 @@ export default class MapComponent extends React.Component<Props> {
           return new Leaflet.LatLng(point.lat, point.long);
         });
 
-        const color = `#${(index * 3).toString(16).substring(0, 1).repeat(3)}`;
-
-        // tslint:disable-next-line
-        console.log(color);
+        const color = generateColorFromIndex(index);
 
         Leaflet.polyline(points, {
           color,
