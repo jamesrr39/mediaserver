@@ -1,12 +1,11 @@
 import { combineReducers } from 'redux';
-import { PictureMetadata } from './domain/PictureMetadata';
 import {
   MediaserverAction,
   FilesActionTypes,
  } from './actions';
 import { DebouncedObservable, Observable } from './util/Observable';
 import { CustomCollection } from './domain/Collection';
-import { CollectionsAction, COLLECTIONS_FETCHED, COLLECTION_SAVED } from './collectionsActions';
+import { CollectionsAction, CollectionActions } from './collectionsActions';
 import { FileQueue } from './fileQueue';
 import { notificationsReducer, NotificationsState } from './reducers/notificationReducer';
 import { MediaFile } from './domain/MediaFile';
@@ -19,9 +18,9 @@ window.addEventListener('resize', (thing) => scrollObservable.triggerEvent(thing
 type PicturesMetadataState = {
   isReady: boolean,
   isFetching: boolean,
-  picturesMetadatas: PictureMetadata[],
+  picturesMetadatas: MediaFile[],
   scrollObservable: Observable<{}>,
-  picturesMetadatasMap: Map<string, PictureMetadata>,
+  picturesMetadatasMap: Map<string, MediaFile>,
   uploadQueue: FileQueue,
 };
 
@@ -36,7 +35,7 @@ const picturesMetadatasInitialState = {
   isFetching: false,
   picturesMetadatas: [],
   scrollObservable,
-  picturesMetadatasMap: new Map<string, PictureMetadata>(),
+  picturesMetadatasMap: new Map<string, MediaFile>(),
   uploadQueue: new FileQueue(4),
 };
 
@@ -66,12 +65,12 @@ function picturesMetadatasReducer(
         ...state,
         picturesMetadatas: state.picturesMetadatas.concat([action.pictureMetadata])
       };
-    case FilesActionTypes.UPLOAD_FILE:
-      state.uploadQueue.uploadOrQueue(action.file);
+    // case FilesActionTypes.UPLOAD_FILE:
+    //   state.uploadQueue.uploadOrQueue(action.file);
 
-      return {
-        ...state,
-      };
+    //   return {
+    //     ...state,
+    //   };
     default:
       return state;
   }
@@ -89,13 +88,13 @@ const collectionInitialState = {
 
 function collectionsReducer(state: CollectionReducerState = collectionInitialState, action: CollectionsAction) {
   switch (action.type) {
-    case COLLECTIONS_FETCHED:
+    case CollectionActions.COLLECTIONS_FETCHED:
       return {
         ...state,
         isReady: true,
         customCollections: action.customCollections,
       };
-    case COLLECTION_SAVED:
+    case CollectionActions.COLLECTION_SAVED:
       const collectionsWithoutUpdated = state.customCollections.filter(
         customCollection => customCollection.id !== action.collection.id);
       collectionsWithoutUpdated.push(action.collection);

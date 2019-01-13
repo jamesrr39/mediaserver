@@ -1,11 +1,14 @@
 import * as React from 'react';
 import { ChangeEvent } from 'react';
-import { queueFileForUpload } from '../actions';
 
-import { connect, Dispatch } from 'react-redux';
-import { Action } from 'redux';
+import { connect } from 'react-redux';
+import { Action, Dispatch } from 'redux';
 import { compose } from 'redux';
 import { themeStyles } from '../theme/theme';
+import { State } from '../reducers';
+import { FileQueue } from '../fileQueue';
+import { newNotificationAction } from '../actions/notificationActions';
+import { GalleryNotification, NotificationLevel } from './NotificationBarComponent';
 
 const styles = {
   uploadInput: {
@@ -15,6 +18,7 @@ const styles = {
 
 type Props = {
   dispatch: Dispatch<Action>;
+  uploadQueue: FileQueue;
 };
 
 type ComponentState = {
@@ -38,7 +42,7 @@ class UploadComponent extends React.Component<Props, ComponentState> {
     });
     for (let i = 0; i < event.target.files.length; i++) {
         const file = event.target.files[i];
-        this.props.dispatch(queueFileForUpload(file));
+        this.uploadFile(file);
     }
   }
 
@@ -50,8 +54,34 @@ class UploadComponent extends React.Component<Props, ComponentState> {
       </label>
     );
   }
+
+  private async uploadFile(file: File) {
+    const { uploadQueue, dispatch } = this.props;
+    
+    try {
+      const mediaFile = await uploadQueue.uploadOrQueue(file);
+      dispatch(
+        newNotificationAction(
+          new GalleryNotification(NotificationLevel.INFO, `uploaded ${mediaFile.getName()}`)
+        )
+      );
+    } catch (error) {
+      dispatch(
+        newNotificationAction(
+          new GalleryNotification(NotificationLevel.ERROR, `failed to upload ${file.name}. Error: ${error}`)
+        )
+      );
+    }
+  }
+}
+
+function mapStateToProps(state: State) {
+  const { uploadQueue } = state.picturesMetadatasReducer;
+  return {
+    uploadQueue,
+  };
 }
 
 export default compose(
-  connect((state) => (state)),
+  connect(mapStateToProps),
 )(UploadComponent);

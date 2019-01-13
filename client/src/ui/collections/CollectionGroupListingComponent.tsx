@@ -3,14 +3,11 @@ import { Collection, CustomCollection } from '../../domain/Collection';
 import CollectionThumbnail from './CollectionThumbnail';
 import { themeStyles } from '../../theme/theme';
 import AddCollectionModal from './AddCollectionModal';
-import { saveCollection } from '../../collectionsActions';
-import { Dispatch, connect } from 'react-redux';
-// import { Dispatch } from 'react-redux';
-import { Action } from 'redux';
-import { History } from 'history';
-import { withRouter } from 'react-router';
-import { compose } from 'redux';
-import { State } from '../../reducers';
+import { saveCollection, CollectionsAction } from '../../collectionsActions';
+// import { connect } from 'react-redux';
+import { Dispatch } from 'redux';
+// import { withRouter } from 'react-router';
+import { connect } from 'react-redux';
 
 const styles = {
   collectionsWrapper: {
@@ -20,8 +17,7 @@ const styles = {
 };
 
 type Props = {
-  dispatch: Dispatch<Action>;
-  history: History;
+  dispatch: Dispatch<CollectionsAction>;
   title: string,
   collections: Collection[],
   canAddCollection?: boolean,
@@ -94,31 +90,33 @@ class CollectionGroupListingComponent extends React.Component<Props, ComponentSt
   }
 
   private onAddCollectionModalSubmit = (name: string) => {
-
-    const { dispatch, history } = this.props;
-
     const newCollection = new CustomCollection(0, name, []);
-    const onSuccess = (returnedCollection: Collection) => {
-      const encodedType = encodeURIComponent(returnedCollection.type);
-      const encodedIdentifier = encodeURIComponent(returnedCollection.identifier());
-      const successUrl = `/collections/${encodedType}/${encodedIdentifier}/edit`;
-      history.push(successUrl);
-    };
+    this.saveCollection(newCollection);
+  }
 
-    dispatch(
-      saveCollection(
-        newCollection,
-        onSuccess,
-      ),
-    );
+  private async saveCollection(newCollection: CustomCollection) {
+    const { dispatch } = this.props;
+
+    const returnedCollection = await saveCollection(newCollection)(dispatch);
+
+    const encodedType = encodeURIComponent(returnedCollection.type);
+    const encodedIdentifier = encodeURIComponent(returnedCollection.identifier());
+    window.location.hash = `#/collections/${encodedType}/${encodedIdentifier}/edit`;
   }
 }
 
-function mapStateToProps(state: State) {
-  return undefined;
-}
+// function mapStateToProps(state: State) {
+//   return undefined;
+// }
 
-export default compose(
-  withRouter,
-  connect(mapStateToProps)
+const composedComponent = connect(
+  // withRouter, 
+  // state => undefined,
+  state => undefined,
 )(CollectionGroupListingComponent);
+// export default compose(
+//   withRouter,
+//   // connect(mapStateToProps),
+//   CollectionGroupListingComponent);
+
+export default composedComponent;

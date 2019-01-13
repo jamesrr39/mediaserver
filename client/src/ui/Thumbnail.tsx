@@ -16,7 +16,7 @@ const NARROW_SCREEN_THUMBNAIL_WIDTH = 100;
 
 const styles = {
   video: {
-    pointerEvents: 'none',
+    pointerEvents: 'none' as 'none',
   },
 };
 

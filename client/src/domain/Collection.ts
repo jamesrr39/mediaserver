@@ -1,4 +1,4 @@
-import { PictureMetadata } from './PictureMetadata';
+import { MediaFile } from './MediaFile';
 
 export enum CollectionType {
   Folder = 'folder',
@@ -52,10 +52,10 @@ export class CustomCollection implements Collection {
   // }
 }
 
-export function extractFolderCollectionsFromPicturesMetadatas(picturesMetadatas: PictureMetadata[]) {
+export function extractFolderCollectionsFromPicturesMetadatas(mediaFiles: MediaFile[]) {
   const collectionsMap = new Map<string, string[]>();
-  picturesMetadatas.forEach((pictureMetadata) => {
-    const filepathFragments = pictureMetadata.relativePath.split('/');
+  mediaFiles.forEach((mediaFile) => {
+    const filepathFragments = mediaFile.relativePath.split('/');
     filepathFragments.splice(filepathFragments.length - 1, 1);
     filepathFragments.splice(0, 1);
     for (let i = 0; i < filepathFragments.length; i++) {
@@ -64,7 +64,7 @@ export function extractFolderCollectionsFromPicturesMetadatas(picturesMetadatas:
         continue;
       }
       const picturesMetadataList = collectionsMap.get(folder) || [];
-      picturesMetadataList.push(pictureMetadata.hashValue);
+      picturesMetadataList.push(mediaFile.hashValue);
       collectionsMap.set(folder, picturesMetadataList);
     }
   });

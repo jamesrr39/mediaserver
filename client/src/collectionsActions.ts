@@ -1,40 +1,45 @@
 import { SERVER_BASE_URL } from './configs';
 import { Action } from 'redux';
 import { Collection, CustomCollection } from './domain/Collection';
-import { NotifyAction, newNotificationAction } from './actions/notificationActions';
-import { NotificationLevel, GalleryNotification } from './ui/NotificationBarComponent';
+import { Dispatch } from 'react';
 
-export const FETCH_COLLECTIONS = 'FETCH_COLLECTIONS';
-
-export interface FetchCollectionsAction extends Action {
-  type: 'FETCH_COLLECTIONS';
+export enum CollectionActions {
+  FETCH_COLLECTIONS = 'FETCH_COLLECTIONS',
+  COLLECTIONS_FETCHED = 'COLLECTIONS_FETCHED',
+  COLLECTION_SAVED = 'COLLECTION_SAVED',
+  SAVE_COLLECTION = 'SAVE_COLLECTION',
 }
 
-export const COLLECTIONS_FETCHED = 'COLLECTIONS_FETCHED';
+export interface FetchCollectionsAction extends Action {
+  type: CollectionActions.FETCH_COLLECTIONS;
+}
 
 export interface CollectionsFetchedAction extends Action {
-  type: 'COLLECTIONS_FETCHED';
+  type: CollectionActions.COLLECTIONS_FETCHED;
   customCollections: CustomCollection[];
 }
 
-export const COLLECTION_SAVED = 'COLLECTION_SAVED';
-// FIXME: use enum for action
-
 export type CollectionSavedAction = {
-  type: 'COLLECTION_SAVED';
+  type: CollectionActions.COLLECTION_SAVED;
   collection: CustomCollection;
 };
 
-export type CollectionsAction = CollectionsFetchedAction | FetchCollectionsAction | CollectionSavedAction;
+export type SaveCollectionAction = {
+  type: CollectionActions.SAVE_COLLECTION,
+  collection: CustomCollection,
+};
+
+export type CollectionsAction = CollectionsFetchedAction | 
+  FetchCollectionsAction | CollectionSavedAction | SaveCollectionAction;
 
 type CustomCollectionJSON = {
   id: number;
 } & Collection;
 
 export function fetchCollections() {
-  return (dispatch: (action: CollectionsAction) => void) => {
+  return (dispatch: Dispatch<CollectionsAction>) => {
     dispatch({
-      type: FETCH_COLLECTIONS,
+      type: CollectionActions.FETCH_COLLECTIONS,
     });
     return fetch(`${SERVER_BASE_URL}/api/collections/`)
       .then(response => response.json())
@@ -45,42 +50,49 @@ export function fetchCollections() {
           collectionJSON.fileHashes,
         ));
         dispatch({
-          type: COLLECTIONS_FETCHED,
+          type: CollectionActions.COLLECTIONS_FETCHED,
           customCollections,
         });
       });
   };
 }
 
-export function saveCollection(collection: CustomCollection, onSuccess: (returnedCollection: Collection) => void) {
-  return (dispatch: (action: CollectionsAction | NotifyAction) => void) => {
+export function saveCollection(collection: CustomCollection) {
+  return async (dispatch: (action: CollectionsAction) => void) => {
     const url = (collection.id === 0)
       ? `${SERVER_BASE_URL}/api/collections/`
       : `${SERVER_BASE_URL}/api/collections/${collection.id}`;
     const method = (collection.id === 0) ? 'POST' : 'PUT';
-    fetch(url, {
+    
+    const response = await fetch(url, {
       method,
       body: JSON.stringify(collection),
-    }).then((response: Response) => {
-      if (!response.ok) {
-        throw new Error(`${response.statusText} (${response.status})`);
-      }
-      response.json().then((collectionJSON: CustomCollectionJSON) => {
-        const returnedCollection = new CustomCollection(
-          collectionJSON.id,
-          collectionJSON.name,
-          collectionJSON.fileHashes
-        );
-        dispatch(newNotificationAction(new GalleryNotification(NotificationLevel.INFO, 'Saved!')));
-        dispatch({
-          type: COLLECTION_SAVED,
-          collection: returnedCollection,
-        });
-        onSuccess(returnedCollection);
-      });
-    }).catch((errMessage: string) => {
-      dispatch(newNotificationAction(
-        new GalleryNotification(NotificationLevel.ERROR, `error saving: '${errMessage}'`)));
     });
+
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+
+    const collectionJSON = await response.json();
+    // collectionJSON: CustomCollectionJSON) => {
+    const returnedCollection = new CustomCollection(
+      collectionJSON.id,
+      collectionJSON.name,
+      collectionJSON.fileHashes
+    );
+      // dispatch(newNotificationAction(new GalleryNotification(NotificationLevel.INFO, 'Saved!')));
+    dispatch({
+      type: CollectionActions.COLLECTION_SAVED,
+      collection: returnedCollection,
+    });
+
+    return returnedCollection;
+    
+    // onSuccess(returnedCollection);
+    
+    // }).catch((errMessage: string) => {
+    //   dispatch(newNotificationAction(
+    //     new GalleryNotification(NotificationLevel.ERROR, `error saving: '${errMessage}'`)));
+    // });
   };
 }

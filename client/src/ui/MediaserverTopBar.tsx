@@ -1,8 +1,5 @@
 import * as React from 'react';
-import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { withRouter } from 'react-router-dom';
-import { compose } from 'redux';
 
 type Props = {
   child?: React.ReactNode;
@@ -19,7 +16,7 @@ const styles = {
   }
 };
 
-class MediaserverTopBar extends React.Component<Props> {
+export default class MediaserverTopBar extends React.Component<Props> {
   render() {
     const child = this.props.child || '';
 
@@ -33,7 +30,6 @@ class MediaserverTopBar extends React.Component<Props> {
   }
 }
 
-export default compose(
-  withRouter,
-  connect((state) => (state)),
-)(MediaserverTopBar);
+// export default compose(
+//   // (state: State) => (state),
+// )(MediaserverTopBar);

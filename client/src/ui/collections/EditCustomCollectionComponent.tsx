@@ -1,18 +1,16 @@
 import * as React from 'react';
-import { CustomCollection, Collection } from '../../domain/Collection';
+import { CustomCollection } from '../../domain/Collection';
 import { MediaFile } from '../../domain/MediaFile';
 import { ChangeEvent } from 'react';
 import Gallery from '../Gallery';
 import { State } from '../../reducers';
-import { connect, Dispatch } from 'react-redux';
-import { PictureMetadata } from '../../domain/PictureMetadata';
-import { Action } from 'redux';
-import { saveCollection } from '../../collectionsActions';
+import { connect } from 'react-redux';
+import { saveCollection, CollectionsAction } from '../../collectionsActions';
 import { themeStyles } from '../../theme/theme';
-import { withRouter } from 'react-router-dom';
-import { compose } from 'redux';
-import { History } from 'history';
-import { queueFileForUpload } from '../../actions';
+import { compose, Dispatch } from 'redux';
+import { newNotificationAction, NotifyAction } from '../../actions/notificationActions';
+import { GalleryNotification, NotificationLevel } from '../NotificationBarComponent';
+import { FileQueue } from '../../fileQueue';
 
 const styles = {
   nameInput: {
@@ -31,10 +29,10 @@ const styles = {
 };
 
 type Props = {
-  picturesMetadatas: PictureMetadata[],
+  picturesMetadatas: MediaFile[],
   collection: CustomCollection,
-  dispatch: Dispatch<Action>;
-  history: History;
+  dispatch: Dispatch<CollectionsAction | NotifyAction>;
+  uploadQueue: FileQueue;
 };
 
 type ComponentState = {
@@ -77,30 +75,26 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
       };
     });
   }
-  onSubmit = (event: React.MouseEvent<HTMLButtonElement>) => {
+  onSubmit = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
 
-    const { dispatch, collection, history } = this.props;
+    const { dispatch, collection } = this.props;
 
     const newCollection = new CustomCollection(
       collection.id,
       this.state.name,
       Array.from(this.state.hashesInCollectionSet),
     );
-    const onSuccess = (returnedCollection: Collection) => {
-      const encodedType = encodeURIComponent(returnedCollection.type);
-      const encodedIdentifier = encodeURIComponent(returnedCollection.identifier());
-      const successUrl = `/collections/${encodedType}/${encodedIdentifier}`;
-      history.push(successUrl);
-    };
 
-    dispatch(
-      saveCollection(
-        newCollection,
-        onSuccess,
-      ),
-    );
+    const returnedCollection = await saveCollection(newCollection)(dispatch);
+
+    dispatch(newNotificationAction(new GalleryNotification(NotificationLevel.INFO, 'Saved!')));
+
+    const encodedType = encodeURIComponent(returnedCollection.type);
+    const encodedIdentifier = encodeURIComponent(returnedCollection.identifier());
+    window.location.hash = `#/collections/${encodedType}/${encodedIdentifier}`;
   }
+
   render() {
     const filesInCollection: MediaFile[] = [];
     const filesOutOfCollection: MediaFile[] = [];
@@ -166,28 +160,37 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
     });
     for (let i = 0; i < event.target.files.length; i++) {
         const file = event.target.files[i];
-        this.props.dispatch(queueFileForUpload(file, (mediaFile) => {
-          const hashesInCollectionSet = this.state.hashesInCollectionSet;
-          hashesInCollectionSet.add(mediaFile.hashValue);
-          this.setState(state => ({
-            ...state,
-            hashesInCollectionSet,
-          }));
-        }));
+
+        this.uploadFile(file);
     }
+  }
+
+  private async uploadFile(file: File) {
+    const { uploadQueue } = this.props;
+    const { hashesInCollectionSet } = this.state;
+    
+    const mediaFile = await uploadQueue.uploadOrQueue(file);
+    hashesInCollectionSet.add(mediaFile.hashValue);
+    this.setState(state => ({
+      ...state,
+      hashesInCollectionSet,
+    }));
   }
 }
 
 function mapStateToProps(state: State) {
-  const { picturesMetadatas } = state.picturesMetadatasReducer;
+  const { picturesMetadatas, uploadQueue } = state.picturesMetadatasReducer;
 
   return {
     picturesMetadatas,
+    uploadQueue,
   };
 }
 
 export default compose(
-  withRouter,
+  // withRouter,
   connect(mapStateToProps),
-)(EditCustomCollectionComponent) as React.ComponentType<{collection: Collection}>;
+)(EditCustomCollectionComponent); // as React.ComponentType<{collection: Collection}>;
+
+// tslint:disable-next-line
 // https://stackoverflow.com/questions/48701121/jsx-element-type-does-not-have-any-construct-or-call-signatures-typescript

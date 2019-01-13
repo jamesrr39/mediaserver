@@ -1,12 +1,12 @@
 import * as React from 'react';
-import { PictureMetadata } from '../domain/PictureMetadata';
 
 import { State } from '../reducers';
 import { connect } from 'react-redux';
 import Gallery from './Gallery';
+import { MediaFile } from '../domain/MediaFile';
 
 export interface GalleryProps {
-  picturesMetadatas: PictureMetadata[];
+  picturesMetadatas: MediaFile[];
 }
 
 class AllPicturesGallery extends React.Component<GalleryProps> {

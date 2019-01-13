@@ -1,14 +1,13 @@
 import * as React from 'react';
 import { State } from '../reducers';
-import { connect, Dispatch } from 'react-redux';
+import { connect } from 'react-redux';
 import { PictureMetadata } from '../domain/PictureMetadata';
 import { SERVER_BASE_URL } from '../configs';
-import { Link, withRouter } from 'react-router-dom';
-import { Action } from 'redux';
+import { Link } from 'react-router-dom';
+import { Action, Dispatch } from 'redux';
 import { THUMBNAIL_HEIGHTS } from '../generated/thumbnail_sizes';
 import { Observable } from '../util/Observable';
 import { compose } from 'redux';
-import { History } from 'history';
 import PictureInfoComponent, { INFO_CONTAINER_WIDTH } from './PictureInfoComponent';
 import { isNarrowScreen } from '../util/screen_size';
 import { MediaFile } from '../domain/MediaFile';
@@ -30,7 +29,6 @@ enum Subview {
 
 type Props = {
   hash: string,
-  history: History,
   picturesMetadatas: MediaFile[],
   dispatch: Dispatch<Action>,
   scrollObservable: Observable<{}>,
@@ -63,7 +61,7 @@ const styles = {
     width: '50px',
     height: '50px',
     lineHeight: '50px',
-    textAlign: 'center',
+    align: 'center',
     verticalAlign: 'middle',
     backgroundColor: 'transparent',
     borderStyle: 'none',
@@ -78,11 +76,11 @@ const styles = {
 
 const navButtonStyle = {
   ...styles.navigationButton,
-  position: 'absolute',
+  position: 'absolute' as 'absolute',
   backgroundColor: '#666',
   opacity: 0.8,
   zIndex: 1000,
-} as React.CSSProperties;
+};
 
 type ComponentState = {
   showInfo: boolean;
@@ -282,11 +280,16 @@ class PictureModal extends React.Component<Props, ComponentState> {
   }
 
   private renderPreviousLink = () => {
+    const style = {
+      ...navButtonStyle,
+      left: '0px',
+    };
+
     return this.previousPictureMetadata
       ? (
         <Link
           to={`${this.props.baseUrl}/detail/${this.previousPictureMetadata.hashValue}`}
-          style={navButtonStyle}
+          style={style}
         >
           &larr;
         </Link>
@@ -313,18 +316,18 @@ class PictureModal extends React.Component<Props, ComponentState> {
   }
 
   private goBack = () => {
-    this.props.history.push(this.props.baseUrl);
+    window.location.hash = `#/this.props.baseUrl`;
   }
 
   private goToPrevious = () => {
     if (this.previousPictureMetadata !== null) {
-      this.props.history.push(`${this.props.baseUrl}/detail/${this.previousPictureMetadata.hashValue}`);
+      window.location.hash = `#${this.props.baseUrl}/detail/${this.previousPictureMetadata.hashValue}`;
     }
   }
 
   private goToNext = () => {
     if (this.nextPictureMetadata !== null) {
-      this.props.history.push(`${this.props.baseUrl}/detail/${this.nextPictureMetadata.hashValue}`);
+      window.location.hash = `#${this.props.baseUrl}/detail/${this.nextPictureMetadata.hashValue}`;
     }
   }
 
@@ -346,7 +349,7 @@ class PictureModal extends React.Component<Props, ComponentState> {
 }
 
 function mapStateToProps(state: State) {
-  const { scrollObservable } = state.picturesMetadatas;
+  const { scrollObservable } = state.picturesMetadatasReducer;
 
   return {
     scrollObservable,
@@ -354,6 +357,6 @@ function mapStateToProps(state: State) {
 }
 
 export default compose(
-  withRouter,
+  // withRouter,
   connect(mapStateToProps)
 )(PictureModal);

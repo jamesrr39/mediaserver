@@ -2,10 +2,7 @@ import { PictureMetadata } from './domain/PictureMetadata';
 import { Action } from 'redux';
 import { SERVER_BASE_URL } from './configs';
 import { NotificationLevel, GalleryNotification } from './ui/NotificationBarComponent';
-import { QueuedFile } from './fileQueue';
-import {
-  newNotificationAction, NotifyAction, removeNotification, RemoveNotificationAction
- } from './actions/notificationActions';
+import { newNotificationAction, NotifyAction } from './actions/notificationActions';
 import { MediaFile } from './domain/MediaFile';
 import { MediaFileJSON, fromJSON } from './domain/deserialise';
 
@@ -25,20 +22,13 @@ export interface PicturesMetadataFetchedAction extends Action {
   mediaFiles: MediaFile[];
 }
 
-export interface UploadFileAction extends Action {
-  type: FilesActionTypes.UPLOAD_FILE;
-  file: QueuedFile;
-}
-
 export interface PictureSuccessfullyUploadedAction extends Action {
   type: FilesActionTypes.PICTURE_SUCCESSFULLY_UPLOADED;
   pictureMetadata: PictureMetadata;
 }
 
 export type MediaserverAction = (
-  UploadFileAction |
   PicturesMetadataFetchedAction |
-  UploadFileAction |
   PictureSuccessfullyUploadedAction |
   FetchPicturesMetadataAction);
 
@@ -67,51 +57,49 @@ export function fetchPicturesMetadata() {
   };
 }
 
-const REMOVE_INFO_NOTIFICATION_AFTER_MS = 3000; // 3s
+// const REMOVE_INFO_NOTIFICATION_AFTER_MS = 3000; // 3s
 
-export function queueFileForUpload(file: File, onSuccessCb?: (mediaFile: MediaFile) => void) {
-  return (dispatch: (action: MediaserverAction | NotifyAction | RemoveNotificationAction) => void) => {
-    const onSuccess = (pictureMetadata: PictureMetadata, uploadsRemaining: number) => {
-      dispatch({
-        type: FilesActionTypes.PICTURE_SUCCESSFULLY_UPLOADED,
-        pictureMetadata,
-      } as PictureSuccessfullyUploadedAction);
+// export function queueFileForUpload(file: File) {
+//   return async (dispatch: (action: MediaserverAction) => void) => {
+//     // const onSuccess = (pictureMetadata: PictureMetadata, uploadsRemaining: number) => {
+//     //   dispatch({
+//     //     type: FilesActionTypes.PICTURE_SUCCESSFULLY_UPLOADED,
+//     //     pictureMetadata,
+//     //   } as PictureSuccessfullyUploadedAction);
 
-      const message = `uploaded '${file.name}'. ${uploadsRemaining} uploads left.`;
-      const notification = new GalleryNotification(NotificationLevel.INFO, message);
-      dispatch(newNotificationAction(notification));
-      setTimeout(
-        () => dispatch(removeNotification(notification) as RemoveNotificationAction),
-        REMOVE_INFO_NOTIFICATION_AFTER_MS);
+//       // const message = `uploaded '${file.name}'. ${uploadsRemaining} uploads left.`;
+//       // const notification = new GalleryNotification(NotificationLevel.INFO, message);
+//       // dispatch(newNotificationAction(notification));
+//       // setTimeout(
+//       //   () => dispatch(removeNotification(notification) as RemoveNotificationAction),
+//       //   REMOVE_INFO_NOTIFICATION_AFTER_MS);
 
-      if (onSuccessCb) {
-        onSuccessCb(pictureMetadata);
-      }
-    };
+//       // if (onSuccessCb) {
+//       //   onSuccessCb(pictureMetadata);
+//       // }
+//     // };
 
-    const onFailure = (response: Response, uploadsRemaining: number) => {
-      if (response.status === 409) {
-        const message = `'${file.name}' already uploaded. ${uploadsRemaining} uploads left.`;
-        const notification = new GalleryNotification(NotificationLevel.INFO, message);
-        dispatch(newNotificationAction(notification));
-        setTimeout(
-          () => dispatch(removeNotification(notification) as RemoveNotificationAction),
-          REMOVE_INFO_NOTIFICATION_AFTER_MS);
-        return;
-      }
+//     // const onFailure = (response: Response, uploadsRemaining: number) => {
+//     //   if (response.status === 409) {
+//     //     const message = `'${file.name}' already uploaded. ${uploadsRemaining} uploads left.`;
+//     //     const notification = new GalleryNotification(NotificationLevel.INFO, message);
+//     //     dispatch(newNotificationAction(notification));
+//     //     setTimeout(
+//     //       () => dispatch(removeNotification(notification) as RemoveNotificationAction),
+//     //       REMOVE_INFO_NOTIFICATION_AFTER_MS);
+//     //     return;
+//     //   }
 
-      dispatch(newNotificationAction(new GalleryNotification(
-        NotificationLevel.ERROR,
-        `error uploading '${file.name}': ${response.statusText}`)));
-    };
+//     //   dispatch(newNotificationAction(new GalleryNotification(
+//     //     NotificationLevel.ERROR,
+//     //     `error uploading '${file.name}': ${response.statusText}`)));
+//     // };
 
-    dispatch({
-      type: FilesActionTypes.UPLOAD_FILE,
-      file: {
-        file,
-        onSuccess,
-        onFailure,
-      }
-    } as UploadFileAction);
-  };
-}
+//     dispatch({
+//       type: FilesActionTypes.UPLOAD_FILE,
+//       file: {
+//         file,
+//       }
+//     } as UploadFileAction);
+//   };
+// }

@@ -1,14 +1,13 @@
 import * as React from 'react';
-import { PictureMetadata } from '../domain/PictureMetadata';
 import AllPicturesGallery from './AllPicturesGallery';
 import { Observable } from '../util/Observable';
 import { Route, Redirect, RouteComponentProps, Switch } from 'react-router';
 import PictureModal from './PictureModal';
-import { connect, Dispatch } from 'react-redux';
+import { connect } from 'react-redux';
 import { State } from '../reducers';
 import { fetchPicturesMetadata } from '../actions';
 import { HashRouter } from 'react-router-dom';
-import { Action } from 'redux';
+import { Action, Dispatch } from 'redux';
 import MediaserverTopBar from './MediaserverTopBar';
 import { fetchCollections } from '../collectionsActions';
 import CollectionsComponent from './collections/CollectionsListingComponent';
@@ -18,6 +17,7 @@ import NotFoundComponent from './NotFoundComponent';
 import NotificationBarComponent from './NotificationBarComponent';
 import EditCustomCollectionComponent from './collections/EditCustomCollectionComponent';
 import UploadComponent from './UploadComponent';
+import { MediaFile } from '../domain/MediaFile';
 
 type CollectionViewRouteParams = {
   identifier: string;
@@ -36,15 +36,15 @@ type AllPicturesPictureModalRouteParams = {
 
 type MediaServerProps = {
   isReady: boolean,
-  picturesMetadatas: PictureMetadata[];
+  picturesMetadatas: MediaFile[];
   scrollObservable: Observable<{}>;
-  picturesMetadatasMap: Map<string, PictureMetadata>;
+  picturesMetadatasMap: Map<string, MediaFile>;
   customCollections: CustomCollection[];
   dispatch: Dispatch<Action>;
 };
 
 function findCollectionFromTypeAndName(
-  picturesMetadatas: PictureMetadata[],
+  picturesMetadatas: MediaFile[],
   collectionType: CollectionType,
   collectionIdentifier: string,
   customCollections: CustomCollection[]) {
@@ -88,8 +88,9 @@ function collectionIdentifierAndTypeFromRoute(routeInfo: RouteComponentProps<Col
 
 class MediaServer extends React.Component<MediaServerProps> {
   componentWillMount() {
-    this.props.dispatch(fetchPicturesMetadata());
-    this.props.dispatch(fetchCollections());
+    const { dispatch } = this.props;
+    fetchPicturesMetadata()(dispatch);
+    fetchCollections()(dispatch);
   }
 
   renderCollectionView = (routeInfo: RouteComponentProps<CollectionViewRouteParams>) => {
@@ -179,13 +180,9 @@ class MediaServer extends React.Component<MediaServerProps> {
     return <PictureModal {...props}/>;
   }
 
-  renderCollectionsComponent = () => {
-    return <CollectionsComponent />;
-  }
+  renderCollectionsComponent = () =>  <CollectionsComponent />;
 
-  renderAllPicturesGallery = () => {
-    return <AllPicturesGallery />;
-  }
+  renderAllPicturesGallery = () =>  <AllPicturesGallery />;
 
   render() {
     if (!this.props.isReady) {
@@ -251,4 +248,16 @@ function mapStateToProps(state: State) {
   };
 }
 
-export default connect(mapStateToProps, null, null, {pure: false})(MediaServer);
+export default connect(
+  mapStateToProps,
+  dispatch => ({dispatch}),
+)(MediaServer);
+
+/*
+isReady: boolean,
+picturesMetadatas: MediaFile[];
+scrollObservable: Observable<{}>;
+picturesMetadatasMap: Map<string, MediaFile>;
+customCollections: CustomCollection[];
+dispatch: Dispatch<Action>;
+*/

@@ -2,12 +2,14 @@ import * as React from 'react';
 import { State } from '../../reducers';
 import { connect } from 'react-redux';
 import { extractFolderCollectionsFromPicturesMetadatas, CustomCollection } from '../../domain/Collection';
-import { PictureMetadata } from '../../domain/PictureMetadata';
 import CollectionGroupListingComponent from './CollectionGroupListingComponent';
+import { MediaFile } from '../../domain/MediaFile';
+// import { compose } from 'redux';
+// import { withRouter } from 'react-router';
 
 type Props = {
   collections: CustomCollection[];
-  picturesMetadatas: PictureMetadata[];
+  picturesMetadatas: MediaFile[];
 };
 
 const styles = {
@@ -22,8 +24,8 @@ class CollectionsComponent extends React.Component<Props> {
       title: 'By Folder',
       collections: extractFolderCollectionsFromPicturesMetadatas(this.props.picturesMetadatas),
     };
-    const comp = <CollectionGroupListingComponent {...props} />;
-    return comp;
+
+    return <CollectionGroupListingComponent {...props} />;
   }
   renderCustomCollections() {
     const props = {

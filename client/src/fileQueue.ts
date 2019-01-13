@@ -2,11 +2,13 @@ import { SERVER_BASE_URL } from './configs';
 import { MediaFile } from './domain/MediaFile';
 import { MediaFileJSON, fromJSON } from './domain/deserialise';
 
-export type QueuedFile = {
+type QueuedFile = {
   file: File,
-  onSuccess: (pictureMetadata: MediaFile, remainingLeftInQueue: number) => void,
-  onFailure: (response: Response, remainingLeftInQueue: number) => void;
+  onSuccess: (mediaFile: MediaFile) => void,
+  onFailure: (error: Error) => void;
 };
+
+export type MediaFileUploadResponse = {mediaFile: MediaFile} | {error: Error};
 
 export class FileQueue {
   private queue: QueuedFile[] = [];
@@ -14,37 +16,51 @@ export class FileQueue {
 
   constructor(private readonly maxConcurrentUploads: number) {}
 
-  public uploadOrQueue(queuedFile: QueuedFile) {
+  public async uploadOrQueue(file: File): Promise<MediaFile> {
+    const queuedFile = {
+      file,
+    } as QueuedFile;
+
+    const promise = new Promise<MediaFile>((resolve, reject) => {
+      // queuedFile.onSuccess = (mediaFile) => resolve({mediaFile});
+      queuedFile.onSuccess = resolve;
+      queuedFile.onFailure = (error) => reject(error);
+    });
+    
     if (this.currentUploads === this.maxConcurrentUploads) {
       // no spare slots, so queue it
       this.queue.push(queuedFile);
-      return;
+    } else {
+      // upload directly
+      this.upload(queuedFile);
     }
 
-    this.upload(queuedFile);
+    return promise;
   }
 
-  private upload(queuedFile: QueuedFile) {
+  public getQtyUploadsRemaining() {
+    return this.currentUploads + this.queue.length;
+  }
+
+  private async upload(queuedFile: QueuedFile) {
     this.currentUploads++;
     const formData = new FormData();
     formData.append('file', queuedFile.file);
-    fetch(`${SERVER_BASE_URL}/api/files/`, {
-        method: 'POST',
-        body: formData,
-      })
-      .then(response => {
-        this.onUploadFinished();
-        const uploadsRemaining = this.currentUploads + this.queue.length;
+    const response = await fetch(`${SERVER_BASE_URL}/api/files/`, {
+      method: 'POST',
+      body: formData,
+    });
+    
+    this.onUploadFinished();
 
-        if (!response.ok) {
-          queuedFile.onFailure(response, uploadsRemaining);
-          return;
-        }
+    if (!response.ok) {
+      queuedFile.onFailure(new Error(response.statusText));
+      return;
+    }
 
-        response.json().then((pictureMetadata: MediaFileJSON) => {
-          queuedFile.onSuccess(fromJSON(pictureMetadata), uploadsRemaining);
-        });
-      });
+    response.json().then((mediaFileJSON: MediaFileJSON) => {
+      queuedFile.onSuccess(fromJSON(mediaFileJSON));
+    });
   }
 
   private onUploadFinished() {
