@@ -144,7 +144,7 @@ class StatelessGallery extends React.Component<StatelessGalleryProps> {
         mediaFile,
       };
 
-      const linkUrl = `/${mediaFileUrlBase}/${mediaFile.hashValue}`;
+      const linkUrl = `${mediaFileUrlBase}/${mediaFile.hashValue}`;
 
       let innerHtml = <Thumbnail {...thumbnailProps} />;
       if (mediaFileUrlBase) {
