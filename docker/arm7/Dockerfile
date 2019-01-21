@@ -18,4 +18,4 @@ RUN mkdir -p /home/mediaserver/cache /home/mediaserver/data /home/mediaserver/me
 # copy this to the build folder and add the binary there
 
 # ENTRYPOINT ["ls", "-l", "/opt"]
-ENTRYPOINT ["/opt/mediaserver", "/home/mediaserver/data", "--addr=:9050", "--cache-dir=/home/mediaserver/cache", "--metadata-dir=/home/mediaserver/metadata"]
+ENTRYPOINT ["/opt/mediaserver", "/home/mediaserver/data", "--addr=:9050", "--cache-dir=/home/mediaserver/cache", "--metadata-dir=/home/mediaserver/metadata", "--profile-dir=/home/mediaserver"]

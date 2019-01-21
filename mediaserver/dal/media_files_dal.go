@@ -1,10 +1,9 @@
 package dal
 
 import (
-	"bytes"
 	"database/sql"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"mediaserverapp/mediaserver/dal/diskcache"
 	"mediaserverapp/mediaserver/dal/diskstorage"
@@ -17,6 +16,7 @@ import (
 	"sync"
 
 	"github.com/jamesrr39/goutil/fswalker"
+	"github.com/jamesrr39/goutil/profile"
 )
 
 type MediaFilesDAL struct {
@@ -108,32 +108,50 @@ func (dal *MediaFilesDAL) processVideoFile(tx *sql.Tx, path string, fileInfo os.
 	return videoFileMetadata, nil
 }
 
-func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string) (*domain.PictureMetadata, error) {
+func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string, profileRun *profile.Run) (*domain.PictureMetadata, error) {
+	var err error
+	var file *os.File
 
-	fileBytes, err := ioutil.ReadFile(path)
+	profileRun.Measure("open file", func() {
+		file, err = os.Open(path)
+	})
 	if nil != err {
 		return nil, err
 	}
 
 	relativePath := strings.TrimPrefix(path, dal.picturesBasePath)
 
-	// look from DB cache
-	hash, err := domain.NewHash(bytes.NewBuffer(fileBytes))
+	var hash domain.HashValue
+	profileRun.Measure("calculate file hash", func() {
+		hash, err = domain.NewHash(file)
+	})
 	if nil != err {
 		return nil, err
 	}
 
-	pictureMetadata, err := dal.dbDAL.GetPictureMetadata(tx, hash, relativePath)
+	_, err = file.Seek(0, io.SeekStart)
+	if nil != err {
+		return nil, err
+	}
+
+	var pictureMetadata *domain.PictureMetadata
+	profileRun.Measure("get metadata from db", func() {
+		pictureMetadata, err = dal.dbDAL.GetPictureMetadata(tx, hash, relativePath)
+	})
 	if nil != err {
 		if err != diskstorage.ErrNotFound {
 			return nil, fmt.Errorf("unexpected error getting picture metadata from database for relative path '%s': '%s'", relativePath, err)
 		}
-		pictureMetadata, _, err = domain.NewPictureMetadataAndPictureFromBytes(fileBytes, relativePath)
+		profileRun.Measure("read picture metadata and picture from bytes", func() {
+			pictureMetadata, _, err = domain.NewPictureMetadataAndPictureFromBytes(file, relativePath, hash)
+		})
 		if nil != err {
 			return nil, err
 		}
 
-		err = dal.dbDAL.CreatePictureMetadata(tx, pictureMetadata)
+		profileRun.Measure("write picture metadata", func() {
+			err = dal.dbDAL.CreatePictureMetadata(tx, pictureMetadata)
+		})
 		if nil != err {
 			return nil, fmt.Errorf("unexpected error setting picture metadata to database for relative file path '%s': '%s'", relativePath, err)
 		}
@@ -142,7 +160,7 @@ func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string) (*domain.P
 	return pictureMetadata, nil
 }
 
-func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx) error {
+func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx, profileRun *profile.Run) error {
 	var mediaFiles []domain.MediaFile
 
 	walkFunc := func(path string, fileinfo os.FileInfo, err error) error {
@@ -159,17 +177,23 @@ func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx) error {
 		fileExtensionLower := strings.ToLower(filepath.Ext(path))
 		switch fileExtensionLower {
 		case ".jpg", ".jpeg", ".png":
-			mediaFile, err = dal.processPictureFile(tx, path)
+			profileRun.Measure("process picture file", func() {
+				mediaFile, err = dal.processPictureFile(tx, path, profileRun)
+			})
 			if err != nil {
 				return err
 			}
 		case ".mp4":
-			mediaFile, err = dal.processVideoFile(tx, path, fileinfo)
+			profileRun.Measure("process video file", func() {
+				mediaFile, err = dal.processVideoFile(tx, path, fileinfo)
+			})
 			if err != nil {
 				return err
 			}
 		case ".fit":
-			mediaFile, err = dal.processFitFile(tx, path, fileinfo)
+			profileRun.Measure("process fit file", func() {
+				mediaFile, err = dal.processFitFile(tx, path, fileinfo)
+			})
 			if err != nil {
 				return err
 			}

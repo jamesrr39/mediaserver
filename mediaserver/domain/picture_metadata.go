@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"bytes"
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
@@ -48,18 +47,18 @@ func NewPictureMetadata(hashValue HashValue, relativePath string, fileSizeBytes 
 	return &PictureMetadata{MediaFileInfo{relativePath, hashValue, MediaFileTypePicture, fileSizeBytes}, exifData, rawSize, format}
 }
 
-func NewPictureMetadataAndPictureFromBytes(fileBytes []byte, relativePath string) (*PictureMetadata, image.Image, error) {
-	hash, err := NewHash(bytes.NewBuffer(fileBytes))
-	if nil != err {
-		return nil, nil, err
-	}
-
-	picture, format, err := image.Decode(bytes.NewBuffer(fileBytes))
+func NewPictureMetadataAndPictureFromBytes(file io.ReadSeeker, relativePath string, hash HashValue) (*PictureMetadata, image.Image, error) {
+	picture, format, err := image.Decode(file)
 	if nil != err {
 		return nil, nil, fmt.Errorf("couldn't decode image. Error: %s", err)
 	}
 
-	exifData, err := DecodeExifFromFile(bytes.NewBuffer(fileBytes))
+	_, err = file.Seek(0, io.SeekStart)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	exifData, err := DecodeExifFromFile(file)
 	if nil != err {
 		log.Printf("not able to read metadata (maybe there is none). Error: %s\n", err)
 	}
@@ -73,7 +72,16 @@ func NewPictureMetadataAndPictureFromBytes(fileBytes []byte, relativePath string
 		}
 	}
 
-	return NewPictureMetadata(hash, relativePath, int64(len(fileBytes)), exifData, RawSizeFromImage(picture), format), picture, nil
+	_, err = file.Seek(0, io.SeekStart)
+	if err != nil {
+		return nil, nil, err
+	}
+	fileLen, err := file.Seek(0, io.SeekEnd)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return NewPictureMetadata(hash, relativePath, fileLen, exifData, RawSizeFromImage(picture), format), picture, nil
 }
 
 func (pictureMetadata *PictureMetadata) String() string {

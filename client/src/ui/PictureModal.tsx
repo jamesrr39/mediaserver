@@ -319,7 +319,7 @@ class PictureModal extends React.Component<Props, ComponentState> {
   }
 
   private goBack = () => {
-    window.location.hash = `#/this.props.baseUrl`;
+    window.location.hash = `#/${this.props.baseUrl}`;
   }
 
   private goToPrevious = () => {

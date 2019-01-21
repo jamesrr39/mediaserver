@@ -222,6 +222,12 @@
 			"revisionTime": "2018-06-30T19:10:31Z"
 		},
 		{
+			"checksumSHA1": "2tNea7ZJXuWNCbZ2aUP1NF9r+NI=",
+			"path": "github.com/jamesrr39/goutil/profile",
+			"revision": "92c0a3f766a18996e29fbf69770a6d8940d728f2",
+			"revisionTime": "2019-01-21T22:25:43Z"
+		},
+		{
 			"checksumSHA1": "TPuL2HiK459EhwUY29Ecb4MGC3I=",
 			"path": "github.com/jamesrr39/goutil/userextra",
 			"revision": "2d7dc6d2de328f77599883bcae23d93928f8262d",
@@ -295,6 +301,24 @@
 			"path": "github.com/stretchr/testify/require",
 			"revision": "2aa2c176b9dab406a6970f6a55f513e8a8c8b18f",
 			"revisionTime": "2017-08-14T20:04:35Z"
+		},
+		{
+			"checksumSHA1": "KwOHzyfUMmJPh3Ll5GwQankyomU=",
+			"path": "github.com/tormoder/fit",
+			"revision": "a0651569cd51b23bca8912620a75abeb016d96e4",
+			"revisionTime": "2017-12-11T14:11:31Z"
+		},
+		{
+			"checksumSHA1": "BM70XiU1kp+wI904DtFoK2uWSZ0=",
+			"path": "github.com/tormoder/fit/dyncrc16",
+			"revision": "a0651569cd51b23bca8912620a75abeb016d96e4",
+			"revisionTime": "2017-12-11T14:11:31Z"
+		},
+		{
+			"checksumSHA1": "5iSjsTDHhMb1XwTjrVPDARNiBsE=",
+			"path": "github.com/tormoder/fit/internal/types",
+			"revision": "a0651569cd51b23bca8912620a75abeb016d96e4",
+			"revisionTime": "2017-12-11T14:11:31Z"
 		},
 		{
 			"checksumSHA1": "c/9FVd7+GBLSlhZ8ag75kjFhkFg=",

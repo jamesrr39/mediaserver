@@ -1,11 +1,15 @@
 package main
 
 import (
+	"fmt"
+	"io/ioutil"
 	"log"
 	"mediaserverapp/mediaserver"
 	"os"
 	"path/filepath"
+	"time"
 
+	"github.com/jamesrr39/goutil/profile"
 	"github.com/jamesrr39/goutil/userextra"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
@@ -20,6 +24,7 @@ var (
 	metadataDir                   = app.Flag("metadata-dir", "Directory to store application data").Default("~/.local/share/github.com/jamesrr39/mediaserver").String()
 	maxConcurrentResizes          = app.Flag("max-concurrent-resizes", "Maximum amount of concurrent resizes. Turn this down on devices with less memory. Resizes ordered after the limit will be queued.").Default("20").Uint()
 	maxConcurrentVideoConversions = app.Flag("max-concurrent-video-conversions", "Maximum amount of concurrent video conversions. Turn this down on devices with less memory. Conversions ordered after the limit will be queued.").Default("1").Uint()
+	profileDir                    = app.Flag("profile-dir", "folder to create a profile file inside").String()
 )
 
 func main() {
@@ -32,13 +37,29 @@ func main() {
 
 	expandedCacheDir, err := userextra.ExpandUser(*cacheDir)
 	if nil != err {
-		log.Fatalf("Couldn't expand the cache directory path from '%s'. Error: %s\n", *cacheDir, err)
+		log.Fatalf("Couldn't expand the cache directory path from %q. Error: %q\n", *cacheDir, err)
 	}
 
 	expandedMetadataDir, err := userextra.ExpandUser(*metadataDir)
 	if nil != err {
-		log.Fatalf("Couldn't expand the data directory path from '%s'. Error: %s\n", *metadataDir, err)
+		log.Fatalf("Couldn't expand the data directory path from %q. Error: %q\n", *metadataDir, err)
 	}
+
+	profileWriter := ioutil.Discard
+	if *profileDir != "" {
+		expandedProfileDir, err := userextra.ExpandUser(*profileDir)
+		if err != nil {
+			log.Fatalf("Couldn't expand the profile directory path from %q. Error: %q\n", *profileDir, err)
+		}
+
+		profileFilePath := filepath.Join(expandedProfileDir, fmt.Sprintf("profile_%s.txt", time.Now().Format("2006-01-02_15_04_05")))
+		profileWriter, err = os.Create(profileFilePath)
+		if err != nil {
+			log.Fatalf("Couldn't create profile writer file at %q. Error: %q\n", profileFilePath, err)
+		}
+	}
+
+	profiler := profile.NewProfiler(profileWriter)
 
 	mediaServer, err := mediaserver.NewMediaServerAndScan(
 		fullpath,
@@ -46,6 +67,7 @@ func main() {
 		expandedMetadataDir,
 		*maxConcurrentResizes,
 		*maxConcurrentVideoConversions,
+		profiler,
 	)
 	if nil != err {
 		log.Fatalf("couldn't create a new media server and scan the pictures directory. Error: %s", err)

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"image"
 	"io"
-	"io/ioutil"
 	"log"
 	"mediaserverapp/mediaserver/dal/diskcache"
 	"mediaserverapp/mediaserver/domain"
@@ -71,12 +70,7 @@ func (dal *PicturesDAL) GetPicture(pictureMetadata *domain.PictureMetadata) (ima
 	}
 	defer file.Close()
 
-	fileBytes, err := ioutil.ReadAll(file)
-	if nil != err {
-		return nil, "", err
-	}
-
-	_, picture, err := domain.NewPictureMetadataAndPictureFromBytes(fileBytes, pictureMetadata.RelativePath)
+	_, picture, err := domain.NewPictureMetadataAndPictureFromBytes(file, pictureMetadata.RelativePath, pictureMetadata.HashValue)
 	if nil != err {
 		return nil, "", err
 	}

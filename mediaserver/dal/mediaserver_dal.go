@@ -1,10 +1,8 @@
 package dal
 
 import (
-	"bytes"
 	"errors"
 	"io"
-	"io/ioutil"
 	"log"
 	"mediaserverapp/mediaserver/dal/diskcache"
 	"mediaserverapp/mediaserver/dal/diskstorage"
@@ -17,6 +15,7 @@ import (
 	"time"
 
 	"github.com/jamesrr39/goutil/dirtraversal"
+	"github.com/jamesrr39/goutil/profile"
 )
 
 var (
@@ -68,15 +67,10 @@ func NewMediaServerDAL(picturesBasePath, cachesBasePath, dataDir string, maxConc
 var ErrContentTypeNotSupported = errors.New("content type not supported")
 
 // Create adds a new picture to the collection
-func (dal *MediaServerDAL) Create(file io.Reader, filename, contentType string) (domain.MediaFile, error) {
+func (dal *MediaServerDAL) Create(file io.ReadSeeker, filename, contentType string, profileRun *profile.Run) (domain.MediaFile, error) {
 
 	if dirtraversal.IsTryingToTraverseUp(filename) {
 		return nil, ErrIllegalPathTraversingUp
-	}
-
-	fileBytes, err := ioutil.ReadAll(file)
-	if nil != err {
-		return nil, err
 	}
 
 	relativeFolderPath := filepath.Join("uploads", strings.Split(time.Now().Format(time.RFC3339), "T")[0])
@@ -85,26 +79,38 @@ func (dal *MediaServerDAL) Create(file io.Reader, filename, contentType string) 
 		return nil, err
 	}
 
+	hashValue, err := domain.NewHash(file)
+	if nil != err {
+		return nil, err
+	}
+
+	fileLen, err := file.Seek(0, io.SeekStart)
+	if err != nil {
+		return nil, err
+	}
+
 	doAtEnd := func() error { return nil }
 	var mediaFile domain.MediaFile
 	switch contentType {
 	case "image/jpg", "image/jpeg", "image/png":
-		pictureMetadata, _, err := domain.NewPictureMetadataAndPictureFromBytes(fileBytes, relativePath)
+		var pictureMetadata *domain.PictureMetadata
+		profileRun.Measure("generate picture metadata from bytes", func() {
+			pictureMetadata, _, err = domain.NewPictureMetadataAndPictureFromBytes(file, relativePath, hashValue)
+		})
 		if nil != err {
 			return nil, err
 		}
 		mediaFile = pictureMetadata
 
 		doAtEnd = func() error {
-			return dal.PicturesDAL.EnsureAllThumbnailsForPictures([]*domain.PictureMetadata{pictureMetadata})
+			var err error
+			profileRun.Measure("generate thumbnails for picture", func() {
+				err = dal.PicturesDAL.EnsureAllThumbnailsForPictures([]*domain.PictureMetadata{pictureMetadata})
+			})
+			return err
 		}
 	case "video/mp4":
-		hashValue, err := domain.NewHash(bytes.NewBuffer(fileBytes))
-		if nil != err {
-			return nil, err
-		}
-
-		videoFile := domain.NewVideoFileMetadata(hashValue, relativePath, int64(len(fileBytes)))
+		videoFile := domain.NewVideoFileMetadata(hashValue, relativePath, fileLen)
 		mediaFile = videoFile
 
 		doAtEnd = func() error {
@@ -112,14 +118,9 @@ func (dal *MediaServerDAL) Create(file io.Reader, filename, contentType string) 
 		}
 	case "application/octet-stream":
 		// try parsing fit file
-		hashValue, err := domain.NewHash(bytes.NewBuffer(fileBytes))
-		if err != nil {
-			return nil, err
-		}
+		mediaFileInfo := domain.NewMediaFileInfo(relativePath, hashValue, domain.MediaFileTypeFitTrack, fileLen)
 
-		mediaFileInfo := domain.NewMediaFileInfo(relativePath, hashValue, domain.MediaFileTypeFitTrack, int64(len(fileBytes)))
-
-		mediaFile, err = domain.NewFitFileSummaryFromReader(mediaFileInfo, bytes.NewReader(fileBytes))
+		mediaFile, err = domain.NewFitFileSummaryFromReader(mediaFileInfo, file)
 		if err != nil {
 			return nil, err
 		}
@@ -140,7 +141,17 @@ func (dal *MediaServerDAL) Create(file io.Reader, filename, contentType string) 
 
 	log.Println("writing to " + absoluteFilePath)
 
-	err = ioutil.WriteFile(absoluteFilePath, fileBytes, 0644)
+	newFile, err := os.Create(absoluteFilePath)
+	if nil != err {
+		return nil, err
+	}
+
+	_, err = file.Seek(0, io.SeekStart)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = io.Copy(newFile, file)
 	if nil != err {
 		return nil, err
 	}

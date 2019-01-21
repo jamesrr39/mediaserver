@@ -1,8 +1,8 @@
 package mediaserver
 
 import (
-	//	"log"
-
+	"database/sql"
+	"fmt"
 	"mediaserverapp/mediaserver/dal"
 	"mediaserverapp/mediaserver/dal/diskstorage/mediaserverdb"
 	"mediaserverapp/mediaserver/domain"
@@ -16,6 +16,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/jamesrr39/goutil/httpextra"
 	"github.com/jamesrr39/goutil/logger"
+	"github.com/jamesrr39/goutil/profile" //	"log"
 )
 
 // MediaServer is a server used for showing pieces of media
@@ -31,13 +32,30 @@ type MediaServer struct {
 }
 
 // NewMediaServerAndScan creates a new MediaServer and builds a cache of pictures by scanning the rootpath
-func NewMediaServerAndScan(rootpath, cachesDir, dataDir string, maxConcurrentResizes, maxConcurrentVideoConversions uint) (*MediaServer, error) {
-	mediaServerDAL, err := dal.NewMediaServerDAL(rootpath, cachesDir, dataDir, maxConcurrentResizes, maxConcurrentVideoConversions)
+func NewMediaServerAndScan(rootpath, cachesDir, dataDir string, maxConcurrentResizes, maxConcurrentVideoConversions uint, profiler *profile.Profiler) (*MediaServer, error) {
+	var err error
+
+	profileRun := profiler.NewRun("NewMediaServerAndScan")
+	defer func() {
+		message := "Successful"
+		if err != nil {
+			message = fmt.Sprintf("failed. Error: %q", err)
+		}
+		profileRun.Record(message)
+	}()
+
+	var mediaServerDAL *dal.MediaServerDAL
+	profileRun.Measure("new MediaServerDAL", func() {
+		mediaServerDAL, err = dal.NewMediaServerDAL(rootpath, cachesDir, dataDir, maxConcurrentResizes, maxConcurrentVideoConversions)
+	})
 	if nil != err {
 		return nil, err
 	}
 
-	dbConn, err := mediaserverdb.NewDBConn(filepath.Join(dataDir, "mediaserver.db"), logger.NewLogger(os.Stdout, logger.LogLevelInfo))
+	var dbConn *mediaserverdb.DBConn
+	profileRun.Measure("new DB Conn", func() {
+		dbConn, err = mediaserverdb.NewDBConn(filepath.Join(dataDir, "mediaserver.db"), logger.NewLogger(os.Stdout, logger.LogLevelInfo))
+	})
 	if nil != err {
 		return nil, err
 	}
@@ -46,27 +64,36 @@ func NewMediaServerAndScan(rootpath, cachesDir, dataDir string, maxConcurrentRes
 		Rootpath:                rootpath,
 		mediaServerDAL:          mediaServerDAL,
 		picturesService:         pictureswebservice.NewPicturesService(mediaServerDAL),
-		picturesMetadataService: pictureswebservice.NewMediaFilesService(dbConn, mediaServerDAL),
+		picturesMetadataService: pictureswebservice.NewMediaFilesService(dbConn, mediaServerDAL, profiler),
 		videosWebService:        pictureswebservice.NewVideoWebService(mediaServerDAL.VideosDAL, mediaServerDAL.MediaFilesDAL),
 		collectionsService:      pictureswebservice.NewCollectionsWebService(dbConn, mediaServerDAL.CollectionsDAL),
 		tracksService:           pictureswebservice.NewTracksWebService(mediaServerDAL.TracksDAL, mediaServerDAL.MediaFilesDAL),
 	}
 
-	tx, err := dbConn.Begin()
+	var tx *sql.Tx
+	profileRun.Measure("begin tx", func() {
+		tx, err = dbConn.Begin()
+	})
 	if nil != err {
 		return nil, err
 	}
 	defer mediaserverdb.CommitOrRollback(tx)
 
-	err = mediaServer.mediaServerDAL.MediaFilesDAL.UpdatePicturesCache(tx)
+	profileRun.Measure("update pictures cache", func() {
+		err = mediaServer.mediaServerDAL.MediaFilesDAL.UpdatePicturesCache(tx, profileRun)
+	})
 	if nil != err {
 		return nil, err
 	}
 
-	// ensure thumbnails
-	mediaFiles := mediaServer.mediaServerDAL.MediaFilesDAL.GetAll()
+	var mediaFiles []domain.MediaFile
+	profileRun.Measure("get all media files", func() {
+		mediaFiles = mediaServer.mediaServerDAL.MediaFilesDAL.GetAll()
+	})
 
-	err = mediaServer.mediaServerDAL.PicturesDAL.EnsureAllThumbnailsForPictures(domain.GetPicturesMetadatasFromMediaFileList(mediaFiles))
+	profileRun.Measure("ensure thumbnails for all mediafiles", func() {
+		err = mediaServer.mediaServerDAL.PicturesDAL.EnsureAllThumbnailsForPictures(domain.GetPicturesMetadatasFromMediaFileList(mediaFiles))
+	})
 	if err != nil {
 		return nil, err
 	}

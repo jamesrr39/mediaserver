@@ -20,7 +20,7 @@ run_dev_client:
 
 run_dev_server:
 	mkdir -p ~/tmp/mediaserver/data ~/tmp/mediaserver/metadata ~/tmp/mediaserver/cache
-	go run cmd/media-server-main.go ~/tmp/mediaserver/data --metadata-dir=~/tmp/mediaserver/metadata --cache-dir=~/tmp/mediaserver/cache
+	go run cmd/media-server-main.go ~/tmp/mediaserver/data --metadata-dir=~/tmp/mediaserver/metadata --cache-dir=~/tmp/mediaserver/cache --profile-dir=~/tmp/mediaserver
 
 clean_dev_metadata:
 	rm -rf ~/tmp/mediaserver/metadata/*
@@ -50,5 +50,5 @@ build_docker_linux_arm7: build_prod_arm7
 	cp build/bin/arm7/mediaserver build/docker/arm7/bin/mediaserver
 	docker build -t jamesrr39/mediaserver_arm7:latest build/docker/arm7
 
-deploy_to_raspberry_pi: build_docker_linux_arm7
+deploy_to_raspberry_pi: test build_docker_linux_arm7
 	docker save jamesrr39/mediaserver_arm7:latest | bzip2 | ssh raspberrypi 'bunzip2 | sudo docker load'
