@@ -8,7 +8,7 @@ import { MediaFile } from '../domain/MediaFile';
 import { MediaFileType } from '../domain/MediaFileType';
 import { PictureThumbnail } from './thumbnails/PictureThumbnail';
 import { VideoThumbnail } from './thumbnails/VideoFileThumbnail';
-import { TrackThumbnail } from './thumbnails/TrackThumbnail';
+import TrackThumbnail from './thumbnails/TrackThumbnail';
 
 const WIDE_SCREEN_THUMBNAIL_HEIGHT = 200;
 const NARROW_SCREEN_THUMBNAIL_HEIGHT = 100;

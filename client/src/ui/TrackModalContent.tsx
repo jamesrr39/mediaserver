@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { FitTrack, Record, getLapsFromRecords } from '../domain/FitTrack';
 import MapComponent from './MapComponent';
-import { fetchRecordsForTrack } from '../actions/trackActions';
+import { fetchRecordsForTrack } from '../actions/mediaFileActions';
+import { connect } from 'react-redux';
 
 const styles = {
   container: {
@@ -11,13 +12,14 @@ const styles = {
 
 type Props = {
   trackSummary: FitTrack;
+  fetchRecordsForTrack: (trackSummary: FitTrack) => Promise<Record[]>
 };
 
 type State = {
   trackRecords: null|Record[];
 };
 
-export class TrackModalContent extends React.Component<Props, State> {
+class TrackModalContent extends React.Component<Props, State> {
   state = {
     trackRecords: null
   };
@@ -27,7 +29,7 @@ export class TrackModalContent extends React.Component<Props, State> {
   }
 
   fetchRecords = async () => {
-    const trackRecords = await fetchRecordsForTrack(this.props.trackSummary);
+    const trackRecords = await this.props.fetchRecordsForTrack(this.props.trackSummary);
     this.setState(state => ({
       ...state,
       trackRecords
@@ -106,3 +108,5 @@ export class TrackModalContent extends React.Component<Props, State> {
     );
   }
 }
+
+export default connect(undefined, {fetchRecordsForTrack})(TrackModalContent);

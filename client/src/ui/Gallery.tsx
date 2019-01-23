@@ -10,9 +10,9 @@ import MapComponent, { MapMarker, TrackMapData } from './MapComponent';
 import { SERVER_BASE_URL } from '../configs';
 import { MediaFile } from '../domain/MediaFile';
 import { MediaFileType } from '../domain/MediaFileType';
-import { FitTrack } from '../domain/FitTrack';
+import { FitTrack, Record } from '../domain/FitTrack';
 import { isNarrowScreen } from '../util/screen_size';
-import { fetchRecordsForTrack } from '../actions/trackActions';
+import { fetchRecordsForTrack } from '../actions/mediaFileActions';
 import { FilterComponent } from './gallery/FilterComponent';
 import { GalleryFilter } from '../domain/Filter';
 import { joinUrlFragments } from '../util/url';
@@ -23,6 +23,8 @@ export type GalleryProps = {
   mediaFileUrlBase?: string; // example: `/gallery/detail`. If undefined, no link should be added.
   onClickThumbnail?: (pictureMetadata: MediaFile) => void;
   showMap?: boolean;
+  fetchRecordsForTrack: (trackSummary: FitTrack) => Promise<Record[]>;
+  // fetchRecordsForTrack: typeof fetchRecordsForTrack,
 };
 
 const gallerySortingFunc = createCompareTimeTakenFunc(true);
@@ -260,7 +262,7 @@ class InnerGallery extends React.Component<InnerGalleryProps, GalleryState> {
   }
 
   private fetchRecords = async (trackSummary: FitTrack) => {
-    const records = await fetchRecordsForTrack(trackSummary);
+    const records = await this.props.fetchRecordsForTrack(trackSummary);
 
     const trackData = {
       trackSummary,
@@ -351,4 +353,6 @@ function mapStateToProps(state: State) {
   };
 }
 
-export default connect(mapStateToProps)(Gallery);
+export default connect(mapStateToProps, {
+  fetchRecordsForTrack
+})(Gallery);

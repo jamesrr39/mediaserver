@@ -2,13 +2,14 @@ import { combineReducers } from 'redux';
 import {
   MediaserverAction,
   FilesActionTypes,
- } from './actions';
+ } from './actions/mediaFileActions';
 import { DebouncedObservable, Observable } from './util/Observable';
 import { CustomCollection } from './domain/Collection';
 import { CollectionsAction, CollectionActions } from './collectionsActions';
 import { FileQueue } from './fileQueue';
 import { notificationsReducer, NotificationsState } from './reducers/notificationReducer';
 import { MediaFile } from './domain/MediaFile';
+import { Record } from './domain/FitTrack';
 
 const scrollObservable = new DebouncedObservable(150);
 
@@ -22,6 +23,7 @@ type MediaFilesState = {
   scrollObservable: Observable<{}>,
   mediaFilesMap: Map<string, MediaFile>,
   uploadQueue: FileQueue,
+  trackRecordsMap: Map<string, Record[]>,
 };
 
 export type State = {
@@ -37,6 +39,7 @@ const mediaFilesInitialState = {
   scrollObservable,
   mediaFilesMap: new Map<string, MediaFile>(),
   uploadQueue: new FileQueue(4),
+  trackRecordsMap: new Map<string, Record[]>(),
 };
 
 function mediaFilesReducer(
@@ -64,6 +67,11 @@ function mediaFilesReducer(
       return {
         ...state,
         mediaFiles: state.mediaFiles.concat([action.mediaFile])
+      };
+    case FilesActionTypes.TRACK_RECORDS_FETCHED_ACTION:
+      state.trackRecordsMap.set(action.fileHash, action.records);
+      return {
+        ...state,
       };
     default:
       return state;

@@ -13,7 +13,7 @@ import { isNarrowScreen } from '../util/screen_size';
 import { MediaFile } from '../domain/MediaFile';
 import { MediaFileType } from '../domain/MediaFileType';
 import Modal from './Modal';
-import { TrackModalContent } from './TrackModalContent';
+import TrackModalContent from './TrackModalContent';
 import { FitTrack } from '../domain/FitTrack';
 import { joinUrlFragments } from '../util/url';
 
@@ -319,7 +319,7 @@ class PictureModal extends React.Component<Props, ComponentState> {
   }
 
   private goBack = () => {
-    window.location.hash = `#/${this.props.baseUrl}`;
+    window.location.hash = `#${this.props.baseUrl}`;
   }
 
   private goToPrevious = () => {

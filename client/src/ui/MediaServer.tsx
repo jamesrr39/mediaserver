@@ -5,7 +5,7 @@ import { Route, Redirect, RouteComponentProps, Switch } from 'react-router';
 import PictureModal from './PictureModal';
 import { connect } from 'react-redux';
 import { State } from '../reducers';
-import { fetchPicturesMetadata } from '../actions';
+import { fetchPicturesMetadata } from '../actions/mediaFileActions';
 import { HashRouter } from 'react-router-dom';
 import { Action, Dispatch } from 'redux';
 import MediaserverTopBar from './MediaserverTopBar';
