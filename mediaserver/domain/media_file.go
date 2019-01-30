@@ -27,13 +27,3 @@ func NewMediaFileInfo(
 type MediaFile interface {
 	GetMediaFileInfo() MediaFileInfo
 }
-
-func GetPicturesMetadatasFromMediaFileList(mediaFiles []MediaFile) []*PictureMetadata {
-	var picturesMetadatas []*PictureMetadata
-	for _, mediaFile := range mediaFiles {
-		if mediaFile.GetMediaFileInfo().MediaFileType == MediaFileTypePicture {
-			picturesMetadatas = append(picturesMetadatas, mediaFile.(*PictureMetadata))
-		}
-	}
-	return picturesMetadatas
-}

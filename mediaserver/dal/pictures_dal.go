@@ -6,7 +6,6 @@ import (
 	"image"
 	"io"
 	"log"
-	"mediaserverapp/mediaserver/dal/diskcache"
 	"mediaserverapp/mediaserver/domain"
 	"os"
 	"path/filepath"
@@ -16,20 +15,20 @@ var ErrHashNotFound = errors.New("hash not found")
 
 type PicturesDAL struct {
 	picturesBasePath string
-	thumbnailsCache  *diskcache.ThumbnailsCache
+	thumbnailsDAL    *ThumbnailsDAL
 	MediaFilesDAL    *MediaFilesDAL
-	pictureResizer   *domain.PictureResizer
 }
 
-func NewPicturesDAL(picturesBasePath, cachesBasePath string, picturesMetadataDAL *MediaFilesDAL, thumbnailsCache *diskcache.ThumbnailsCache, pictureResizer *domain.PictureResizer) (*PicturesDAL, error) {
-	return &PicturesDAL{picturesBasePath, thumbnailsCache, picturesMetadataDAL, pictureResizer}, nil
+func NewPicturesDAL(
+	picturesBasePath, cachesBasePath string, picturesMetadataDAL *MediaFilesDAL, thumbnailsDAL *ThumbnailsDAL) (*PicturesDAL, error) {
+	return &PicturesDAL{picturesBasePath, thumbnailsDAL, picturesMetadataDAL}, nil
 }
 
 func (dal *PicturesDAL) GetPictureBytes(hash domain.HashValue, size domain.Size) (io.Reader, string, error) {
-	isSizeCachable := dal.thumbnailsCache.IsSizeCacheable(size)
+	isSizeCachable := dal.thumbnailsDAL.IsSizeCacheable(size)
 	if isSizeCachable {
 		// look in on-disk cache for thumbnail
-		file, pictureFormat, err := dal.thumbnailsCache.Get(hash, size)
+		file, pictureFormat, err := dal.thumbnailsDAL.Get(hash, size)
 		if nil == err && nil != file {
 			return file, pictureFormat, nil
 		}
@@ -50,7 +49,7 @@ func (dal *PicturesDAL) GetPictureBytes(hash domain.HashValue, size domain.Size)
 		return nil, "", err
 	}
 
-	picture = dal.pictureResizer.ResizePicture(picture, size)
+	picture = domain.ResizePicture(picture, size)
 
 	pictureBytes, err := domain.EncodePicture(picture, pictureFormat)
 	if err != nil {
@@ -58,7 +57,7 @@ func (dal *PicturesDAL) GetPictureBytes(hash domain.HashValue, size domain.Size)
 	}
 
 	if isSizeCachable {
-		go dal.saveThumbnailToCache(hash, size, pictureFormat, pictureBytes)
+		go dal.thumbnailsDAL.save(hash, size, pictureFormat, pictureBytes)
 	}
 	return bytes.NewBuffer(pictureBytes), pictureFormat, nil
 }
@@ -78,20 +77,20 @@ func (dal *PicturesDAL) GetPicture(pictureMetadata *domain.PictureMetadata) (ima
 	return picture, pictureMetadata.Format, nil
 }
 
-func (dal *PicturesDAL) EnsureAllThumbnailsForPictures(pictureMetadatas []*domain.PictureMetadata) error {
-	for _, pictureMetadata := range pictureMetadatas {
-		err := dal.thumbnailsCache.EnsureAllThumbnailsForPicture(pictureMetadata, dal.GetPicture)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
+// func (dal *PicturesDAL) QueueThumbnailCreation(pictureMetadatas []*domain.PictureMetadata) error {
+// 	for _, pictureMetadata := range pictureMetadatas {
+// 		err := dal.thumbnailsDAL.EnsureAllThumbnailsForPicture(pictureMetadata, dal.GetPicture)
+// 		if err != nil {
+// 			return err
+// 		}
+// 	}
+// 	return nil
+// }
 
-func (dal *PicturesDAL) saveThumbnailToCache(hash domain.HashValue, size domain.Size, pictureFormat string, gzippedThumbnailBytes []byte) {
-	log.Printf("saving %s with mimetype '%s'\n", hash, pictureFormat)
-	err := dal.thumbnailsCache.Save(hash, size, pictureFormat, gzippedThumbnailBytes)
-	if nil != err {
-		log.Printf("ERROR writing thumbnail to on-disk cache for hash '%s'. Error: '%s'\n", hash, err)
-	}
-}
+// func (dal *PicturesDAL) saveThumbnailToCache(hash domain.HashValue, size domain.Size, pictureFormat string, gzippedThumbnailBytes []byte) {
+// 	log.Printf("saving %s with mimetype '%s'\n", hash, pictureFormat)
+// 	err := dal.thumbnailsDAL.save(hash, size, pictureFormat, gzippedThumbnailBytes)
+// 	if nil != err {
+// 		log.Printf("ERROR writing thumbnail to on-disk cache for hash '%s'. Error: '%s'\n", hash, err)
+// 	}
+// }

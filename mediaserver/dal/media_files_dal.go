@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"mediaserverapp/mediaserver/dal/diskcache"
 	"mediaserverapp/mediaserver/dal/diskstorage"
 	"mediaserverapp/mediaserver/dal/picturesmetadatacache"
 	"mediaserverapp/mediaserver/dal/videodal"
@@ -23,12 +22,12 @@ type MediaFilesDAL struct {
 	picturesBasePath string
 	cache            *picturesmetadatacache.MediaFilesCache
 	dbDAL            *diskstorage.PicturesMetadataRepository // FIXME rename
-	thumbnailsCache  *diskcache.ThumbnailsCache
+	thumbnailsDAL    *ThumbnailsDAL
 	videosDAL        videodal.VideoDAL
 }
 
-func NewMediaFilesDAL(picturesBasePath string, thumbnailsCache *diskcache.ThumbnailsCache, videosDAL videodal.VideoDAL) *MediaFilesDAL {
-	return &MediaFilesDAL{picturesBasePath, picturesmetadatacache.NewMediaFilesCache(), diskstorage.NewPicturesMetadataRepository(), thumbnailsCache, videosDAL}
+func NewMediaFilesDAL(picturesBasePath string, thumbnailsDAL *ThumbnailsDAL, videosDAL videodal.VideoDAL) *MediaFilesDAL {
+	return &MediaFilesDAL{picturesBasePath, picturesmetadatacache.NewMediaFilesCache(), diskstorage.NewPicturesMetadataRepository(), thumbnailsDAL, videosDAL}
 }
 
 func (dal *MediaFilesDAL) GetAll() []domain.MediaFile {

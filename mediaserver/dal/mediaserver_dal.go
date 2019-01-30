@@ -4,10 +4,10 @@ import (
 	"errors"
 	"io"
 	"log"
-	"mediaserverapp/mediaserver/dal/diskcache"
 	"mediaserverapp/mediaserver/dal/diskstorage"
 	"mediaserverapp/mediaserver/dal/videodal"
 	"mediaserverapp/mediaserver/domain"
+	"mediaserverapp/mediaserver/mediaserverjobs"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/jamesrr39/goutil/dirtraversal"
+	"github.com/jamesrr39/goutil/logger"
 	"github.com/jamesrr39/goutil/profile"
 )
 
@@ -30,21 +31,22 @@ type MediaServerDAL struct {
 	CollectionsDAL *diskstorage.CollectionsRepository
 	VideosDAL      videodal.VideoDAL
 	TracksDAL      *TracksDAL
+	ThumbnailsDAL  *ThumbnailsDAL
 }
 
-func NewMediaServerDAL(picturesBasePath, cachesBasePath, dataDir string, maxConcurrentResizes, maxConcurrentVideoConversions uint) (*MediaServerDAL, error) {
-	pictureResizer := domain.NewPictureResizer(maxConcurrentResizes)
+func NewMediaServerDAL(logger logger.Logger, picturesBasePath, cachesBasePath, dataDir string, maxConcurrentCPUJobs, maxConcurrentVideoConversions uint) (*MediaServerDAL, error) {
+	jobRunner := mediaserverjobs.NewJobRunner(logger, maxConcurrentCPUJobs)
 
-	thumbnailsCache, err := diskcache.NewThumbnailsCache(filepath.Join(cachesBasePath, "thumbnails"), pictureResizer)
+	thumbnailsDAL, err := NewThumbnailsDAL(filepath.Join(cachesBasePath, "thumbnails"), jobRunner)
 	if nil != err {
 		return nil, err
 	}
 
 	videosDAL := videodal.NewNoActionVideoDAL()
 
-	mediaFilesDAL := NewMediaFilesDAL(picturesBasePath, thumbnailsCache, videosDAL)
+	mediaFilesDAL := NewMediaFilesDAL(picturesBasePath, thumbnailsDAL, videosDAL)
 
-	picturesDAL, err := NewPicturesDAL(picturesBasePath, cachesBasePath, mediaFilesDAL, thumbnailsCache, pictureResizer)
+	picturesDAL, err := NewPicturesDAL(picturesBasePath, cachesBasePath, mediaFilesDAL, thumbnailsDAL)
 	if nil != err {
 		return nil, err
 	}
@@ -61,6 +63,7 @@ func NewMediaServerDAL(picturesBasePath, cachesBasePath, dataDir string, maxConc
 		diskstorage.NewCollectionsRepository(),
 		videosDAL,
 		NewTracksDAL(mediaFilesDAL),
+		thumbnailsDAL,
 	}, nil
 }
 
@@ -105,7 +108,10 @@ func (dal *MediaServerDAL) Create(file io.ReadSeeker, filename, contentType stri
 		doAtEnd = func() error {
 			var err error
 			profileRun.Measure("generate thumbnails for picture", func() {
-				err = dal.PicturesDAL.EnsureAllThumbnailsForPictures([]*domain.PictureMetadata{pictureMetadata})
+				err = dal.ThumbnailsDAL.EnsureAllThumbnailsForPicture(
+					pictureMetadata,
+					dal.PicturesDAL.GetPicture,
+				)
 			})
 			return err
 		}

@@ -4,6 +4,11 @@ import (
 	"strconv"
 )
 
+type Size struct {
+	Width  uint
+	Height uint
+}
+
 // widthAndHeightStringsToSize scales the maximum picture dimenions to the width and height URL Query parameters
 // it will use the smallest size
 // example: Picture 300w x 400h , widthParam "600" heightParam "900"

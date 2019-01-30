@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/jamesrr39/goutil/logger"
 	"github.com/jamesrr39/goutil/profile"
 	"github.com/jamesrr39/goutil/userextra"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
@@ -22,7 +23,7 @@ var (
 	addr                          = app.Flag("addr", addrHelp).Default("localhost:9050").String()
 	cacheDir                      = app.Flag("cache-dir", "Directory to cache data like picture thumbnails in").Default("~/.cache/github.com/jamesrr39/mediaserver").String()
 	metadataDir                   = app.Flag("metadata-dir", "Directory to store application data").Default("~/.local/share/github.com/jamesrr39/mediaserver").String()
-	maxConcurrentResizes          = app.Flag("max-concurrent-resizes", "Maximum amount of concurrent resizes. Turn this down on devices with less memory. Resizes ordered after the limit will be queued.").Default("20").Uint()
+	maxConcurrentCPUJobs          = app.Flag("max-concurrent-cpu-jobs", "Maximum amount of concurrent CPU jobs to run. Turn this down on devices with less memory. Resizes ordered after the limit will be queued.").Default("4").Uint()
 	maxConcurrentVideoConversions = app.Flag("max-concurrent-video-conversions", "Maximum amount of concurrent video conversions. Turn this down on devices with less memory. Conversions ordered after the limit will be queued.").Default("1").Uint()
 	profileDir                    = app.Flag("profile-dir", "folder to create a profile file inside").String()
 )
@@ -62,10 +63,11 @@ func main() {
 	profiler := profile.NewProfiler(profileWriter)
 
 	mediaServer, err := mediaserver.NewMediaServerAndScan(
+		logger.NewLogger(os.Stderr, logger.LogLevelInfo),
 		fullpath,
 		expandedCacheDir,
 		expandedMetadataDir,
-		*maxConcurrentResizes,
+		*maxConcurrentCPUJobs,
 		*maxConcurrentVideoConversions,
 		profiler,
 	)

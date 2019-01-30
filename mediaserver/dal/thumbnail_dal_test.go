@@ -1,4 +1,4 @@
-package diskcache
+package dal
 
 import (
 	"mediaserverapp/mediaserver/domain"
@@ -8,7 +8,7 @@ import (
 )
 
 func Test_getFilePath(t *testing.T) {
-	thumbnailsCache := &ThumbnailsCache{
+	thumbnailsCache := &ThumbnailsDAL{
 		BasePath: "a/b/c",
 	}
 

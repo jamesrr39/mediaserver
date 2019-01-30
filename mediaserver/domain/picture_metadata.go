@@ -53,7 +53,7 @@ func NewPictureMetadataAndPictureFromBytes(file io.ReadSeeker, relativePath stri
 		return nil, nil, fmt.Errorf("couldn't decode image. Error: %s", err)
 	}
 
-	_, err = file.Seek(0, io.SeekStart)
+	fileLen, err := file.Seek(0, io.SeekStart)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -70,15 +70,6 @@ func NewPictureMetadataAndPictureFromBytes(file io.ReadSeeker, relativePath stri
 		} else {
 			picture = imageprocessingutil.FlipAndRotatePictureByExif(picture, orientation)
 		}
-	}
-
-	_, err = file.Seek(0, io.SeekStart)
-	if err != nil {
-		return nil, nil, err
-	}
-	fileLen, err := file.Seek(0, io.SeekEnd)
-	if err != nil {
-		return nil, nil, err
 	}
 
 	return NewPictureMetadata(hash, relativePath, fileLen, exifData, RawSizeFromImage(picture), format), picture, nil
@@ -98,3 +89,5 @@ func NewHash(file io.Reader) (HashValue, error) {
 
 	return HashValue(hex.EncodeToString(hasher.Sum(nil))), nil
 }
+
+type GetPictureFunc func(pictureMetadata *PictureMetadata) (image.Image, string, error)
