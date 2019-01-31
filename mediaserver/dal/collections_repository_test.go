@@ -1,4 +1,4 @@
-package diskstorage
+package dal
 
 import (
 	"mediaserverapp/mediaserver/collections"
@@ -18,7 +18,7 @@ func Test_CrudCollection(t *testing.T) {
 	require.Nil(t, err)
 	defer tx.Rollback()
 
-	collectionsRepo := NewCollectionsRepository()
+	collectionsRepo := NewCollectionsDAL()
 	collection1 := &collections.Collection{
 		Name: "test 1",
 	}

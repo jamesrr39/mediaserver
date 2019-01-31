@@ -1,4 +1,4 @@
-package diskstorage
+package dal
 
 import (
 	"database/sql"
@@ -8,14 +8,14 @@ import (
 	"mediaserverapp/mediaserver/domain"
 )
 
-type CollectionsRepository struct {
+type CollectionsDAL struct {
 }
 
-func NewCollectionsRepository() *CollectionsRepository {
-	return &CollectionsRepository{}
+func NewCollectionsDAL() *CollectionsDAL {
+	return &CollectionsDAL{}
 }
 
-func (r *CollectionsRepository) GetAll(tx *sql.Tx) ([]*collections.Collection, error) {
+func (r *CollectionsDAL) GetAll(tx *sql.Tx) ([]*collections.Collection, error) {
 	result, err := tx.Query(`
 SELECT id(), name FROM collections;
     `)
@@ -51,7 +51,7 @@ SELECT id(), name FROM collections;
 	return collectionList, nil
 }
 
-func (r *CollectionsRepository) Get(tx *sql.Tx, collectionID int64) (*collections.Collection, error) {
+func (r *CollectionsDAL) Get(tx *sql.Tx, collectionID int64) (*collections.Collection, error) {
 	row := tx.QueryRow(`
 SELECT name FROM collections WHERE id() = $1;
     `, collectionID)
@@ -77,7 +77,7 @@ SELECT name FROM collections WHERE id() = $1;
 	return collection, nil
 }
 
-func (r *CollectionsRepository) Create(tx *sql.Tx, collection *collections.Collection) error {
+func (r *CollectionsDAL) Create(tx *sql.Tx, collection *collections.Collection) error {
 	if collection.ID != 0 {
 		return fmt.Errorf("expected collection ID to be 0 but was '%d'", collection.ID)
 	}
@@ -104,7 +104,7 @@ INSERT INTO collections(name) VALUES($1);
 	return nil
 }
 
-func (r *CollectionsRepository) Update(tx *sql.Tx, collection *collections.Collection) error {
+func (r *CollectionsDAL) Update(tx *sql.Tx, collection *collections.Collection) error {
 	if collection.ID == 0 {
 		return errors.New("expected collection ID to be not 0 but was 0")
 	}
@@ -132,7 +132,7 @@ UPDATE collections SET name = $1 WHERE id() = $2;
 	return nil
 }
 
-func (r *CollectionsRepository) Delete(tx *sql.Tx, collectionID int64) error {
+func (r *CollectionsDAL) Delete(tx *sql.Tx, collectionID int64) error {
 	if collectionID == 0 {
 		return errors.New("expected collection ID to be not 0 but was 0")
 	}

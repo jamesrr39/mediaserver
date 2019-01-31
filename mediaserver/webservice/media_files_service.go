@@ -83,6 +83,13 @@ func (ps *MediaFilesService) serveFileUpload(w http.ResponseWriter, r *http.Requ
 		profileRun.Record(fmt.Sprintf("successfully uploaded: %t", successfullyUploaded))
 	}()
 
+	tx, err := ps.dbConn.Begin()
+	if nil != err {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	defer mediaserverdb.CommitOrRollback(tx)
+
 	file, fileHandler, err := r.FormFile("file")
 	if nil != err {
 		http.Error(w, err.Error(), 400)
@@ -92,7 +99,7 @@ func (ps *MediaFilesService) serveFileUpload(w http.ResponseWriter, r *http.Requ
 
 	contentType := fileHandler.Header.Get("Content-Type")
 
-	mediaFile, err := ps.mediaServerDAL.Create(file, fileHandler.Filename, contentType, profileRun)
+	mediaFile, err := ps.mediaServerDAL.Create(tx, file, fileHandler.Filename, contentType, profileRun)
 	if nil != err {
 		switch err {
 		case dal.ErrFileAlreadyExists:

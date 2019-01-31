@@ -1,4 +1,4 @@
-package diskstorage
+package dal
 
 import (
 	"mediaserverapp/mediaserver/domain"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/alecthomas/assert"
+	"github.com/jamesrr39/goutil/gofs/mockfs"
 	"github.com/stretchr/testify/require"
 )
 
@@ -13,7 +14,12 @@ func Test_CrudPictureMetadataNoExif(t *testing.T) {
 	dbConn := testutil.NewTestDB(t)
 	defer dbConn.Close()
 
-	picturesMetadataRepository := NewPicturesMetadataRepository()
+	fs := mockfs.NewMockFs()
+
+	thumbnailsDAL, err := NewThumbnailsDAL(fs, "", nil)
+	require.Nil(t, err)
+
+	picturesMetadataRepository := NewPicturesDAL(fs, "", "", thumbnailsDAL)
 
 	tx, err := dbConn.Begin()
 	require.Nil(t, err)

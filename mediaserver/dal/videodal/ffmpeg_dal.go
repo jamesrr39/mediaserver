@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/jamesrr39/goutil/gofs"
 	"github.com/jamesrr39/semaphore"
 )
 
@@ -18,21 +19,22 @@ var (
 )
 
 type FFMPEGDAL struct {
+	fs               gofs.Fs
 	videosBasePath   string
 	picturesBasePath string
 	sema             *semaphore.Semaphore
 }
 
-func NewFFMPEGDAL(videosBathPath, picturesBasePath string, maxConcurrentVideoConversions uint) (*FFMPEGDAL, error) {
-	err := os.MkdirAll(videosBathPath, 0700)
+func NewFFMPEGDAL(fs gofs.Fs, videosBathPath, picturesBasePath string, maxConcurrentVideoConversions uint) (*FFMPEGDAL, error) {
+	err := fs.MkdirAll(videosBathPath, 0700)
 	if err != nil {
 		return nil, err
 	}
-	return &FFMPEGDAL{videosBathPath, picturesBasePath, semaphore.NewSemaphore(maxConcurrentVideoConversions)}, nil
+	return &FFMPEGDAL{fs, videosBathPath, picturesBasePath, semaphore.NewSemaphore(maxConcurrentVideoConversions)}, nil
 }
 
-func (dal *FFMPEGDAL) GetFile(hash domain.HashValue) (*os.File, error) {
-	return os.Open(dal.buildPath(hash))
+func (dal *FFMPEGDAL) GetFile(hash domain.HashValue) (gofs.File, error) {
+	return dal.fs.Open(dal.buildPath(hash))
 }
 
 func (dal *FFMPEGDAL) EnsureSupportedFile(mediaFile domain.MediaFile) error {
@@ -42,7 +44,7 @@ func (dal *FFMPEGDAL) EnsureSupportedFile(mediaFile domain.MediaFile) error {
 
 	if !strings.HasSuffix(mediaFile.GetMediaFileInfo().RelativePath, ".ogv") {
 		toPath := filepath.Join(dal.videosBasePath, fmt.Sprintf("%s.ogv", mediaFile.GetMediaFileInfo().HashValue))
-		_, err := os.Stat(toPath)
+		_, err := dal.fs.Stat(toPath)
 		if err != nil {
 			if !os.IsNotExist(err) {
 				return err

@@ -2,49 +2,47 @@ package dal
 
 import (
 	"bytes"
+	"database/sql"
+	"encoding/json"
 	"errors"
 	"image"
 	"io"
 	"log"
 	"mediaserverapp/mediaserver/domain"
-	"os"
 	"path/filepath"
+
+	"github.com/jamesrr39/goutil/gofs"
 )
 
 var ErrHashNotFound = errors.New("hash not found")
 
 type PicturesDAL struct {
+	fs               gofs.Fs
 	picturesBasePath string
 	thumbnailsDAL    *ThumbnailsDAL
-	MediaFilesDAL    *MediaFilesDAL
 }
 
 func NewPicturesDAL(
-	picturesBasePath, cachesBasePath string, picturesMetadataDAL *MediaFilesDAL, thumbnailsDAL *ThumbnailsDAL) (*PicturesDAL, error) {
-	return &PicturesDAL{picturesBasePath, thumbnailsDAL, picturesMetadataDAL}, nil
+	fs gofs.Fs,
+	picturesBasePath, cachesBasePath string, thumbnailsDAL *ThumbnailsDAL) *PicturesDAL {
+	return &PicturesDAL{fs, picturesBasePath, thumbnailsDAL}
 }
 
-func (dal *PicturesDAL) GetPictureBytes(hash domain.HashValue, size domain.Size) (io.Reader, string, error) {
+func (dal *PicturesDAL) GetPictureBytes(pictureMetadata *domain.PictureMetadata, size domain.Size) (io.Reader, string, error) {
 	isSizeCachable := dal.thumbnailsDAL.IsSizeCacheable(size)
 	if isSizeCachable {
 		// look in on-disk cache for thumbnail
-		file, pictureFormat, err := dal.thumbnailsDAL.Get(hash, size)
+		file, pictureFormat, err := dal.thumbnailsDAL.Get(pictureMetadata.HashValue, size)
 		if nil == err && nil != file {
 			return file, pictureFormat, nil
 		}
 
 		if nil != err {
-			log.Printf("ERROR getting thumbnail from cache for hash: '%s'. Error: '%s'\n", hash, err)
+			log.Printf("ERROR getting thumbnail from cache for hash: '%s'. Error: '%s'\n", pictureMetadata.HashValue, err)
 		}
 	}
 
-	// picture not available in on-disk cache - fetch the image, perform transformations and save it to cache
-	pictureMetadata := dal.MediaFilesDAL.Get(hash)
-	if pictureMetadata == nil || pictureMetadata.GetMediaFileInfo().MediaFileType != domain.MediaFileTypePicture {
-		return nil, "", ErrHashNotFound
-	}
-
-	picture, pictureFormat, err := dal.GetPicture(pictureMetadata.(*domain.PictureMetadata))
+	picture, pictureFormat, err := dal.GetPicture(pictureMetadata)
 	if nil != err {
 		return nil, "", err
 	}
@@ -57,13 +55,13 @@ func (dal *PicturesDAL) GetPictureBytes(hash domain.HashValue, size domain.Size)
 	}
 
 	if isSizeCachable {
-		go dal.thumbnailsDAL.save(hash, size, pictureFormat, pictureBytes)
+		go dal.thumbnailsDAL.save(pictureMetadata.HashValue, size, pictureFormat, pictureBytes)
 	}
 	return bytes.NewBuffer(pictureBytes), pictureFormat, nil
 }
 
 func (dal *PicturesDAL) GetPicture(pictureMetadata *domain.PictureMetadata) (image.Image, string, error) {
-	file, err := os.Open(filepath.Join(dal.picturesBasePath, pictureMetadata.RelativePath))
+	file, err := dal.fs.Open(filepath.Join(dal.picturesBasePath, pictureMetadata.RelativePath))
 	if nil != err {
 		return nil, "", err
 	}
@@ -77,20 +75,59 @@ func (dal *PicturesDAL) GetPicture(pictureMetadata *domain.PictureMetadata) (ima
 	return picture, pictureMetadata.Format, nil
 }
 
-// func (dal *PicturesDAL) QueueThumbnailCreation(pictureMetadatas []*domain.PictureMetadata) error {
-// 	for _, pictureMetadata := range pictureMetadatas {
-// 		err := dal.thumbnailsDAL.EnsureAllThumbnailsForPicture(pictureMetadata, dal.GetPicture)
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
-// 	return nil
-// }
+var ErrNotFound = errors.New("not found")
 
-// func (dal *PicturesDAL) saveThumbnailToCache(hash domain.HashValue, size domain.Size, pictureFormat string, gzippedThumbnailBytes []byte) {
-// 	log.Printf("saving %s with mimetype '%s'\n", hash, pictureFormat)
-// 	err := dal.thumbnailsDAL.save(hash, size, pictureFormat, gzippedThumbnailBytes)
-// 	if nil != err {
-// 		log.Printf("ERROR writing thumbnail to on-disk cache for hash '%s'. Error: '%s'\n", hash, err)
-// 	}
-// }
+func (pr *PicturesDAL) GetPictureMetadata(tx *sql.Tx, hash domain.HashValue, relativePath string) (*domain.PictureMetadata, error) {
+
+	row := tx.QueryRow(`
+SELECT file_size_bytes, exif_data_json, raw_size_width, raw_size_height, format
+FROM pictures_metadatas
+WHERE hash == $1
+    `, hash)
+
+	var fileSizeBytes int64
+	var exifDataJSON, format string
+	var rawSizeWidth, rawSizeHeight uint
+	err := row.Scan(&fileSizeBytes, &exifDataJSON, &rawSizeWidth, &rawSizeHeight, &format)
+	if nil != err {
+		if err == sql.ErrNoRows {
+			return nil, ErrNotFound
+		}
+
+		return nil, err
+	}
+
+	var exifData *domain.ExifData
+	if exifDataJSON != "" {
+		err = json.NewDecoder(bytes.NewBuffer([]byte(exifDataJSON))).Decode(&exifData)
+		if nil != err {
+			return nil, err
+		}
+	}
+
+	rawSize := domain.RawSize{
+		Width:  rawSizeWidth,
+		Height: rawSizeHeight,
+	}
+
+	return domain.NewPictureMetadata(hash, relativePath, fileSizeBytes, exifData, rawSize, format), nil
+}
+
+func (pr *PicturesDAL) CreatePictureMetadata(tx *sql.Tx, pictureMetadata *domain.PictureMetadata) error {
+	var exifDataJSON string
+	if nil != pictureMetadata.ExifData {
+		byteBuffer := bytes.NewBuffer(nil)
+		err := json.NewEncoder(byteBuffer).Encode(pictureMetadata.ExifData)
+		if nil != err {
+			return err
+		}
+		exifDataJSON = string(byteBuffer.Bytes())
+	}
+
+	_, err := tx.Exec(`
+INSERT INTO pictures_metadatas(hash, file_size_bytes, exif_data_json, raw_size_width, raw_size_height, format)
+VALUES($1, $2, $3, $4, $5, $6)
+`, pictureMetadata.HashValue, pictureMetadata.FileSizeBytes, exifDataJSON, pictureMetadata.RawSize.Width, pictureMetadata.RawSize.Height, pictureMetadata.Format)
+
+	return err
+}

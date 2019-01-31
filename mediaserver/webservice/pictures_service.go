@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
-
-	picturesdal "mediaserverapp/mediaserver/dal"
+	"mediaserverapp/mediaserver/dal"
 	"mediaserverapp/mediaserver/domain"
 	"net/http"
 
@@ -13,11 +12,11 @@ import (
 )
 
 type PicturesService struct {
-	mediaServerDAL *picturesdal.MediaServerDAL
+	mediaServerDAL *dal.MediaServerDAL
 	http.Handler
 }
 
-func NewPicturesService(mediaServerDAL *picturesdal.MediaServerDAL) *PicturesService {
+func NewPicturesService(mediaServerDAL *dal.MediaServerDAL) *PicturesService {
 	router := chi.NewRouter()
 
 	picturesService := &PicturesService{mediaServerDAL, router}
@@ -56,10 +55,10 @@ func (ps *PicturesService) servePicture(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	pictureReader, pictureFormat, err := ps.mediaServerDAL.PicturesDAL.GetPictureBytes(domain.HashValue(hash), sizeToResizeTo)
+	pictureReader, pictureFormat, err := ps.mediaServerDAL.PicturesDAL.GetPictureBytes(pictureMetadata, sizeToResizeTo)
 	if nil != err {
 		switch err {
-		case picturesdal.ErrHashNotFound:
+		case dal.ErrHashNotFound:
 			http.Error(w, "picture not found for this hash", 404)
 			return
 		default:

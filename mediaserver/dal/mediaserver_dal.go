@@ -1,10 +1,10 @@
 package dal
 
 import (
+	"database/sql"
 	"errors"
 	"io"
 	"log"
-	"mediaserverapp/mediaserver/dal/diskstorage"
 	"mediaserverapp/mediaserver/dal/videodal"
 	"mediaserverapp/mediaserver/domain"
 	"mediaserverapp/mediaserver/mediaserverjobs"
@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/jamesrr39/goutil/dirtraversal"
+	"github.com/jamesrr39/goutil/gofs"
 	"github.com/jamesrr39/goutil/logger"
 	"github.com/jamesrr39/goutil/profile"
 )
@@ -25,42 +26,41 @@ var (
 )
 
 type MediaServerDAL struct {
+	fs             gofs.Fs
 	Rootpath       string
 	PicturesDAL    *PicturesDAL
 	MediaFilesDAL  *MediaFilesDAL
-	CollectionsDAL *diskstorage.CollectionsRepository
+	CollectionsDAL *CollectionsDAL
 	VideosDAL      videodal.VideoDAL
 	TracksDAL      *TracksDAL
 	ThumbnailsDAL  *ThumbnailsDAL
 }
 
-func NewMediaServerDAL(logger logger.Logger, picturesBasePath, cachesBasePath, dataDir string, maxConcurrentCPUJobs, maxConcurrentVideoConversions uint) (*MediaServerDAL, error) {
+func NewMediaServerDAL(logger logger.Logger, fs gofs.Fs, picturesBasePath, cachesBasePath, dataDir string, maxConcurrentCPUJobs, maxConcurrentVideoConversions uint) (*MediaServerDAL, error) {
 	jobRunner := mediaserverjobs.NewJobRunner(logger, maxConcurrentCPUJobs)
 
-	thumbnailsDAL, err := NewThumbnailsDAL(filepath.Join(cachesBasePath, "thumbnails"), jobRunner)
+	thumbnailsDAL, err := NewThumbnailsDAL(fs, filepath.Join(cachesBasePath, "thumbnails"), jobRunner)
 	if nil != err {
 		return nil, err
 	}
 
 	videosDAL := videodal.NewNoActionVideoDAL()
 
-	mediaFilesDAL := NewMediaFilesDAL(picturesBasePath, thumbnailsDAL, videosDAL)
+	picturesDAL := NewPicturesDAL(fs, picturesBasePath, cachesBasePath, thumbnailsDAL)
 
-	picturesDAL, err := NewPicturesDAL(picturesBasePath, cachesBasePath, mediaFilesDAL, thumbnailsDAL)
-	if nil != err {
-		return nil, err
-	}
+	mediaFilesDAL := NewMediaFilesDAL(fs, picturesBasePath, thumbnailsDAL, videosDAL, picturesDAL)
 
-	err = os.MkdirAll(dataDir, 0700)
+	err = fs.MkdirAll(dataDir, 0700)
 	if nil != err {
 		return nil, err
 	}
 
 	return &MediaServerDAL{
+		fs,
 		picturesBasePath,
 		picturesDAL,
 		mediaFilesDAL,
-		diskstorage.NewCollectionsRepository(),
+		NewCollectionsDAL(),
 		videosDAL,
 		NewTracksDAL(mediaFilesDAL),
 		thumbnailsDAL,
@@ -70,7 +70,7 @@ func NewMediaServerDAL(logger logger.Logger, picturesBasePath, cachesBasePath, d
 var ErrContentTypeNotSupported = errors.New("content type not supported")
 
 // Create adds a new picture to the collection
-func (dal *MediaServerDAL) Create(file io.ReadSeeker, filename, contentType string, profileRun *profile.Run) (domain.MediaFile, error) {
+func (dal *MediaServerDAL) Create(tx *sql.Tx, file io.ReadSeeker, filename, contentType string, profileRun *profile.Run) (domain.MediaFile, error) {
 
 	if dirtraversal.IsTryingToTraverseUp(filename) {
 		return nil, ErrIllegalPathTraversingUp
@@ -103,6 +103,12 @@ func (dal *MediaServerDAL) Create(file io.ReadSeeker, filename, contentType stri
 		if nil != err {
 			return nil, err
 		}
+
+		err = dal.PicturesDAL.CreatePictureMetadata(tx, pictureMetadata)
+		if err != nil {
+			return nil, err
+		}
+
 		mediaFile = pictureMetadata
 
 		doAtEnd = func() error {
@@ -140,14 +146,14 @@ func (dal *MediaServerDAL) Create(file io.ReadSeeker, filename, contentType stri
 		return nil, ErrFileAlreadyExists
 	}
 
-	err = os.MkdirAll(filepath.Dir(absoluteFilePath), 0755)
+	err = dal.fs.MkdirAll(filepath.Dir(absoluteFilePath), 0755)
 	if nil != err {
 		return nil, err
 	}
 
 	log.Println("writing to " + absoluteFilePath)
 
-	newFile, err := os.Create(absoluteFilePath)
+	newFile, err := dal.fs.Create(absoluteFilePath)
 	if nil != err {
 		return nil, err
 	}
@@ -186,7 +192,7 @@ func (dal *MediaServerDAL) getPathForNewFile(folder, filename string) (string, s
 
 		relativePath := filepath.Join(folder, name)
 		path := filepath.Join(dal.Rootpath, relativePath)
-		_, err := os.Stat(path)
+		_, err := dal.fs.Stat(path)
 		if nil != err {
 			if os.IsNotExist(err) {
 				return path, relativePath, nil

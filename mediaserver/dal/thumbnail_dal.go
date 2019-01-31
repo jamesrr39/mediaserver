@@ -11,9 +11,12 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+
+	"github.com/jamesrr39/goutil/gofs"
 )
 
 type ThumbnailsDAL struct {
+	fs        gofs.Fs
 	BasePath  string
 	mu        *sync.Mutex
 	jobRunner *mediaserverjobs.JobRunner
@@ -24,17 +27,17 @@ type serializedThumbnail struct {
 	GzippedThumbnailBytes []byte
 }
 
-func NewThumbnailsDAL(basePath string, jobRunner *mediaserverjobs.JobRunner) (*ThumbnailsDAL, error) {
-	err := os.MkdirAll(basePath, 0700)
+func NewThumbnailsDAL(fs gofs.Fs, basePath string, jobRunner *mediaserverjobs.JobRunner) (*ThumbnailsDAL, error) {
+	err := fs.MkdirAll(basePath, 0700)
 	if nil != err {
 		return nil, err
 	}
-	return &ThumbnailsDAL{basePath, new(sync.Mutex), jobRunner}, nil
+	return &ThumbnailsDAL{fs, basePath, new(sync.Mutex), jobRunner}, nil
 }
 
 // Get fetches the gzipped thumbnail file bytes and the mime type it's saved in
 func (c *ThumbnailsDAL) Get(hash domain.HashValue, size domain.Size) (io.Reader, string, error) {
-	file, err := os.Open(c.getFilePath(hash, size.Height))
+	file, err := c.fs.Open(c.getFilePath(hash, size.Height))
 	if nil != err {
 		if os.IsNotExist(err) {
 			return nil, "", nil
@@ -68,7 +71,7 @@ func (c *ThumbnailsDAL) getNewSizesRequiredForPicture(pictureMetadata *domain.Pi
 			continue
 		}
 		filePath := c.getFilePath(pictureMetadata.HashValue, resizeSize.Height)
-		_, err := os.Stat(filePath)
+		_, err := c.fs.Stat(filePath)
 		if err == nil {
 			// thumbnail already exists
 			continue
@@ -107,12 +110,12 @@ func (c *ThumbnailsDAL) save(hash domain.HashValue, size domain.Size, pictureFor
 
 	filePath := c.getFilePath(hash, size.Height)
 
-	err := os.MkdirAll(filepath.Dir(filePath), 0700)
+	err := c.fs.MkdirAll(filepath.Dir(filePath), 0700)
 	if nil != err {
 		return err
 	}
 
-	file, err := os.Create(filePath)
+	file, err := c.fs.Create(filePath)
 	if nil != err {
 		return err
 	}

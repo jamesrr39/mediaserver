@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/jamesrr39/goutil/gofs"
 	"github.com/jamesrr39/goutil/logger"
 	"github.com/jamesrr39/goutil/profile"
 	"github.com/jamesrr39/goutil/userextra"
@@ -64,6 +65,7 @@ func main() {
 
 	mediaServer, err := mediaserver.NewMediaServerAndScan(
 		logger.NewLogger(os.Stderr, logger.LogLevelInfo),
+		gofs.NewOsFs(),
 		fullpath,
 		expandedCacheDir,
 		expandedMetadataDir,

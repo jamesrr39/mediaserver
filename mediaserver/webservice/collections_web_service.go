@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"mediaserverapp/mediaserver/collections"
-	"mediaserverapp/mediaserver/dal/diskstorage"
+	"mediaserverapp/mediaserver/dal"
 	"mediaserverapp/mediaserver/dal/diskstorage/mediaserverdb"
 	"mediaserverapp/mediaserver/domain"
 	"net/http"
@@ -15,14 +15,14 @@ import (
 )
 
 type CollectionsWebService struct {
-	collectionsRepository *diskstorage.CollectionsRepository
+	collectionsRepository *dal.CollectionsDAL
 	dbConn                *mediaserverdb.DBConn
 	chi.Router
 }
 
 func NewCollectionsWebService(
 	dbConn *mediaserverdb.DBConn,
-	collectionsRepository *diskstorage.CollectionsRepository,
+	collectionsRepository *dal.CollectionsDAL,
 ) *CollectionsWebService {
 	router := chi.NewRouter()
 

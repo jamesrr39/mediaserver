@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"mediaserverapp/mediaserver/dal/diskstorage"
 	"mediaserverapp/mediaserver/dal/picturesmetadatacache"
 	"mediaserverapp/mediaserver/dal/videodal"
 	"mediaserverapp/mediaserver/domain"
@@ -15,19 +14,21 @@ import (
 	"sync"
 
 	"github.com/jamesrr39/goutil/fswalker"
+	"github.com/jamesrr39/goutil/gofs"
 	"github.com/jamesrr39/goutil/profile"
 )
 
 type MediaFilesDAL struct {
+	fs               gofs.Fs
 	picturesBasePath string
 	cache            *picturesmetadatacache.MediaFilesCache
-	dbDAL            *diskstorage.PicturesMetadataRepository // FIXME rename
 	thumbnailsDAL    *ThumbnailsDAL
 	videosDAL        videodal.VideoDAL
+	picturesDAL      *PicturesDAL
 }
 
-func NewMediaFilesDAL(picturesBasePath string, thumbnailsDAL *ThumbnailsDAL, videosDAL videodal.VideoDAL) *MediaFilesDAL {
-	return &MediaFilesDAL{picturesBasePath, picturesmetadatacache.NewMediaFilesCache(), diskstorage.NewPicturesMetadataRepository(), thumbnailsDAL, videosDAL}
+func NewMediaFilesDAL(fs gofs.Fs, picturesBasePath string, thumbnailsDAL *ThumbnailsDAL, videosDAL videodal.VideoDAL, picturesDAL *PicturesDAL) *MediaFilesDAL {
+	return &MediaFilesDAL{fs, picturesBasePath, picturesmetadatacache.NewMediaFilesCache(), thumbnailsDAL, videosDAL, picturesDAL}
 }
 
 func (dal *MediaFilesDAL) GetAll() []domain.MediaFile {
@@ -49,12 +50,12 @@ func (dal *MediaFilesDAL) Get(hashValue domain.HashValue) domain.MediaFile {
 	return dal.cache.Get(hashValue)
 }
 
-func (dal *MediaFilesDAL) OpenFile(mediaFile domain.MediaFile) (*os.File, error) {
-	return os.Open(filepath.Join(dal.picturesBasePath, mediaFile.GetMediaFileInfo().RelativePath))
+func (dal *MediaFilesDAL) OpenFile(mediaFile domain.MediaFile) (gofs.File, error) {
+	return dal.fs.Open(filepath.Join(dal.picturesBasePath, mediaFile.GetMediaFileInfo().RelativePath))
 }
 
 func (dal *MediaFilesDAL) processFitFile(tx *sql.Tx, path string, fileInfo os.FileInfo) (*domain.FitFileSummary, error) {
-	file, err := os.Open(path)
+	file, err := dal.fs.Open(path)
 	if nil != err {
 		return nil, err
 	}
@@ -79,7 +80,7 @@ func (dal *MediaFilesDAL) processFitFile(tx *sql.Tx, path string, fileInfo os.Fi
 
 func (dal *MediaFilesDAL) processVideoFile(tx *sql.Tx, path string, fileInfo os.FileInfo) (*domain.VideoFileMetadata, error) {
 
-	file, err := os.Open(path)
+	file, err := dal.fs.Open(path)
 	if nil != err {
 		return nil, err
 	}
@@ -109,10 +110,10 @@ func (dal *MediaFilesDAL) processVideoFile(tx *sql.Tx, path string, fileInfo os.
 
 func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string, profileRun *profile.Run) (*domain.PictureMetadata, error) {
 	var err error
-	var file *os.File
+	var file gofs.File
 
 	profileRun.Measure("open file", func() {
-		file, err = os.Open(path)
+		file, err = dal.fs.Open(path)
 	})
 	if nil != err {
 		return nil, err
@@ -135,13 +136,13 @@ func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string, profileRun
 
 	var pictureMetadata *domain.PictureMetadata
 	profileRun.Measure("get metadata from db", func() {
-		pictureMetadata, err = dal.dbDAL.GetPictureMetadata(tx, hash, relativePath)
+		pictureMetadata, err = dal.picturesDAL.GetPictureMetadata(tx, hash, relativePath)
 	})
 	if nil != err {
-		if err != diskstorage.ErrNotFound {
+		if err != ErrNotFound {
 			return nil, fmt.Errorf("unexpected error getting picture metadata from database for relative path '%s': '%s'", relativePath, err)
 		}
-		profileRun.Measure("read picture metadata and picture from bytes", func() {
+		profileRun.Measure("read picture metadata and picture", func() {
 			pictureMetadata, _, err = domain.NewPictureMetadataAndPictureFromBytes(file, relativePath, hash)
 		})
 		if nil != err {
@@ -149,7 +150,7 @@ func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string, profileRun
 		}
 
 		profileRun.Measure("write picture metadata", func() {
-			err = dal.dbDAL.CreatePictureMetadata(tx, pictureMetadata)
+			err = dal.picturesDAL.CreatePictureMetadata(tx, pictureMetadata)
 		})
 		if nil != err {
 			return nil, fmt.Errorf("unexpected error setting picture metadata to database for relative file path '%s': '%s'", relativePath, err)
