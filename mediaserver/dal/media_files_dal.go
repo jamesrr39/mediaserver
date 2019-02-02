@@ -11,6 +11,7 @@ import (
 	"mediaserverapp/mediaserver/domain"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 
@@ -162,8 +163,7 @@ func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string, profileRun
 }
 
 func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx, profileRun *profile.Run) error {
-	const openFilesLimit = 4
-	sema := semaphore.NewSemaphore(openFilesLimit)
+	sema := semaphore.NewSemaphore(runtime.NumCPU())
 
 	var mediaFiles []domain.MediaFile
 	var errs []error
