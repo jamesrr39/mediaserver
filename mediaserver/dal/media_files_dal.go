@@ -2,6 +2,7 @@ package dal
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -13,9 +14,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/jamesrr39/goutil/fswalker"
 	"github.com/jamesrr39/goutil/gofs"
 	"github.com/jamesrr39/goutil/profile"
+	"github.com/jamesrr39/semaphore"
 )
 
 type MediaFilesDAL struct {
@@ -161,54 +162,69 @@ func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string, profileRun
 }
 
 func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx, profileRun *profile.Run) error {
-	var mediaFiles []domain.MediaFile
+	const openFilesLimit = 4
+	sema := semaphore.NewSemaphore(openFilesLimit)
 
-	walkFunc := func(path string, fileinfo os.FileInfo, err error) error {
+	var mediaFiles []domain.MediaFile
+	var errs []error
+
+	mediaFileChan := make(chan domain.MediaFile)
+	go func() {
+		for {
+			mediaFile := <-mediaFileChan
+			mediaFiles = append(mediaFiles, mediaFile)
+		}
+	}()
+
+	errChan := make(chan error)
+	go func() {
+		for {
+			err := <-errChan
+			errs = append(errs, err)
+		}
+	}()
+
+	walkFunc := func(path string, fileInfo os.FileInfo, err error) error {
 		if nil != err {
 			return err
 		}
 
-		if fileinfo.IsDir() {
+		if fileInfo.IsDir() {
 			// skip
 			return nil
 		}
 
-		var mediaFile domain.MediaFile
-		fileExtensionLower := strings.ToLower(filepath.Ext(path))
-		switch fileExtensionLower {
-		case ".jpg", ".jpeg", ".png":
-			profileRun.Measure("process picture file", func() {
-				mediaFile, err = dal.processPictureFile(tx, path, profileRun)
-			})
+		sema.Add()
+		go func() {
+			defer sema.Done()
+			mediaFile, err := dal.processFile(dal.fs, profileRun, tx, path, fileInfo)
 			if err != nil {
-				return err
+				if err == ErrFileNotSupported {
+					log.Println("skipping " + path + ", file extension not recognised")
+					return
+				}
+				errChan <- err
+				return
 			}
-		case ".mp4":
-			profileRun.Measure("process video file", func() {
-				mediaFile, err = dal.processVideoFile(tx, path, fileinfo)
-			})
-			if err != nil {
-				return err
-			}
-		case ".fit":
-			profileRun.Measure("process fit file", func() {
-				mediaFile, err = dal.processFitFile(tx, path, fileinfo)
-			})
-			if err != nil {
-				return err
-			}
-		default:
-			log.Println("skipping " + path + ", file extension (lower case) '" + fileExtensionLower + " not recognised")
-			return nil
-		}
 
-		mediaFiles = append(mediaFiles, mediaFile) // todo concurrency
+			mediaFileChan <- mediaFile
+		}()
 		return nil
 	}
 
-	err := fswalker.Walk(dal.picturesBasePath, walkFunc, fswalker.WalkOptions{FollowSymlinks: true})
+	err := gofs.Walk(dal.fs, dal.picturesBasePath, walkFunc, gofs.WalkOptions{FollowSymlinks: true})
 	if nil != err {
 		return err
+	}
+
+	sema.Wait()
+
+	if len(errs) > 0 {
+		var errTexts []string
+		for _, err := range errs {
+			errTexts = append(errTexts, fmt.Sprintf("%q", err))
+		}
+		return fmt.Errorf("errors reading files: %s", strings.Join(errTexts, ", "))
 	}
 
 	newCache := picturesmetadatacache.NewMediaFilesCache()
@@ -219,3 +235,39 @@ func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx, profileRun *profile.Ru
 	mu.Unlock()
 	return nil
 }
+
+func (dal *MediaFilesDAL) processFile(fs gofs.Fs, profileRun *profile.Run, tx *sql.Tx, path string, fileInfo os.FileInfo) (domain.MediaFile, error) {
+	var mediaFile domain.MediaFile
+	var err error
+
+	fileExtensionLower := strings.ToLower(filepath.Ext(path))
+	switch fileExtensionLower {
+	case ".jpg", ".jpeg", ".png":
+		profileRun.Measure("process picture file", func() {
+			mediaFile, err = dal.processPictureFile(tx, path, profileRun)
+		})
+		if err != nil {
+			return nil, err
+		}
+	case ".mp4":
+		profileRun.Measure("process video file", func() {
+			mediaFile, err = dal.processVideoFile(tx, path, fileInfo)
+		})
+		if err != nil {
+			return nil, err
+		}
+	case ".fit":
+		profileRun.Measure("process fit file", func() {
+			mediaFile, err = dal.processFitFile(tx, path, fileInfo)
+		})
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, ErrFileNotSupported
+	}
+
+	return mediaFile, nil
+}
+
+var ErrFileNotSupported = errors.New("file not supported")
