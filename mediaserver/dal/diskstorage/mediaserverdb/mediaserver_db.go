@@ -5,10 +5,9 @@ import (
 	"io"
 	"log"
 
+	ql "github.com/cznic/ql" // register driver
 	"github.com/jamesrr39/goutil/dbstatetracker"
 	"github.com/jamesrr39/goutil/logger"
-
-	ql "github.com/cznic/ql" // register driver
 )
 
 type db interface {
