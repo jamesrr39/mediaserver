@@ -1,19 +1,17 @@
-package fswalker
+package gofs
 
 import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
-
-	"github.com/jamesrr39/goutil/gofs"
 )
 
 type WalkOptions struct {
 	FollowSymlinks bool
 }
 
-func Walk(fs gofs.Fs, path string, walkFunc filepath.WalkFunc, options WalkOptions) error {
+func Walk(fs Fs, path string, walkFunc filepath.WalkFunc, options WalkOptions) error {
 	fileInfo, err := fs.Stat(path)
 	if err != nil {
 		return err
