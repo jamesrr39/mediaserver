@@ -1,17 +1,23 @@
 package dal
 
-import "mediaserverapp/mediaserver/domain"
+import (
+	"mediaserverapp/mediaserver/domain"
+
+	"github.com/jamesrr39/goutil/gofs"
+)
+
+type openFileFuncType func(domain.MediaFile) (gofs.File, error)
 
 type TracksDAL struct {
-	mediaFileDAL *MediaFilesDAL
+	openFileFunc openFileFuncType
 }
 
-func NewTracksDAL(mediaFileDAL *MediaFilesDAL) *TracksDAL {
-	return &TracksDAL{mediaFileDAL}
+func NewTracksDAL(openFileFunc openFileFuncType) *TracksDAL {
+	return &TracksDAL{openFileFunc}
 }
 
-func (dal *TracksDAL) GetRecords(track *domain.FitFileSummary) ([]*domain.Record, error) {
-	file, err := dal.mediaFileDAL.OpenFile(track)
+func (dal *TracksDAL) GetRecords(track *domain.FitFileSummary) (domain.Records, error) {
+	file, err := dal.openFileFunc(track)
 	if err != nil {
 		return nil, err
 	}

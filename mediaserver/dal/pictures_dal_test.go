@@ -3,9 +3,11 @@ package dal
 import (
 	"mediaserverapp/mediaserver/domain"
 	"mediaserverapp/mediaserver/testutil"
+	"os"
 	"testing"
 
 	"github.com/alecthomas/assert"
+	"github.com/jamesrr39/goutil/gofs"
 	"github.com/jamesrr39/goutil/gofs/mockfs"
 	"github.com/stretchr/testify/require"
 )
@@ -15,11 +17,14 @@ func Test_CrudPictureMetadataNoExif(t *testing.T) {
 	defer dbConn.Close()
 
 	fs := mockfs.NewMockFs()
+	openFileFunc := func(mediaFile domain.MediaFile) (gofs.File, error) {
+		return nil, os.ErrNotExist
+	}
 
 	thumbnailsDAL, err := NewThumbnailsDAL(fs, "", nil)
 	require.Nil(t, err)
 
-	picturesMetadataRepository := NewPicturesDAL(fs, "", "", thumbnailsDAL)
+	picturesMetadataRepository := NewPicturesDAL("", thumbnailsDAL, openFileFunc)
 
 	tx, err := dbConn.Begin()
 	require.Nil(t, err)

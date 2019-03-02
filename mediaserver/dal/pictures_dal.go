@@ -9,23 +9,18 @@ import (
 	"io"
 	"log"
 	"mediaserverapp/mediaserver/domain"
-	"path/filepath"
-
-	"github.com/jamesrr39/goutil/gofs"
 )
 
 var ErrHashNotFound = errors.New("hash not found")
 
 type PicturesDAL struct {
-	fs               gofs.Fs
-	picturesBasePath string
-	thumbnailsDAL    *ThumbnailsDAL
+	thumbnailsDAL *ThumbnailsDAL
+	openFileFunc  openFileFuncType
 }
 
 func NewPicturesDAL(
-	fs gofs.Fs,
-	picturesBasePath, cachesBasePath string, thumbnailsDAL *ThumbnailsDAL) *PicturesDAL {
-	return &PicturesDAL{fs, picturesBasePath, thumbnailsDAL}
+	cachesBasePath string, thumbnailsDAL *ThumbnailsDAL, openFileFunc openFileFuncType) *PicturesDAL {
+	return &PicturesDAL{thumbnailsDAL, openFileFunc}
 }
 
 func (dal *PicturesDAL) GetPictureBytes(pictureMetadata *domain.PictureMetadata, size domain.Size) (io.Reader, string, error) {
@@ -61,7 +56,7 @@ func (dal *PicturesDAL) GetPictureBytes(pictureMetadata *domain.PictureMetadata,
 }
 
 func (dal *PicturesDAL) GetPicture(pictureMetadata *domain.PictureMetadata) (image.Image, string, error) {
-	file, err := dal.fs.Open(filepath.Join(dal.picturesBasePath, pictureMetadata.RelativePath))
+	file, err := dal.openFileFunc(pictureMetadata)
 	if nil != err {
 		return nil, "", err
 	}

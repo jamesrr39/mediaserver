@@ -46,9 +46,14 @@ func NewMediaServerDAL(logger logger.Logger, fs gofs.Fs, picturesBasePath, cache
 
 	videosDAL := videodal.NewNoActionVideoDAL()
 
-	picturesDAL := NewPicturesDAL(fs, picturesBasePath, cachesBasePath, thumbnailsDAL)
+	openFileFunc := func(mediaFile domain.MediaFile) (gofs.File, error) {
+		return fs.Open(filepath.Join(picturesBasePath, mediaFile.GetMediaFileInfo().RelativePath))
+	}
 
-	mediaFilesDAL := NewMediaFilesDAL(fs, picturesBasePath, thumbnailsDAL, videosDAL, picturesDAL)
+	picturesDAL := NewPicturesDAL(cachesBasePath, thumbnailsDAL, openFileFunc)
+	tracksDAL := NewTracksDAL(openFileFunc)
+
+	mediaFilesDAL := NewMediaFilesDAL(fs, picturesBasePath, thumbnailsDAL, videosDAL, picturesDAL, jobRunner, tracksDAL)
 
 	err = fs.MkdirAll(dataDir, 0700)
 	if nil != err {
@@ -62,7 +67,7 @@ func NewMediaServerDAL(logger logger.Logger, fs gofs.Fs, picturesBasePath, cache
 		mediaFilesDAL,
 		NewCollectionsDAL(),
 		videosDAL,
-		NewTracksDAL(mediaFilesDAL),
+		tracksDAL,
 		thumbnailsDAL,
 	}, nil
 }
@@ -201,5 +206,4 @@ func (dal *MediaServerDAL) getPathForNewFile(folder, filename string) (string, s
 		}
 	}
 	return "", "", errors.New("ran out of numbers for the new file")
-
 }

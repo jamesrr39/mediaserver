@@ -34,9 +34,10 @@ func RawSizeFromImage(picture image.Image) RawSize {
 
 type PictureMetadata struct {
 	MediaFileInfo
-	ExifData *ExifData `json:"exif"`
-	RawSize  RawSize   `json:"rawSize"`
-	Format   string    `json:"format"`
+	ExifData          *ExifData           `json:"exif"`
+	RawSize           RawSize             `json:"rawSize"`
+	Format            string              `json:"format"`
+	SuggestedLocation *LocationSuggestion `json:"suggestedLocation"`
 }
 
 func (pm *PictureMetadata) GetMediaFileInfo() MediaFileInfo {
@@ -44,7 +45,7 @@ func (pm *PictureMetadata) GetMediaFileInfo() MediaFileInfo {
 }
 
 func NewPictureMetadata(hashValue HashValue, relativePath string, fileSizeBytes int64, exifData *ExifData, rawSize RawSize, format string) *PictureMetadata {
-	return &PictureMetadata{MediaFileInfo{relativePath, hashValue, MediaFileTypePicture, fileSizeBytes}, exifData, rawSize, format}
+	return &PictureMetadata{MediaFileInfo{relativePath, hashValue, MediaFileTypePicture, fileSizeBytes}, exifData, rawSize, format, nil}
 }
 
 func NewPictureMetadataAndPictureFromBytes(file io.ReadSeeker, relativePath string, hash HashValue) (*PictureMetadata, image.Image, error) {

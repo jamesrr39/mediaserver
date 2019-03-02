@@ -6,15 +6,16 @@ import (
 	"mediaserverapp/mediaserver/dal"
 	"mediaserverapp/mediaserver/dal/diskstorage/mediaserverdb"
 	"mediaserverapp/mediaserver/domain"
+	"mediaserverapp/mediaserver/mediaserverjobs"
 	"mediaserverapp/mediaserver/static_assets_handler"
 	pictureswebservice "mediaserverapp/mediaserver/webservice"
 	"mediaserverapp/mediaserver/webservice/mediaservermiddleware"
 	"net/http"
 	"path/filepath"
+	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/jamesrr39/goutil/gofs"
-	"github.com/jamesrr39/goutil/httpextra"
 	"github.com/jamesrr39/goutil/logger"
 	"github.com/jamesrr39/goutil/profile"
 )
@@ -29,6 +30,8 @@ type MediaServer struct {
 	collectionsService      *pictureswebservice.CollectionsWebService
 	tracksService           *pictureswebservice.TracksWebService
 	dbConn                  *mediaserverdb.DBConn
+	jobRunner               *mediaserverjobs.JobRunner
+	logger                  logger.Logger
 }
 
 // NewMediaServerAndScan creates a new MediaServer and builds a cache of pictures by scanning the rootpath
@@ -68,6 +71,7 @@ func NewMediaServerAndScan(logger logger.Logger, fs gofs.Fs, rootpath, cachesDir
 		videosWebService:        pictureswebservice.NewVideoWebService(mediaServerDAL.VideosDAL, mediaServerDAL.MediaFilesDAL),
 		collectionsService:      pictureswebservice.NewCollectionsWebService(dbConn, mediaServerDAL.CollectionsDAL),
 		tracksService:           pictureswebservice.NewTracksWebService(mediaServerDAL.TracksDAL, mediaServerDAL.MediaFilesDAL),
+		logger:                  logger,
 	}
 
 	var tx *sql.Tx
@@ -85,6 +89,8 @@ func NewMediaServerAndScan(logger logger.Logger, fs gofs.Fs, rootpath, cachesDir
 	if nil != err {
 		return nil, err
 	}
+
+	mediaServer.mediaServerDAL.MediaFilesDAL.QueueSuggestedLocationJob()
 
 	var mediaFiles []domain.MediaFile
 	profileRun.Measure("get all media files", func() {
@@ -123,6 +129,7 @@ func (ms *MediaServer) ListenAndServe(addr string) error {
 	mainRouter := chi.NewRouter()
 
 	mediaservermiddleware.ApplyCorsMiddleware(mainRouter)
+	mainRouter.Use(mediaservermiddleware.CreateRequestLoggerMiddleware(ms.logger))
 
 	mainRouter.Route("/api/", func(r chi.Router) {
 		r.Mount("/files/", ms.picturesMetadataService)
@@ -134,8 +141,13 @@ func (ms *MediaServer) ListenAndServe(addr string) error {
 	mainRouter.Mount("/picture/", ms.picturesService)
 	mainRouter.Mount("/", statichandlers.NewClientHandler())
 
-	server := httpextra.NewServerWithTimeouts()
-	server.Addr = addr
-	server.Handler = mainRouter
+	server := http.Server{
+		ReadHeaderTimeout: time.Minute,
+		ReadTimeout:       time.Minute * 20,
+		WriteTimeout:      time.Minute * 20,
+		IdleTimeout:       time.Minute * 5,
+		Addr:              addr,
+		Handler:           mainRouter,
+	}
 	return server.ListenAndServe()
 }
