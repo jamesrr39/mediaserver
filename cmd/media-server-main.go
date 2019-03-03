@@ -14,6 +14,8 @@ import (
 	"github.com/jamesrr39/goutil/profile"
 	"github.com/jamesrr39/goutil/userextra"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
+
+	"github.com/jamesrr39/goutil/errorsx"
 )
 
 const addrHelp = "Serves up via http on this address. Examples: 'localhost:9050' - serve on 9050 to localhost only. ':9050' serve to everyone on port 9050."
@@ -88,7 +90,7 @@ func main() {
 func getFullDataPath(path string) (string, error) {
 	expandedPath, err := userextra.ExpandUser(path)
 	if nil != err {
-		return "", err
+		return "", errorsx.Wrap(err)
 	}
 
 	return filepath.Abs(expandedPath)

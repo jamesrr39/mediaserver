@@ -12,6 +12,8 @@ import (
 
 	"github.com/jamesrr39/goutil/gofs"
 	"github.com/jamesrr39/semaphore"
+
+	"github.com/jamesrr39/goutil/errorsx"
 )
 
 var (
@@ -28,7 +30,7 @@ type FFMPEGDAL struct {
 func NewFFMPEGDAL(fs gofs.Fs, videosBathPath, picturesBasePath string, maxConcurrentVideoConversions uint) (*FFMPEGDAL, error) {
 	err := fs.MkdirAll(videosBathPath, 0700)
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 	return &FFMPEGDAL{fs, videosBathPath, picturesBasePath, semaphore.NewSemaphore(maxConcurrentVideoConversions)}, nil
 }
@@ -47,7 +49,7 @@ func (dal *FFMPEGDAL) EnsureSupportedFile(mediaFile domain.MediaFile) error {
 		_, err := dal.fs.Stat(toPath)
 		if err != nil {
 			if !os.IsNotExist(err) {
-				return err
+				return errorsx.Wrap(err)
 			}
 			dal.sema.Add()
 			defer dal.sema.Done()

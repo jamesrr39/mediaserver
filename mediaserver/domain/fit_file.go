@@ -6,6 +6,8 @@ import (
 	"math"
 
 	"github.com/tormoder/fit"
+
+	"github.com/jamesrr39/goutil/errorsx"
 )
 
 // type FitFile struct {
@@ -17,7 +19,7 @@ import (
 func GetTrackRecordsFromReader(mediaFileInfo MediaFileInfo, reader io.Reader) ([]*Record, error) {
 	decodedFile, err := fit.Decode(reader)
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	// summary, err := newSummaryFromDecodedFitFile(mediaFileInfo, decodedFile)

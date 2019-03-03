@@ -4,6 +4,8 @@ import (
 	"mediaserverapp/mediaserver/domain"
 
 	"github.com/jamesrr39/goutil/gofs"
+
+	"github.com/jamesrr39/goutil/errorsx"
 )
 
 type openFileFuncType func(domain.MediaFile) (gofs.File, error)
@@ -19,13 +21,13 @@ func NewTracksDAL(openFileFunc openFileFuncType) *TracksDAL {
 func (dal *TracksDAL) GetRecords(track *domain.FitFileSummary) (domain.Records, error) {
 	file, err := dal.openFileFunc(track)
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 	defer file.Close()
 
 	records, err := domain.GetTrackRecordsFromReader(track.GetMediaFileInfo(), file)
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	return records, nil

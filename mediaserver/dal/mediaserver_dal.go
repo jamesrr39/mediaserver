@@ -18,6 +18,8 @@ import (
 	"github.com/jamesrr39/goutil/gofs"
 	"github.com/jamesrr39/goutil/logger"
 	"github.com/jamesrr39/goutil/profile"
+
+	"github.com/jamesrr39/goutil/errorsx"
 )
 
 var (
@@ -41,7 +43,7 @@ func NewMediaServerDAL(logger logger.Logger, fs gofs.Fs, picturesBasePath, cache
 
 	thumbnailsDAL, err := NewThumbnailsDAL(fs, filepath.Join(cachesBasePath, "thumbnails"), jobRunner)
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	videosDAL := videodal.NewNoActionVideoDAL()
@@ -57,7 +59,7 @@ func NewMediaServerDAL(logger logger.Logger, fs gofs.Fs, picturesBasePath, cache
 
 	err = fs.MkdirAll(dataDir, 0700)
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	return &MediaServerDAL{
@@ -84,17 +86,17 @@ func (dal *MediaServerDAL) Create(tx *sql.Tx, file io.ReadSeeker, filename, cont
 	relativeFolderPath := filepath.Join("uploads", strings.Split(time.Now().Format(time.RFC3339), "T")[0])
 	absoluteFilePath, relativePath, err := dal.getPathForNewFile(relativeFolderPath, filename)
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	hashValue, err := domain.NewHash(file)
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	fileLen, err := file.Seek(0, io.SeekStart)
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	doAtEnd := func() error { return nil }
@@ -106,12 +108,12 @@ func (dal *MediaServerDAL) Create(tx *sql.Tx, file io.ReadSeeker, filename, cont
 			pictureMetadata, _, err = domain.NewPictureMetadataAndPictureFromBytes(file, relativePath, hashValue)
 		})
 		if nil != err {
-			return nil, err
+			return nil, errorsx.Wrap(err)
 		}
 
 		err = dal.PicturesDAL.CreatePictureMetadata(tx, pictureMetadata)
 		if err != nil {
-			return nil, err
+			return nil, errorsx.Wrap(err)
 		}
 
 		mediaFile = pictureMetadata
@@ -124,7 +126,7 @@ func (dal *MediaServerDAL) Create(tx *sql.Tx, file io.ReadSeeker, filename, cont
 					dal.PicturesDAL.GetPicture,
 				)
 			})
-			return err
+			return errorsx.Wrap(err)
 		}
 	case "video/mp4":
 		videoFile := domain.NewVideoFileMetadata(hashValue, relativePath, fileLen)
@@ -139,7 +141,7 @@ func (dal *MediaServerDAL) Create(tx *sql.Tx, file io.ReadSeeker, filename, cont
 
 		mediaFile, err = domain.NewFitFileSummaryFromReader(mediaFileInfo, file)
 		if err != nil {
-			return nil, err
+			return nil, errorsx.Wrap(err)
 		}
 
 	default:
@@ -153,29 +155,29 @@ func (dal *MediaServerDAL) Create(tx *sql.Tx, file io.ReadSeeker, filename, cont
 
 	err = dal.fs.MkdirAll(filepath.Dir(absoluteFilePath), 0755)
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	log.Println("writing to " + absoluteFilePath)
 
 	newFile, err := dal.fs.Create(absoluteFilePath)
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	_, err = file.Seek(0, io.SeekStart)
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	_, err = io.Copy(newFile, file)
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	err = doAtEnd()
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	dal.MediaFilesDAL.add(mediaFile)
@@ -202,7 +204,7 @@ func (dal *MediaServerDAL) getPathForNewFile(folder, filename string) (string, s
 			if os.IsNotExist(err) {
 				return path, relativePath, nil
 			}
-			return "", "", err
+			return "", "", errorsx.Wrap(err)
 		}
 	}
 	return "", "", errors.New("ran out of numbers for the new file")

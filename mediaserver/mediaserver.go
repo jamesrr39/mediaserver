@@ -18,6 +18,8 @@ import (
 	"github.com/jamesrr39/goutil/gofs"
 	"github.com/jamesrr39/goutil/logger"
 	"github.com/jamesrr39/goutil/profile"
+
+	"github.com/jamesrr39/goutil/errorsx"
 )
 
 // MediaServer is a server used for showing pieces of media
@@ -52,7 +54,7 @@ func NewMediaServerAndScan(logger logger.Logger, fs gofs.Fs, rootpath, cachesDir
 		mediaServerDAL, err = dal.NewMediaServerDAL(logger, fs, rootpath, cachesDir, dataDir, maxConcurrentResizes, maxConcurrentVideoConversions)
 	})
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	var dbConn *mediaserverdb.DBConn
@@ -60,7 +62,7 @@ func NewMediaServerAndScan(logger logger.Logger, fs gofs.Fs, rootpath, cachesDir
 		dbConn, err = mediaserverdb.NewDBConn(filepath.Join(dataDir, "mediaserver.db"), logger)
 	})
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	mediaServer := &MediaServer{
@@ -79,7 +81,7 @@ func NewMediaServerAndScan(logger logger.Logger, fs gofs.Fs, rootpath, cachesDir
 		tx, err = dbConn.Begin()
 	})
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 	defer mediaserverdb.CommitOrRollback(tx)
 
@@ -87,7 +89,7 @@ func NewMediaServerAndScan(logger logger.Logger, fs gofs.Fs, rootpath, cachesDir
 		err = mediaServer.mediaServerDAL.MediaFilesDAL.UpdatePicturesCache(tx, profileRun)
 	})
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	mediaServer.mediaServerDAL.MediaFilesDAL.QueueSuggestedLocationJob()
@@ -113,7 +115,7 @@ func NewMediaServerAndScan(logger logger.Logger, fs gofs.Fs, rootpath, cachesDir
 		}
 	})
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	return mediaServer, nil

@@ -13,6 +13,8 @@ import (
 	"sync"
 
 	"github.com/jamesrr39/goutil/gofs"
+
+	"github.com/jamesrr39/goutil/errorsx"
 )
 
 type ThumbnailsDAL struct {
@@ -30,7 +32,7 @@ type serializedThumbnail struct {
 func NewThumbnailsDAL(fs gofs.Fs, basePath string, jobRunner *mediaserverjobs.JobRunner) (*ThumbnailsDAL, error) {
 	err := fs.MkdirAll(basePath, 0700)
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 	return &ThumbnailsDAL{fs, basePath, new(sync.Mutex), jobRunner}, nil
 }
@@ -43,14 +45,14 @@ func (c *ThumbnailsDAL) Get(hash domain.HashValue, size domain.Size) (io.Reader,
 			return nil, "", nil
 		}
 
-		return nil, "", err
+		return nil, "", errorsx.Wrap(err)
 	}
 	defer file.Close()
 
 	var thumbnail serializedThumbnail
 	err = gob.NewDecoder(file).Decode(&thumbnail)
 	if nil != err {
-		return nil, "", err
+		return nil, "", errorsx.Wrap(err)
 	}
 
 	return bytes.NewBuffer(thumbnail.GzippedThumbnailBytes), thumbnail.PictureFormat, nil
@@ -78,7 +80,7 @@ func (c *ThumbnailsDAL) getNewSizesRequiredForPicture(pictureMetadata *domain.Pi
 		}
 		if !os.IsNotExist(err) {
 			// there was an error and it wasn't that it doesn't exist already
-			return nil, err
+			return nil, errorsx.Wrap(err)
 		}
 
 		requiredSizes = append(requiredSizes, resizeSize)
@@ -89,7 +91,7 @@ func (c *ThumbnailsDAL) getNewSizesRequiredForPicture(pictureMetadata *domain.Pi
 func (c *ThumbnailsDAL) EnsureAllThumbnailsForPicture(pictureMetadata *domain.PictureMetadata, getPictureFunc domain.GetPictureFunc) error {
 	requiredSizes, err := c.getNewSizesRequiredForPicture(pictureMetadata)
 	if err != nil {
-		return err
+		return errorsx.Wrap(err)
 	}
 
 	if len(requiredSizes) == 0 {
@@ -112,24 +114,24 @@ func (c *ThumbnailsDAL) save(hash domain.HashValue, size domain.Size, pictureFor
 
 	err := c.fs.MkdirAll(filepath.Dir(filePath), 0700)
 	if nil != err {
-		return err
+		return errorsx.Wrap(err)
 	}
 
 	file, err := c.fs.Create(filePath)
 	if nil != err {
-		return err
+		return errorsx.Wrap(err)
 	}
 	defer file.Close()
 
 	thumbnail := &serializedThumbnail{pictureFormat, gzippedThumbnailBytes}
 	err = gob.NewEncoder(file).Encode(thumbnail)
 	if nil != err {
-		return err
+		return errorsx.Wrap(err)
 	}
 
 	err = file.Sync()
 	if err != nil {
-		return err
+		return errorsx.Wrap(err)
 	}
 
 	return nil

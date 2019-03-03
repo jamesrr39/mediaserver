@@ -9,6 +9,8 @@ import (
 
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/tiff"
+
+	"github.com/jamesrr39/goutil/errorsx"
 )
 
 type ExifData map[string]interface{}
@@ -16,13 +18,13 @@ type ExifData map[string]interface{}
 func DecodeExifFromFile(file io.Reader) (*ExifData, error) {
 	externalExifData, err := exif.Decode(file)
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	exifData := make(ExifData)
 	err = externalExifData.Walk(&exifData)
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	return &exifData, nil
@@ -42,7 +44,7 @@ func (e ExifData) GetOrientation() (int, error) {
 		orientationTag := orientationInf.(*tiff.Tag)
 		orientationInt, err := orientationTag.Int(0)
 		if err != nil {
-			return 0, err
+			return 0, errorsx.Wrap(err)
 		}
 		return orientationInt, nil
 	default:
@@ -53,23 +55,23 @@ func (e ExifData) GetOrientation() (int, error) {
 func (e ExifData) GetLocation() (*Location, error) {
 	gpsLatitude, err := e.propToStringSlice("GPSLatitude")
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 	gpsLatitudeRef, err := e.propToString("GPSLatitudeRef")
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 	gpsLongitude, err := e.propToStringSlice("GPSLongitude")
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 	gpsLongitudeRef, err := e.propToString("GPSLongitudeRef")
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 	gpsMapDatum, err := e.propToString("GPSMapDatum")
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 	switch gpsMapDatum {
 	case "WGS-84":
@@ -92,15 +94,15 @@ func parseWGS84ToLocation(
 	gpsLongitudeRef string) (*Location, error) {
 	latDegs, err := asDecimal(gpsLatitude[0])
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 	latMins, err := asDecimal(gpsLatitude[1])
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 	latSecs, err := asDecimal(gpsLatitude[2])
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 	lat := ((((latSecs / 60) + latMins) / 60) + latDegs)
 	if gpsLatitudeRef == "S" {
@@ -108,15 +110,15 @@ func parseWGS84ToLocation(
 	}
 	lonDegs, err := asDecimal(gpsLongitude[0])
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 	lonMins, err := asDecimal(gpsLongitude[1])
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 	lonSecs, err := asDecimal(gpsLongitude[2])
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 	lon := ((((lonSecs / 60) + lonMins) / 60) + lonDegs)
 
@@ -138,11 +140,11 @@ func asDecimal(value string) (float64, error) {
 	case 2:
 		numerator, err := strconv.ParseFloat(fragments[0], 64)
 		if err != nil {
-			return 0, err
+			return 0, errorsx.Wrap(err)
 		}
 		denominator, err := strconv.ParseFloat(fragments[1], 64)
 		if err != nil {
-			return 0, err
+			return 0, errorsx.Wrap(err)
 		}
 		return numerator / denominator, nil
 	default:
@@ -180,7 +182,7 @@ func (e ExifData) GetDate() (*time.Time, error) {
 	for _, key := range []string{"DateTime", "DateTimeDigitized", "DateTimeOriginal"} {
 		dateText, err := e.propToString(key)
 		if err != nil {
-			return nil, err
+			return nil, errorsx.Wrap(err)
 		}
 
 		if dateText == "" {
@@ -200,31 +202,31 @@ func parseExifDate(dateString string) (*time.Time, error) {
 
 	year, err := strconv.Atoi(dateFragments[0])
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	month, err := strconv.Atoi(dateFragments[1])
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 	day, err := strconv.Atoi(dateFragments[2])
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	hour, err := strconv.Atoi(timeFragments[0])
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	minute, err := strconv.Atoi(timeFragments[1])
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	second, err := strconv.Atoi(timeFragments[2])
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 	date := time.Date(year, time.Month(month), day, hour, minute, second, 0, time.UTC)
 	return &date, nil

@@ -9,6 +9,8 @@ import (
 	"io"
 	"log"
 	"mediaserverapp/mediaserver/domain"
+
+	"github.com/jamesrr39/goutil/errorsx"
 )
 
 var ErrHashNotFound = errors.New("hash not found")
@@ -39,14 +41,14 @@ func (dal *PicturesDAL) GetPictureBytes(pictureMetadata *domain.PictureMetadata,
 
 	picture, pictureFormat, err := dal.GetPicture(pictureMetadata)
 	if nil != err {
-		return nil, "", err
+		return nil, "", errorsx.Wrap(err)
 	}
 
 	picture = domain.ResizePicture(picture, size)
 
 	pictureBytes, err := domain.EncodePicture(picture, pictureFormat)
 	if err != nil {
-		return nil, "", err
+		return nil, "", errorsx.Wrap(err)
 	}
 
 	if isSizeCachable {
@@ -58,13 +60,13 @@ func (dal *PicturesDAL) GetPictureBytes(pictureMetadata *domain.PictureMetadata,
 func (dal *PicturesDAL) GetPicture(pictureMetadata *domain.PictureMetadata) (image.Image, string, error) {
 	file, err := dal.openFileFunc(pictureMetadata)
 	if nil != err {
-		return nil, "", err
+		return nil, "", errorsx.Wrap(err)
 	}
 	defer file.Close()
 
 	_, picture, err := domain.NewPictureMetadataAndPictureFromBytes(file, pictureMetadata.RelativePath, pictureMetadata.HashValue)
 	if nil != err {
-		return nil, "", err
+		return nil, "", errorsx.Wrap(err)
 	}
 
 	return picture, pictureMetadata.Format, nil
@@ -89,14 +91,14 @@ WHERE hash == $1
 			return nil, ErrNotFound
 		}
 
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	var exifData *domain.ExifData
 	if exifDataJSON != "" {
 		err = json.NewDecoder(bytes.NewBuffer([]byte(exifDataJSON))).Decode(&exifData)
 		if nil != err {
-			return nil, err
+			return nil, errorsx.Wrap(err)
 		}
 	}
 
@@ -114,7 +116,7 @@ func (pr *PicturesDAL) CreatePictureMetadata(tx *sql.Tx, pictureMetadata *domain
 		byteBuffer := bytes.NewBuffer(nil)
 		err := json.NewEncoder(byteBuffer).Encode(pictureMetadata.ExifData)
 		if nil != err {
-			return err
+			return errorsx.Wrap(err)
 		}
 		exifDataJSON = string(byteBuffer.Bytes())
 	}
@@ -124,5 +126,5 @@ INSERT INTO pictures_metadatas(hash, file_size_bytes, exif_data_json, raw_size_w
 VALUES($1, $2, $3, $4, $5, $6)
 `, pictureMetadata.HashValue, pictureMetadata.FileSizeBytes, exifDataJSON, pictureMetadata.RawSize.Width, pictureMetadata.RawSize.Height, pictureMetadata.Format)
 
-	return err
+	return errorsx.Wrap(err)
 }

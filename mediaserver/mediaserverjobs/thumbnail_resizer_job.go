@@ -3,6 +3,8 @@ package mediaserverjobs
 import (
 	"fmt"
 	"mediaserverapp/mediaserver/domain"
+
+	"github.com/jamesrr39/goutil/errorsx"
 )
 
 type ThumbnailResizerJob struct {
@@ -26,17 +28,17 @@ func NewThumbnailResizerJob(
 func (j *ThumbnailResizerJob) run() error {
 	picture, _, err := j.getPictureFunc(j.pictureMetadata)
 	if err != nil {
-		return err
+		return errorsx.Wrap(err)
 	}
 	newPicture := domain.ResizePicture(picture, j.requestedSize)
 	pictureBytes, err := domain.EncodePicture(newPicture, j.pictureMetadata.Format)
 	if err != nil {
-		return err
+		return errorsx.Wrap(err)
 	}
 
 	err = j.save(j.pictureMetadata.HashValue, j.requestedSize, j.pictureMetadata.Format, pictureBytes)
 	if err != nil {
-		return err
+		return errorsx.Wrap(err)
 	}
 
 	return nil

@@ -5,6 +5,8 @@ import (
 	"math"
 	"mediaserverapp/mediaserver/domain"
 	"time"
+
+	"github.com/jamesrr39/goutil/errorsx"
 )
 
 type ApproximateLocationsJob struct {
@@ -31,7 +33,7 @@ func NewApproximateLocationsJob(
 func (j *ApproximateLocationsJob) run() error {
 	picturesMetadatas, err := j.fetchAllPictureMetadatas()
 	if err != nil {
-		return err
+		return errorsx.Wrap(err)
 	}
 
 	for _, pictureMetadata := range picturesMetadatas {
@@ -49,7 +51,7 @@ func (j *ApproximateLocationsJob) run() error {
 
 		pictureDate, err := pictureMetadata.ExifData.GetDate()
 		if err != nil {
-			return err
+			return errorsx.Wrap(err)
 		}
 
 		if pictureDate == nil {
@@ -62,12 +64,12 @@ func (j *ApproximateLocationsJob) run() error {
 				// found a match
 				records, err := j.fetchTrackRecords(trackSummary)
 				if err != nil {
-					return err
+					return errorsx.Wrap(err)
 				}
 
 				record, _, err := records.GetRecordClosestToTime(*pictureDate)
 				if err != nil {
-					return err
+					return errorsx.Wrap(err)
 				}
 
 				return j.setLocationsOnPicture(pictureMetadata, domain.LocationSuggestion{
@@ -88,7 +90,7 @@ func (j *ApproximateLocationsJob) run() error {
 
 			location, err := pictureMetadataInList.ExifData.GetLocation()
 			if err != nil {
-				return err
+				return errorsx.Wrap(err)
 			}
 
 			if location == nil {
@@ -97,7 +99,7 @@ func (j *ApproximateLocationsJob) run() error {
 
 			pictureInListDate, err := pictureMetadataInList.ExifData.GetDate()
 			if err != nil {
-				return err
+				return errorsx.Wrap(err)
 			}
 
 			pictureTimeTakenBeforeListPicture := pictureDate.Sub(*pictureInListDate)

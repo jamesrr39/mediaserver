@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/tormoder/fit"
+
+	"github.com/jamesrr39/goutil/errorsx"
 )
 
 // FitFileSummary is a summary of a fit file
@@ -33,7 +35,7 @@ func NewFitFileSummary(mediaFileInfo MediaFileInfo, startTime, endTime time.Time
 func NewFitFileSummaryFromReader(mediaFileInfo MediaFileInfo, reader io.Reader) (*FitFileSummary, error) {
 	file, err := fit.Decode(reader)
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	summary, err := newSummaryFromDecodedFitFile(mediaFileInfo, file)
@@ -49,11 +51,11 @@ func newSummaryFromDecodedFitFile(mediaFileInfo MediaFileInfo, file *fit.File) (
 
 	activity, err := file.Activity()
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	if len(activity.Records) < 1 {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	var distanceScaled float64

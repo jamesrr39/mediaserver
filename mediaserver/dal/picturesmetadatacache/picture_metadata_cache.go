@@ -8,6 +8,8 @@ import (
 	"log"
 	"mediaserverapp/mediaserver/domain"
 	"sync"
+
+	"github.com/jamesrr39/goutil/errorsx"
 )
 
 type mapByHash map[domain.HashValue]domain.MediaFile
@@ -61,7 +63,7 @@ func (cache *MediaFilesCache) setHashValue() error {
 	encoder := gob.NewEncoder(&byteBuffer)
 	err := encoder.Encode(cache.mediaFiles)
 	if nil != err {
-		return err
+		return errorsx.Wrap(err)
 	}
 	hash := sha1.New()
 	hash.Write(byteBuffer.Bytes())
