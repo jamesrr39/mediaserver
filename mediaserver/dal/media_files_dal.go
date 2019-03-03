@@ -16,11 +16,10 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/jamesrr39/goutil/gofs"
 	"github.com/jamesrr39/goutil/profile"
 	"github.com/jamesrr39/semaphore"
-
-	"github.com/jamesrr39/goutil/errorsx"
 )
 
 type getRecordsInTrackFuncType func(trackSummary *domain.FitFileSummary) (domain.Records, error)
@@ -169,7 +168,7 @@ func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string, profileRun
 	return pictureMetadata, nil
 }
 
-func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx, profileRun *profile.Run) error {
+func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx, profileRun *profile.Run) errorsx.Error {
 	sema := semaphore.NewSemaphore(uint(runtime.NumCPU()))
 
 	var mediaFiles []domain.MediaFile
@@ -231,7 +230,7 @@ func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx, profileRun *profile.Ru
 		for _, err := range errs {
 			errTexts = append(errTexts, fmt.Sprintf("%q", err))
 		}
-		return fmt.Errorf("errors reading files: %s", strings.Join(errTexts, ", "))
+		return errorsx.Errorf("errors reading files: %s", strings.Join(errTexts, ", "))
 	}
 
 	newCache := picturesmetadatacache.NewMediaFilesCache()
@@ -256,11 +255,11 @@ func (dal *MediaFilesDAL) QueueSuggestedLocationJob() {
 		}
 	}
 
-	var getAllPictureMetadatas = func() ([]*domain.PictureMetadata, error) {
+	var getAllPictureMetadatas = func() ([]*domain.PictureMetadata, errorsx.Error) {
 		return picturesMetadatas, nil
 	}
 
-	var setLocationsOnPictureFunc = func(pictureMetadata *domain.PictureMetadata, suggestedLocation domain.LocationSuggestion) error {
+	var setLocationsOnPictureFunc = func(pictureMetadata *domain.PictureMetadata, suggestedLocation domain.LocationSuggestion) errorsx.Error {
 		pm := dal.Get(pictureMetadata.HashValue).(*domain.PictureMetadata)
 		pm.SuggestedLocation = &suggestedLocation
 		return nil

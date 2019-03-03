@@ -1,28 +1,31 @@
 package webservice
 
 import (
-	"encoding/json"
 	"fmt"
 	"mediaserverapp/mediaserver/dal"
 	"mediaserverapp/mediaserver/dal/diskstorage/mediaserverdb"
 	"mediaserverapp/mediaserver/domain"
+	"mime/multipart"
 	"net/http"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
+	"github.com/jamesrr39/goutil/errorsx"
+	"github.com/jamesrr39/goutil/logger"
 	"github.com/jamesrr39/goutil/profile"
 )
 
 type MediaFilesService struct {
+	log            *logger.Logger
 	mediaServerDAL *dal.MediaServerDAL
 	dbConn         *mediaserverdb.DBConn
 	chi.Router
 	profiler *profile.Profiler
 }
 
-func NewMediaFilesService(dbConn *mediaserverdb.DBConn, picturesDAL *dal.MediaServerDAL, profiler *profile.Profiler) *MediaFilesService {
+func NewMediaFilesService(log *logger.Logger, dbConn *mediaserverdb.DBConn, picturesDAL *dal.MediaServerDAL, profiler *profile.Profiler) *MediaFilesService {
 	router := chi.NewRouter()
-	picturesService := &MediaFilesService{picturesDAL, dbConn, router, profiler}
+	picturesService := &MediaFilesService{log, picturesDAL, dbConn, router, profiler}
 
 	router.Get("/", picturesService.serveAllPicturesMetadata)
 	router.Post("/", picturesService.serveFileUpload)
@@ -30,16 +33,16 @@ func NewMediaFilesService(dbConn *mediaserverdb.DBConn, picturesDAL *dal.MediaSe
 	return picturesService
 }
 
-func (ms *MediaFilesService) refresh(profileRun *profile.Run) error {
+func (ms *MediaFilesService) refresh(profileRun *profile.Run) errorsx.Error {
 	tx, err := ms.dbConn.Begin()
 	if nil != err {
-		return fmt.Errorf("couldn't open transaction to database. Error: %s", err)
+		return errorsx.Errorf("couldn't open transaction to database. Error: %s", err)
 	}
 	defer mediaserverdb.CommitOrRollback(tx)
 
 	err = ms.mediaServerDAL.MediaFilesDAL.UpdatePicturesCache(tx, profileRun)
 	if nil != err {
-		return fmt.Errorf("couldn't update pictures cache (refresh pictures library). Error: %s", err)
+		return errorsx.Errorf("couldn't update pictures cache (refresh pictures library). Error: %s", err)
 	}
 
 	return nil
@@ -55,7 +58,7 @@ func (ms *MediaFilesService) serveAllPicturesMetadata(w http.ResponseWriter, r *
 	if shouldRefresh {
 		err := ms.refresh(profileRun)
 		if err != nil {
-			http.Error(w, err.Error(), 500)
+			errorsx.HTTPError(w, ms.log, err, 500)
 			return
 		}
 	}
@@ -65,51 +68,49 @@ func (ms *MediaFilesService) serveAllPicturesMetadata(w http.ResponseWriter, r *
 		mediaFiles = []domain.MediaFile{}
 	}
 
-	jsonBytes, err := json.Marshal(mediaFiles)
-	if nil != err {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("etag", string(ms.mediaServerDAL.MediaFilesDAL.GetStateHashCode()))
-	w.Write(jsonBytes)
+	render.JSON(w, r, mediaFiles)
 }
 
-func (ps *MediaFilesService) serveFileUpload(w http.ResponseWriter, r *http.Request) {
+func (ms *MediaFilesService) serveFileUpload(w http.ResponseWriter, r *http.Request) {
 	successfullyUploaded := false
-	profileRun := ps.profiler.NewRun("upload file")
+	profileRun := ms.profiler.NewRun("upload file")
 	defer func() {
 		profileRun.Record(fmt.Sprintf("successfully uploaded: %t", successfullyUploaded))
 	}()
 
-	tx, err := ps.dbConn.Begin()
+	tx, err := ms.dbConn.Begin()
 	if nil != err {
-		http.Error(w, err.Error(), 500)
+		errorsx.HTTPError(w, ms.log, err, 500)
 		return
 	}
 	defer mediaserverdb.CommitOrRollback(tx)
 
-	file, fileHandler, err := r.FormFile("file")
-	if nil != err {
-		http.Error(w, err.Error(), 400)
-		return
+	var file multipart.File
+	var fileHeader *multipart.FileHeader
+	{
+		var err error
+		file, fileHeader, err = r.FormFile("file")
+		if nil != err {
+			errorsx.HTTPError(w, ms.log, errorsx.Wrap(err), 400)
+			return
+		}
 	}
 	defer file.Close()
 
-	contentType := fileHandler.Header.Get("Content-Type")
+	contentType := fileHeader.Header.Get("Content-Type")
 
-	mediaFile, err := ps.mediaServerDAL.Create(tx, file, fileHandler.Filename, contentType, profileRun)
+	mediaFile, err := ms.mediaServerDAL.Create(tx, file, fileHeader.Filename, contentType, profileRun)
 	if nil != err {
 		switch err {
 		case dal.ErrFileAlreadyExists:
-			http.Error(w, err.Error(), 409)
+			errorsx.HTTPError(w, ms.log, err, 409)
 		case dal.ErrIllegalPathTraversingUp:
-			http.Error(w, err.Error(), 400)
+			errorsx.HTTPError(w, ms.log, err, 400)
 		case dal.ErrContentTypeNotSupported:
-			http.Error(w, err.Error(), 400)
+			errorsx.HTTPError(w, ms.log, err, 400)
 		default:
-			http.Error(w, err.Error(), 500)
+			errorsx.HTTPError(w, ms.log, err, 500)
 		}
 		return
 	}

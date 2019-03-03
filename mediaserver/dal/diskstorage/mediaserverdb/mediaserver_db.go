@@ -2,31 +2,37 @@ package mediaserverdb
 
 import (
 	"database/sql"
-	"io"
 	"log"
 
 	ql "github.com/cznic/ql" // register driver
 	"github.com/jamesrr39/goutil/dbstatetracker"
-	"github.com/jamesrr39/goutil/logger"
-
 	"github.com/jamesrr39/goutil/errorsx"
+	"github.com/jamesrr39/goutil/logger"
 )
 
-type db interface {
-	Begin() (*sql.Tx, error)
-	io.Closer
+type DBConn struct {
+	backingDB *sql.DB
+	logger    *logger.Logger
 }
 
-type DBConn struct {
-	db
-	logger logger.Logger
+func (dbc *DBConn) Begin() (*sql.Tx, errorsx.Error) {
+	tx, err := dbc.backingDB.Begin()
+	if err != nil {
+		return nil, errorsx.Wrap(err)
+	}
+
+	return tx, nil
+}
+
+func (dbc *DBConn) Close() error {
+	return dbc.backingDB.Close()
 }
 
 func init() {
 	ql.RegisterDriver()
 }
 
-func NewDBConn(dbPath string, logger logger.Logger) (*DBConn, error) {
+func NewDBConn(dbPath string, logger *logger.Logger) (*DBConn, error) {
 	logger.Info("opening ql db at '%s'", dbPath)
 	db, err := sql.Open("ql", dbPath)
 	if nil != err {
@@ -43,7 +49,8 @@ func NewDBConn(dbPath string, logger logger.Logger) (*DBConn, error) {
 	return dbConn, nil
 }
 
-func (dbConn *DBConn) runChangescripts() error {
+func (dbConn *DBConn) runChangescripts() errorsx.Error {
+	var err error
 	tx, err := dbConn.Begin()
 	if nil != err {
 		return errorsx.Wrap(err)

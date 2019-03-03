@@ -15,11 +15,10 @@ import (
 	"time"
 
 	"github.com/jamesrr39/goutil/dirtraversal"
+	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/jamesrr39/goutil/gofs"
 	"github.com/jamesrr39/goutil/logger"
 	"github.com/jamesrr39/goutil/profile"
-
-	"github.com/jamesrr39/goutil/errorsx"
 )
 
 var (
@@ -38,7 +37,7 @@ type MediaServerDAL struct {
 	ThumbnailsDAL  *ThumbnailsDAL
 }
 
-func NewMediaServerDAL(logger logger.Logger, fs gofs.Fs, picturesBasePath, cachesBasePath, dataDir string, maxConcurrentCPUJobs, maxConcurrentVideoConversions uint) (*MediaServerDAL, error) {
+func NewMediaServerDAL(logger *logger.Logger, fs gofs.Fs, picturesBasePath, cachesBasePath, dataDir string, maxConcurrentCPUJobs, maxConcurrentVideoConversions uint) (*MediaServerDAL, error) {
 	jobRunner := mediaserverjobs.NewJobRunner(logger, maxConcurrentCPUJobs)
 
 	thumbnailsDAL, err := NewThumbnailsDAL(fs, filepath.Join(cachesBasePath, "thumbnails"), jobRunner)
@@ -77,10 +76,10 @@ func NewMediaServerDAL(logger logger.Logger, fs gofs.Fs, picturesBasePath, cache
 var ErrContentTypeNotSupported = errors.New("content type not supported")
 
 // Create adds a new picture to the collection
-func (dal *MediaServerDAL) Create(tx *sql.Tx, file io.ReadSeeker, filename, contentType string, profileRun *profile.Run) (domain.MediaFile, error) {
+func (dal *MediaServerDAL) Create(tx *sql.Tx, file io.ReadSeeker, filename, contentType string, profileRun *profile.Run) (domain.MediaFile, errorsx.Error) {
 
 	if dirtraversal.IsTryingToTraverseUp(filename) {
-		return nil, ErrIllegalPathTraversingUp
+		return nil, errorsx.Wrap(ErrIllegalPathTraversingUp)
 	}
 
 	relativeFolderPath := filepath.Join("uploads", strings.Split(time.Now().Format(time.RFC3339), "T")[0])
@@ -146,11 +145,11 @@ func (dal *MediaServerDAL) Create(tx *sql.Tx, file io.ReadSeeker, filename, cont
 
 	default:
 		log.Printf("content type not supported: %q\n", contentType)
-		return nil, ErrContentTypeNotSupported
+		return nil, errorsx.Wrap(ErrContentTypeNotSupported)
 	}
 
 	if nil != dal.MediaFilesDAL.Get(mediaFile.GetMediaFileInfo().HashValue) {
-		return nil, ErrFileAlreadyExists
+		return nil, errorsx.Wrap(ErrFileAlreadyExists)
 	}
 
 	err = dal.fs.MkdirAll(filepath.Dir(absoluteFilePath), 0755)

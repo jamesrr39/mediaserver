@@ -21,11 +21,11 @@ type Job interface {
 }
 
 type JobRunner struct {
-	logger      logger.Logger
+	logger      *logger.Logger
 	cpuJobsSema *semaphore.Semaphore
 }
 
-func NewJobRunner(logger logger.Logger, maxConcurrentJobs uint) *JobRunner {
+func NewJobRunner(logger *logger.Logger, maxConcurrentJobs uint) *JobRunner {
 	cpuJobsSema := semaphore.NewSemaphore(maxConcurrentJobs)
 	return &JobRunner{logger, cpuJobsSema}
 }

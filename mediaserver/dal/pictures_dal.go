@@ -25,7 +25,7 @@ func NewPicturesDAL(
 	return &PicturesDAL{thumbnailsDAL, openFileFunc}
 }
 
-func (dal *PicturesDAL) GetPictureBytes(pictureMetadata *domain.PictureMetadata, size domain.Size) (io.Reader, string, error) {
+func (dal *PicturesDAL) GetPictureBytes(pictureMetadata *domain.PictureMetadata, size domain.Size) (io.Reader, string, errorsx.Error) {
 	isSizeCachable := dal.thumbnailsDAL.IsSizeCacheable(size)
 	if isSizeCachable {
 		// look in on-disk cache for thumbnail

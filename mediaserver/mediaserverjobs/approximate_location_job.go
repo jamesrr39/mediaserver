@@ -9,18 +9,24 @@ import (
 	"github.com/jamesrr39/goutil/errorsx"
 )
 
+type fetchTrackRecordsFuncType func(trackSummary *domain.FitFileSummary) (domain.Records, errorsx.Error)
+
+type fetchAllPictureMetadatasFuncType func() ([]*domain.PictureMetadata, errorsx.Error)
+
+type setLocationsOnPictureFuncType func(pictureMetadata *domain.PictureMetadata, suggestedLocation domain.LocationSuggestion) errorsx.Error
+
 type ApproximateLocationsJob struct {
-	fetchAllPictureMetadatas func() ([]*domain.PictureMetadata, error)
+	fetchAllPictureMetadatas fetchAllPictureMetadatasFuncType
 	trackSummaries           []*domain.FitFileSummary
-	fetchTrackRecords        func(trackSummary *domain.FitFileSummary) (domain.Records, error)
-	setLocationsOnPicture    func(pictureMetadata *domain.PictureMetadata, suggestedLocation domain.LocationSuggestion) error
+	fetchTrackRecords        fetchTrackRecordsFuncType
+	setLocationsOnPicture    setLocationsOnPictureFuncType
 }
 
 func NewApproximateLocationsJob(
-	fetchAllPictureMetadatasFunc func() ([]*domain.PictureMetadata, error),
+	fetchAllPictureMetadatasFunc fetchAllPictureMetadatasFuncType,
 	trackSummaries []*domain.FitFileSummary,
-	fetchTrackRecordsFunc func(trackSummary *domain.FitFileSummary) (domain.Records, error),
-	setLocationsOnPictureFunc func(pictureMetadata *domain.PictureMetadata, suggestedLocation domain.LocationSuggestion) error,
+	fetchTrackRecordsFunc fetchTrackRecordsFuncType,
+	setLocationsOnPictureFunc setLocationsOnPictureFuncType,
 ) *ApproximateLocationsJob {
 	return &ApproximateLocationsJob{
 		fetchAllPictureMetadatasFunc,

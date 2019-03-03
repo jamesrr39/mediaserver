@@ -2,8 +2,6 @@ package dal
 
 import (
 	"database/sql"
-	"errors"
-	"fmt"
 	"mediaserverapp/mediaserver/collections"
 	"mediaserverapp/mediaserver/domain"
 
@@ -17,7 +15,7 @@ func NewCollectionsDAL() *CollectionsDAL {
 	return &CollectionsDAL{}
 }
 
-func (r *CollectionsDAL) GetAll(tx *sql.Tx) ([]*collections.Collection, error) {
+func (r *CollectionsDAL) GetAll(tx *sql.Tx) ([]*collections.Collection, errorsx.Error) {
 	result, err := tx.Query(`
 SELECT id(), name FROM collections;
     `)
@@ -79,9 +77,9 @@ SELECT name FROM collections WHERE id() = $1;
 	return collection, nil
 }
 
-func (r *CollectionsDAL) Create(tx *sql.Tx, collection *collections.Collection) error {
+func (r *CollectionsDAL) Create(tx *sql.Tx, collection *collections.Collection) errorsx.Error {
 	if collection.ID != 0 {
-		return fmt.Errorf("expected collection ID to be 0 but was '%d'", collection.ID)
+		return errorsx.Errorf("expected collection ID to be 0 but was '%d'", collection.ID)
 	}
 
 	result, err := tx.Exec(`
@@ -106,9 +104,9 @@ INSERT INTO collections(name) VALUES($1);
 	return nil
 }
 
-func (r *CollectionsDAL) Update(tx *sql.Tx, collection *collections.Collection) error {
+func (r *CollectionsDAL) Update(tx *sql.Tx, collection *collections.Collection) errorsx.Error {
 	if collection.ID == 0 {
-		return errors.New("expected collection ID to be not 0 but was 0")
+		return errorsx.Errorf("expected collection ID to be not 0 but was 0")
 	}
 
 	result, err := tx.Exec(`
@@ -123,7 +121,7 @@ UPDATE collections SET name = $1 WHERE id() = $2;
 		return errorsx.Wrap(err)
 	}
 	if rowsAffected == 0 {
-		return errors.New("expected rows to be affected by name update but they were not")
+		return errorsx.Errorf("expected rows to be affected by name update but they were not")
 	}
 
 	err = setFileHashesForCollection(tx, collection)
@@ -134,9 +132,9 @@ UPDATE collections SET name = $1 WHERE id() = $2;
 	return nil
 }
 
-func (r *CollectionsDAL) Delete(tx *sql.Tx, collectionID int64) error {
+func (r *CollectionsDAL) Delete(tx *sql.Tx, collectionID int64) errorsx.Error {
 	if collectionID == 0 {
-		return errors.New("expected collection ID to be not 0 but was 0")
+		return errorsx.Errorf("expected collection ID to be not 0 but was 0")
 	}
 
 	result, err := tx.Exec(`
@@ -151,7 +149,7 @@ DELETE FROM collections WHERE id() = $1;
 		return errorsx.Wrap(err)
 	}
 	if rowsAffected == 0 {
-		return errors.New("expected rows to be affected by name update but they were not")
+		return errorsx.Errorf("expected rows to be affected by name update but they were not")
 	}
 
 	_, err = tx.Exec(`

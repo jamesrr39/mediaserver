@@ -16,7 +16,7 @@ type Size struct {
 // example: Picture 300w x 400h , widthParam "600" heightParam "900"
 // resulting size: 600 x 800
 // we won't size the picture up from the original picture size
-func WidthAndHeightStringsToSize(widthParam, heightParam string, pictureSize Size) (Size, error) {
+func WidthAndHeightStringsToSize(widthParam, heightParam string, pictureSize Size) (Size, errorsx.Error) {
 	if "" == widthParam && "" == heightParam {
 		return pictureSize, nil
 	}
