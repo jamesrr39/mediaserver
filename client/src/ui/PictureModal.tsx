@@ -169,10 +169,10 @@ class PictureModal extends React.Component<Props, ComponentState> {
     );
   }
 
-  private renderInfoContainer = (pictureMetadata: MediaFile) => {
+  private renderInfoContainer = (mediaFile: MediaFile) => {
     return (
       <div style={styles.pictureInfoContainer}>
-        <PictureInfoComponent {...{pictureMetadata}} />
+        <PictureInfoComponent {...{mediaFile}} />
       </div>
     );
   }

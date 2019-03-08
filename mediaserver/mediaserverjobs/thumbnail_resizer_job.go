@@ -25,7 +25,7 @@ func NewThumbnailResizerJob(
 	return &ThumbnailResizerJob{pictureMetadata, requestedSize, getPictureFunc, save}
 }
 
-func (j *ThumbnailResizerJob) run() error {
+func (j *ThumbnailResizerJob) run() errorsx.Error {
 	picture, _, err := j.getPictureFunc(j.pictureMetadata)
 	if err != nil {
 		return errorsx.Wrap(err)

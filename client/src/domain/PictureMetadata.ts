@@ -1,5 +1,5 @@
 import { AbstractMediaFile } from './AbstractMediaFile';
-import { MapLocation } from './Location';
+import { MapLocation, SuggestedLocation } from './Location';
 import { MediaFileType } from './MediaFileType';
 import { MediaFile } from './MediaFile';
 
@@ -10,7 +10,8 @@ export class PictureMetadata extends AbstractMediaFile {
     public readonly relativePath: string,
     public readonly fileSizeBytes: number,
     public readonly exif: null|ExifData,
-    public readonly rawSize: RawSize) {
+    public readonly rawSize: RawSize,
+    public readonly suggestedLocation?: SuggestedLocation) {
       super(hashValue, relativePath, fileSizeBytes);
     }
 
@@ -71,11 +72,11 @@ function parseWGS84ToLocation(
   const longDegs = asDecimal(GPSLongitude[0]);
   const longMins = asDecimal(GPSLongitude[1]);
   const longSecs = asDecimal(GPSLongitude[2]);
-  const long = ((((longSecs / 60) + longMins) / 60) + longDegs) * (GPSLongitudeRef === 'E' ? 1 : -1);
+  const lon = ((((longSecs / 60) + longMins) / 60) + longDegs) * (GPSLongitudeRef === 'E' ? 1 : -1);
 
   return {
     lat,
-    long,
+    lon,
   };
 }
 

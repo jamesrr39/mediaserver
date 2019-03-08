@@ -40,7 +40,7 @@ class TrackThumbnail extends React.Component<Props, ComponentState> {
           
           return {
             lat: posLat,
-            long: posLong,
+            lon: posLong,
           };
         }),
         activityBounds: trackSummary.activityBounds,

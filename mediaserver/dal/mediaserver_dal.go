@@ -54,7 +54,7 @@ func NewMediaServerDAL(logger *logger.Logger, fs gofs.Fs, picturesBasePath, cach
 	picturesDAL := NewPicturesDAL(cachesBasePath, thumbnailsDAL, openFileFunc)
 	tracksDAL := NewTracksDAL(openFileFunc)
 
-	mediaFilesDAL := NewMediaFilesDAL(fs, picturesBasePath, thumbnailsDAL, videosDAL, picturesDAL, jobRunner, tracksDAL)
+	mediaFilesDAL := NewMediaFilesDAL(logger, fs, picturesBasePath, thumbnailsDAL, videosDAL, picturesDAL, jobRunner, tracksDAL)
 
 	err = fs.MkdirAll(dataDir, 0700)
 	if nil != err {

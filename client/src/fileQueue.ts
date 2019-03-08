@@ -22,7 +22,6 @@ export class FileQueue {
     } as QueuedFile;
 
     const promise = new Promise<MediaFile>((resolve, reject) => {
-      // queuedFile.onSuccess = (mediaFile) => resolve({mediaFile});
       queuedFile.onSuccess = resolve;
       queuedFile.onFailure = (error) => reject(error);
     });

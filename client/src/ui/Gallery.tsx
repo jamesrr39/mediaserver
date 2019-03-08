@@ -269,7 +269,7 @@ class InnerGallery extends React.Component<InnerGalleryProps, GalleryState> {
       activityBounds: trackSummary.activityBounds,
       points: records.map(record => ({
         lat: record.posLat,
-        long: record.posLong,
+        lon: record.posLong,
       })),
       openTrackUrl: this.props.mediaFileUrlBase,
     };

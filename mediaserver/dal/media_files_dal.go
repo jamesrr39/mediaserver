@@ -18,6 +18,7 @@ import (
 
 	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/jamesrr39/goutil/gofs"
+	"github.com/jamesrr39/goutil/logger"
 	"github.com/jamesrr39/goutil/profile"
 	"github.com/jamesrr39/semaphore"
 )
@@ -25,6 +26,7 @@ import (
 type getRecordsInTrackFuncType func(trackSummary *domain.FitFileSummary) (domain.Records, error)
 
 type MediaFilesDAL struct {
+	log              *logger.Logger
 	fs               gofs.Fs
 	picturesBasePath string
 	cache            *picturesmetadatacache.MediaFilesCache
@@ -35,8 +37,8 @@ type MediaFilesDAL struct {
 	tracksDAL        *TracksDAL
 }
 
-func NewMediaFilesDAL(fs gofs.Fs, picturesBasePath string, thumbnailsDAL *ThumbnailsDAL, videosDAL videodal.VideoDAL, picturesDAL *PicturesDAL, jobRunner *mediaserverjobs.JobRunner, tracksDAL *TracksDAL) *MediaFilesDAL {
-	return &MediaFilesDAL{fs, picturesBasePath, picturesmetadatacache.NewMediaFilesCache(), thumbnailsDAL, videosDAL, picturesDAL, jobRunner, tracksDAL}
+func NewMediaFilesDAL(log *logger.Logger, fs gofs.Fs, picturesBasePath string, thumbnailsDAL *ThumbnailsDAL, videosDAL videodal.VideoDAL, picturesDAL *PicturesDAL, jobRunner *mediaserverjobs.JobRunner, tracksDAL *TracksDAL) *MediaFilesDAL {
+	return &MediaFilesDAL{log, fs, picturesBasePath, picturesmetadatacache.NewMediaFilesCache(), thumbnailsDAL, videosDAL, picturesDAL, jobRunner, tracksDAL}
 }
 
 func (dal *MediaFilesDAL) GetAll() []domain.MediaFile {
@@ -255,18 +257,15 @@ func (dal *MediaFilesDAL) QueueSuggestedLocationJob() {
 		}
 	}
 
-	var getAllPictureMetadatas = func() ([]*domain.PictureMetadata, errorsx.Error) {
-		return picturesMetadatas, nil
-	}
-
 	var setLocationsOnPictureFunc = func(pictureMetadata *domain.PictureMetadata, suggestedLocation domain.LocationSuggestion) errorsx.Error {
 		pm := dal.Get(pictureMetadata.HashValue).(*domain.PictureMetadata)
 		pm.SuggestedLocation = &suggestedLocation
+		dal.log.Info("set suggested location on %s", pictureMetadata.HashValue)
 		return nil
 	}
 
 	dal.jobRunner.QueueJob(mediaserverjobs.NewApproximateLocationsJob(
-		getAllPictureMetadatas,
+		picturesMetadatas,
 		trackSummaries,
 		dal.tracksDAL.GetRecords,
 		setLocationsOnPictureFunc,

@@ -6,8 +6,8 @@ import { escapeHtml } from '../util/html';
 import { ActivityBounds, FitTrack } from '../domain/FitTrack';
 import { joinUrlFragments } from '../util/url';
 
-const markerIcon = require('../../node_modules/leaflet/dist/images/marker-icon.png');
-const markerShadow = require('../../node_modules/leaflet/dist/images/marker-shadow.png');
+import markerIcon from '../../node_modules/leaflet/dist/images/marker-icon.png';
+import markerShadow from '../../node_modules/leaflet/dist/images/marker-shadow.png';
 
 const StartIcon = Leaflet.Icon.extend({
   createIcon: () => {
@@ -67,12 +67,12 @@ function getBounds(markers?: MapMarker[], tracks?: TrackMapData[]) {
         s = marker.location.lat;
       }
 
-      if (marker.location.long > e) {
-        e = marker.location.long;
+      if (marker.location.lon > e) {
+        e = marker.location.lon;
       }
 
-      if (marker.location.long < w) {
-        w = marker.location.long;
+      if (marker.location.lon < w) {
+        w = marker.location.lon;
       }
     });
   }
@@ -113,6 +113,7 @@ export type PopupData = {
 };
 
 export type MapMarker = {
+  icon?: Leaflet.DivIcon,
   location: MapLocation,
   popupData?: PopupData,
 };
@@ -185,7 +186,7 @@ export default class MapComponent extends React.Component<Props> {
         }
 
         const points = track.points.map(point => {
-          return new Leaflet.LatLng(point.lat, point.long);
+          return new Leaflet.LatLng(point.lat, point.lon);
         });
 
         const color = generateColorFromIndex(index);
@@ -222,15 +223,19 @@ export default class MapComponent extends React.Component<Props> {
 
     if (markers) {
       markers.forEach(marker => {
-        const { lat, long } = marker.location;
-
-        const leafletMarker = Leaflet.marker([lat, long], {
-          icon: new Leaflet.Icon({
+        const { lat, lon } = marker.location;
+        let icon = marker.icon;
+        if (!icon) {
+          icon = new Leaflet.Icon({
             iconUrl: markerIcon,
             shadowUrl: markerShadow,
             iconSize: [24, 36],
             iconAnchor: [12, 36],
-          }),
+          });
+        }
+
+        const leafletMarker = Leaflet.marker([lat, lon], {
+          icon,
         })
         .addTo(map);
 
@@ -269,3 +274,29 @@ export default class MapComponent extends React.Component<Props> {
     `;
   }
 }
+
+export function newDivIcon() {
+  const myCustomColour = '#583470';
+
+  const markerHtmlStyles = `
+    background-color: ${myCustomColour};
+    width: 3rem;
+    height: 3rem;
+    display: block;
+    left: -1.5rem;
+    top: -1.5rem;
+    position: relative;
+    border-radius: 3rem 3rem 0;
+    transform: rotate(45deg);
+    border: 1px solid #FFFFFF`;
+
+  const icon = Leaflet.divIcon({
+    className: 'my-custom-pin', // TODO needed?
+    iconAnchor: [0, 24],
+    // labelAnchor: [-6, 0],
+    popupAnchor: [0, -36],
+    html: `<span style="${markerHtmlStyles}" />`
+  });
+
+  return icon;
+} 

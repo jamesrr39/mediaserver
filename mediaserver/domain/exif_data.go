@@ -7,10 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/tiff"
-
-	"github.com/jamesrr39/goutil/errorsx"
 )
 
 type ExifData map[string]interface{}
@@ -154,6 +153,9 @@ func asDecimal(value string) (float64, error) {
 
 func (e ExifData) propToString(keyName string) (string, error) {
 	val := e[keyName]
+	if val == nil {
+		return "", ErrNotExist
+	}
 	switch val.(type) {
 	case string:
 		return val.(string), nil
@@ -167,12 +169,20 @@ func (e ExifData) propToString(keyName string) (string, error) {
 
 func (e ExifData) propToStringSlice(keyName string) ([]string, error) {
 	val := e[keyName]
-	switch val.(type) {
+	if val == nil {
+		return nil, ErrNotExist
+	}
+	switch val := val.(type) {
 	case []string:
-		return val.([]string), nil
+		return val, nil
 	case *tiff.Tag:
-		tag := val.(*tiff.Tag)
-		return nil, fmt.Errorf("don't know how to handle %v (%T)", tag, tag)
+		return nil, fmt.Errorf("don't know how to handle %v (%T)", val, val)
+	case []interface{}:
+		var s []string
+		for _, part := range val {
+			s = append(s, fmt.Sprintf("%v", part))
+		}
+		return s, nil
 	}
 
 	return nil, fmt.Errorf("couldn't convert exif key %q (%T):(%v) to string slice", keyName, val, val)
