@@ -51,12 +51,12 @@ SELECT id(), name FROM collections;
 	return collectionList, nil
 }
 
-func (r *CollectionsDAL) Get(tx *sql.Tx, collectionID int64) (*collections.Collection, error) {
+func (r *CollectionsDAL) Get(tx *sql.Tx, collectionID int64) (*collections.Collection, errorsx.Error) {
 	row := tx.QueryRow(`
 SELECT name FROM collections WHERE id() = $1;
     `, collectionID)
 	if row == nil {
-		return nil, ErrNotFound
+		return nil, errorsx.Wrap(ErrNotFound)
 	}
 
 	collection := &collections.Collection{
