@@ -93,6 +93,11 @@ func (dal *MediaServerDAL) Create(tx *sql.Tx, file io.ReadSeeker, filename, cont
 		return nil, errorsx.Wrap(err)
 	}
 
+	existingFile := dal.MediaFilesDAL.Get(hashValue)
+	if existingFile != nil {
+		return nil, errorsx.Wrap(ErrFileAlreadyExists)
+	}
+
 	fileLen, err := file.Seek(0, io.SeekStart)
 	if err != nil {
 		return nil, errorsx.Wrap(err)

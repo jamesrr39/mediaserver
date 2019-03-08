@@ -102,7 +102,7 @@ func (ms *MediaFilesService) serveFileUpload(w http.ResponseWriter, r *http.Requ
 
 	mediaFile, err := ms.mediaServerDAL.Create(tx, file, fileHeader.Filename, contentType, profileRun)
 	if nil != err {
-		switch err {
+		switch errorsx.Cause(err) {
 		case dal.ErrFileAlreadyExists:
 			errorsx.HTTPError(w, ms.log, err, 409)
 		case dal.ErrIllegalPathTraversingUp:
