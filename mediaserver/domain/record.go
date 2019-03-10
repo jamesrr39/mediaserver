@@ -1,8 +1,9 @@
 package domain
 
 import (
-	"errors"
 	"time"
+
+	"github.com/jamesrr39/goutil/errorsx"
 )
 
 type Record struct {
@@ -19,9 +20,9 @@ func NewRecord(timestamp time.Time, posLat, posLong float64, distance, altitude 
 
 type Records []*Record
 
-func (r Records) GetRecordClosestToTime(dateTime time.Time) (*Record, int, error) {
+func (r Records) GetRecordClosestToTime(dateTime time.Time) (*Record, int, errorsx.Error) {
 	if len(r) == 0 {
-		return nil, 0, errors.New("expected at least one record, but there were none")
+		return nil, 0, errorsx.Errorf("expected at least one record, but there were none")
 	}
 
 	upperIndex := len(r) - 1
@@ -49,5 +50,5 @@ func (r Records) GetRecordClosestToTime(dateTime time.Time) (*Record, int, error
 		}
 	}
 
-	return nil, 0, errors.New("reached max limit of iteration for binary search (implementation error)")
+	return nil, 0, errorsx.Errorf("reached max limit of iteration for binary search (implementation error)")
 }

@@ -27,7 +27,7 @@ func (bw *BodyWriter) Write(data []byte) (int, error) {
 	return bw.WrapResponseWriter.Write(data)
 }
 
-func CreateRequestLoggerMiddleware(log logger.Logger) func(http.Handler) http.Handler {
+func CreateRequestLoggerMiddleware(log *logger.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			startTime := time.Now()

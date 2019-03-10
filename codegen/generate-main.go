@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"github.com/jamesrr39/goutil/must"
+
+	"github.com/jamesrr39/goutil/errorsx"
 )
 
 func main() {
@@ -66,7 +68,7 @@ func writeGeneratedCode(generatedCode GeneratedCode) error {
 	log.Printf("writing generated code to %s\n", goPath)
 	err := ioutil.WriteFile(goPath, []byte(comment+generatedCode.GoCode), 0644)
 	if err != nil {
-		return err
+		return errorsx.Wrap(err)
 	}
 
 	tsPath := fmt.Sprintf("client/src/generated/%s.ts", generatedCode.RelativePath)

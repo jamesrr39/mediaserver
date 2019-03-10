@@ -36,8 +36,8 @@ type Logger struct {
 	logLevel  LogLevel
 }
 
-func NewLogger(writer io.Writer, logLevel LogLevel) Logger {
-	return Logger{writer, nowFunc, logLevel}
+func NewLogger(writer io.Writer, logLevel LogLevel) *Logger {
+	return &Logger{writer, nowFunc, logLevel}
 }
 
 func (l *Logger) Debug(message string, args ...interface{}) {

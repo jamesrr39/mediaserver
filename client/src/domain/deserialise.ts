@@ -2,6 +2,7 @@ import { MediaFileType } from './MediaFileType';
 import { ExifData, RawSize, PictureMetadata } from './PictureMetadata';
 import { VideoMetadata } from './VideoMetadata';
 import { ActivityBounds, FitTrack } from './FitTrack';
+import { SuggestedLocation } from './Location';
 
 interface BaseMediaFileJSON {
   hashValue: string;
@@ -32,14 +33,22 @@ type FitFileMetadataJSON = {
 
 export type MediaFileJSON = {
   fileType: MediaFileType;
+  suggestedLocation?: SuggestedLocation;
 } & (PictureMetadataJSON | VideoMetadataJSON | FitFileMetadataJSON);
 
 export function fromJSON(json: MediaFileJSON) {
   switch (json.fileType) {
   case MediaFileType.Picture:
-    return new PictureMetadata(json.hashValue, json.relativePath, json.fileSizeBytes, json.exif, json.rawSize);
+    return new PictureMetadata(
+      json.hashValue, 
+      json.relativePath, 
+      json.fileSizeBytes, 
+      json.exif, 
+      json.rawSize, 
+      json.suggestedLocation,
+    );
   case MediaFileType.Video:
-    return new VideoMetadata(json.hashValue, json.relativePath, json.fileSizeBytes);
+    return new VideoMetadata(json.hashValue, json.relativePath, json.fileSizeBytes, json.suggestedLocation);
   case MediaFileType.FitTrack:
     return new FitTrack(
       json.hashValue,
@@ -51,6 +60,7 @@ export function fromJSON(json: MediaFileJSON) {
       json.deviceProduct,
       json.totalDistance,
       json.activityBounds,
+      json.suggestedLocation,
     );
   default:
     throw new Error(`type '${json}' not supported`);

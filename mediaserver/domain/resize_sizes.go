@@ -2,6 +2,8 @@ package domain
 
 import (
 	"strconv"
+
+	"github.com/jamesrr39/goutil/errorsx"
 )
 
 type Size struct {
@@ -14,7 +16,7 @@ type Size struct {
 // example: Picture 300w x 400h , widthParam "600" heightParam "900"
 // resulting size: 600 x 800
 // we won't size the picture up from the original picture size
-func WidthAndHeightStringsToSize(widthParam, heightParam string, pictureSize Size) (Size, error) {
+func WidthAndHeightStringsToSize(widthParam, heightParam string, pictureSize Size) (Size, errorsx.Error) {
 	if "" == widthParam && "" == heightParam {
 		return pictureSize, nil
 	}
@@ -26,7 +28,7 @@ func WidthAndHeightStringsToSize(widthParam, heightParam string, pictureSize Siz
 	} else {
 		width, err = strconv.Atoi(widthParam)
 		if nil != err {
-			return Size{}, err
+			return Size{}, errorsx.Wrap(err)
 		}
 	}
 
@@ -35,7 +37,7 @@ func WidthAndHeightStringsToSize(widthParam, heightParam string, pictureSize Siz
 	} else {
 		height, err = strconv.Atoi(heightParam)
 		if nil != err {
-			return Size{}, err
+			return Size{}, errorsx.Wrap(err)
 		}
 	}
 

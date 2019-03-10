@@ -45,6 +45,6 @@ describe('PictureMetadata', () => {
       throw new Error('location should not be null');
     }
     expect(location.lat).toBe(40.43287);
-    expect(location.long).toBe(7.850745);
+    expect(location.lon).toBe(7.850745);
   });
 });

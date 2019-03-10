@@ -12,6 +12,8 @@ import (
 	"log"
 
 	"github.com/jamesrr39/goutil/image-processing/imageprocessingutil"
+
+	"github.com/jamesrr39/goutil/errorsx"
 )
 
 type HashValue string
@@ -56,7 +58,7 @@ func NewPictureMetadataAndPictureFromBytes(file io.ReadSeeker, relativePath stri
 
 	fileLen, err := file.Seek(0, io.SeekStart)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errorsx.Wrap(err)
 	}
 
 	exifData, err := DecodeExifFromFile(file)
@@ -85,7 +87,7 @@ func NewHash(file io.Reader) (HashValue, error) {
 
 	_, err := io.Copy(hasher, file)
 	if nil != err {
-		return "", err
+		return "", errorsx.Wrap(err)
 	}
 
 	return HashValue(hex.EncodeToString(hasher.Sum(nil))), nil

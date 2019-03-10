@@ -16,7 +16,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/jamesrr39/goutil/gofs"
+	"github.com/jamesrr39/goutil/logger"
 	"github.com/jamesrr39/goutil/profile"
 	"github.com/jamesrr39/semaphore"
 )
@@ -24,6 +26,7 @@ import (
 type getRecordsInTrackFuncType func(trackSummary *domain.FitFileSummary) (domain.Records, error)
 
 type MediaFilesDAL struct {
+	log              *logger.Logger
 	fs               gofs.Fs
 	picturesBasePath string
 	cache            *picturesmetadatacache.MediaFilesCache
@@ -34,8 +37,8 @@ type MediaFilesDAL struct {
 	tracksDAL        *TracksDAL
 }
 
-func NewMediaFilesDAL(fs gofs.Fs, picturesBasePath string, thumbnailsDAL *ThumbnailsDAL, videosDAL videodal.VideoDAL, picturesDAL *PicturesDAL, jobRunner *mediaserverjobs.JobRunner, tracksDAL *TracksDAL) *MediaFilesDAL {
-	return &MediaFilesDAL{fs, picturesBasePath, picturesmetadatacache.NewMediaFilesCache(), thumbnailsDAL, videosDAL, picturesDAL, jobRunner, tracksDAL}
+func NewMediaFilesDAL(log *logger.Logger, fs gofs.Fs, picturesBasePath string, thumbnailsDAL *ThumbnailsDAL, videosDAL videodal.VideoDAL, picturesDAL *PicturesDAL, jobRunner *mediaserverjobs.JobRunner, tracksDAL *TracksDAL) *MediaFilesDAL {
+	return &MediaFilesDAL{log, fs, picturesBasePath, picturesmetadatacache.NewMediaFilesCache(), thumbnailsDAL, videosDAL, picturesDAL, jobRunner, tracksDAL}
 }
 
 func (dal *MediaFilesDAL) GetAll() []domain.MediaFile {
@@ -64,7 +67,7 @@ func (dal *MediaFilesDAL) OpenFile(mediaFile domain.MediaFile) (gofs.File, error
 func (dal *MediaFilesDAL) processFitFile(tx *sql.Tx, path string, fileInfo os.FileInfo) (*domain.FitFileSummary, error) {
 	file, err := dal.fs.Open(path)
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 	defer file.Close()
 
@@ -72,14 +75,14 @@ func (dal *MediaFilesDAL) processFitFile(tx *sql.Tx, path string, fileInfo os.Fi
 
 	hashValue, err := domain.NewHash(file)
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	mediaFileInfo := domain.NewMediaFileInfo(relativePath, hashValue, domain.MediaFileTypeFitTrack, fileInfo.Size())
 
 	_, err = file.Seek(0, 0)
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	return domain.NewFitFileSummaryFromReader(mediaFileInfo, file)
@@ -89,7 +92,7 @@ func (dal *MediaFilesDAL) processVideoFile(tx *sql.Tx, path string, fileInfo os.
 
 	file, err := dal.fs.Open(path)
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 	defer file.Close()
 
@@ -97,19 +100,19 @@ func (dal *MediaFilesDAL) processVideoFile(tx *sql.Tx, path string, fileInfo os.
 
 	hashValue, err := domain.NewHash(file)
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	_, err = file.Seek(0, 0)
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	videoFileMetadata := domain.NewVideoFileMetadata(hashValue, relativePath, fileInfo.Size())
 
 	err = dal.videosDAL.EnsureSupportedFile(videoFileMetadata)
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	return videoFileMetadata, nil
@@ -123,7 +126,7 @@ func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string, profileRun
 		file, err = dal.fs.Open(path)
 	})
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	relativePath := strings.TrimPrefix(path, dal.picturesBasePath)
@@ -133,12 +136,12 @@ func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string, profileRun
 		hash, err = domain.NewHash(file)
 	})
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	_, err = file.Seek(0, io.SeekStart)
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	var pictureMetadata *domain.PictureMetadata
@@ -153,7 +156,7 @@ func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string, profileRun
 			pictureMetadata, _, err = domain.NewPictureMetadataAndPictureFromBytes(file, relativePath, hash)
 		})
 		if nil != err {
-			return nil, err
+			return nil, errorsx.Wrap(err)
 		}
 
 		profileRun.Measure("write picture metadata", func() {
@@ -167,7 +170,7 @@ func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string, profileRun
 	return pictureMetadata, nil
 }
 
-func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx, profileRun *profile.Run) error {
+func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx, profileRun *profile.Run) errorsx.Error {
 	sema := semaphore.NewSemaphore(uint(runtime.NumCPU()))
 
 	var mediaFiles []domain.MediaFile
@@ -191,7 +194,7 @@ func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx, profileRun *profile.Ru
 
 	walkFunc := func(path string, fileInfo os.FileInfo, err error) error {
 		if nil != err {
-			return err
+			return errorsx.Wrap(err)
 		}
 
 		if fileInfo.IsDir() {
@@ -219,7 +222,7 @@ func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx, profileRun *profile.Ru
 
 	err := gofs.Walk(dal.fs, dal.picturesBasePath, walkFunc, gofs.WalkOptions{FollowSymlinks: true})
 	if nil != err {
-		return err
+		return errorsx.Wrap(err)
 	}
 
 	sema.Wait()
@@ -229,7 +232,7 @@ func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx, profileRun *profile.Ru
 		for _, err := range errs {
 			errTexts = append(errTexts, fmt.Sprintf("%q", err))
 		}
-		return fmt.Errorf("errors reading files: %s", strings.Join(errTexts, ", "))
+		return errorsx.Errorf("errors reading files: %s", strings.Join(errTexts, ", "))
 	}
 
 	newCache := picturesmetadatacache.NewMediaFilesCache()
@@ -254,18 +257,15 @@ func (dal *MediaFilesDAL) QueueSuggestedLocationJob() {
 		}
 	}
 
-	var getAllPictureMetadatas = func() ([]*domain.PictureMetadata, error) {
-		return picturesMetadatas, nil
-	}
-
-	var setLocationsOnPictureFunc = func(pictureMetadata *domain.PictureMetadata, suggestedLocation domain.LocationSuggestion) error {
+	var setLocationsOnPictureFunc = func(pictureMetadata *domain.PictureMetadata, suggestedLocation domain.LocationSuggestion) errorsx.Error {
 		pm := dal.Get(pictureMetadata.HashValue).(*domain.PictureMetadata)
 		pm.SuggestedLocation = &suggestedLocation
+		dal.log.Info("set suggested location on %s", pictureMetadata.HashValue)
 		return nil
 	}
 
 	dal.jobRunner.QueueJob(mediaserverjobs.NewApproximateLocationsJob(
-		getAllPictureMetadatas,
+		picturesMetadatas,
 		trackSummaries,
 		dal.tracksDAL.GetRecords,
 		setLocationsOnPictureFunc,
@@ -283,21 +283,21 @@ func (dal *MediaFilesDAL) processFile(fs gofs.Fs, profileRun *profile.Run, tx *s
 			mediaFile, err = dal.processPictureFile(tx, path, profileRun)
 		})
 		if err != nil {
-			return nil, err
+			return nil, errorsx.Wrap(err)
 		}
 	case ".mp4":
 		profileRun.Measure("process video file", func() {
 			mediaFile, err = dal.processVideoFile(tx, path, fileInfo)
 		})
 		if err != nil {
-			return nil, err
+			return nil, errorsx.Wrap(err)
 		}
 	case ".fit":
 		profileRun.Measure("process fit file", func() {
 			mediaFile, err = dal.processFitFile(tx, path, fileInfo)
 		})
 		if err != nil {
-			return nil, err
+			return nil, errorsx.Wrap(err)
 		}
 	default:
 		return nil, ErrFileNotSupported

@@ -1,11 +1,11 @@
 package domain
 
 type Location struct {
-	Lat float64
-	Lon float64
+	Lat float64 `json:"lat"`
+	Lon float64 `json:"lon"`
 }
 
 type LocationSuggestion struct {
 	Location
-	Reason string
+	Reason string `json:"reason"`
 }

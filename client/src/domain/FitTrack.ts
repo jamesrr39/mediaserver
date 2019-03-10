@@ -1,6 +1,7 @@
 import { MediaFileType } from './MediaFileType';
 import { Duration } from './duration';
 import { AbstractMediaFile } from './AbstractMediaFile';
+import { SuggestedLocation } from './Location';
 
 /*
 Fit file summary
@@ -41,7 +42,8 @@ export class FitTrack extends AbstractMediaFile {
     public readonly deviceManufacturer: string,
     public readonly deviceProduct: string,
     public readonly totalDistance: number,
-    public readonly activityBounds: ActivityBounds) {
+    public readonly activityBounds: ActivityBounds,
+    public readonly suggestedLocation?: SuggestedLocation) {
       super(hashValue, relativePath, fileSizeBytes);
     }
 

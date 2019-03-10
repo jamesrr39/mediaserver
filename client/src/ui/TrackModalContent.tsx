@@ -72,7 +72,7 @@ class TrackModalContent extends React.Component<Props, State> {
         trackSummary,
         points: trackRecords.map(record => ({
           lat: record.posLat,
-          long: record.posLong,
+          lon: record.posLong,
         })),
         activityBounds: trackSummary.activityBounds,
       }],

@@ -2,7 +2,6 @@ package webservice
 
 import (
 	"encoding/json"
-	"fmt"
 	"mediaserverapp/mediaserver/collections"
 	"mediaserverapp/mediaserver/dal"
 	"mediaserverapp/mediaserver/dal/diskstorage/mediaserverdb"
@@ -12,21 +11,25 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
+	"github.com/jamesrr39/goutil/errorsx"
+	"github.com/jamesrr39/goutil/logger"
 )
 
 type CollectionsWebService struct {
+	log                   *logger.Logger
 	collectionsRepository *dal.CollectionsDAL
 	dbConn                *mediaserverdb.DBConn
 	chi.Router
 }
 
 func NewCollectionsWebService(
+	log *logger.Logger,
 	dbConn *mediaserverdb.DBConn,
 	collectionsRepository *dal.CollectionsDAL,
 ) *CollectionsWebService {
 	router := chi.NewRouter()
 
-	ws := &CollectionsWebService{collectionsRepository, dbConn, router}
+	ws := &CollectionsWebService{log, collectionsRepository, dbConn, router}
 
 	router.Get("/", ws.handleGetAll)
 	router.Post("/", ws.handleCreate)
@@ -38,14 +41,14 @@ func NewCollectionsWebService(
 func (ws *CollectionsWebService) handleGetAll(w http.ResponseWriter, r *http.Request) {
 	tx, err := ws.dbConn.Begin()
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		errorsx.HTTPError(w, ws.log, err, 500)
 		return
 	}
 	defer tx.Rollback()
 
 	collectionList, err := ws.collectionsRepository.GetAll(tx)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		errorsx.HTTPError(w, ws.log, err, 500)
 		return
 	}
 
@@ -64,28 +67,30 @@ func (ws *CollectionsWebService) handleGetAll(w http.ResponseWriter, r *http.Req
 
 func (ws *CollectionsWebService) handleCreate(w http.ResponseWriter, r *http.Request) {
 	var collection *collections.Collection
-	err := json.NewDecoder(r.Body).Decode(&collection)
-	if err != nil {
-		http.Error(w, err.Error(), 400)
-		return
+	{
+		err := json.NewDecoder(r.Body).Decode(&collection)
+		if err != nil {
+			errorsx.HTTPError(w, ws.log, errorsx.Wrap(err), 400)
+			return
+		}
 	}
 
-	err = collection.IsValid()
-	if err != nil {
-		http.Error(w, err.Error(), 400)
+	validationResult := collection.IsValid()
+	if !validationResult.Valid {
+		errorsx.HTTPError(w, ws.log, errorsx.Errorf(validationResult.Message), 400)
 		return
 	}
 
 	tx, err := ws.dbConn.Begin()
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		errorsx.HTTPError(w, ws.log, err, 500)
 		return
 	}
 	defer mediaserverdb.CommitOrRollback(tx)
 
 	err = ws.collectionsRepository.Create(tx, collection)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		errorsx.HTTPError(w, ws.log, err, 500)
 		return
 	}
 
@@ -100,33 +105,35 @@ func (ws *CollectionsWebService) handleUpdate(w http.ResponseWriter, r *http.Req
 	id := chi.URLParam(r, "id")
 
 	var collection *collections.Collection
-	err := json.NewDecoder(r.Body).Decode(&collection)
-	if err != nil {
-		http.Error(w, err.Error(), 400)
-		return
+	{
+		err := json.NewDecoder(r.Body).Decode(&collection)
+		if err != nil {
+			errorsx.HTTPError(w, ws.log, errorsx.Wrap(err), 400)
+			return
+		}
 	}
 
-	err = collection.IsValid()
-	if err != nil {
-		http.Error(w, err.Error(), 400)
+	validationResult := collection.IsValid()
+	if !validationResult.Valid {
+		errorsx.HTTPError(w, ws.log, errorsx.Errorf(validationResult.Message), 400)
 		return
 	}
 
 	if id != strconv.FormatInt(collection.ID, 10) {
-		http.Error(w, fmt.Sprintf("bad match on IDs: got '%s' from URL param but '%d' from request body", id, collection.ID), 400)
+		errorsx.HTTPError(w, ws.log, errorsx.Errorf("bad match on IDs: got '%s' from URL param but '%d' from request body", id, collection.ID), 400)
 		return
 	}
 
 	tx, err := ws.dbConn.Begin()
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		errorsx.HTTPError(w, ws.log, err, 500)
 		return
 	}
 	defer mediaserverdb.CommitOrRollback(tx)
 
 	err = ws.collectionsRepository.Update(tx, collection)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		errorsx.HTTPError(w, ws.log, err, 500)
 		return
 	}
 
@@ -138,22 +145,25 @@ func (ws *CollectionsWebService) handleUpdate(w http.ResponseWriter, r *http.Req
 }
 
 func (ws *CollectionsWebService) handleDelete(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
-	if err != nil {
-		http.Error(w, err.Error(), 400)
-		return
+	var id int64
+	{
+		var err error
+		id, err = strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+		if err != nil {
+			errorsx.HTTPError(w, ws.log, errorsx.Wrap(err), 400)
+			return
+		}
 	}
-
 	tx, err := ws.dbConn.Begin()
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		errorsx.HTTPError(w, ws.log, err, 500)
 		return
 	}
 	defer mediaserverdb.CommitOrRollback(tx)
 
 	err = ws.collectionsRepository.Delete(tx, id)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		errorsx.HTTPError(w, ws.log, err, 500)
 		return
 	}
 

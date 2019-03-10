@@ -67,9 +67,6 @@ export function fetchPicturesMetadata() {
 
 export function fetchRecordsForTrack(trackSummary: FitTrack) {
   return async (dispatch: (action: TrackRecordsFetchedAction) => void, getState: () => State) => {
-    // tslint:disable-next-line
-    // console.log(getState())
-
     const state = getState();
     const recordsFromState = state.mediaFilesReducer.trackRecordsMap.get(trackSummary.hashValue);
     if (recordsFromState) {

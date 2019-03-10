@@ -32,13 +32,15 @@ export type State = {
   notificationsReducer: NotificationsState,
 };
 
+const maxConcurrentUploads = 2;
+
 const mediaFilesInitialState = {
   isReady: false,
   isFetching: false,
   mediaFiles: [],
   scrollObservable,
   mediaFilesMap: new Map<string, MediaFile>(),
-  uploadQueue: new FileQueue(4),
+  uploadQueue: new FileQueue(maxConcurrentUploads),
   trackRecordsMap: new Map<string, Record[]>(),
 };
 

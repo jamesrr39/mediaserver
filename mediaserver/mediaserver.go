@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
+	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/jamesrr39/goutil/gofs"
 	"github.com/jamesrr39/goutil/logger"
 	"github.com/jamesrr39/goutil/profile"
@@ -31,13 +32,12 @@ type MediaServer struct {
 	tracksService           *pictureswebservice.TracksWebService
 	dbConn                  *mediaserverdb.DBConn
 	jobRunner               *mediaserverjobs.JobRunner
-	logger                  logger.Logger
+	logger                  *logger.Logger
 }
 
 // NewMediaServerAndScan creates a new MediaServer and builds a cache of pictures by scanning the rootpath
-func NewMediaServerAndScan(logger logger.Logger, fs gofs.Fs, rootpath, cachesDir, dataDir string, maxConcurrentResizes, maxConcurrentVideoConversions uint, profiler *profile.Profiler) (*MediaServer, error) {
+func NewMediaServerAndScan(logger *logger.Logger, fs gofs.Fs, rootpath, cachesDir, dataDir string, maxConcurrentResizes, maxConcurrentVideoConversions uint, profiler *profile.Profiler) (*MediaServer, error) {
 	var err error
-
 	profileRun := profiler.NewRun("NewMediaServerAndScan")
 	defer func() {
 		message := "Successful"
@@ -52,7 +52,7 @@ func NewMediaServerAndScan(logger logger.Logger, fs gofs.Fs, rootpath, cachesDir
 		mediaServerDAL, err = dal.NewMediaServerDAL(logger, fs, rootpath, cachesDir, dataDir, maxConcurrentResizes, maxConcurrentVideoConversions)
 	})
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	var dbConn *mediaserverdb.DBConn
@@ -60,17 +60,17 @@ func NewMediaServerAndScan(logger logger.Logger, fs gofs.Fs, rootpath, cachesDir
 		dbConn, err = mediaserverdb.NewDBConn(filepath.Join(dataDir, "mediaserver.db"), logger)
 	})
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	mediaServer := &MediaServer{
 		Rootpath:                rootpath,
 		mediaServerDAL:          mediaServerDAL,
-		picturesService:         pictureswebservice.NewPicturesService(mediaServerDAL),
-		picturesMetadataService: pictureswebservice.NewMediaFilesService(dbConn, mediaServerDAL, profiler),
+		picturesService:         pictureswebservice.NewPicturesService(logger, mediaServerDAL),
+		picturesMetadataService: pictureswebservice.NewMediaFilesService(logger, dbConn, mediaServerDAL, profiler),
 		videosWebService:        pictureswebservice.NewVideoWebService(mediaServerDAL.VideosDAL, mediaServerDAL.MediaFilesDAL),
-		collectionsService:      pictureswebservice.NewCollectionsWebService(dbConn, mediaServerDAL.CollectionsDAL),
-		tracksService:           pictureswebservice.NewTracksWebService(mediaServerDAL.TracksDAL, mediaServerDAL.MediaFilesDAL),
+		collectionsService:      pictureswebservice.NewCollectionsWebService(logger, dbConn, mediaServerDAL.CollectionsDAL),
+		tracksService:           pictureswebservice.NewTracksWebService(logger, mediaServerDAL.TracksDAL, mediaServerDAL.MediaFilesDAL),
 		logger:                  logger,
 	}
 
@@ -79,7 +79,7 @@ func NewMediaServerAndScan(logger logger.Logger, fs gofs.Fs, rootpath, cachesDir
 		tx, err = dbConn.Begin()
 	})
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 	defer mediaserverdb.CommitOrRollback(tx)
 
@@ -87,7 +87,7 @@ func NewMediaServerAndScan(logger logger.Logger, fs gofs.Fs, rootpath, cachesDir
 		err = mediaServer.mediaServerDAL.MediaFilesDAL.UpdatePicturesCache(tx, profileRun)
 	})
 	if nil != err {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	mediaServer.mediaServerDAL.MediaFilesDAL.QueueSuggestedLocationJob()
@@ -113,7 +113,7 @@ func NewMediaServerAndScan(logger logger.Logger, fs gofs.Fs, rootpath, cachesDir
 		}
 	})
 	if err != nil {
-		return nil, err
+		return nil, errorsx.Wrap(err)
 	}
 
 	return mediaServer, nil

@@ -3,6 +3,7 @@ package mediaserverjobs
 import (
 	"fmt"
 
+	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/jamesrr39/goutil/logger"
 	"github.com/jamesrr39/semaphore"
 )
@@ -15,17 +16,17 @@ const (
 )
 
 type Job interface {
-	run() error
+	run() errorsx.Error
 	fmt.Stringer
 	JobType() JobType
 }
 
 type JobRunner struct {
-	logger      logger.Logger
+	logger      *logger.Logger
 	cpuJobsSema *semaphore.Semaphore
 }
 
-func NewJobRunner(logger logger.Logger, maxConcurrentJobs uint) *JobRunner {
+func NewJobRunner(logger *logger.Logger, maxConcurrentJobs uint) *JobRunner {
 	cpuJobsSema := semaphore.NewSemaphore(maxConcurrentJobs)
 	return &JobRunner{logger, cpuJobsSema}
 }
@@ -41,7 +42,9 @@ func (j *JobRunner) QueueJob(job Job) {
 
 			err := job.run()
 			if err != nil {
-				j.logger.Error("JOB: error running job %q. Error: %q", job, err)
+				j.logger.Error("JOB: error running job %q. Error: %q. Stack:\n%s", job, err, err.Stack())
+			} else {
+				j.logger.Info("JOB: job finished successfully (%q)", job)
 			}
 		}()
 	default:

@@ -1,7 +1,6 @@
 package collections
 
 import (
-	"errors"
 	"mediaserverapp/mediaserver/domain"
 )
 
@@ -11,12 +10,18 @@ type Collection struct {
 	FileHashes []domain.HashValue `json:"fileHashes"`
 }
 
-var ErrNoName = errors.New("no name supplied for the collection")
+type ValidationResult struct {
+	Valid   bool
+	Message string
+}
 
-func (c *Collection) IsValid() error {
+func (c *Collection) IsValid() ValidationResult {
 	if c.Name == "" {
-		return ErrNoName
+		return ValidationResult{
+			Valid:   false,
+			Message: "no name supplied for the collection",
+		}
 	}
 
-	return nil
+	return ValidationResult{Valid: true}
 }
