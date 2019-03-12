@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"mediaserverapp/mediaserver"
+	"mediaserver/mediaserver"
 	"os"
 	"path/filepath"
 	"time"

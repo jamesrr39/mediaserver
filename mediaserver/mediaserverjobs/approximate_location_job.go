@@ -3,7 +3,7 @@ package mediaserverjobs
 import (
 	"fmt"
 	"math"
-	"mediaserverapp/mediaserver/domain"
+	"mediaserver/mediaserver/domain"
 	"time"
 
 	"github.com/jamesrr39/goutil/errorsx"

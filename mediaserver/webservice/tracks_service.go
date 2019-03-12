@@ -2,8 +2,8 @@ package webservice
 
 import (
 	"fmt"
-	"mediaserverapp/mediaserver/dal"
-	"mediaserverapp/mediaserver/domain"
+	"mediaserver/mediaserver/dal"
+	"mediaserver/mediaserver/domain"
 	"net/http"
 
 	"github.com/go-chi/chi"

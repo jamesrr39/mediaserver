@@ -3,7 +3,7 @@ package testutil
 import (
 	"fmt"
 	"io/ioutil"
-	"mediaserverapp/mediaserver/dal/diskstorage/mediaserverdb"
+	"mediaserver/mediaserver/dal/diskstorage/mediaserverdb"
 	"sync/atomic"
 	"testing"
 

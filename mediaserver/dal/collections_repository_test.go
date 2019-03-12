@@ -1,9 +1,9 @@
 package dal
 
 import (
-	"mediaserverapp/mediaserver/collections"
-	"mediaserverapp/mediaserver/domain"
-	"mediaserverapp/mediaserver/testutil"
+	"mediaserver/mediaserver/collections"
+	"mediaserver/mediaserver/domain"
+	"mediaserver/mediaserver/testutil"
 	"testing"
 
 	"github.com/alecthomas/assert"

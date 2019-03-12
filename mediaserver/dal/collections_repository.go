@@ -2,8 +2,8 @@ package dal
 
 import (
 	"database/sql"
-	"mediaserverapp/mediaserver/collections"
-	"mediaserverapp/mediaserver/domain"
+	"mediaserver/mediaserver/collections"
+	"mediaserver/mediaserver/domain"
 
 	"github.com/jamesrr39/goutil/errorsx"
 )

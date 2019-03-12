@@ -2,10 +2,10 @@ package webservice
 
 import (
 	"encoding/json"
-	"mediaserverapp/mediaserver/collections"
-	"mediaserverapp/mediaserver/dal"
-	"mediaserverapp/mediaserver/dal/diskstorage/mediaserverdb"
-	"mediaserverapp/mediaserver/domain"
+	"mediaserver/mediaserver/collections"
+	"mediaserver/mediaserver/dal"
+	"mediaserver/mediaserver/dal/diskstorage/mediaserverdb"
+	"mediaserver/mediaserver/domain"
 	"net/http"
 	"strconv"
 

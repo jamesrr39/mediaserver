@@ -2,9 +2,9 @@ package webservice
 
 import (
 	"fmt"
-	"mediaserverapp/mediaserver/dal"
-	"mediaserverapp/mediaserver/dal/diskstorage/mediaserverdb"
-	"mediaserverapp/mediaserver/domain"
+	"mediaserver/mediaserver/dal"
+	"mediaserver/mediaserver/dal/diskstorage/mediaserverdb"
+	"mediaserver/mediaserver/domain"
 	"mime/multipart"
 	"net/http"
 

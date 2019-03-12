@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	_ "mediaserverapp/build/client/statik"
+	_ "mediaserver/build/client/statik"
 
 	"github.com/rakyll/statik/fs"
 )
