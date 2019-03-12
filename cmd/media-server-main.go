@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/jamesrr39/goutil/gofs"
-	"github.com/jamesrr39/goutil/logger"
+	"github.com/jamesrr39/goutil/logpkg"
 	"github.com/jamesrr39/goutil/profile"
 	"github.com/jamesrr39/goutil/userextra"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
@@ -66,7 +66,7 @@ func main() {
 	profiler := profile.NewProfiler(profileWriter)
 
 	mediaServer, err := mediaserver.NewMediaServerAndScan(
-		logger.NewLogger(os.Stderr, logger.LogLevelInfo),
+		logpkg.NewLogger(os.Stderr, logpkg.LogLevelInfo),
 		gofs.NewOsFs(),
 		fullpath,
 		expandedCacheDir,

@@ -8,16 +8,16 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/jamesrr39/goutil/errorsx"
-	"github.com/jamesrr39/goutil/logger"
+	"github.com/jamesrr39/goutil/logpkg"
 )
 
 type PicturesService struct {
-	log            *logger.Logger
+	log            *logpkg.Logger
 	mediaServerDAL *dal.MediaServerDAL
 	http.Handler
 }
 
-func NewPicturesService(log *logger.Logger, mediaServerDAL *dal.MediaServerDAL) *PicturesService {
+func NewPicturesService(log *logpkg.Logger, mediaServerDAL *dal.MediaServerDAL) *PicturesService {
 	router := chi.NewRouter()
 
 	picturesService := &PicturesService{log, mediaServerDAL, router}

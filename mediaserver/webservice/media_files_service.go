@@ -11,19 +11,19 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"github.com/jamesrr39/goutil/errorsx"
-	"github.com/jamesrr39/goutil/logger"
+	"github.com/jamesrr39/goutil/logpkg"
 	"github.com/jamesrr39/goutil/profile"
 )
 
 type MediaFilesService struct {
-	log            *logger.Logger
+	log            *logpkg.Logger
 	mediaServerDAL *dal.MediaServerDAL
 	dbConn         *mediaserverdb.DBConn
 	chi.Router
 	profiler *profile.Profiler
 }
 
-func NewMediaFilesService(log *logger.Logger, dbConn *mediaserverdb.DBConn, picturesDAL *dal.MediaServerDAL, profiler *profile.Profiler) *MediaFilesService {
+func NewMediaFilesService(log *logpkg.Logger, dbConn *mediaserverdb.DBConn, picturesDAL *dal.MediaServerDAL, profiler *profile.Profiler) *MediaFilesService {
 	router := chi.NewRouter()
 	picturesService := &MediaFilesService{log, picturesDAL, dbConn, router, profiler}
 

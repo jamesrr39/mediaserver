@@ -9,17 +9,17 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"github.com/jamesrr39/goutil/errorsx"
-	"github.com/jamesrr39/goutil/logger"
+	"github.com/jamesrr39/goutil/logpkg"
 )
 
 type TracksWebService struct {
-	log           *logger.Logger
+	log           *logpkg.Logger
 	tracksDAL     *dal.TracksDAL
 	mediaFilesDAL *dal.MediaFilesDAL
 	chi.Router
 }
 
-func NewTracksWebService(log *logger.Logger, tracksDAL *dal.TracksDAL, mediaFilesDAL *dal.MediaFilesDAL) *TracksWebService {
+func NewTracksWebService(log *logpkg.Logger, tracksDAL *dal.TracksDAL, mediaFilesDAL *dal.MediaFilesDAL) *TracksWebService {
 	router := chi.NewRouter()
 
 	s := &TracksWebService{log, tracksDAL, mediaFilesDAL, router}

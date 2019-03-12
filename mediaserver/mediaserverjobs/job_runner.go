@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jamesrr39/goutil/errorsx"
-	"github.com/jamesrr39/goutil/logger"
+	"github.com/jamesrr39/goutil/logpkg"
 	"github.com/jamesrr39/semaphore"
 )
 
@@ -22,11 +22,11 @@ type Job interface {
 }
 
 type JobRunner struct {
-	logger      *logger.Logger
+	logger      *logpkg.Logger
 	cpuJobsSema *semaphore.Semaphore
 }
 
-func NewJobRunner(logger *logger.Logger, maxConcurrentJobs uint) *JobRunner {
+func NewJobRunner(logger *logpkg.Logger, maxConcurrentJobs uint) *JobRunner {
 	cpuJobsSema := semaphore.NewSemaphore(maxConcurrentJobs)
 	return &JobRunner{logger, cpuJobsSema}
 }

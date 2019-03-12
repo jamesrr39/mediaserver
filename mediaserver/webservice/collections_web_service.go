@@ -12,18 +12,18 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"github.com/jamesrr39/goutil/errorsx"
-	"github.com/jamesrr39/goutil/logger"
+	"github.com/jamesrr39/goutil/logpkg"
 )
 
 type CollectionsWebService struct {
-	log                   *logger.Logger
+	log                   *logpkg.Logger
 	collectionsRepository *dal.CollectionsDAL
 	dbConn                *mediaserverdb.DBConn
 	chi.Router
 }
 
 func NewCollectionsWebService(
-	log *logger.Logger,
+	log *logpkg.Logger,
 	dbConn *mediaserverdb.DBConn,
 	collectionsRepository *dal.CollectionsDAL,
 ) *CollectionsWebService {

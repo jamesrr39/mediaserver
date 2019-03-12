@@ -7,12 +7,12 @@ import (
 	ql "github.com/cznic/ql" // register driver
 	"github.com/jamesrr39/goutil/dbstatetracker"
 	"github.com/jamesrr39/goutil/errorsx"
-	"github.com/jamesrr39/goutil/logger"
+	"github.com/jamesrr39/goutil/logpkg"
 )
 
 type DBConn struct {
 	backingDB *sql.DB
-	logger    *logger.Logger
+	logger    *logpkg.Logger
 }
 
 func (dbc *DBConn) Begin() (*sql.Tx, errorsx.Error) {
@@ -32,7 +32,7 @@ func init() {
 	ql.RegisterDriver()
 }
 
-func NewDBConn(dbPath string, logger *logger.Logger) (*DBConn, error) {
+func NewDBConn(dbPath string, logger *logpkg.Logger) (*DBConn, error) {
 	logger.Info("opening ql db at '%s'", dbPath)
 	db, err := sql.Open("ql", dbPath)
 	if nil != err {

@@ -17,7 +17,7 @@ import (
 	"github.com/jamesrr39/goutil/dirtraversal"
 	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/jamesrr39/goutil/gofs"
-	"github.com/jamesrr39/goutil/logger"
+	"github.com/jamesrr39/goutil/logpkg"
 	"github.com/jamesrr39/goutil/profile"
 )
 
@@ -37,7 +37,7 @@ type MediaServerDAL struct {
 	ThumbnailsDAL  *ThumbnailsDAL
 }
 
-func NewMediaServerDAL(logger *logger.Logger, fs gofs.Fs, picturesBasePath, cachesBasePath, dataDir string, maxConcurrentCPUJobs, maxConcurrentVideoConversions uint) (*MediaServerDAL, error) {
+func NewMediaServerDAL(logger *logpkg.Logger, fs gofs.Fs, picturesBasePath, cachesBasePath, dataDir string, maxConcurrentCPUJobs, maxConcurrentVideoConversions uint) (*MediaServerDAL, error) {
 	jobRunner := mediaserverjobs.NewJobRunner(logger, maxConcurrentCPUJobs)
 
 	thumbnailsDAL, err := NewThumbnailsDAL(fs, filepath.Join(cachesBasePath, "thumbnails"), jobRunner)

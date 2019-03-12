@@ -197,22 +197,10 @@
 			"revisionTime": "2019-02-02T18:25:09Z"
 		},
 		{
-			"checksumSHA1": "i+qxU1ivdwEYzLyl5gnExRgGrVg=",
-			"path": "github.com/jamesrr39/goutil/httpextra",
-			"revision": "2d7dc6d2de328f77599883bcae23d93928f8262d",
-			"revisionTime": "2017-09-18T23:13:52Z"
-		},
-		{
 			"checksumSHA1": "R81RYFgZcwS8icCB3CzTZky+lF4=",
 			"path": "github.com/jamesrr39/goutil/image-processing/imageprocessingutil",
 			"revision": "2d7dc6d2de328f77599883bcae23d93928f8262d",
 			"revisionTime": "2017-09-18T23:13:52Z"
-		},
-		{
-			"checksumSHA1": "qJi0KzjiH+9H9iOQXy4w60R6OkY=",
-			"path": "github.com/jamesrr39/goutil/logger",
-			"revision": "81fefce615d2ddb531b04162fbdc1acc4244f5f5",
-			"revisionTime": "2018-06-30T19:10:31Z"
 		},
 		{
 			"checksumSHA1": "Y2imtbIi3zcQlKhVFOflycgJ1LU=",
