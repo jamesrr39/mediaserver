@@ -1,7 +1,7 @@
 package collections
 
 import (
-	"mediaserverapp/mediaserver/domain"
+	"mediaserver/mediaserver/domain"
 )
 
 type Collection struct {

@@ -1,7 +1,7 @@
 package videodal
 
 import (
-	"mediaserverapp/mediaserver/domain"
+	"mediaserver/mediaserver/domain"
 	"os"
 )
 

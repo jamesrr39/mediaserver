@@ -3,13 +3,13 @@ package mediaserver
 import (
 	"database/sql"
 	"fmt"
-	"mediaserverapp/mediaserver/dal"
-	"mediaserverapp/mediaserver/dal/diskstorage/mediaserverdb"
-	"mediaserverapp/mediaserver/domain"
-	"mediaserverapp/mediaserver/mediaserverjobs"
-	"mediaserverapp/mediaserver/static_assets_handler"
-	pictureswebservice "mediaserverapp/mediaserver/webservice"
-	"mediaserverapp/mediaserver/webservice/mediaservermiddleware"
+	"mediaserver/mediaserver/dal"
+	"mediaserver/mediaserver/dal/diskstorage/mediaserverdb"
+	"mediaserver/mediaserver/domain"
+	"mediaserver/mediaserver/mediaserverjobs"
+	"mediaserver/mediaserver/static_assets_handler"
+	pictureswebservice "mediaserver/mediaserver/webservice"
+	"mediaserver/mediaserver/webservice/mediaservermiddleware"
 	"net/http"
 	"path/filepath"
 	"time"
@@ -17,7 +17,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/jamesrr39/goutil/gofs"
-	"github.com/jamesrr39/goutil/logger"
+	"github.com/jamesrr39/goutil/logpkg"
 	"github.com/jamesrr39/goutil/profile"
 )
 
@@ -32,11 +32,11 @@ type MediaServer struct {
 	tracksService           *pictureswebservice.TracksWebService
 	dbConn                  *mediaserverdb.DBConn
 	jobRunner               *mediaserverjobs.JobRunner
-	logger                  *logger.Logger
+	logger                  *logpkg.Logger
 }
 
 // NewMediaServerAndScan creates a new MediaServer and builds a cache of pictures by scanning the rootpath
-func NewMediaServerAndScan(logger *logger.Logger, fs gofs.Fs, rootpath, cachesDir, dataDir string, maxConcurrentResizes, maxConcurrentVideoConversions uint, profiler *profile.Profiler) (*MediaServer, error) {
+func NewMediaServerAndScan(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDir, dataDir string, maxConcurrentResizes, maxConcurrentVideoConversions uint, profiler *profile.Profiler) (*MediaServer, error) {
 	var err error
 	profileRun := profiler.NewRun("NewMediaServerAndScan")
 	defer func() {

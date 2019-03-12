@@ -1,8 +1,8 @@
 package dal
 
 import (
-	"mediaserverapp/mediaserver/domain"
-	"mediaserverapp/mediaserver/testutil"
+	"mediaserver/mediaserver/domain"
+	"mediaserver/mediaserver/testutil"
 	"os"
 	"testing"
 

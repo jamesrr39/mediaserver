@@ -2,9 +2,9 @@ package webservice
 
 import (
 	"log"
-	picturesdal "mediaserverapp/mediaserver/dal"
-	"mediaserverapp/mediaserver/dal/videodal"
-	"mediaserverapp/mediaserver/domain"
+	picturesdal "mediaserver/mediaserver/dal"
+	"mediaserver/mediaserver/dal/videodal"
+	"mediaserver/mediaserver/domain"
 	"net/http"
 	"os"
 	"strings"

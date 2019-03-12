@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"mediaserverapp/mediaserver/domain"
+	"mediaserver/mediaserver/domain"
 	"os"
 	"os/exec"
 	"path/filepath"

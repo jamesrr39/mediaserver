@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"mediaserverapp/mediaserver/dal/picturesmetadatacache"
-	"mediaserverapp/mediaserver/dal/videodal"
-	"mediaserverapp/mediaserver/domain"
-	"mediaserverapp/mediaserver/mediaserverjobs"
+	"mediaserver/mediaserver/dal/picturesmetadatacache"
+	"mediaserver/mediaserver/dal/videodal"
+	"mediaserver/mediaserver/domain"
+	"mediaserver/mediaserver/mediaserverjobs"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -18,7 +18,7 @@ import (
 
 	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/jamesrr39/goutil/gofs"
-	"github.com/jamesrr39/goutil/logger"
+	"github.com/jamesrr39/goutil/logpkg"
 	"github.com/jamesrr39/goutil/profile"
 	"github.com/jamesrr39/semaphore"
 )
@@ -26,7 +26,7 @@ import (
 type getRecordsInTrackFuncType func(trackSummary *domain.FitFileSummary) (domain.Records, error)
 
 type MediaFilesDAL struct {
-	log              *logger.Logger
+	log              *logpkg.Logger
 	fs               gofs.Fs
 	picturesBasePath string
 	cache            *picturesmetadatacache.MediaFilesCache
@@ -37,7 +37,7 @@ type MediaFilesDAL struct {
 	tracksDAL        *TracksDAL
 }
 
-func NewMediaFilesDAL(log *logger.Logger, fs gofs.Fs, picturesBasePath string, thumbnailsDAL *ThumbnailsDAL, videosDAL videodal.VideoDAL, picturesDAL *PicturesDAL, jobRunner *mediaserverjobs.JobRunner, tracksDAL *TracksDAL) *MediaFilesDAL {
+func NewMediaFilesDAL(log *logpkg.Logger, fs gofs.Fs, picturesBasePath string, thumbnailsDAL *ThumbnailsDAL, videosDAL videodal.VideoDAL, picturesDAL *PicturesDAL, jobRunner *mediaserverjobs.JobRunner, tracksDAL *TracksDAL) *MediaFilesDAL {
 	return &MediaFilesDAL{log, fs, picturesBasePath, picturesmetadatacache.NewMediaFilesCache(), thumbnailsDAL, videosDAL, picturesDAL, jobRunner, tracksDAL}
 }
 

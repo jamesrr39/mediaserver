@@ -1,7 +1,7 @@
 package dal
 
 import (
-	"mediaserverapp/mediaserver/domain"
+	"mediaserver/mediaserver/domain"
 	"testing"
 
 	"github.com/alecthomas/assert"

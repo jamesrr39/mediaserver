@@ -8,7 +8,7 @@ import (
 	"image"
 	"io"
 	"log"
-	"mediaserverapp/mediaserver/domain"
+	"mediaserver/mediaserver/domain"
 
 	"github.com/jamesrr39/goutil/errorsx"
 )

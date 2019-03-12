@@ -6,7 +6,7 @@ import (
 	"encoding/gob"
 	"encoding/hex"
 	"log"
-	"mediaserverapp/mediaserver/domain"
+	"mediaserver/mediaserver/domain"
 	"sync"
 
 	"github.com/jamesrr39/goutil/errorsx"

@@ -2,28 +2,28 @@ package webservice
 
 import (
 	"encoding/json"
-	"mediaserverapp/mediaserver/collections"
-	"mediaserverapp/mediaserver/dal"
-	"mediaserverapp/mediaserver/dal/diskstorage/mediaserverdb"
-	"mediaserverapp/mediaserver/domain"
+	"mediaserver/mediaserver/collections"
+	"mediaserver/mediaserver/dal"
+	"mediaserver/mediaserver/dal/diskstorage/mediaserverdb"
+	"mediaserver/mediaserver/domain"
 	"net/http"
 	"strconv"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"github.com/jamesrr39/goutil/errorsx"
-	"github.com/jamesrr39/goutil/logger"
+	"github.com/jamesrr39/goutil/logpkg"
 )
 
 type CollectionsWebService struct {
-	log                   *logger.Logger
+	log                   *logpkg.Logger
 	collectionsRepository *dal.CollectionsDAL
 	dbConn                *mediaserverdb.DBConn
 	chi.Router
 }
 
 func NewCollectionsWebService(
-	log *logger.Logger,
+	log *logpkg.Logger,
 	dbConn *mediaserverdb.DBConn,
 	collectionsRepository *dal.CollectionsDAL,
 ) *CollectionsWebService {
