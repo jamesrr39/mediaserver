@@ -15,6 +15,24 @@ export class GalleryFilter {
 
     return true;
   }
+
+  public getSummary() {
+    const {dateFilter} = this;
+    if (!dateFilter) {
+      return 'Showing all files';
+    }
+
+    const includingWithoutDatesText = dateFilter.includeFilesWithoutDates ? 'including' : 'excluding';
+
+    return [
+      'Showing files with dates between', 
+      dateFilter.startDate.toLocaleDateString(), 
+      'and', 
+      dateFilter.endDate.toLocaleDateString(),
+      includingWithoutDatesText,
+      'files without dates'
+    ].join(' ');
+  }
 }
 
 function isDate1Before(date1: Date, date2: Date): boolean {

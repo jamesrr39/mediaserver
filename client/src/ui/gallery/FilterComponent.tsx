@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { GalleryFilter, DateFilter } from '../../domain/Filter';
+import { themeStyles } from '../../theme/theme';
 
 const styles = {
   container: {
@@ -7,6 +8,10 @@ const styles = {
     background: 'lightgreen',
     margin: '10px',
   },
+  customiseButton: {
+    ...themeStyles.button,
+    margin: '0 10px',
+  }
 };
 
 type Props = {
@@ -21,6 +26,7 @@ type ComponentState = {
   endDateValue: Date,
   dateFilterEnabled: boolean,
   includeFilesWithoutDates: boolean,
+  showEditFilter: boolean,
 };
 
 function dateToISODateString(date: Date) {
@@ -36,9 +42,84 @@ export class FilterComponent extends React.Component<Props, ComponentState> {
     dateFilterEnabled: Boolean(this.props.initialFilter.dateFilter),
     includeFilesWithoutDates: this.props.initialFilter.dateFilter && 
       this.props.initialFilter.dateFilter.includeFilesWithoutDates || true,
+    showEditFilter: false,
   };
 
   componentDidUpdate() {
+    this.props.onFilterChange(this.getFilter());
+  }
+
+  render() {
+    const { showEditFilter } = this.state;
+    const filter = this.getFilter();
+
+    return (
+      <div style={styles.container}>
+        <div>
+          {filter.getSummary()}
+          <button 
+            style={styles.customiseButton}
+            type="button" 
+            onClick={() => this.setState(state => ({...state, showEditFilter: !showEditFilter}))}>
+              {showEditFilter ? 'Close' : 'Customise'}
+            </button>
+        </div>
+        {showEditFilter && this.renderEditContainer()}
+      </div>
+      );
+
+    }
+
+    private renderEditContainer = () => {
+      const { startDateValue, endDateValue, dateFilterEnabled, includeFilesWithoutDates } = this.state;
+      const maxStartDate = dateFilterEnabled ? endDateValue : new Date();
+      const minEndDate = dateFilterEnabled ? startDateValue : new Date(0);
+
+      return (
+        <div>
+          <label>
+            <input
+              type="checkbox"
+              onChange={this.enableDateFilterCheckboxChange}
+              checked={dateFilterEnabled}
+            />
+            Show files in a date range
+          </label>
+          <div>
+            Between
+            <input
+              type="date"
+              onChange={this.onStartDateChange}
+              value={dateToISODateString(startDateValue)}
+              max={dateToISODateString(maxStartDate)}
+              disabled={!dateFilterEnabled}
+            />
+            and
+            <input
+              type="date"
+              onChange={this.onEndDateChange}
+              value={dateToISODateString(endDateValue)}
+              min={dateToISODateString(minEndDate)}
+              max={dateToISODateString(new Date())}
+              disabled={!dateFilterEnabled}
+            />
+          </div>
+          <div>
+            <label>
+              Show items without a date
+              <input
+                type="checkbox"
+                onChange={this.onIncludeFilesWithoutDatesChange}
+                checked={includeFilesWithoutDates}
+                disabled={!dateFilterEnabled}
+              />
+            </label>
+          </div>
+      </div>
+    );
+  }
+
+  private getFilter() {
     const { startDateValue, endDateValue, dateFilterEnabled, includeFilesWithoutDates } = this.state;
 
     const dateFilter = dateFilterEnabled ? 
@@ -49,58 +130,7 @@ export class FilterComponent extends React.Component<Props, ComponentState> {
       dateFilter,
     );
 
-    this.props.onFilterChange(filter);
-  }
-
-  render() {
-    const { startDateValue, endDateValue, dateFilterEnabled, includeFilesWithoutDates } = this.state;
-    const maxStartDate = dateFilterEnabled ? endDateValue : new Date();
-    const minEndDate = dateFilterEnabled ? startDateValue : new Date(0);
-
-    return (
-      <div style={styles.container}>
-        <div>
-          <label>
-            <input
-              type="checkbox"
-              onChange={this.enableDateFilterCheckboxChange}
-              checked={dateFilterEnabled}
-            />
-            Show files in a date range
-          </label>
-            <div>
-              Between
-              <input
-                type="date"
-                onChange={this.onStartDateChange}
-                value={dateToISODateString(startDateValue)}
-                max={dateToISODateString(maxStartDate)}
-                disabled={!dateFilterEnabled}
-              />
-              and
-              <input
-                type="date"
-                onChange={this.onEndDateChange}
-                value={dateToISODateString(endDateValue)}
-                min={dateToISODateString(minEndDate)}
-                max={dateToISODateString(new Date())}
-                disabled={!dateFilterEnabled}
-              />
-            </div>
-            <div>
-              <label>
-                Show items without a date
-                <input
-                  type="checkbox"
-                  onChange={this.onIncludeFilesWithoutDatesChange}
-                  checked={includeFilesWithoutDates}
-                  disabled={!dateFilterEnabled}
-                />
-              </label>
-            </div>
-        </div>
-      </div>
-    );
+    return filter;
   }
 
   private enableDateFilterCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
