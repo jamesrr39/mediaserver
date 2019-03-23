@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { State } from '../reducers';
+import { State } from '../reducers/fileReducer';
 import { connect } from 'react-redux';
 import Gallery from './Gallery';
 import { MediaFile } from '../domain/MediaFile';

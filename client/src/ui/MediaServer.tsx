@@ -4,7 +4,7 @@ import { Observable } from '../util/Observable';
 import { Route, Redirect, RouteComponentProps, Switch } from 'react-router';
 import PictureModal from './PictureModal';
 import { connect } from 'react-redux';
-import { State } from '../reducers';
+import { State } from '../reducers/fileReducer';
 import { fetchPicturesMetadata } from '../actions/mediaFileActions';
 import { HashRouter } from 'react-router-dom';
 import { Action, Dispatch } from 'redux';
@@ -16,7 +16,7 @@ import { extractFolderCollectionsFrommediaFiles, CollectionType, CustomCollectio
 import NotFoundComponent from './NotFoundComponent';
 import NotificationBarComponent from './NotificationBarComponent';
 import EditCustomCollectionComponent from './collections/EditCustomCollectionComponent';
-import UploadComponent from './UploadComponent';
+import UploadComponent from './upload/UploadComponent';
 import { MediaFile } from '../domain/MediaFile';
 import UploadProgressComponent from './upload/UploadProgressComponent';
 
@@ -75,7 +75,7 @@ const styles = {
     bottom: '30px',
     zIndex: 1001,
   },
-  uploadProgressComponent: {
+  uploadProgressComponent: { 
     position: 'fixed' as 'fixed',
     right: '30px',
     bottom: '30px',

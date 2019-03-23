@@ -5,7 +5,7 @@ import { newNotificationAction, NotifyAction } from './notificationActions';
 import { MediaFile } from '../domain/MediaFile';
 import { MediaFileJSON, fromJSON } from '../domain/deserialise';
 import { FitTrack, Record } from '../domain/FitTrack';
-import { State } from '../reducers';
+import { State } from '../reducers/fileReducer';
 
 export enum FilesActionTypes {
   FETCH_MEDIA_FILES,

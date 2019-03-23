@@ -2,9 +2,9 @@ import * as React from 'react';
 import { ChangeEvent } from 'react';
 
 import { connect } from 'react-redux';
-import { themeStyles } from '../theme/theme';
-import { uploadFile } from '../actions/mediaFileActions';
-import { MediaFile } from '../domain/MediaFile';
+import { themeStyles } from '../../theme/theme';
+import { uploadFile } from '../../actions/mediaFileActions';
+import { MediaFile } from '../../domain/MediaFile';
 
 const styles = {
   uploadInput: {

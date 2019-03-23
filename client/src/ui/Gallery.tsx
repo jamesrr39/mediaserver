@@ -3,7 +3,7 @@ import { createCompareTimeTakenFunc } from '../domain/PictureMetadata';
 
 import { Observable, DebouncedObservable } from '../util/Observable';
 import { Thumbnail } from './Thumbnail';
-import { State } from '../reducers';
+import { State } from '../reducers/fileReducer';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import MapComponent, { MapMarker, TrackMapData } from './MapComponent';

@@ -3,7 +3,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { compose } from 'redux';
 import { FileQueue } from '../../fileQueue';
-import { State } from '../../reducers';
+import { State } from '../../reducers/fileReducer';
 
 type Props = {
   uploadQueue: FileQueue;

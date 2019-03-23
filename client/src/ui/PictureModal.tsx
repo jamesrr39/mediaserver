@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { State } from '../reducers';
+import { State } from '../reducers/fileReducer';
 import { connect } from 'react-redux';
 import { PictureMetadata } from '../domain/PictureMetadata';
 import { SERVER_BASE_URL } from '../configs';

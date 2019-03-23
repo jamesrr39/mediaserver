@@ -3,7 +3,7 @@ import { CustomCollection } from '../../domain/Collection';
 import { MediaFile } from '../../domain/MediaFile';
 import { ChangeEvent } from 'react';
 import Gallery from '../Gallery';
-import { State } from '../../reducers';
+import { State } from '../../reducers/fileReducer';
 import { connect } from 'react-redux';
 import { saveCollection } from '../../collectionsActions';
 import { themeStyles } from '../../theme/theme';

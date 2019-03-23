@@ -1,6 +1,6 @@
 import { createStore, applyMiddleware } from 'redux';
 import thunkMiddleware from 'redux-thunk';
-import rootReducer from './reducers';
+import rootReducer from './reducers/fileReducer';
 
 // tslint:disable-next-line
 export default function configureStore(preloadedState?: any) {

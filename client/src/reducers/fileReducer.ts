@@ -2,14 +2,14 @@ import { combineReducers } from 'redux';
 import {
   MediaserverAction,
   FilesActionTypes,
- } from './actions/mediaFileActions';
-import { DebouncedObservable, Observable } from './util/Observable';
-import { CustomCollection } from './domain/Collection';
-import { CollectionsAction, CollectionActions } from './collectionsActions';
-import { FileQueue } from './fileQueue';
-import { notificationsReducer, NotificationsState } from './reducers/notificationReducer';
-import { MediaFile } from './domain/MediaFile';
-import { Record } from './domain/FitTrack';
+ } from '../actions/mediaFileActions';
+import { DebouncedObservable, Observable } from '../util/Observable';
+import { CustomCollection } from '../domain/Collection';
+import { CollectionsAction, CollectionActions } from '../collectionsActions';
+import { FileQueue } from '../fileQueue';
+import { notificationsReducer, NotificationsState } from './notificationReducer';
+import { MediaFile } from '../domain/MediaFile';
+import { Record } from '../domain/FitTrack';
 
 const scrollObservable = new DebouncedObservable(150);
 
