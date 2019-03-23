@@ -8,11 +8,11 @@ import { FitTrack, Record } from '../domain/FitTrack';
 import { State } from '../reducers';
 
 export enum FilesActionTypes {
-  FETCH_MEDIA_FILES = 'FETCH_PICTURES_METADATA',
-  MEDIA_FILES_FETCHED = 'PICTURES_METADATA_FETCHED',
-  UPLOAD_FILE = 'UPLOAD_FILE',
-  FILE_SUCCESSFULLY_UPLOADED = 'PICTURE_SUCCESSFULLY_UPLOADED',
-  TRACK_RECORDS_FETCHED_ACTION = 'TRACK_RECORDS_FETCHED_ACTION',
+  FETCH_MEDIA_FILES,
+  MEDIA_FILES_FETCHED,
+  QUEUE_FOR_UPLOAD,
+  FILE_SUCCESSFULLY_UPLOADED,
+  TRACK_RECORDS_FETCHED_ACTION,
 }
 
 export interface FetchPicturesMetadataAction extends Action {
@@ -35,10 +35,18 @@ export type TrackRecordsFetchedAction = {
   records: Record[];
 };
 
+export type QueueForUploadAction = {
+  type: FilesActionTypes.QUEUE_FOR_UPLOAD,
+  file: File,
+};
+
 export type MediaserverAction = (
   PicturesMetadataFetchedAction |
   PictureSuccessfullyUploadedAction |
-  FetchPicturesMetadataAction | TrackRecordsFetchedAction);
+  FetchPicturesMetadataAction | 
+  TrackRecordsFetchedAction |
+  QueueForUploadAction
+);
 
 export function fetchPicturesMetadata() {
   return (dispatch: (action: FetchPicturesMetadataAction | PicturesMetadataFetchedAction | NotifyAction) => void) => {
@@ -88,5 +96,23 @@ export function fetchRecordsForTrack(trackSummary: FitTrack) {
     });
 
     return records;
+  };
+}
+
+export function uploadFile(file: File) {
+  return async (
+    dispatch: (action: MediaserverAction) => void, 
+    getState: () => State,
+  ) => {
+    console.log('upload', file.name);
+    const state = getState();
+
+    const mediaFile = await state.mediaFilesReducer.uploadQueue.uploadOrQueue(file);
+    dispatch({
+      type: FilesActionTypes.FILE_SUCCESSFULLY_UPLOADED,
+      mediaFile,
+    });
+
+    return mediaFile;
   };
 }

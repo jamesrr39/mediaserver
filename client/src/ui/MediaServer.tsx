@@ -18,6 +18,7 @@ import NotificationBarComponent from './NotificationBarComponent';
 import EditCustomCollectionComponent from './collections/EditCustomCollectionComponent';
 import UploadComponent from './UploadComponent';
 import { MediaFile } from '../domain/MediaFile';
+import UploadProgressComponent from './upload/UploadProgressComponent';
 
 type CollectionViewRouteParams = {
   identifier: string;
@@ -69,11 +70,17 @@ const withNavBar = (component: JSX.Element, navBarChild?: React.ReactNode) => (
 
 const styles = {
   notificationsComponent: {
-    position: 'fixed',
+    position: 'fixed' as 'fixed',
     left: '30px',
     bottom: '30px',
+    zIndex: 1001,
+  },
+  uploadProgressComponent: {
+    position: 'fixed' as 'fixed',
+    right: '30px',
+    bottom: '30px',
     zIndex: 1000,
-  } as React.CSSProperties,
+  }
 };
 
 function collectionIdentifierAndTypeFromRoute(routeInfo: RouteComponentProps<CollectionViewRouteParams>) {
@@ -225,6 +232,9 @@ class MediaServer extends React.Component<MediaServerProps> {
             <Route path="/" exact={true} render={() => (<Redirect to="/gallery" />)} />
             <div style={styles.notificationsComponent}>
               <NotificationBarComponent />
+            </div>
+            <div style={styles.uploadProgressComponent}>
+              <UploadProgressComponent />
             </div>
           </div>
         </HashRouter>

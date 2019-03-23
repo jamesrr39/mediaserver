@@ -12,7 +12,8 @@ export type MediaFileUploadResponse = {mediaFile: MediaFile} | {error: Error};
 
 export class FileQueue {
   private queue: QueuedFile[] = [];
-  private currentUploads = 0;
+  private finishedFiles: MediaFileUploadResponse[] = [];
+  private currentlyUploading: QueuedFile[] = [];
 
   constructor(private readonly maxConcurrentUploads: number) {}
 
@@ -26,7 +27,7 @@ export class FileQueue {
       queuedFile.onFailure = (error) => reject(error);
     });
     
-    if (this.currentUploads === this.maxConcurrentUploads) {
+    if (this.currentlyUploading.length === this.maxConcurrentUploads) {
       // no spare slots, so queue it
       this.queue.push(queuedFile);
     } else {
@@ -37,12 +38,16 @@ export class FileQueue {
     return promise;
   }
 
-  public getQtyUploadsRemaining() {
-    return this.currentUploads + this.queue.length;
+  public getStatus() {
+    return {
+      queued: this.queue,
+      currentlyUploading: this.currentlyUploading,
+      finished: this.finishedFiles,
+    };
   }
 
   private async upload(queuedFile: QueuedFile) {
-    this.currentUploads++;
+    this.currentlyUploading.push(queuedFile);
     const formData = new FormData();
     formData.append('file', queuedFile.file);
     const response = await fetch(`${SERVER_BASE_URL}/api/files/`, {
@@ -50,20 +55,23 @@ export class FileQueue {
       body: formData,
     });
     
-    this.onUploadFinished();
-
     if (!response.ok) {
-      queuedFile.onFailure(new Error(response.statusText));
+      const error = new Error(response.statusText);
+      this.onUploadFinished(queuedFile, {error});
+      queuedFile.onFailure(error);
       return;
     }
 
     response.json().then((mediaFileJSON: MediaFileJSON) => {
-      queuedFile.onSuccess(fromJSON(mediaFileJSON));
+      const mediaFile = fromJSON(mediaFileJSON);
+      this.onUploadFinished(queuedFile, {mediaFile});
+      queuedFile.onSuccess(mediaFile);
     });
   }
 
-  private onUploadFinished() {
-    this.currentUploads--;
+  private onUploadFinished(file: QueuedFile, response: MediaFileUploadResponse) {
+    this.currentlyUploading.splice(this.currentlyUploading.indexOf(file), 1);
+    this.finishedFiles.push(response);
 
     const nextFile = this.queue.shift();
     if (!nextFile) {

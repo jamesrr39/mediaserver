@@ -5,12 +5,9 @@ import { ChangeEvent } from 'react';
 import Gallery from '../Gallery';
 import { State } from '../../reducers';
 import { connect } from 'react-redux';
-import { saveCollection, CollectionsAction } from '../../collectionsActions';
+import { saveCollection } from '../../collectionsActions';
 import { themeStyles } from '../../theme/theme';
-import { compose, Dispatch } from 'redux';
-import { newNotificationAction, NotifyAction } from '../../actions/notificationActions';
-import { GalleryNotification, NotificationLevel } from '../NotificationBarComponent';
-import { FileQueue } from '../../fileQueue';
+import { uploadFile } from '../../actions/mediaFileActions';
 
 const styles = {
   nameInput: {
@@ -31,8 +28,10 @@ const styles = {
 type Props = {
   mediaFiles: MediaFile[],
   collection: CustomCollection,
-  dispatch: Dispatch<CollectionsAction | NotifyAction>;
-  uploadQueue: FileQueue;
+  // dispatch: Dispatch<CollectionsAction | NotifyAction>;
+  // uploadQueue: FileQueue;
+  saveCollection: (collection: CustomCollection) => Promise<CustomCollection>,
+  uploadFile: (file: File) => Promise<MediaFile>,
 };
 
 type ComponentState = {
@@ -78,7 +77,7 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
   onSubmit = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
 
-    const { dispatch, collection } = this.props;
+    const { collection, saveCollection } = this.props;
 
     const newCollection = new CustomCollection(
       collection.id,
@@ -86,9 +85,9 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
       Array.from(this.state.hashesInCollectionSet),
     );
 
-    const returnedCollection = await saveCollection(newCollection)(dispatch);
+    const returnedCollection = await saveCollection(newCollection);
 
-    dispatch(newNotificationAction(new GalleryNotification(NotificationLevel.INFO, 'Saved!')));
+    // dispatch(newNotificationAction(new GalleryNotification(NotificationLevel.INFO, 'Saved!')));
 
     const encodedType = encodeURIComponent(returnedCollection.type);
     const encodedIdentifier = encodeURIComponent(returnedCollection.identifier());
@@ -166,10 +165,10 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
   }
 
   private async uploadFile(file: File) {
-    const { uploadQueue } = this.props;
+    const { uploadFile } = this.props;
     const { hashesInCollectionSet } = this.state;
     
-    const mediaFile = await uploadQueue.uploadOrQueue(file);
+    const mediaFile = await uploadFile(file);
     hashesInCollectionSet.add(mediaFile.hashValue);
     this.setState(state => ({
       ...state,
@@ -179,18 +178,17 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
 }
 
 function mapStateToProps(state: State) {
-  const { mediaFiles: mediaFiles, uploadQueue } = state.mediaFilesReducer;
+  const { mediaFiles: mediaFiles } = state.mediaFilesReducer;
 
   return {
     mediaFiles,
-    uploadQueue,
   };
 }
 
-export default compose(
-  // withRouter,
-  connect(mapStateToProps),
-)(EditCustomCollectionComponent); // as React.ComponentType<{collection: Collection}>;
+export default connect(
+  mapStateToProps, 
+  { uploadFile, saveCollection })
+(EditCustomCollectionComponent); // as React.ComponentType<{collection: Collection}>;
 
 // tslint:disable-next-line
 // https://stackoverflow.com/questions/48701121/jsx-element-type-does-not-have-any-construct-or-call-signatures-typescript

@@ -5,6 +5,7 @@ import (
 	"mediaserver/mediaserver/dal"
 	"mediaserver/mediaserver/domain"
 	"net/http"
+	"os"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
@@ -53,6 +54,10 @@ func (s *TracksWebService) handleGetTrackRecords(w http.ResponseWriter, r *http.
 
 	records, err := s.tracksDAL.GetRecords(mediaFile.(*domain.FitFileSummary))
 	if err != nil {
+		if os.IsNotExist(errorsx.Cause(err)) {
+			errorsx.HTTPError(w, s.log, err, 404)
+			return
+		}
 		errorsx.HTTPError(w, s.log, err, 500)
 		return
 	}

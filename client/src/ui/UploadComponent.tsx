@@ -2,13 +2,9 @@ import * as React from 'react';
 import { ChangeEvent } from 'react';
 
 import { connect } from 'react-redux';
-import { Action, Dispatch } from 'redux';
-import { compose } from 'redux';
 import { themeStyles } from '../theme/theme';
-import { State } from '../reducers';
-import { FileQueue } from '../fileQueue';
-import { newNotificationAction } from '../actions/notificationActions';
-import { GalleryNotification, NotificationLevel } from './NotificationBarComponent';
+import { uploadFile } from '../actions/mediaFileActions';
+import { MediaFile } from '../domain/MediaFile';
 
 const styles = {
   uploadInput: {
@@ -17,8 +13,7 @@ const styles = {
 };
 
 type Props = {
-  dispatch: Dispatch<Action>;
-  uploadQueue: FileQueue;
+  uploadFile: (file: File) => Promise<MediaFile>
 };
 
 type ComponentState = {
@@ -56,32 +51,29 @@ class UploadComponent extends React.Component<Props, ComponentState> {
   }
 
   private async uploadFile(file: File) {
-    const { uploadQueue, dispatch } = this.props;
+    // const { dispatch } = this.props;
     
-    try {
-      const mediaFile = await uploadQueue.uploadOrQueue(file);
-      dispatch(
-        newNotificationAction(
-          new GalleryNotification(NotificationLevel.INFO, `uploaded ${mediaFile.getName()}`)
-        )
-      );
-    } catch (error) {
-      dispatch(
-        newNotificationAction(
-          new GalleryNotification(NotificationLevel.ERROR, `failed to upload ${file.name}. Error: ${error}`)
-        )
-      );
-    }
+    // try {
+    await this.props.uploadFile(file);
+      // console.log(mediaFile);
+      // dispatch(
+      //   newNotificationAction(
+      //     new GalleryNotification(NotificationLevel.INFO, `uploaded ${mediaFile.getName()}`)
+      //   )
+      // );
+    // } catch (error) {
+      // dispatch(
+      //   newNotificationAction(
+      //     new GalleryNotification(NotificationLevel.ERROR, `failed to upload ${file.name}. Error: ${error}`)
+      //   )
+      // );
+    // }
   }
 }
 
-function mapStateToProps(state: State) {
-  const { uploadQueue } = state.mediaFilesReducer;
-  return {
-    uploadQueue,
-  };
-}
-
-export default compose(
-  connect(mapStateToProps),
+export default connect(
+  undefined,
+  {
+    uploadFile,
+  }
 )(UploadComponent);
