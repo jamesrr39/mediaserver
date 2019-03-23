@@ -40,6 +40,7 @@ const styles = {
   modalBody: {
     display: 'flex',
     height: '100%',
+    overflow: 'scroll',
   } as React.CSSProperties,
   pictureInfoContainer: {
     backgroundColor: '#333',

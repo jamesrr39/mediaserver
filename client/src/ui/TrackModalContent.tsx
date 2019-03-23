@@ -40,7 +40,12 @@ class TrackModalContent extends React.Component<Props, State> {
     const { trackRecords } = this.state;
     const { trackSummary } = this.props;
 
-    const map = trackRecords === null ? <p>loading</p> : this.renderMap(trackRecords) ;
+    const map = trackRecords === null ? <p>loading</p> : (
+      <React.Fragment>
+        {this.renderMap(trackRecords)}
+        {this.renderTable(trackRecords)}
+      </React.Fragment>
+    ) ;
 
     const opts = {
       weekday: 'long',
@@ -78,6 +83,10 @@ class TrackModalContent extends React.Component<Props, State> {
       }],
     };
 
+    return <MapComponent {...mapProps} />;
+  }
+
+  private renderTable(trackRecords: Record[]) {
     const lapIntervalDistance = 1000;
     const laps = getLapsFromRecords(trackRecords, lapIntervalDistance);
     const lapsRows = laps.map((lap, index) => (
@@ -86,7 +95,8 @@ class TrackModalContent extends React.Component<Props, State> {
         <td>{lap.time.getDisplayString()}</td>
       </tr>
     ));
-    const tableHtml = (
+
+    return (
       <table>
         <thead>
           <tr>
@@ -98,13 +108,6 @@ class TrackModalContent extends React.Component<Props, State> {
           {lapsRows}
         </tbody>
       </table>
-    );
-
-    return (
-      <React.Fragment>
-        <MapComponent {...mapProps} />
-        {tableHtml}
-      </React.Fragment>
     );
   }
 }
