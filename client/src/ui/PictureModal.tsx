@@ -38,10 +38,10 @@ type Props = {
 
 const styles = {
   modalBody: {
-    display: 'flex',
+    display: 'flex' as 'flex',
     height: '100%',
     overflow: 'scroll',
-  } as React.CSSProperties,
+  },
   pictureInfoContainer: {
     backgroundColor: '#333',
     height: '100%',
@@ -51,10 +51,10 @@ const styles = {
   pictureContainer: {
     width: '100%',
     height: '100%',
-    display: 'flex',
+    display: 'flex' as 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-  } as React.CSSProperties,
+  },
   navigationButton: {
     color: 'white',
     textDecoration: 'none',
@@ -68,11 +68,11 @@ const styles = {
     borderStyle: 'none',
   },
   topBar: {
-    position: 'fixed',
+    position: 'fixed' as 'fixed',
     display: 'flex',
     justifyContent: 'space-between',
     width: '100%',
-  } as React.CSSProperties,
+  },
 };
 
 const navButtonTextStyle = {
