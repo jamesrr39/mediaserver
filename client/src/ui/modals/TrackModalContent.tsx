@@ -1,12 +1,14 @@
 import * as React from 'react';
-import { FitTrack, Record, getLapsFromRecords } from '../domain/FitTrack';
-import MapComponent from './MapComponent';
-import { fetchRecordsForTrack } from '../actions/mediaFileActions';
+import { FitTrack, Record, getLapsFromRecords } from '../../domain/FitTrack';
+import MapComponent from '../MapComponent';
+import { fetchRecordsForTrack } from '../../actions/mediaFileActions';
 import { connect } from 'react-redux';
 
 const styles = {
   container: {
     width: '100%',
+    overflow: 'auto',
+    height: '100vh',
   },
 };
 

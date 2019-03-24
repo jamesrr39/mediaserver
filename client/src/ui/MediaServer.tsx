@@ -2,7 +2,7 @@ import * as React from 'react';
 import AllPicturesGallery from './AllPicturesGallery';
 import { Observable } from '../util/Observable';
 import { Route, Redirect, RouteComponentProps, Switch } from 'react-router';
-import PictureModal from './PictureModal';
+import PictureModal from './modals/MediaFileModal';
 import { connect } from 'react-redux';
 import { State } from '../reducers/fileReducer';
 import { fetchPicturesMetadata } from '../actions/mediaFileActions';
