@@ -12,16 +12,39 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/jamesrr39/goutil/gofs"
-
 	"github.com/jamesrr39/goutil/errorsx"
+	"github.com/jamesrr39/goutil/gofs"
+	"github.com/jamesrr39/goutil/logpkg"
 )
 
+type ThumbnailCachePolicy int
+
+const (
+	// generate thumbnails only when requested
+	ThumbnailCachePolicyOnDemand ThumbnailCachePolicy = iota
+	// generate all thumbnails as soon as possible
+	ThumbnailCachePolicyAheadOfTime
+	// don't write thumbnails to disk
+	ThumbnailCachePolicyNoSave
+)
+
+var thumbnailCachePolicyNames = []string{
+	"on-demand",
+	"ahead-of-time",
+	"no-save",
+}
+
+func (t ThumbnailCachePolicy) String() string {
+	return thumbnailCachePolicyNames[t]
+}
+
 type ThumbnailsDAL struct {
-	fs        gofs.Fs
-	BasePath  string
-	mu        *sync.Mutex
-	jobRunner *mediaserverjobs.JobRunner
+	fs                   gofs.Fs
+	logger               *logpkg.Logger
+	BasePath             string
+	mu                   *sync.Mutex
+	jobRunner            *mediaserverjobs.JobRunner
+	thumbnailCachePolicy ThumbnailCachePolicy
 }
 
 type serializedThumbnail struct {
@@ -29,12 +52,12 @@ type serializedThumbnail struct {
 	GzippedThumbnailBytes []byte
 }
 
-func NewThumbnailsDAL(fs gofs.Fs, basePath string, jobRunner *mediaserverjobs.JobRunner) (*ThumbnailsDAL, error) {
+func NewThumbnailsDAL(fs gofs.Fs, logger *logpkg.Logger, basePath string, jobRunner *mediaserverjobs.JobRunner, thumbnailCachePolicy ThumbnailCachePolicy) (*ThumbnailsDAL, error) {
 	err := fs.MkdirAll(basePath, 0700)
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}
-	return &ThumbnailsDAL{fs, basePath, new(sync.Mutex), jobRunner}, nil
+	return &ThumbnailsDAL{fs, logger, basePath, new(sync.Mutex), jobRunner, thumbnailCachePolicy}, nil
 }
 
 // Get fetches the gzipped thumbnail file bytes and the mime type it's saved in
@@ -89,6 +112,11 @@ func (c *ThumbnailsDAL) getNewSizesRequiredForPicture(pictureMetadata *domain.Pi
 }
 
 func (c *ThumbnailsDAL) EnsureAllThumbnailsForPicture(pictureMetadata *domain.PictureMetadata, getPictureFunc domain.GetPictureFunc) error {
+	if c.thumbnailCachePolicy != ThumbnailCachePolicyAheadOfTime {
+		c.logger.Info("skipping ensure thumbnails for picture (due to thumbnail cache policy)")
+		return nil
+	}
+
 	requiredSizes, err := c.getNewSizesRequiredForPicture(pictureMetadata)
 	if err != nil {
 		return errorsx.Wrap(err)
@@ -107,6 +135,11 @@ func (c *ThumbnailsDAL) EnsureAllThumbnailsForPicture(pictureMetadata *domain.Pi
 }
 
 func (c *ThumbnailsDAL) save(hash domain.HashValue, size domain.Size, pictureFormat string, gzippedThumbnailBytes []byte) error {
+	if c.thumbnailCachePolicy == ThumbnailCachePolicyNoSave {
+		c.logger.Info("skipping save thumbnail for picture (due to thumbnail cache policy)")
+		return nil
+	}
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 

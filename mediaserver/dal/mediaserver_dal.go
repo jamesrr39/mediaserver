@@ -37,10 +37,10 @@ type MediaServerDAL struct {
 	ThumbnailsDAL  *ThumbnailsDAL
 }
 
-func NewMediaServerDAL(logger *logpkg.Logger, fs gofs.Fs, picturesBasePath, cachesBasePath, dataDir string, maxConcurrentCPUJobs, maxConcurrentVideoConversions uint) (*MediaServerDAL, error) {
+func NewMediaServerDAL(logger *logpkg.Logger, fs gofs.Fs, picturesBasePath, cachesBasePath, dataDir string, maxConcurrentCPUJobs, maxConcurrentVideoConversions uint, thumbnailCachePolicy ThumbnailCachePolicy) (*MediaServerDAL, error) {
 	jobRunner := mediaserverjobs.NewJobRunner(logger, maxConcurrentCPUJobs)
 
-	thumbnailsDAL, err := NewThumbnailsDAL(fs, filepath.Join(cachesBasePath, "thumbnails"), jobRunner)
+	thumbnailsDAL, err := NewThumbnailsDAL(fs, logger, filepath.Join(cachesBasePath, "thumbnails"), jobRunner, thumbnailCachePolicy)
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}

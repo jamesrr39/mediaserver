@@ -5,17 +5,17 @@ import (
 	"io/ioutil"
 	"log"
 	"mediaserver/mediaserver"
+	"mediaserver/mediaserver/dal"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/jamesrr39/goutil/gofs"
 	"github.com/jamesrr39/goutil/logpkg"
 	"github.com/jamesrr39/goutil/profile"
 	"github.com/jamesrr39/goutil/userextra"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
-
-	"github.com/jamesrr39/goutil/errorsx"
 )
 
 const addrHelp = "Serves up via http on this address. Examples: 'localhost:9050' - serve on 9050 to localhost only. ':9050' serve to everyone on port 9050."
@@ -29,10 +29,34 @@ var (
 	maxConcurrentCPUJobs          = app.Flag("max-concurrent-cpu-jobs", "Maximum amount of concurrent CPU jobs to run. Turn this down on devices with less memory. Resizes ordered after the limit will be queued.").Default("4").Uint()
 	maxConcurrentVideoConversions = app.Flag("max-concurrent-video-conversions", "Maximum amount of concurrent video conversions. Turn this down on devices with less memory. Conversions ordered after the limit will be queued.").Default("1").Uint()
 	profileDir                    = app.Flag("profile-dir", "folder to create a profile file inside").String()
+	thumbnailCachePolicyFlag      = app.Flag("--thumbnail-cache-policy", "policy for how aggresively to cache thumbnails").Default(thumbnailCachePolicyNameOnDemand).Enum(thumbnailCachePolicyNameOnDemand, thumbnailCachePolicyNameAheadOfTime, thumbnailCachePolicyNameNoSave)
 )
+
+const (
+	thumbnailCachePolicyNameAheadOfTime = "ahead-of-time"
+	thumbnailCachePolicyNameOnDemand    = "on-demand"
+	thumbnailCachePolicyNameNoSave      = "no-save"
+)
+
+var thumbnailCachePolicyNameMap = map[string]dal.ThumbnailCachePolicy{
+	thumbnailCachePolicyNameOnDemand:    dal.ThumbnailCachePolicyOnDemand,
+	thumbnailCachePolicyNameAheadOfTime: dal.ThumbnailCachePolicyAheadOfTime,
+	thumbnailCachePolicyNameNoSave:      dal.ThumbnailCachePolicyNoSave,
+}
+
+func getThumbnailCachePolicy(name string) (dal.ThumbnailCachePolicy, error) {
+	policy, ok := thumbnailCachePolicyNameMap[name]
+	if !ok {
+		return 0, errorsx.Errorf("thumbnail policy not found: %q", name)
+	}
+
+	return policy, nil
+}
 
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
+
+	logger := logpkg.NewLogger(os.Stderr, logpkg.LogLevelInfo)
 
 	fullpath, err := getFullDataPath(*imageRootDirFlag)
 	if nil != err {
@@ -65,8 +89,14 @@ func main() {
 
 	profiler := profile.NewProfiler(profileWriter)
 
+	thumbnailCachePolicy, err := getThumbnailCachePolicy(*thumbnailCachePolicyFlag)
+	if err != nil {
+		log.Fatalf("couldn't figure out the thumbnail cache policy")
+	}
+	logger.Info("thumbnail cache policy: %q", thumbnailCachePolicy)
+
 	mediaServer, err := mediaserver.NewMediaServerAndScan(
-		logpkg.NewLogger(os.Stderr, logpkg.LogLevelInfo),
+		logger,
 		gofs.NewOsFs(),
 		fullpath,
 		expandedCacheDir,
@@ -74,6 +104,7 @@ func main() {
 		*maxConcurrentCPUJobs,
 		*maxConcurrentVideoConversions,
 		profiler,
+		thumbnailCachePolicy,
 	)
 	if nil != err {
 		log.Fatalf("couldn't create a new media server and scan the pictures directory. Error: %s", err)
