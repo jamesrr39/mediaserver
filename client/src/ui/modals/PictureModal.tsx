@@ -12,6 +12,9 @@ const styles = {
     display: 'flex',
     justifyContent: 'center',
   },
+  image: {
+    margin: 'auto 0',
+  },
 };
 
 type Props = {
@@ -25,7 +28,7 @@ class PictureModal extends React.Component<Props> {
   render() {
     return (
       <div ref={el => this.createRefCallback(el)} style={styles.container}>
-        <img ref={(el) => {this.pictureEl = el; }} />
+        <img style={styles.image} ref={(el) => {this.pictureEl = el; }} />
       </div>
     );
   }
