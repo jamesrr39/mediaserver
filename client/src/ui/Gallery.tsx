@@ -29,7 +29,9 @@ export type GalleryProps = {
 
 const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
-export type StatelessGalleryProps = {
+const PHOTOS_IN_INCREMENT = 40;
+
+export type InnerGalleryProps = {
   showMap: boolean;
   tracks: TrackMapData[];
 } & GalleryProps;
@@ -57,9 +59,24 @@ const styles = {
   },
 };
 
-class StatelessGallery extends React.Component<StatelessGalleryProps> {
+type InnerGalleryState = {
+  lastIndexShown: number,
+};
+
+class InnerGallery extends React.Component<InnerGalleryProps, InnerGalleryState> {
+  state = {
+    lastIndexShown: 0,
+  };
+  
   componentDidMount() {
-    this.props.scrollObservable.triggerEvent({});
+    const {scrollObservable} = this.props;
+
+    scrollObservable.triggerEvent({});
+    scrollObservable.addListener(this.onScroll);
+  }
+
+  componentWillUnmount() {
+    this.props.scrollObservable.removeListener(this.onScroll);
   }
 
   componentDidUpdate() {
@@ -146,6 +163,11 @@ class StatelessGallery extends React.Component<StatelessGalleryProps> {
         mediaFile,
       };
 
+      const {lastIndexShown} = this.state;
+      if (index > (lastIndexShown + PHOTOS_IN_INCREMENT)) {
+        return null;
+      }
+
       const linkUrl = `${mediaFileUrlBase}/${mediaFile.hashValue}`;
 
       let innerHtml = <Thumbnail {...thumbnailProps} />;
@@ -211,13 +233,27 @@ class StatelessGallery extends React.Component<StatelessGalleryProps> {
 
     return markers;
   }
+
+  private onScroll = () => {
+    const scrolledTo = window.scrollY;
+    const bodyHeight = document.documentElement.scrollHeight;
+    const viewportHeight = document.documentElement.clientHeight;
+
+    const distanceFromBottom = bodyHeight - (scrolledTo + viewportHeight);
+    if (distanceFromBottom < (viewportHeight)) {
+      this.setState((state) => ({
+        ...state,
+        lastIndexShown: state.lastIndexShown + PHOTOS_IN_INCREMENT,
+      }));
+    }
+  }
 }
 
-type InnerGalleryProps = {
+type GalleryWrapperProps = {
   onFilterChangeObservable: Observable<GalleryFilter>;
 } & GalleryProps;
 
-class InnerGallery extends React.Component<InnerGalleryProps, GalleryState> {
+class GalleryWrapper extends React.Component<GalleryWrapperProps, GalleryState> {
   state = {
     showMap: true,
     tracks: [],
@@ -232,8 +268,7 @@ class InnerGallery extends React.Component<InnerGalleryProps, GalleryState> {
         return;
       }
 
-      const trackSummary = mediaFile as FitTrack;
-      this.fetchRecords(trackSummary);
+      this.fetchRecords(mediaFile);
     });
 
     onFilterChangeObservable.addListener(this.filterChangeCallback);
@@ -257,7 +292,7 @@ class InnerGallery extends React.Component<InnerGalleryProps, GalleryState> {
     };
 
     return (
-      <StatelessGallery {...statelessGalleryProps} />
+      <InnerGallery {...statelessGalleryProps} />
     );
   }
 
@@ -339,7 +374,7 @@ class Gallery extends React.Component<GalleryProps> {
     return (
       <div>
         <FilterComponent {...filterComponentProps} />
-        <InnerGallery {...innerGalleryProps} />
+        <GalleryWrapper {...innerGalleryProps} />
       </div>
     );
   }
