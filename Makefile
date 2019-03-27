@@ -2,12 +2,15 @@ clean:
 	rm -rf build
 
 codegen:
-	go run codegen/generate-main.go
+	go run codegen/generate-main.go	
 
 build_prod_x86_64: clean bundle_static_assets
-	go run vendor/github.com/rakyll/statik/statik.go -src=client/build -dest=build/client
 	mkdir -p build/bin/x86_64
 	env GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -tags "purego prod" -o build/bin/x86_64/mediaserver cmd/media-server-main.go
+
+build_prod: clean bundle_static_assets
+	mkdir -p build/bin/default
+	env CGO_ENABLED=0 go build -tags "purego prod" -o build/bin/default/mediaserver cmd/media-server-main.go
 
 # raspberry pi 3
 build_prod_arm7: clean bundle_static_assets
@@ -32,6 +35,8 @@ test:
 
 bundle_static_assets:
 	cd client && yarn build
+	go run vendor/github.com/rakyll/statik/statik.go -src=client/build -dest=build/client
+
 
 # build_docker_raspberry_pi_3:
 #        mkdir -p bin/docker/x86-64/mediaserver
