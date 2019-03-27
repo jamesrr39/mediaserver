@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"mediaserver/mediaserver/dal/picturesmetadatacache"
 	"mediaserver/mediaserver/dal/videodal"
 	"mediaserver/mediaserver/domain"
@@ -174,21 +173,12 @@ func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx, profileRun *profile.Ru
 	sema := semaphore.NewSemaphore(uint(runtime.NumCPU()))
 
 	var mediaFiles []domain.MediaFile
-	var errs []error
 
 	mediaFileChan := make(chan domain.MediaFile)
 	go func() {
 		for {
 			mediaFile := <-mediaFileChan
 			mediaFiles = append(mediaFiles, mediaFile)
-		}
-	}()
-
-	errChan := make(chan error)
-	go func() {
-		for {
-			err := <-errChan
-			errs = append(errs, err)
 		}
 	}()
 
@@ -208,10 +198,10 @@ func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx, profileRun *profile.Ru
 			mediaFile, err := dal.processFile(dal.fs, profileRun, tx, path, fileInfo)
 			if err != nil {
 				if err == ErrFileNotSupported {
-					log.Println("skipping " + path + ", file extension not recognised")
+					dal.log.Info("skipping " + path + ", file extension not recognised")
 					return
 				}
-				errChan <- err
+				dal.log.Warn("couldn't process file %q: %s", path, err)
 				return
 			}
 
@@ -226,14 +216,6 @@ func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx, profileRun *profile.Ru
 	}
 
 	sema.Wait()
-
-	if len(errs) > 0 {
-		var errTexts []string
-		for _, err := range errs {
-			errTexts = append(errTexts, fmt.Sprintf("%q", err))
-		}
-		return errorsx.Errorf("errors reading files: %s", strings.Join(errTexts, ", "))
-	}
 
 	newCache := picturesmetadatacache.NewMediaFilesCache()
 	newCache.AddBatch(mediaFiles...)
