@@ -39,8 +39,8 @@ class CollectionThumbnail extends React.Component<Props> {
 
     let thumbnailHtml = <span>?</span>;
     if (fileHashes.length !== 0) {
-      const url = joinUrlFragments(SERVER_BASE_URL, 'picture', `${fileHashes[0]}?h=200`);
-      thumbnailStyle.backgroundImage = `url(${url})`;
+      const imageUrl = joinUrlFragments(SERVER_BASE_URL, 'picture', `${fileHashes[0]}?h=200`);
+      thumbnailStyle.backgroundImage = `url(${imageUrl})`;
       thumbnailHtml = <span />;
     }
 

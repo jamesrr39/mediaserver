@@ -34,7 +34,7 @@ class CollectionViewComponent extends React.Component<Props> {
 
     const galleryProps = {
       mediaFiles,
-      mediaFileUrlBase: joinUrlFragments(routeUrl, 'detail'),
+      mediaFileUrlBase: '/' + joinUrlFragments(routeUrl, 'detail'),
       showMap: true,
     };
 

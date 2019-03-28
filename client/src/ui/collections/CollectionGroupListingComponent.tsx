@@ -106,5 +106,5 @@ class CollectionGroupListingComponent extends React.Component<Props, ComponentSt
 }
 
 export default connect(
-  state => undefined,
+  undefined,
 )(CollectionGroupListingComponent);
