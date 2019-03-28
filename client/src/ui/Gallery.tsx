@@ -235,6 +235,12 @@ class InnerGallery extends React.Component<InnerGalleryProps, InnerGalleryState>
   }
 
   private onScroll = () => {
+    const {lastIndexShown} = this.state;
+    if (lastIndexShown >= this.props.mediaFiles.length) {
+      // we are already showing everything
+      return;
+    }
+
     const scrolledTo = window.scrollY;
     const bodyHeight = document.documentElement.scrollHeight;
     const viewportHeight = document.documentElement.clientHeight;
