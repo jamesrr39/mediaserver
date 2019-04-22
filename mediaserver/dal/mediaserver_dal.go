@@ -130,7 +130,35 @@ func (dal *MediaServerDAL) Create(tx *sql.Tx, file io.ReadSeeker, filename, cont
 					dal.PicturesDAL.GetPicture,
 				)
 			})
-			return errorsx.Wrap(err)
+			if err != nil {
+				return errorsx.Wrap(err)
+			}
+
+			// suggested locations job
+			var pictureMetadatas []*domain.PictureMetadata
+			var tracks []*domain.FitFileSummary
+			for _, mediaFile := range dal.MediaFilesDAL.GetAll() {
+				switch castedMediaFile := mediaFile.(type) {
+				case *domain.PictureMetadata:
+					pictureMetadatas = append(pictureMetadatas, castedMediaFile)
+				case *domain.FitFileSummary:
+					tracks = append(tracks, castedMediaFile)
+				}
+			}
+
+			dal.MediaFilesDAL.jobRunner.QueueJob(
+				mediaserverjobs.NewApproximateLocationsJob(
+					pictureMetadatas,
+					tracks,
+					dal.MediaFilesDAL.tracksDAL.GetRecords,
+					func(pictureMetadata *domain.PictureMetadata, suggestedLocation domain.LocationSuggestion) errorsx.Error {
+						pictureMetadata.SuggestedLocation = &suggestedLocation
+						return nil
+					},
+				),
+			)
+
+			return nil
 		}
 	case "video/mp4":
 		videoFile := domain.NewVideoFileMetadata(hashValue, relativePath, fileLen)
@@ -143,9 +171,35 @@ func (dal *MediaServerDAL) Create(tx *sql.Tx, file io.ReadSeeker, filename, cont
 		// try parsing fit file
 		mediaFileInfo := domain.NewMediaFileInfo(relativePath, hashValue, domain.MediaFileTypeFitTrack, fileLen)
 
-		mediaFile, err = domain.NewFitFileSummaryFromReader(mediaFileInfo, file)
+		fitFileSummary, err := domain.NewFitFileSummaryFromReader(mediaFileInfo, file)
 		if err != nil {
 			return nil, errorsx.Wrap(err)
+		}
+		mediaFile = fitFileSummary
+
+		doAtEnd = func() error {
+			// suggested locations job
+			var pictureMetadatas []*domain.PictureMetadata
+			for _, mediaFile := range dal.MediaFilesDAL.GetAll() {
+				switch castedMediaFile := mediaFile.(type) {
+				case *domain.PictureMetadata:
+					pictureMetadatas = append(pictureMetadatas, castedMediaFile)
+				}
+			}
+
+			dal.MediaFilesDAL.jobRunner.QueueJob(
+				mediaserverjobs.NewApproximateLocationsJob(
+					pictureMetadatas,
+					[]*domain.FitFileSummary{fitFileSummary},
+					dal.MediaFilesDAL.tracksDAL.GetRecords,
+					func(pictureMetadata *domain.PictureMetadata, suggestedLocation domain.LocationSuggestion) errorsx.Error {
+						pictureMetadata.SuggestedLocation = &suggestedLocation
+						return nil
+					},
+				),
+			)
+
+			return nil
 		}
 
 	default:

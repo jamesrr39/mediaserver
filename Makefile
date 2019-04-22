@@ -14,7 +14,6 @@ build_prod: clean bundle_static_assets
 
 # raspberry pi 3
 build_prod_arm7: clean bundle_static_assets
-	go run vendor/github.com/rakyll/statik/statik.go -src=client/build -dest=build/client
 	mkdir -p build/bin/arm7
 	env GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -tags "purego prod" -o build/bin/arm7/mediaserver cmd/media-server-main.go
 

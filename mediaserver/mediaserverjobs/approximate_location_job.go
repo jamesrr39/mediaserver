@@ -135,7 +135,7 @@ func (j *ApproximateLocationsJob) setLocationOnPicture(pictureMetadata *domain.P
 }
 
 func (j *ApproximateLocationsJob) String() string {
-	return "approximate locations job"
+	return fmt.Sprintf("approximate locations job (qty tracks: %d, qty pictures: %d)", len(j.trackSummaries), len(j.allPictureMetadatas))
 }
 
 func (j *ApproximateLocationsJob) JobType() JobType {

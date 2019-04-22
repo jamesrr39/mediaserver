@@ -13,9 +13,6 @@ WORKDIR /home/mediaserver
 
 USER mediaserver
 
-RUN mkdir -p /home/mediaserver/cache /home/mediaserver/data /home/mediaserver/metadata
+RUN mkdir -p /home/mediaserver/cache /home/mediaserver/data /home/mediaserver/metadata /home/mediaserver/profile
 
-# copy this to the build folder and add the binary there
-
-# ENTRYPOINT ["ls", "-l", "/opt"]
-ENTRYPOINT ["/opt/mediaserver", "/home/mediaserver/data", "--addr=:9050", "--cache-dir=/home/mediaserver/cache", "--metadata-dir=/home/mediaserver/metadata", "--profile-dir=/home/mediaserver", "--max-concurrent-cpu-jobs=4"]
+ENTRYPOINT ["/opt/mediaserver", "/home/mediaserver/data", "--addr=:9050", "--cache-dir=/home/mediaserver/cache", "--metadata-dir=/home/mediaserver/metadata", "--profile-dir=/home/mediaserver/profile", "--max-concurrent-cpu-jobs=4"]
