@@ -31,7 +31,7 @@ class UploadProgressComponent extends React.Component<Props> {
       <div style={styles.container}>
         Upload:
         <p>{status.finished.length} finished</p>
-        <p>{status.queued.length} in progress</p>
+        <p>{status.currentlyUploading.length} in progress</p>
         <p>{status.queued.length} queued</p>
       </div>
     );
