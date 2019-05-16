@@ -101,3 +101,39 @@ export function getLapsFromRecords(records: Record[], interval: number) {
 
   return laps;
 }
+
+type SpeedWithTime = {
+  speed: number,
+  startTimeThroughSeconds: number,
+  endTimeThroughSeconds: number,
+};
+
+export function getSpeedsFromRecords(records: Record[], intervalDistanceSeconds: number) {
+  if (records.length === 0) {
+    return [];
+  }
+
+  const speeds: SpeedWithTime[] = [];
+  let lastRecord = records[0];
+  const firstRecordTime = lastRecord.timestamp;
+
+  records.slice(1).forEach((record, index) => {
+    const timeSinceLastInterval = record.timestamp.getTime() - lastRecord.timestamp.getTime();
+    const isLastRecord = index === records.length - 1;
+    if (timeSinceLastInterval >= intervalDistanceSeconds * 1000 || isLastRecord) {
+      const distanceTravelled = record.distance - lastRecord.distance;
+      const speed = distanceTravelled / timeSinceLastInterval;
+
+      const startTimeThroughSeconds = (lastRecord.timestamp.getTime() - firstRecordTime.getTime()) / 1000;
+      const endTimeThroughSeconds = (record.timestamp.getTime() - firstRecordTime.getTime()) / 1000;
+      speeds.push({
+        speed,
+        startTimeThroughSeconds,
+        endTimeThroughSeconds,
+      });
+      lastRecord = record;
+    }
+  });
+
+  return speeds;
+}

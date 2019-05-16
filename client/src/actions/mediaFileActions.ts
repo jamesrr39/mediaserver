@@ -48,6 +48,14 @@ export type MediaserverAction = (
   QueueForUploadAction
 );
 
+type RecordJSON = {
+  timestamp: string,
+  posLat: number,
+  posLong: number,
+  distance: number,
+  altitude: number
+};
+
 export function fetchPicturesMetadata() {
   return (dispatch: (action: FetchPicturesMetadataAction | PicturesMetadataFetchedAction | NotifyAction) => void) => {
     dispatch({
@@ -87,7 +95,11 @@ export function fetchRecordsForTrack(trackSummary: FitTrack) {
       throw new Error(response.statusText);
     }
 
-    const records = (await response.json()) as Record[];
+    const recordsJSON = (await response.json()) as RecordJSON[];
+    const records = recordsJSON.map(recordJSON => ({
+        ...recordJSON,
+        timestamp: new Date(recordJSON.timestamp),
+    }));
 
     dispatch({
       type: FilesActionTypes.TRACK_RECORDS_FETCHED_ACTION,
@@ -104,7 +116,6 @@ export function uploadFile(file: File) {
     dispatch: (action: MediaserverAction) => void, 
     getState: () => State,
   ) => {
-    console.log('upload', file.name);
     const state = getState();
 
     const mediaFile = await state.mediaFilesReducer.uploadQueue.uploadOrQueue(file);

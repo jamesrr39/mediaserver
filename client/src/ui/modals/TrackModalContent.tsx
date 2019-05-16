@@ -1,8 +1,9 @@
 import * as React from 'react';
-import { FitTrack, Record, getLapsFromRecords } from '../../domain/FitTrack';
+import { FitTrack, Record, getLapsFromRecords, getSpeedsFromRecords } from '../../domain/FitTrack';
 import MapComponent from '../MapComponent';
 import { fetchRecordsForTrack } from '../../actions/mediaFileActions';
 import { connect } from 'react-redux';
+import SpeedChart from './SpeedChart';
 
 const styles = {
   container: {
@@ -18,16 +19,26 @@ type Props = {
 };
 
 type State = {
-  trackRecords: null|Record[];
+  trackRecords?: Record[];
 };
 
 class TrackModalContent extends React.Component<Props, State> {
-  state = {
-    trackRecords: null
-  };
+  constructor(props: Props) {
+    super(props);
+    this.state = {};
+  }
 
   componentDidMount() {
     this.fetchRecords();
+  }
+
+  componentDidUpdate(prevProps: Props, prevState: State) {
+    if (prevProps.trackSummary.hashValue !== this.props.trackSummary.hashValue) {
+      this.setState(state => ({
+        trackRecords: undefined,
+      }));
+      this.fetchRecords();
+    }
   }
 
   fetchRecords = async () => {
@@ -39,15 +50,9 @@ class TrackModalContent extends React.Component<Props, State> {
   }
 
   render() {
-    const { trackRecords } = this.state;
     const { trackSummary } = this.props;
 
-    const map = trackRecords === null ? <p>loading</p> : (
-      <React.Fragment>
-        {this.renderMap(trackRecords)}
-        {this.renderTable(trackRecords)}
-      </React.Fragment>
-    ) ;
+    const map = this.renderRecordInformation();
 
     const opts = {
       weekday: 'long',
@@ -61,10 +66,55 @@ class TrackModalContent extends React.Component<Props, State> {
         <h3>
           {trackSummary.startTime.toLocaleDateString(undefined, opts)} at {trackSummary.startTime.toLocaleTimeString()}
         </h3>
+        <small>{trackSummary.relativePath}</small>
         <p>{trackSummary.totalDistance}m in {trackSummary.getDuration().getDisplayString()}</p>
         {map}
       </div>
     );
+  }
+
+  private renderRecordInformation() {
+    const { trackRecords } = this.state;
+
+    if (!trackRecords) {
+      return <p>loading</p>;
+    }
+
+    return (
+      <React.Fragment >
+        {this.renderMap(trackRecords)}
+        {this.renderTable(trackRecords)}
+        {this.renderSpeedChart(trackRecords)}
+      </React.Fragment>
+    ) ;
+  }
+
+  private renderSpeedChart(trackRecords: Record[]) {
+    const {trackSummary} = this.props;
+    if (trackRecords.length === 0) {
+      return null;
+    }
+
+    const speeds = getSpeedsFromRecords(trackRecords, 10);
+    const maxTimeThroughSeconds = speeds[speeds.length - 1].startTimeThroughSeconds;
+    const maxSpeed = Math.max(...speeds.map(speedWithTime => speedWithTime.speed));
+
+    const points = speeds.map((speed, index) => {
+      const y = speed.speed / maxSpeed;
+      const x = speed.startTimeThroughSeconds / maxTimeThroughSeconds;
+
+      return {
+        x,
+        y,
+      };
+    });
+
+    const speedChartProps = {
+      points,
+      k: trackSummary.hashValue,
+    };
+    
+    return <SpeedChart {...speedChartProps} />;
   }
 
   private renderMap(trackRecords: Record[]) {

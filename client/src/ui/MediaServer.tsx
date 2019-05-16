@@ -2,7 +2,7 @@ import * as React from 'react';
 import AllPicturesGallery from './AllPicturesGallery';
 import { Observable } from '../util/Observable';
 import { Route, Redirect, RouteComponentProps, Switch } from 'react-router';
-import PictureModal from './modals/MediaFileModal';
+import MediaFileModal from './modals/MediaFileModal';
 import { connect } from 'react-redux';
 import { State } from '../reducers/fileReducer';
 import { fetchPicturesMetadata } from '../actions/mediaFileActions';
@@ -19,6 +19,8 @@ import EditCustomCollectionComponent from './collections/EditCustomCollectionCom
 import UploadComponent from './upload/UploadComponent';
 import { MediaFile } from '../domain/MediaFile';
 import UploadProgressComponent from './upload/UploadProgressComponent';
+import { gallerySortingFunc } from './Gallery';
+import { filterFromJson } from '../domain/Filter';
 
 type CollectionViewRouteParams = {
   identifier: string;
@@ -33,6 +35,7 @@ type CollectionPictureModalRouteParams = {
 
 type AllPicturesPictureModalRouteParams = {
   hash: string;
+  filterJson?: string;
 };
 
 type MediaServerProps = {
@@ -149,13 +152,17 @@ class MediaServer extends React.Component<MediaServerProps> {
   }
 
   renderAllPicturesPictureModal = (routeInfo: RouteComponentProps<AllPicturesPictureModalRouteParams>) => {
+    const filter = filterFromJson(routeInfo.match.params.filterJson || '{}');
+    const mediaFiles = this.props.mediaFiles.filter(mediaFile => filter.filter(mediaFile));
+    mediaFiles.sort(gallerySortingFunc);
+    
     const props = {
-      mediaFiles: this.props.mediaFiles,
+      mediaFiles,
       hash: decodeURIComponent(routeInfo.match.params.hash),
       baseUrl: '/gallery',
     };
 
-    return <PictureModal {...props} />;
+    return <MediaFileModal {...props} />;
   }
 
   renderCollectionPicture = (routeInfo: RouteComponentProps<CollectionPictureModalRouteParams>) => {
@@ -184,7 +191,7 @@ class MediaServer extends React.Component<MediaServerProps> {
       baseUrl: `/collections/${routeInfo.match.params.type}/${routeInfo.match.params.identifier}`,
     };
 
-    return <PictureModal {...props}/>;
+    return <MediaFileModal {...props}/>;
   }
 
   renderCollectionsComponent = () =>  <CollectionsComponent />;

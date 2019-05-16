@@ -1,6 +1,14 @@
 import { MediaFile } from './MediaFile';
 import { MediaFileType } from './MediaFileType';
 
+type FilterJson = {
+  date?: {
+    start: number,
+    end: number,
+    includeWithOutDates: boolean,
+  },
+};
+
 export class GalleryFilter {
   constructor(
     public readonly dateFilter: DateFilter|null,
@@ -32,6 +40,20 @@ export class GalleryFilter {
       includingWithoutDatesText,
       'files without dates'
     ].join(' ');
+  }
+
+  public toJsObject() {
+    if (this.dateFilter) {
+      return {
+        date: {
+          start: this.dateFilter.startDate.getTime(),
+          end: this.dateFilter.endDate.getTime(),
+          includeFilesWithoutDates: this.dateFilter.includeFilesWithoutDates,
+        }
+      };
+    }
+
+    return {};
   }
 }
 
@@ -117,4 +139,19 @@ export class DateFilter {
 
     return true;
   }
+}
+
+export function filterFromJson(json: string) {
+  const filterJson: FilterJson = JSON.parse(json);
+  if (filterJson.date) {
+    return new GalleryFilter(
+      new DateFilter(
+        new Date(filterJson.date.start),
+        new Date(filterJson.date.end),
+        filterJson.date.includeWithOutDates,
+      )
+    );
+  }
+
+  return new GalleryFilter(null);
 }

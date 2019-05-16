@@ -62,5 +62,10 @@ func (s *TracksWebService) handleGetTrackRecords(w http.ResponseWriter, r *http.
 		return
 	}
 
+	// force serialisation as [], not null
+	if len(records) == 0 {
+		records = domain.Records{}
+	}
+
 	render.JSON(w, r, records)
 }

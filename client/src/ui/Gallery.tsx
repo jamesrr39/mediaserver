@@ -24,16 +24,16 @@ export type GalleryProps = {
   onClickThumbnail?: (pictureMetadata: MediaFile) => void;
   showMap?: boolean;
   fetchRecordsForTrack: (trackSummary: FitTrack) => Promise<Record[]>;
-  // fetchRecordsForTrack: typeof fetchRecordsForTrack,
 };
 
-const gallerySortingFunc = createCompareTimeTakenFunc(true);
+export const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
 const PHOTOS_IN_INCREMENT = 40;
 
 export type InnerGalleryProps = {
   showMap: boolean;
   tracks: TrackMapData[];
+  filterJson: string;
 } & GalleryProps;
 
 type GalleryState = {
@@ -154,7 +154,8 @@ class InnerGallery extends React.Component<InnerGalleryProps, InnerGalleryState>
       mediaFiles,
       scrollObservable,
       mediaFileUrlBase,
-      onClickThumbnail
+      onClickThumbnail,
+      filterJson
     } = this.props;
 
     return mediaFiles.map((mediaFile, index) => {
@@ -167,8 +168,9 @@ class InnerGallery extends React.Component<InnerGalleryProps, InnerGalleryState>
       if (index > (lastIndexShown + PHOTOS_IN_INCREMENT)) {
         return null;
       }
-
-      const linkUrl = `${mediaFileUrlBase}/${mediaFile.hashValue}`;
+      
+      const query = `filterJson=${encodeURIComponent(filterJson)}`;
+      const linkUrl = `${mediaFileUrlBase}/${mediaFile.hashValue}?${query}`;
 
       let innerHtml = <Thumbnail {...thumbnailProps} />;
       if (mediaFileUrlBase) {
@@ -295,6 +297,7 @@ class GalleryWrapper extends React.Component<GalleryWrapperProps, GalleryState> 
       mediaFiles,
       tracks,
       showMap,
+      filterJson: JSON.stringify(galleryFilter.toJsObject()),
     };
 
     return (

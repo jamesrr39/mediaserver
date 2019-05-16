@@ -51,23 +51,7 @@ class UploadComponent extends React.Component<Props, ComponentState> {
   }
 
   private async uploadFile(file: File) {
-    // const { dispatch } = this.props;
-    
-    // try {
     await this.props.uploadFile(file);
-      // console.log(mediaFile);
-      // dispatch(
-      //   newNotificationAction(
-      //     new GalleryNotification(NotificationLevel.INFO, `uploaded ${mediaFile.getName()}`)
-      //   )
-      // );
-    // } catch (error) {
-      // dispatch(
-      //   newNotificationAction(
-      //     new GalleryNotification(NotificationLevel.ERROR, `failed to upload ${file.name}. Error: ${error}`)
-      //   )
-      // );
-    // }
   }
 }
 
