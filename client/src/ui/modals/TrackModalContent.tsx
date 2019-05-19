@@ -91,11 +91,12 @@ class TrackModalContent extends React.Component<Props, State> {
 
   private renderSpeedChart(trackRecords: Record[]) {
     const {trackSummary} = this.props;
-    if (trackRecords.length === 0) {
+
+    const speeds = getSpeedsFromRecords(trackRecords, 10);
+    if (speeds.length === 0) {
       return null;
     }
 
-    const speeds = getSpeedsFromRecords(trackRecords, 10);
     const maxTimeThroughSeconds = speeds[speeds.length - 1].startTimeThroughSeconds;
     const maxSpeed = Math.max(...speeds.map(speedWithTime => speedWithTime.speed));
 
