@@ -30,6 +30,7 @@ type MediaServer struct {
 	videosWebService        *pictureswebservice.VideoWebService
 	collectionsService      *pictureswebservice.CollectionsWebService
 	tracksService           *pictureswebservice.TracksWebService
+	graphQLService          *pictureswebservice.GraphQLAPIService
 	dbConn                  *mediaserverdb.DBConn
 	jobRunner               *mediaserverjobs.JobRunner
 	logger                  *logpkg.Logger
@@ -63,6 +64,11 @@ func NewMediaServerAndScan(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDi
 		return nil, errorsx.Wrap(err)
 	}
 
+	graphQLAPIService, err := pictureswebservice.NewGraphQLAPIService(logger, mediaServerDAL.TracksDAL, mediaServerDAL.MediaFilesDAL)
+	if nil != err {
+		return nil, errorsx.Wrap(err)
+	}
+
 	mediaServer := &MediaServer{
 		Rootpath:                rootpath,
 		mediaServerDAL:          mediaServerDAL,
@@ -71,6 +77,7 @@ func NewMediaServerAndScan(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDi
 		videosWebService:        pictureswebservice.NewVideoWebService(mediaServerDAL.VideosDAL, mediaServerDAL.MediaFilesDAL),
 		collectionsService:      pictureswebservice.NewCollectionsWebService(logger, dbConn, mediaServerDAL.CollectionsDAL),
 		tracksService:           pictureswebservice.NewTracksWebService(logger, mediaServerDAL.TracksDAL, mediaServerDAL.MediaFilesDAL),
+		graphQLService:          graphQLAPIService,
 		logger:                  logger,
 	}
 
@@ -135,6 +142,7 @@ func (ms *MediaServer) ListenAndServe(addr string) error {
 		r.Mount("/files/", ms.picturesMetadataService)
 		r.Mount("/collections/", ms.collectionsService)
 		r.Mount("/tracks/", ms.tracksService)
+		r.Mount("/graphql", ms.graphQLService)
 	})
 
 	mainRouter.Mount("/video/", http.StripPrefix("/video/", ms.videosWebService))

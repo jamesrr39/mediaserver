@@ -179,6 +179,84 @@
 			"revisionTime": "2017-12-08T16:08:15Z"
 		},
 		{
+			"checksumSHA1": "R/bZkmpLQr/c/UCOId17mQk3cm4=",
+			"path": "github.com/graphql-go/graphql",
+			"revision": "199d20bbfed70dae8c7d4619d4e0d339ce738b43",
+			"revisionTime": "2019-04-03T16:56:46Z"
+		},
+		{
+			"checksumSHA1": "KSU+OVQpKd/hTV4Wwd3KcrFfAxw=",
+			"path": "github.com/graphql-go/graphql/benchutil",
+			"revision": "199d20bbfed70dae8c7d4619d4e0d339ce738b43",
+			"revisionTime": "2019-04-03T16:56:46Z"
+		},
+		{
+			"checksumSHA1": "cnffNOPk/XVskjIQc8BlUcUbqTw=",
+			"path": "github.com/graphql-go/graphql/gqlerrors",
+			"revision": "199d20bbfed70dae8c7d4619d4e0d339ce738b43",
+			"revisionTime": "2019-04-03T16:56:46Z"
+		},
+		{
+			"checksumSHA1": "kkCqu4ytw4xtVuzPn4GhtYPfhLo=",
+			"path": "github.com/graphql-go/graphql/language/ast",
+			"revision": "199d20bbfed70dae8c7d4619d4e0d339ce738b43",
+			"revisionTime": "2019-04-03T16:56:46Z"
+		},
+		{
+			"checksumSHA1": "FNFpZJ07U5Ud3MCc25ast14qVbo=",
+			"path": "github.com/graphql-go/graphql/language/kinds",
+			"revision": "199d20bbfed70dae8c7d4619d4e0d339ce738b43",
+			"revisionTime": "2019-04-03T16:56:46Z"
+		},
+		{
+			"checksumSHA1": "3kex7ziplcqiCEqYJ/+MHXZ5AUw=",
+			"path": "github.com/graphql-go/graphql/language/lexer",
+			"revision": "199d20bbfed70dae8c7d4619d4e0d339ce738b43",
+			"revisionTime": "2019-04-03T16:56:46Z"
+		},
+		{
+			"checksumSHA1": "yskrC6tG5BTJdIk4GKHzGTenQOc=",
+			"path": "github.com/graphql-go/graphql/language/location",
+			"revision": "199d20bbfed70dae8c7d4619d4e0d339ce738b43",
+			"revisionTime": "2019-04-03T16:56:46Z"
+		},
+		{
+			"checksumSHA1": "UVnatE6SrOuLBojP0oo0jbGbY60=",
+			"path": "github.com/graphql-go/graphql/language/parser",
+			"revision": "199d20bbfed70dae8c7d4619d4e0d339ce738b43",
+			"revisionTime": "2019-04-03T16:56:46Z"
+		},
+		{
+			"checksumSHA1": "1tKIquj7qByBd5DMnlTx4aO0Fl0=",
+			"path": "github.com/graphql-go/graphql/language/printer",
+			"revision": "199d20bbfed70dae8c7d4619d4e0d339ce738b43",
+			"revisionTime": "2019-04-03T16:56:46Z"
+		},
+		{
+			"checksumSHA1": "dRrl/Ky/0NTYA3bZznpxp4tG5Jc=",
+			"path": "github.com/graphql-go/graphql/language/source",
+			"revision": "199d20bbfed70dae8c7d4619d4e0d339ce738b43",
+			"revisionTime": "2019-04-03T16:56:46Z"
+		},
+		{
+			"checksumSHA1": "f62XVj7So29WO/HJC6znxHbbeTs=",
+			"path": "github.com/graphql-go/graphql/language/typeInfo",
+			"revision": "199d20bbfed70dae8c7d4619d4e0d339ce738b43",
+			"revisionTime": "2019-04-03T16:56:46Z"
+		},
+		{
+			"checksumSHA1": "VCT3ceOQpPNGb3N7c9CmWwC3ZgQ=",
+			"path": "github.com/graphql-go/graphql/language/visitor",
+			"revision": "199d20bbfed70dae8c7d4619d4e0d339ce738b43",
+			"revisionTime": "2019-04-03T16:56:46Z"
+		},
+		{
+			"checksumSHA1": "E2ZqHTh/XZ8kmQMVUPfy9Rns2aE=",
+			"path": "github.com/graphql-go/graphql/testutil",
+			"revision": "199d20bbfed70dae8c7d4619d4e0d339ce738b43",
+			"revisionTime": "2019-04-03T16:56:46Z"
+		},
+		{
 			"checksumSHA1": "0hZUXKGcKlC9vU8rMudEJj8a6yQ=",
 			"path": "github.com/jamesrr39/goutil/dbstatetracker",
 			"revision": "72241063256602010edba7ecc3658b99b8b77794",
@@ -447,5 +525,5 @@
 			"revisionTime": "2017-07-27T04:22:29Z"
 		}
 	],
-	"rootPath": "mediaserverapp"
+	"rootPath": "mediaserver"
 }
