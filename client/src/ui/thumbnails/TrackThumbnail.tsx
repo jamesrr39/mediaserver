@@ -1,13 +1,13 @@
 import * as React from 'react';
 import { FitTrack, Record } from '../../domain/FitTrack';
 import MapComponent from '../MapComponent';
-import { fetchRecordsForTrack } from '../../actions/mediaFileActions';
+import { fetchRecordsForTracks } from '../../actions/mediaFileActions';
 import { connect } from 'react-redux';
 
 type Props = {
   size: {width: number, height: number},
   trackSummary: FitTrack,
-  fetchRecordsForTrack: (trackSummary: FitTrack) => Promise<Record[]>,
+  fetchRecordsForTracks: (trackSummaries: FitTrack[]) => Promise<Map<string, Record[]>>,
 };
 
 type ComponentState = {
@@ -54,13 +54,17 @@ class TrackThumbnail extends React.Component<Props, ComponentState> {
   }
 
   private async fetchRecords() {
-    const trackRecords = await this.props.fetchRecordsForTrack(this.props.trackSummary);
+    const tracksDetails = await this.props.fetchRecordsForTracks([this.props.trackSummary]);
+    const records = tracksDetails.get(this.props.trackSummary.hashValue);
+    if (!records) {
+      throw new Error(`couldn't get records for ${this.props.trackSummary.hashValue}`);
+    }
 
     this.setState(state => ({
       ...state,
-      trackRecords,
+      trackRecords: records,
     }));
   }
 }
 
-export default connect(undefined, {fetchRecordsForTrack})(TrackThumbnail);
+export default connect(undefined, {fetchRecordsForTracks})(TrackThumbnail);

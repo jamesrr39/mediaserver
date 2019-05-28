@@ -31,8 +31,7 @@ export interface PictureSuccessfullyUploadedAction extends Action {
 
 export type TrackRecordsFetchedAction = {
   type: FilesActionTypes.TRACK_RECORDS_FETCHED_ACTION;
-  fileHash: string;
-  records: Record[];
+  trackSummaryIdsMap: Map<string, Record[]>,
 };
 
 export type QueueForUploadAction = {
@@ -47,6 +46,11 @@ export type MediaserverAction = (
   TrackRecordsFetchedAction |
   QueueForUploadAction
 );
+
+type TrackJSON = {
+  hash: string,
+  records: RecordJSON[],
+};
 
 type RecordJSON = {
   timestamp: string,
@@ -81,33 +85,68 @@ export function fetchPicturesMetadata() {
   };
 }
 
-export function fetchRecordsForTrack(trackSummary: FitTrack) {
+export function fetchRecordsForTracks(trackSummaries: FitTrack[]) {
   return async (dispatch: (action: TrackRecordsFetchedAction) => void, getState: () => State) => {
     const state = getState();
-    const recordsFromState = state.mediaFilesReducer.trackRecordsMap.get(trackSummary.hashValue);
-    if (recordsFromState) {
-      return recordsFromState;
+    
+    const trackSummaryIdsMap: Map<string, Record[]> = new Map();
+    const trackSummariesToFetch: string[] = [];
+    trackSummaries.forEach(trackSummary => {
+      const recordsFromState = state.mediaFilesReducer.trackRecordsMap.get(trackSummary.hashValue);
+      if (recordsFromState) {
+        trackSummaryIdsMap.set(trackSummary.hashValue, recordsFromState);
+        return;
+      }
+
+      trackSummariesToFetch.push(trackSummary.hashValue);
+    });
+
+    if (trackSummariesToFetch.length !== 0) {
+      const response = await fetch(`${SERVER_BASE_URL}/api/graphql`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/graphql',
+        },
+        body: `
+        {
+          tracks(hashes:${JSON.stringify(trackSummariesToFetch)}) {
+            hash
+            records {
+              timestamp
+              distance
+              posLat
+              posLong
+              altitude
+            }
+          }
+        }
+        `,
+      });
+      if (!response.ok) {
+        throw new Error(response.statusText);
+      }
+
+      type Response = {
+        data: {
+          tracks: TrackJSON[],
+        },
+      };
+      const responseBody = (await response.json()) as Response;
+      responseBody.data.tracks.forEach(track => {
+        const records = track.records.map(record => ({
+          ...record,
+          timestamp: new Date(record.timestamp),
+        }));
+        trackSummaryIdsMap.set(track.hash, records);
+      });
     }
-
-    const response = await fetch(`${SERVER_BASE_URL}/api/tracks/${trackSummary.hashValue}/records`);
-
-    if (!response.ok) {
-      throw new Error(response.statusText);
-    }
-
-    const recordsJSON = (await response.json()) as RecordJSON[];
-    const records = recordsJSON.map(recordJSON => ({
-        ...recordJSON,
-        timestamp: new Date(recordJSON.timestamp),
-    }));
 
     dispatch({
       type: FilesActionTypes.TRACK_RECORDS_FETCHED_ACTION,
-      fileHash: trackSummary.hashValue,
-      records,
+      trackSummaryIdsMap,
     });
 
-    return records;
+    return trackSummaryIdsMap;
   };
 }
 

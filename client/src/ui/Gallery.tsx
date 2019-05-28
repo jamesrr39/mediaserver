@@ -12,7 +12,7 @@ import { MediaFile } from '../domain/MediaFile';
 import { MediaFileType } from '../domain/MediaFileType';
 import { FitTrack, Record } from '../domain/FitTrack';
 import { isNarrowScreen } from '../util/screen_size';
-import { fetchRecordsForTrack } from '../actions/mediaFileActions';
+import { fetchRecordsForTracks } from '../actions/mediaFileActions';
 import { FilterComponent } from './gallery/FilterComponent';
 import { GalleryFilter } from '../domain/Filter';
 import { joinUrlFragments } from '../util/url';
@@ -23,7 +23,7 @@ export type GalleryProps = {
   mediaFileUrlBase?: string; // example: `/gallery/detail`. If undefined, no link should be added.
   onClickThumbnail?: (pictureMetadata: MediaFile) => void;
   showMap?: boolean;
-  fetchRecordsForTrack: (trackSummary: FitTrack) => Promise<Record[]>;
+  fetchRecordsForTracks: (trackSummary: FitTrack[]) => Promise<Map<string, Record[]>>;
 };
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
@@ -270,14 +270,17 @@ class GalleryWrapper extends React.Component<GalleryWrapperProps, GalleryState> 
 
   componentDidMount() {
     const { mediaFiles, onFilterChangeObservable } = this.props;
+    const tracks: FitTrack[] = [];
 
     mediaFiles.forEach(mediaFile => {
       if (mediaFile.fileType !== MediaFileType.FitTrack) {
         return;
       }
 
-      this.fetchRecords(mediaFile);
+      tracks.push(mediaFile);
     });
+
+    this.fetchRecords(tracks);
 
     onFilterChangeObservable.addListener(this.filterChangeCallback);
   }
@@ -305,22 +308,33 @@ class GalleryWrapper extends React.Component<GalleryWrapperProps, GalleryState> 
     );
   }
 
-  private fetchRecords = async (trackSummary: FitTrack) => {
-    const records = await this.props.fetchRecordsForTrack(trackSummary);
+  private fetchRecords = async (trackSummaries: FitTrack[]) => {
+    const tracksDetails = await this.props.fetchRecordsForTracks(trackSummaries);
+    // const detailsAsMap = new Map<string, TrackDetail>();
+    // tracksDetails.forEach((records, hash) => {
+    //   detailsAsMap.set(hash, records);
+    // });
 
-    const trackData = {
-      trackSummary,
-      activityBounds: trackSummary.activityBounds,
-      points: records.map(record => ({
-        lat: record.posLat,
-        lon: record.posLong,
-      })),
-      openTrackUrl: this.props.mediaFileUrlBase,
-    };
+    const trackDatas = trackSummaries.map(trackSummary => {
+      const records = tracksDetails.get(trackSummary.hashValue);
+      if (!records) {
+        throw new Error(`track details not found for track ${trackSummary.hashValue} (${trackSummary.relativePath})`);
+      }
+
+      return {
+        trackSummary,
+        activityBounds: trackSummary.activityBounds,
+        points: records.map(record => ({
+          lat: record.posLat,
+          lon: record.posLong,
+        })),
+        openTrackUrl: this.props.mediaFileUrlBase,
+      };
+    });
 
     this.setState(state => ({
       ...state,
-      tracks: state.tracks.concat([trackData]),
+      tracks: state.tracks.concat(trackDatas),
     }));
   }
 
@@ -398,5 +412,5 @@ function mapStateToProps(state: State) {
 }
 
 export default connect(mapStateToProps, {
-  fetchRecordsForTrack
+  fetchRecordsForTracks
 })(Gallery);

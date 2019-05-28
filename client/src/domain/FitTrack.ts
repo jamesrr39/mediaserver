@@ -137,3 +137,8 @@ export function getSpeedsFromRecords(records: Record[], intervalDistanceSeconds:
 
   return speeds;
 }
+
+export type TrackDetail = {
+  hash: string;
+  records: Record[];
+};

@@ -71,9 +71,13 @@ function mediaFilesReducer(
         mediaFiles: state.mediaFiles.concat([action.mediaFile])
       };
     case FilesActionTypes.TRACK_RECORDS_FETCHED_ACTION:
-      state.trackRecordsMap.set(action.fileHash, action.records);
+      const newMap = new Map(state.trackRecordsMap);
+      action.trackSummaryIdsMap.forEach((records, hash) => {
+          newMap.set(hash, records);
+      });
       return {
         ...state,
+        trackRecordsMap: newMap,
       };
     default:
       return state;

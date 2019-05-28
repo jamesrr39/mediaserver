@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { FitTrack, Record, getLapsFromRecords, getSpeedsFromRecords } from '../../domain/FitTrack';
 import MapComponent from '../MapComponent';
-import { fetchRecordsForTrack } from '../../actions/mediaFileActions';
+import { fetchRecordsForTracks } from '../../actions/mediaFileActions';
 import { connect } from 'react-redux';
 import SpeedChart from './SpeedChart';
 
@@ -15,7 +15,7 @@ const styles = {
 
 type Props = {
   trackSummary: FitTrack;
-  fetchRecordsForTrack: (trackSummary: FitTrack) => Promise<Record[]>
+  fetchRecordsForTracks: (trackSummaries: FitTrack[]) => Promise<Map<string, Record[]>>
 };
 
 type State = {
@@ -42,10 +42,16 @@ class TrackModalContent extends React.Component<Props, State> {
   }
 
   fetchRecords = async () => {
-    const trackRecords = await this.props.fetchRecordsForTrack(this.props.trackSummary);
+    const {trackSummary} = this.props;
+    const trackRecords = await this.props.fetchRecordsForTracks([trackSummary]);
+    const records = trackRecords.get(trackSummary.hashValue);
+    if (!records) {
+      throw new Error(`couldn't get records for track ${trackSummary.hashValue}`);
+    }
+
     this.setState(state => ({
       ...state,
-      trackRecords
+      trackRecords: records,
     }));
   }
 
@@ -165,4 +171,4 @@ class TrackModalContent extends React.Component<Props, State> {
   }
 }
 
-export default connect(undefined, {fetchRecordsForTrack})(TrackModalContent);
+export default connect(undefined, {fetchRecordsForTracks})(TrackModalContent);
