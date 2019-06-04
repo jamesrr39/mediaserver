@@ -132,7 +132,7 @@ func (ws *GraphQLAPIService) setupQueryType() *graphql.Object {
 									Name: "record",
 									Fields: graphql.Fields{
 										"timestamp": &graphql.Field{
-											Type: graphql.String,
+											Type: graphql.DateTime,
 										},
 										"posLat": &graphql.Field{
 											Type: graphql.Float,

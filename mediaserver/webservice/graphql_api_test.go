@@ -20,7 +20,7 @@ func Test_GraphQLAPIService(t *testing.T) {
 	tracksDAL := &mockTrackDAL{
 		GetRecordsFunc: func(mediaFile *domain.FitFileSummary) (domain.Records, errorsx.Error) {
 			return domain.Records{{
-				Timestamp:    time.Unix(0, 0),
+				Timestamp:    time.Date(1970, 01, 01, 00, 00, 01, 0, time.UTC),
 				Distance:     1,
 				PositionLat:  1.5,
 				PositionLong: 2.5,
@@ -83,7 +83,7 @@ func Test_GraphQLAPIService(t *testing.T) {
 	})
 }
 
-const expectedResponse = `{"data":{"tracks":[{"hash":"abcdef123456","records":[{"altitude":3,"distance":1,"posLat":1.5,"posLong":2.5,"timestamp":"1970-01-01 01:00:00 +0100 CET"}]}]}}
+const expectedResponse = `{"data":{"tracks":[{"hash":"abcdef123456","records":[{"altitude":3,"distance":1,"posLat":1.5,"posLong":2.5,"timestamp":"1970-01-01T00:00:01Z"}]}]}}
 `
 
 type mockTrackDAL struct {
