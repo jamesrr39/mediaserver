@@ -2,10 +2,11 @@ import * as React from 'react';
 import { PictureMetadata } from '../../domain/PictureMetadata';
 import { SERVER_BASE_URL } from '../../configs';
 import { joinUrlFragments } from '../../util/url';
+import { Size } from '../../domain/Size';
 
 type Props = {
-    pictureMetadata: PictureMetadata
-    size: {width: number, height: number}
+    pictureMetadata: PictureMetadata,
+    size: Size,
 };
 
 type ComponentState = {

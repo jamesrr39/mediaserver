@@ -27,7 +27,7 @@ class PictureInfoComponent extends React.Component<Props> {
       icon = newDivIcon();
     }
     const mapContainer = (location !== null)
-      ? <MapComponent {...{size: mapContainerSize, markers: [{location, icon}]}} />
+      ? <MapComponent {...{size: mapContainerSize, markers: [{location, icon}], zoomControl: true}} />
       : <p>No Location Data available</p>;
 
     const reason = mediaFile.suggestedLocation && mediaFile.suggestedLocation.reason;

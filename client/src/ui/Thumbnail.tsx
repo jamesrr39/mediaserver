@@ -9,6 +9,7 @@ import { MediaFileType } from '../domain/MediaFileType';
 import { PictureThumbnail } from './thumbnails/PictureThumbnail';
 import { VideoThumbnail } from './thumbnails/VideoFileThumbnail';
 import TrackThumbnail from './thumbnails/TrackThumbnail';
+import { Size } from '../domain/Size';
 
 const WIDE_SCREEN_THUMBNAIL_HEIGHT = 200;
 const NARROW_SCREEN_THUMBNAIL_HEIGHT = 100;
@@ -37,7 +38,8 @@ function getImageHeightToRequest(narrowScreen: boolean, pictureMetadata: Picture
   return NARROW_SCREEN_THUMBNAIL_HEIGHT;
 }
 
-function getSizeForThumbnail(mediaFile: MediaFile) {
+export function getSizeForThumbnail(mediaFile: MediaFile) {
+  // TODO pass in row size
   const narrowScreen = isNarrowScreen();
 
   switch (mediaFile.fileType) {
@@ -79,6 +81,7 @@ const generateThumbnailStyle = (mediaFile: MediaFile, isLoaded: boolean) => {
 export interface ThumbnailProps {
   mediaFile: MediaFile;
   scrollObservable: Observable<{}>;
+  size: Size;
 }
 
 type ThumbnailState = {
@@ -109,7 +112,7 @@ export class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
   }
 
   render() {
-    const { mediaFile } = this.props;
+    const { mediaFile, size } = this.props;
     const thumbnailStyle = generateThumbnailStyle(
       mediaFile, this.state.isImageQueued);
 
@@ -119,12 +122,7 @@ export class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
       );
     }
 
-    const { width, height } = getSizeForThumbnail(mediaFile);
-
-    const size = {
-      height,
-      width,
-    };
+    // const { width, height } = getSizeForThumbnail(mediaFile);
 
     switch (mediaFile.fileType) {
       case MediaFileType.Picture: {

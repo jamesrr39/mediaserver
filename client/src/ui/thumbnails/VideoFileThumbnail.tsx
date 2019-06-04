@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { SERVER_BASE_URL } from '../../configs';
 import { VideoMetadata } from '../../domain/VideoMetadata';
+import { Size } from '../../domain/Size';
 
 const styles = {
     video: {
@@ -9,12 +10,11 @@ const styles = {
 };
 
 type Props = {
-    videoMetadata: VideoMetadata
-    size: {width: number, height: number}
+    videoMetadata: VideoMetadata,
+    size: Size,
 };
 
 export class VideoThumbnail extends React.Component<Props> {
-
     render() {
         const { videoMetadata, size } = this.props;
 

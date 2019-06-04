@@ -2,20 +2,19 @@ import * as React from 'react';
 import { createCompareTimeTakenFunc } from '../domain/PictureMetadata';
 
 import { Observable, DebouncedObservable } from '../util/Observable';
-import { Thumbnail } from './Thumbnail';
 import { State } from '../reducers/fileReducer';
 import { connect } from 'react-redux';
-import { Link } from 'react-router-dom';
 import MapComponent, { MapMarker, TrackMapData } from './MapComponent';
 import { SERVER_BASE_URL } from '../configs';
 import { MediaFile } from '../domain/MediaFile';
 import { MediaFileType } from '../domain/MediaFileType';
 import { FitTrack, Record } from '../domain/FitTrack';
-import { isNarrowScreen } from '../util/screen_size';
+import { isNarrowScreen, getScreenWidth } from '../util/screen_size';
 import { fetchRecordsForTracks } from '../actions/mediaFileActions';
 import { FilterComponent } from './gallery/FilterComponent';
 import { GalleryFilter } from '../domain/Filter';
 import { joinUrlFragments } from '../util/url';
+import { filesToRows, GalleryRow, BuildLinkFunc } from './gallery/GalleryRow';
 
 export type GalleryProps = {
   mediaFiles: MediaFile[];
@@ -28,7 +27,7 @@ export type GalleryProps = {
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
-const PHOTOS_IN_INCREMENT = 40;
+const ROWS_IN_INCREMENT = 10;
 
 export type InnerGalleryProps = {
   showMap: boolean;
@@ -46,11 +45,6 @@ const styles = {
   wideScreenContainer: {
     margin: '0 20px',
   },
-  picturesContainer: {
-    display: 'flex',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  } as React.CSSProperties,
   thumbnail: {
       margin: '0 10px 10px 0',
   },
@@ -73,10 +67,14 @@ class InnerGallery extends React.Component<InnerGalleryProps, InnerGalleryState>
 
     scrollObservable.triggerEvent({});
     scrollObservable.addListener(this.onScroll);
+    scrollObservable.addListener(this.onResize);
   }
 
   componentWillUnmount() {
-    this.props.scrollObservable.removeListener(this.onScroll);
+    const {scrollObservable} = this.props;
+
+    scrollObservable.removeListener(this.onScroll);
+    scrollObservable.removeListener(this.onResize);
   }
 
   componentDidUpdate() {
@@ -85,8 +83,8 @@ class InnerGallery extends React.Component<InnerGalleryProps, InnerGalleryState>
 
   render() {
     const pictureContainerStyle = isNarrowScreen()
-      ? styles.picturesContainer
-      : {...styles.picturesContainer, ...styles.wideScreenContainer};
+      ? {}
+      : {...styles.wideScreenContainer};
 
     return (
       <React.Fragment>
@@ -139,6 +137,7 @@ class InnerGallery extends React.Component<InnerGalleryProps, InnerGalleryState>
       markers,
       tracks: tracks,
       extraLatLongMapPadding: 0.001,
+      zoomControl: false,
     };
 
     return (
@@ -150,55 +149,35 @@ class InnerGallery extends React.Component<InnerGalleryProps, InnerGalleryState>
   }
 
   private renderThumbnails = () => {
-    const {
-      mediaFiles,
-      scrollObservable,
-      mediaFileUrlBase,
-      onClickThumbnail,
-      filterJson
-    } = this.props;
+    const {mediaFiles, scrollObservable, onClickThumbnail, mediaFileUrlBase, filterJson} = this.props;
+    const rowWidth = getScreenWidth() - 50; // 50 = padding
 
-    return mediaFiles.map((mediaFile, index) => {
-      const thumbnailProps = {
-        scrollObservable,
-        mediaFile,
+    const rows = filesToRows(rowWidth, mediaFiles);
+
+    let buildLink: (undefined | BuildLinkFunc)  = undefined;
+    if (mediaFileUrlBase) {
+      buildLink = (mediaFile: MediaFile) => {
+        const query = `filterJson=${encodeURIComponent(filterJson)}`;
+        const linkUrl = `${mediaFileUrlBase}/${mediaFile.hashValue}?${query}`;
+        return linkUrl;
       };
+    }
 
+    return rows.map((mediaFilesWithSizes, index) => {
       const {lastIndexShown} = this.state;
-      if (index > (lastIndexShown + PHOTOS_IN_INCREMENT)) {
+      if (index > (lastIndexShown + ROWS_IN_INCREMENT)) {
         return null;
       }
-      
-      const query = `filterJson=${encodeURIComponent(filterJson)}`;
-      const linkUrl = `${mediaFileUrlBase}/${mediaFile.hashValue}?${query}`;
 
-      let innerHtml = <Thumbnail {...thumbnailProps} />;
-      if (mediaFileUrlBase) {
-        innerHtml = (
-          <Link to={linkUrl}>
-            {innerHtml}
-          </Link>
-        );
-      }
+      const rowProps = {
+        mediaFilesWithSizes,
+        scrollObservable,
+        rowWidth,
+        onClickThumbnail,
+        buildLink,
+      };
 
-      if (onClickThumbnail) {
-        const onClickThumbnailCb = (event: React.MouseEvent<HTMLAnchorElement>) => {
-          event.preventDefault();
-          if (onClickThumbnail) {
-            onClickThumbnail(mediaFile);
-          }
-        };
-
-        innerHtml = (
-          <a href="#" onClick={onClickThumbnailCb}>{innerHtml}</a>
-        );
-      }
-
-      return (
-        <div key={index} style={styles.thumbnail}>
-          {innerHtml}
-        </div>
-      );
+      return <GalleryRow key={index} {...rowProps} />;
     });
   }
 
@@ -251,9 +230,17 @@ class InnerGallery extends React.Component<InnerGalleryProps, InnerGalleryState>
     if (distanceFromBottom < (viewportHeight)) {
       this.setState((state) => ({
         ...state,
-        lastIndexShown: state.lastIndexShown + PHOTOS_IN_INCREMENT,
+        lastIndexShown: state.lastIndexShown + ROWS_IN_INCREMENT,
       }));
     }
+  }
+
+  private onResize = () => {
+    console.log('triggering resize');
+    // trigger re-render
+    // this.setState(state => ({
+    //   ...state,
+    // }));
   }
 }
 
@@ -283,6 +270,7 @@ class GalleryWrapper extends React.Component<GalleryWrapperProps, GalleryState> 
     this.fetchRecords(tracks);
 
     onFilterChangeObservable.addListener(this.filterChangeCallback);
+    // 
   }
 
   componentWillUnmount() {
@@ -310,10 +298,6 @@ class GalleryWrapper extends React.Component<GalleryWrapperProps, GalleryState> 
 
   private fetchRecords = async (trackSummaries: FitTrack[]) => {
     const tracksDetails = await this.props.fetchRecordsForTracks(trackSummaries);
-    // const detailsAsMap = new Map<string, TrackDetail>();
-    // tracksDetails.forEach((records, hash) => {
-    //   detailsAsMap.set(hash, records);
-    // });
 
     const trackDatas = trackSummaries.map(trackSummary => {
       const records = tracksDetails.get(trackSummary.hashValue);

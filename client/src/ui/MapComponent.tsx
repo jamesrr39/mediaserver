@@ -133,6 +133,7 @@ type Props = {
   markers?: MapMarker[],
   tracks?: TrackMapData[],
   extraLatLongMapPadding?: number,
+  zoomControl: boolean,
 };
 
 export default class MapComponent extends React.Component<Props> {
@@ -149,14 +150,19 @@ export default class MapComponent extends React.Component<Props> {
       return;
     }
 
-    const { extraLatLongMapPadding } = this.props;
+    const { extraLatLongMapPadding, zoomControl } = this.props;
 
     if (this.map) {
       this.map.remove();
       this.map = null;
     }
 
-    const map = Leaflet.map(element);
+    const map = Leaflet.map(element, {
+      zoomControl,
+      scrollWheelZoom: zoomControl,
+      touchZoom: zoomControl,
+      dragging: zoomControl,
+    });
     const osmUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
     const attribution = 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors';
     const osm = new Leaflet.TileLayer(osmUrl, {

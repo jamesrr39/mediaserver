@@ -140,6 +140,7 @@ class TrackModalContent extends React.Component<Props, State> {
         })),
         activityBounds: trackSummary.activityBounds,
       }],
+      zoomControl: true,
     };
 
     return <MapComponent {...mapProps} />;

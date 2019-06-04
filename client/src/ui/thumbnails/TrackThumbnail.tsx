@@ -3,9 +3,10 @@ import { FitTrack, Record } from '../../domain/FitTrack';
 import MapComponent from '../MapComponent';
 import { fetchRecordsForTracks } from '../../actions/mediaFileActions';
 import { connect } from 'react-redux';
+import { Size } from '../../domain/Size';
 
 type Props = {
-  size: {width: number, height: number},
+  size: Size
   trackSummary: FitTrack,
   fetchRecordsForTracks: (trackSummaries: FitTrack[]) => Promise<Map<string, Record[]>>,
 };
@@ -45,6 +46,7 @@ class TrackThumbnail extends React.Component<Props, ComponentState> {
         }),
         activityBounds: trackSummary.activityBounds,
       }],
+      zoomControl: false,
     };
     return (
       <div>

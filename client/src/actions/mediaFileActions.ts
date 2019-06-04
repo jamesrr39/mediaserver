@@ -85,10 +85,44 @@ export function fetchPicturesMetadata() {
   };
 }
 
+async function fetchTrackRecords(hashes: string[]) {
+  const response = await fetch(`${SERVER_BASE_URL}/api/graphql`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/graphql',
+    },
+    body: `
+    {
+      tracks(hashes:${JSON.stringify(hashes)}) {
+        hash
+        records {
+          timestamp
+          distance
+          posLat
+          posLong
+          altitude
+        }
+      }
+    }
+    `,
+  });
+  if (!response.ok) {
+    throw new Error(response.statusText);
+  }
+
+  type Response = {
+    data: {
+      tracks: TrackJSON[],
+    },
+  };
+  const responseBody = (await response.json()) as Response;
+  return responseBody.data;
+}
+
 export function fetchRecordsForTracks(trackSummaries: FitTrack[]) {
   return async (dispatch: (action: TrackRecordsFetchedAction) => void, getState: () => State) => {
     const state = getState();
-    
+
     const trackSummaryIdsMap: Map<string, Record[]> = new Map();
     const trackSummariesToFetch: string[] = [];
     trackSummaries.forEach(trackSummary => {
@@ -102,37 +136,8 @@ export function fetchRecordsForTracks(trackSummaries: FitTrack[]) {
     });
 
     if (trackSummariesToFetch.length !== 0) {
-      const response = await fetch(`${SERVER_BASE_URL}/api/graphql`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/graphql',
-        },
-        body: `
-        {
-          tracks(hashes:${JSON.stringify(trackSummariesToFetch)}) {
-            hash
-            records {
-              timestamp
-              distance
-              posLat
-              posLong
-              altitude
-            }
-          }
-        }
-        `,
-      });
-      if (!response.ok) {
-        throw new Error(response.statusText);
-      }
-
-      type Response = {
-        data: {
-          tracks: TrackJSON[],
-        },
-      };
-      const responseBody = (await response.json()) as Response;
-      responseBody.data.tracks.forEach(track => {
+      const {tracks} = await fetchTrackRecords(trackSummariesToFetch);
+      tracks.forEach(track => {
         const records = track.records.map(record => ({
           ...record,
           timestamp: new Date(record.timestamp),
