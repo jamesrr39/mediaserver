@@ -11,6 +11,7 @@ import (
 	"mediaserver/mediaserver/domain"
 
 	"github.com/jamesrr39/goutil/errorsx"
+	"github.com/jamesrr39/semaphore"
 )
 
 var ErrHashNotFound = errors.New("hash not found")
@@ -18,11 +19,12 @@ var ErrHashNotFound = errors.New("hash not found")
 type PicturesDAL struct {
 	thumbnailsDAL *ThumbnailsDAL
 	openFileFunc  openFileFuncType
+	sema          *semaphore.Semaphore
 }
 
 func NewPicturesDAL(
-	cachesBasePath string, thumbnailsDAL *ThumbnailsDAL, openFileFunc openFileFuncType) *PicturesDAL {
-	return &PicturesDAL{thumbnailsDAL, openFileFunc}
+	cachesBasePath string, thumbnailsDAL *ThumbnailsDAL, openFileFunc openFileFuncType, maxConcurrentResizes uint) *PicturesDAL {
+	return &PicturesDAL{thumbnailsDAL, openFileFunc, semaphore.NewSemaphore(maxConcurrentResizes)}
 }
 
 func (dal *PicturesDAL) GetPictureBytes(pictureMetadata *domain.PictureMetadata, size domain.Size) (io.Reader, string, errorsx.Error) {
@@ -43,6 +45,9 @@ func (dal *PicturesDAL) GetPictureBytes(pictureMetadata *domain.PictureMetadata,
 	if nil != err {
 		return nil, "", errorsx.Wrap(err)
 	}
+
+	dal.sema.Add()
+	defer dal.sema.Done()
 
 	picture = domain.ResizePicture(picture, size)
 

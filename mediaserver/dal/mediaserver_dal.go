@@ -37,7 +37,7 @@ type MediaServerDAL struct {
 	ThumbnailsDAL  *ThumbnailsDAL
 }
 
-func NewMediaServerDAL(logger *logpkg.Logger, fs gofs.Fs, picturesBasePath, cachesBasePath, dataDir string, maxConcurrentCPUJobs, maxConcurrentVideoConversions uint, thumbnailCachePolicy ThumbnailCachePolicy) (*MediaServerDAL, error) {
+func NewMediaServerDAL(logger *logpkg.Logger, fs gofs.Fs, picturesBasePath, cachesBasePath, dataDir string, maxConcurrentCPUJobs, maxConcurrentVideoConversions uint, thumbnailCachePolicy ThumbnailCachePolicy, maxConcurrentTrackRecordsParsing, maxConcurrentResizes uint) (*MediaServerDAL, error) {
 	jobRunner := mediaserverjobs.NewJobRunner(logger, maxConcurrentCPUJobs)
 
 	thumbnailsDAL, err := NewThumbnailsDAL(fs, logger, filepath.Join(cachesBasePath, "thumbnails"), jobRunner, thumbnailCachePolicy)
@@ -51,8 +51,8 @@ func NewMediaServerDAL(logger *logpkg.Logger, fs gofs.Fs, picturesBasePath, cach
 		return fs.Open(filepath.Join(picturesBasePath, mediaFile.GetMediaFileInfo().RelativePath))
 	}
 
-	picturesDAL := NewPicturesDAL(cachesBasePath, thumbnailsDAL, openFileFunc)
-	tracksDAL := NewTracksDAL(openFileFunc)
+	picturesDAL := NewPicturesDAL(cachesBasePath, thumbnailsDAL, openFileFunc, maxConcurrentCPUJobs)
+	tracksDAL := NewTracksDAL(openFileFunc, maxConcurrentTrackRecordsParsing)
 
 	mediaFilesDAL := NewMediaFilesDAL(logger, fs, picturesBasePath, thumbnailsDAL, videosDAL, picturesDAL, jobRunner, tracksDAL)
 

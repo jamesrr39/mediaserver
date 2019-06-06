@@ -37,7 +37,7 @@ type MediaServer struct {
 }
 
 // NewMediaServerAndScan creates a new MediaServer and builds a cache of pictures by scanning the rootpath
-func NewMediaServerAndScan(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDir, dataDir string, maxConcurrentResizes, maxConcurrentVideoConversions uint, profiler *profile.Profiler, thumbnailCachePolicy dal.ThumbnailCachePolicy) (*MediaServer, error) {
+func NewMediaServerAndScan(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDir, dataDir string, maxConcurrentCPUJobs, maxConcurrentVideoConversions uint, profiler *profile.Profiler, thumbnailCachePolicy dal.ThumbnailCachePolicy, maxConcurrentTrackRecordsParsing, maxConcurrentResizes uint) (*MediaServer, error) {
 	var err error
 	profileRun := profiler.NewRun("NewMediaServerAndScan")
 	defer func() {
@@ -50,7 +50,7 @@ func NewMediaServerAndScan(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDi
 
 	var mediaServerDAL *dal.MediaServerDAL
 	profileRun.Measure("new MediaServerDAL", func() {
-		mediaServerDAL, err = dal.NewMediaServerDAL(logger, fs, rootpath, cachesDir, dataDir, maxConcurrentResizes, maxConcurrentVideoConversions, thumbnailCachePolicy)
+		mediaServerDAL, err = dal.NewMediaServerDAL(logger, fs, rootpath, cachesDir, dataDir, maxConcurrentCPUJobs, maxConcurrentVideoConversions, thumbnailCachePolicy, maxConcurrentTrackRecordsParsing, maxConcurrentResizes)
 	})
 	if nil != err {
 		return nil, errorsx.Wrap(err)
