@@ -23,7 +23,7 @@ type MediaFilesState = {
   scrollObservable: Observable<{}>,
   mediaFilesMap: Map<string, MediaFile>,
   uploadQueue: FileQueue,
-  trackRecordsMap: Map<string, Record[]>,
+  trackRecordsMap: Map<string, Promise<Record[]>>,
 };
 
 export type State = {
@@ -41,7 +41,7 @@ const mediaFilesInitialState = {
   scrollObservable,
   mediaFilesMap: new Map<string, MediaFile>(),
   uploadQueue: new FileQueue(maxConcurrentUploads),
-  trackRecordsMap: new Map<string, Record[]>(),
+  trackRecordsMap: new Map<string, Promise<Record[]>>(),
 };
 
 function mediaFilesReducer(

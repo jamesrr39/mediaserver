@@ -31,7 +31,7 @@ export interface PictureSuccessfullyUploadedAction extends Action {
 
 export type TrackRecordsFetchedAction = {
   type: FilesActionTypes.TRACK_RECORDS_FETCHED_ACTION;
-  trackSummaryIdsMap: Map<string, Record[]>,
+  trackSummaryIdsMap: Map<string, Promise<Record[]>>,
 };
 
 export type QueueForUploadAction = {
@@ -119,16 +119,19 @@ async function fetchTrackRecords(hashes: string[]) {
   return responseBody.data;
 }
 
+type Resolver = (records: Record[]) => void;
+
 export function fetchRecordsForTracks(trackSummaries: FitTrack[]) {
-  return async (dispatch: (action: TrackRecordsFetchedAction) => void, getState: () => State) => {
+  return (dispatch: (action: TrackRecordsFetchedAction) => void, getState: () => State) => {
     const state = getState();
 
-    const trackSummaryIdsMap: Map<string, Record[]> = new Map();
+    const trackSummaryIdsMap = new Map<string, Promise<Record[]>>();
     const trackSummariesToFetch: string[] = [];
+    // figure out which already have promises, and which need to be fetched
     trackSummaries.forEach(trackSummary => {
-      const recordsFromState = state.mediaFilesReducer.trackRecordsMap.get(trackSummary.hashValue);
-      if (recordsFromState) {
-        trackSummaryIdsMap.set(trackSummary.hashValue, recordsFromState);
+      const recordsFromStatePromise = state.mediaFilesReducer.trackRecordsMap.get(trackSummary.hashValue);
+      if (recordsFromStatePromise) {
+        trackSummaryIdsMap.set(trackSummary.hashValue, recordsFromStatePromise);
         return;
       }
 
@@ -136,22 +139,57 @@ export function fetchRecordsForTracks(trackSummaries: FitTrack[]) {
     });
 
     if (trackSummariesToFetch.length !== 0) {
-      const {tracks} = await fetchTrackRecords(trackSummariesToFetch);
-      tracks.forEach(track => {
-        const records = track.records.map(record => ({
-          ...record,
-          timestamp: new Date(record.timestamp),
-        }));
-        trackSummaryIdsMap.set(track.hash, records);
+      const resolverMap = new Map<string, Resolver>();
+      trackSummariesToFetch.forEach(hash => {
+        const promise = new Promise<Record[]>((resolve, reject) => {
+          const resolver = (records: Record[]) => {
+            resolve(records);
+          };
+          resolverMap.set(hash, resolver);
+        });
+
+        trackSummaryIdsMap.set(hash, promise);
+      });
+      fetchTrackRecords(trackSummariesToFetch).then(response => {
+        response.tracks.forEach(track => {
+          const records = track.records.map(record => ({
+            ...record,
+            timestamp: new Date(record.timestamp),
+          }));
+          const resolver = resolverMap.get(track.hash);
+          if (!resolver) {
+            throw new Error(`couldn't find resolver for ${track.hash}`);
+          }
+          resolver(records);
+        });
+      });
+
+      const dispatchMap = new Map<string, Promise<Record[]>>();
+      trackSummariesToFetch.forEach(hash => {
+        const promise = trackSummaryIdsMap.get(hash);
+        if (!promise) {
+          throw new Error(`couldn't find promise for ${hash}`);
+        }
+        dispatchMap.set(hash, promise);
+      });
+
+      dispatch({
+        type: FilesActionTypes.TRACK_RECORDS_FETCHED_ACTION,
+        trackSummaryIdsMap: dispatchMap,
       });
     }
 
-    dispatch({
-      type: FilesActionTypes.TRACK_RECORDS_FETCHED_ACTION,
-      trackSummaryIdsMap,
+    return new Promise<Map<string, Record[]>>((resolve, reject) => {
+      const map = new Map<string, Record[]>();
+      trackSummaryIdsMap.forEach((recordsPromise, hash) => {
+        recordsPromise.then(records => {
+          map.set(hash, records);
+          if (map.size === trackSummariesToFetch.length) {
+            resolve();
+          }
+        });
+      });
     });
-
-    return trackSummaryIdsMap;
   };
 }
 

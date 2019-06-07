@@ -27,7 +27,7 @@ export type GalleryProps = {
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
-const ROWS_IN_INCREMENT = 10;
+const ROWS_IN_INCREMENT = 1;
 
 export type InnerGalleryProps = {
   showMap: boolean;
