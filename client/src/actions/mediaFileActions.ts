@@ -184,8 +184,8 @@ export function fetchRecordsForTracks(trackSummaries: FitTrack[]) {
       trackSummaryIdsMap.forEach((recordsPromise, hash) => {
         recordsPromise.then(records => {
           map.set(hash, records);
-          if (map.size === trackSummariesToFetch.length) {
-            resolve();
+          if (map.size === trackSummaries.length) {
+            resolve(map);
           }
         });
       });

@@ -270,7 +270,6 @@ class GalleryWrapper extends React.Component<GalleryWrapperProps, GalleryState> 
     this.fetchRecords(tracks);
 
     onFilterChangeObservable.addListener(this.filterChangeCallback);
-    // 
   }
 
   componentWillUnmount() {

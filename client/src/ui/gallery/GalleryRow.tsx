@@ -63,7 +63,7 @@ export class GalleryRow extends React.Component<Props> {
 
                 if (buildLink) {
                     thumbnail = (
-                        <Link to={buildLink(mediaFile)}>
+                        <Link key={index} to={buildLink(mediaFile)}>
                             {thumbnail}
                         </Link>
                     );

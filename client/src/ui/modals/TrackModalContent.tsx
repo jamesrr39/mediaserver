@@ -43,15 +43,15 @@ class TrackModalContent extends React.Component<Props, State> {
 
   fetchRecords = async () => {
     const {trackSummary} = this.props;
-    const trackRecords = await this.props.fetchRecordsForTracks([trackSummary]);
-    const records = trackRecords.get(trackSummary.hashValue);
-    if (!records) {
+    const trackRecordsMap = await this.props.fetchRecordsForTracks([trackSummary]);
+    const trackRecords = trackRecordsMap.get(trackSummary.hashValue);
+    if (!trackRecords) {
       throw new Error(`couldn't get records for track ${trackSummary.hashValue}`);
     }
 
     this.setState(state => ({
       ...state,
-      trackRecords: records,
+      trackRecords,
     }));
   }
 
