@@ -9,7 +9,7 @@ import { SERVER_BASE_URL } from '../configs';
 import { MediaFile } from '../domain/MediaFile';
 import { MediaFileType } from '../domain/MediaFileType';
 import { FitTrack, Record } from '../domain/FitTrack';
-import { isNarrowScreen, getScreenWidth } from '../util/screen_size';
+import { getScreenWidth } from '../util/screen_size';
 import { fetchRecordsForTracks } from '../actions/mediaFileActions';
 import { FilterComponent } from './gallery/FilterComponent';
 import { GalleryFilter } from '../domain/Filter';
@@ -42,9 +42,9 @@ type GalleryState = {
 };
 
 const styles = {
-  wideScreenContainer: {
-    margin: '0 20px',
-  },
+  // wideScreenContainer: {
+  //   margin: '0 20px',
+  // },
   thumbnail: {
       margin: '0 10px 10px 0',
   },
@@ -82,14 +82,10 @@ class InnerGallery extends React.Component<InnerGalleryProps, InnerGalleryState>
   }
 
   render() {
-    const pictureContainerStyle = isNarrowScreen()
-      ? {}
-      : {...styles.wideScreenContainer};
-
     return (
       <React.Fragment>
         {this.props.showMap && this.renderMap()}
-        <div style={pictureContainerStyle}>
+        <div>
           {this.renderThumbnails()}
         </div>
       </React.Fragment>
@@ -150,7 +146,8 @@ class InnerGallery extends React.Component<InnerGalleryProps, InnerGalleryState>
 
   private renderThumbnails = () => {
     const {mediaFiles, scrollObservable, onClickThumbnail, mediaFileUrlBase, filterJson} = this.props;
-    const rowWidth = getScreenWidth() - 50; // 50 = padding
+    // const rowWidth = getScreenWidth() - 50; // 50 = padding
+    const rowWidth = getScreenWidth();
 
     const rows = filesToRows(rowWidth, mediaFiles);
 
@@ -236,11 +233,10 @@ class InnerGallery extends React.Component<InnerGalleryProps, InnerGalleryState>
   }
 
   private onResize = () => {
-    console.log('triggering resize');
     // trigger re-render
-    // this.setState(state => ({
-    //   ...state,
-    // }));
+    this.setState(state => ({
+      ...state,
+    }));
   }
 }
 

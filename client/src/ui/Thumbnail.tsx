@@ -2,7 +2,7 @@ import * as React from 'react';
 import { PictureMetadata } from '../domain/PictureMetadata';
 
 import { Observable } from '../util/Observable';
-import { isNarrowScreen } from '../util/screen_size';
+// import { isNarrowScreen } from '../util/screen_size';
 import { THUMBNAIL_HEIGHTS } from '../generated/thumbnail_sizes';
 import { MediaFile } from '../domain/MediaFile';
 import { MediaFileType } from '../domain/MediaFileType';
@@ -40,7 +40,24 @@ function getImageHeightToRequest(narrowScreen: boolean, pictureMetadata: Picture
 
 export function getSizeForThumbnail(mediaFile: MediaFile) {
   // TODO pass in row size
-  const narrowScreen = isNarrowScreen();
+  // const narrowScreen = isNarrowScreen();
+
+  // switch (mediaFile.fileType) {
+  //   case MediaFileType.Picture: {
+  //     const heightToRequest = getImageHeightToRequest(narrowScreen, mediaFile);
+  //     const ratio = heightToRequest / mediaFile.rawSize.height;
+  //     const width = narrowScreen ? NARROW_SCREEN_THUMBNAIL_WIDTH : (mediaFile.rawSize.width * ratio);
+  //     const height = narrowScreen ? NARROW_SCREEN_THUMBNAIL_HEIGHT : WIDE_SCREEN_THUMBNAIL_HEIGHT;
+  //     return {height, width};
+  //   }
+  //   default: {
+  //     const height = narrowScreen ? NARROW_SCREEN_THUMBNAIL_HEIGHT : WIDE_SCREEN_THUMBNAIL_HEIGHT;
+  //     const width = narrowScreen ? NARROW_SCREEN_THUMBNAIL_WIDTH : (height * 16 / 9);
+  //     return {height, width};
+  //   }
+  // }
+
+  const narrowScreen = false;
 
   switch (mediaFile.fileType) {
     case MediaFileType.Picture: {

@@ -8,6 +8,7 @@ import { joinUrlFragments } from '../util/url';
 
 import markerIcon from '../../node_modules/leaflet/dist/images/marker-icon.png';
 import markerShadow from '../../node_modules/leaflet/dist/images/marker-shadow.png';
+import { deepEqual } from '../util/equal';
 
 const StartIcon = Leaflet.Icon.extend({
   createIcon: () => {
@@ -138,6 +139,13 @@ type Props = {
 
 export default class MapComponent extends React.Component<Props> {
   private map: Leaflet.Map | null = null;
+
+  shouldComponentUpdate(nextProps: Props, nextState: {}) {
+    // TODO: better equality comparison
+    const hasChanged = !deepEqual(this.props, nextProps);
+
+    return hasChanged;
+  }
 
   render() {
     const { size, markers, tracks } = this.props;
