@@ -121,8 +121,8 @@ class InnerGallery extends React.Component<InnerGalleryProps, InnerGalleryState>
 
     const markers = this.getMarkers(mediaFiles);
 
-    if (markers.length === 0) {
-      return '';
+    if (markers.length === 0 && tracks.length === 0) {
+      return null;
     }
 
     const mapProps = {
@@ -133,7 +133,7 @@ class InnerGallery extends React.Component<InnerGalleryProps, InnerGalleryState>
       markers,
       tracks: tracks,
       extraLatLongMapPadding: 0.001,
-      zoomControl: false,
+      zoomControl: true,
     };
 
     return (
