@@ -199,6 +199,12 @@ export default class MapComponent extends React.Component<Props> {
           return;
         }
 
+        const TRACKS_SHOWN_LIMIT = 20;
+        if (index >= TRACKS_SHOWN_LIMIT) {
+          console.warn(`only showing the first ${TRACKS_SHOWN_LIMIT} tracks`);
+          return;
+        }
+
         const points = track.points.map(point => {
           return new Leaflet.LatLng(point.lat, point.lon);
         });

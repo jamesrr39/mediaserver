@@ -19,7 +19,7 @@ import EditCustomCollectionComponent from './collections/EditCustomCollectionCom
 import UploadComponent from './upload/UploadComponent';
 import { MediaFile } from '../domain/MediaFile';
 import UploadProgressComponent from './upload/UploadProgressComponent';
-import { gallerySortingFunc } from './Gallery';
+import { gallerySortingFunc } from './gallery/Gallery';
 import { filterFromJson } from '../domain/Filter';
 
 type CollectionViewRouteParams = {

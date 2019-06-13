@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { State } from '../reducers/fileReducer';
 import { connect } from 'react-redux';
-import Gallery from './Gallery';
+import GalleryWithFilter from './gallery/Gallery';
 import { MediaFile } from '../domain/MediaFile';
 
 type GalleryProps = {
@@ -18,7 +18,7 @@ class AllPicturesGallery extends React.Component<GalleryProps> {
     };
 
     return (
-      <Gallery {...props} />
+      <GalleryWithFilter {...props} />
     );
   }
 }

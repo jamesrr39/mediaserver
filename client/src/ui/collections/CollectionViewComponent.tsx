@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Collection } from '../../domain/Collection';
-import Gallery from '../Gallery';
+import GalleryWithFilter from '../gallery/Gallery';
 import { connect } from 'react-redux';
 import { themeStyles } from '../../theme/theme';
 import { Link } from 'react-router-dom';
@@ -41,7 +41,7 @@ class CollectionViewComponent extends React.Component<Props> {
     return (
       <div style={styles.container}>
         <h1>{this.props.collection.name}</h1>
-        <Gallery {...galleryProps} />
+        <GalleryWithFilter {...galleryProps} />
       </div>
     );
   }

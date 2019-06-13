@@ -2,7 +2,7 @@ import * as React from 'react';
 import { CustomCollection } from '../../domain/Collection';
 import { MediaFile } from '../../domain/MediaFile';
 import { ChangeEvent } from 'react';
-import Gallery from '../Gallery';
+import GalleryWithFilter from '../gallery/Gallery';
 import { State } from '../../reducers/fileReducer';
 import { connect } from 'react-redux';
 import { saveCollection } from '../../collectionsActions';
@@ -139,9 +139,9 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
             <input style={styles.uploadInput} type="file" multiple={true} onChange={this.onFileUploadSelected} />
           </label>
           <h3>Items in collection</h3>
-          <Gallery {...itemsInCollectionGalleryProps} />
+          <GalleryWithFilter {...itemsInCollectionGalleryProps} />
           <h3>Items out of collection</h3>
-          <Gallery {...itemsOutOfCollectionGalleryProps} />
+          <GalleryWithFilter {...itemsOutOfCollectionGalleryProps} />
         </form>
       </div>
     );
