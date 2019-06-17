@@ -3,12 +3,22 @@ import { MediaFile } from '../../domain/MediaFile';
 import { getSizeForThumbnail, Thumbnail } from '../Thumbnail';
 import { Observable } from '../../util/Observable';
 import { Size } from '../../domain/Size';
+import { MediaFileGroup } from '../../domain/MediaFileGroup';
 import { Link } from 'react-router-dom';
+
+export type Row = {
+    groups: GroupWithSizes[],
+};
 
 const styles = {
     row: {
         display: 'flex',
         justifyContent: 'space-between',
+        padding: '10px',
+        margin: '10px',
+    },
+    pictureContainer: {
+        display: 'flex'
     },
 };
 
@@ -19,94 +29,121 @@ type MediaFileWithSize = {
     size: Size,
 };
 
-type Props = {
-    mediaFilesWithSizes: MediaFileWithSize[];
-    scrollObservable: Observable<{}>;
-    rowWidth: number;
-    onClickThumbnail?: (mediaFile: MediaFile) => void;
-    buildLink?: BuildLinkFunc;
+type GroupWithSizes = {
+    name: string,
+    mediaFiles: MediaFileWithSize[],
 };
 
-const reduceFunc = (total: number, mediaFileWithSize: MediaFileWithSize) => {
-    return total + mediaFileWithSize.size.width;
+type Props = {
+    row: Row;
+    scrollObservable: Observable<{}>;
+    onClickThumbnail?: (mediaFile: MediaFile) => void;
+    buildLink?: BuildLinkFunc;
 };
 
 export class GalleryRow extends React.Component<Props> {
     render() {
         const {
-            mediaFilesWithSizes,
+            row,
             scrollObservable,
-            rowWidth,
             onClickThumbnail,
             buildLink,
         } = this.props;
-        const totalFilesWidth = mediaFilesWithSizes.reduce(reduceFunc, 0);
-        const ratio = rowWidth / totalFilesWidth;
+
+        const {groups} = row;
 
         return (
             <div style={styles.row}>
-            {mediaFilesWithSizes.map((mediaFileWithSize, index) => {
-                const {size, mediaFile} = mediaFileWithSize;
+            {groups.map((group, index) => {
+                return (
+                    <div key={index}>
+                        <h4>{group.name}</h4>
+                        <div style={styles.pictureContainer}>
+                        {group.mediaFiles.map((mediaFileWithSize, index) => {
+                            const {mediaFile, size} = mediaFileWithSize;
 
-                const adjustedSize = {
-                    width: Math.floor(size.width * ratio),
-                    height: Math.floor(size.height * ratio),
-                };
+                            const thumbnailProps = {
+                                size,
+                                mediaFile,
+                                scrollObservable,
+                            };
 
-                const thumbnailProps = {
-                    size: adjustedSize,
-                    mediaFile,
-                    scrollObservable,
-                };
-                
-                let thumbnail = <Thumbnail key={index} {...thumbnailProps} />;
+                            let thumbnail = <Thumbnail key={index} {...thumbnailProps} />;
 
-                if (buildLink) {
-                    thumbnail = (
-                        <Link key={index} to={buildLink(mediaFile)}>
-                            {thumbnail}
-                        </Link>
-                    );
-                }
+                            if (buildLink) {
+                                thumbnail = (
+                                    <Link key={index} to={buildLink(mediaFile)}>
+                                        {thumbnail}
+                                    </Link>
+                                );
+                            }
 
-                if (onClickThumbnail) {
-                    const onClickThumbnailCb = (event: React.MouseEvent<HTMLAnchorElement>) => {
-                        event.preventDefault();
-                        onClickThumbnail(mediaFile);
-                    };
+                            if (onClickThumbnail) {
+                                const onClickThumbnailCb = (event: React.MouseEvent<HTMLAnchorElement>) => {
+                                    event.preventDefault();
+                                    onClickThumbnail(mediaFile);
+                                };
 
-                    thumbnail = <a href="#" onClick={onClickThumbnailCb}>{thumbnail}</a>;
-                }
+                                thumbnail = <a href="#" onClick={onClickThumbnailCb}>{thumbnail}</a>;
+                            }
 
-                return thumbnail;
+                            return thumbnail;
+                        })}
+                        </div>
+                    </div>
+                );
             })}
             </div>
         );
     }
 }
 
-export function filesToRows(rowSizePx: number, mediaFiles: MediaFile[]) {
-    const rows: MediaFileWithSize[][] = [];
-    let currentRow: MediaFileWithSize[] = [];
+export function filesToRows(rowSizePx: number, mediaFileGroups: MediaFileGroup[]): Row[] {
+    const rows: Row[] = [];
+    let currentRow: GroupWithSizes[] = [];
     let widthSoFar = 0;
+    const reduceFunc = (prev: number, curr: MediaFileWithSize) => {
+        return prev + curr.size.width;
+    };
+    const groupSortingFunc = (a: GroupWithSizes, b: GroupWithSizes) => {
+        return a.name < b.name ? 1 : -1;
+    };
 
-    mediaFiles.forEach(mediaFile => {
-        const size = getSizeForThumbnail(mediaFile);
+    mediaFileGroups.forEach(group => {
+        const thumbnails = group.mediaFiles.map(mediaFile => ({size: getSizeForThumbnail(mediaFile), mediaFile}));
 
-        currentRow.push({mediaFile, size});
+        const groupWidth = thumbnails.reduce(reduceFunc, 0);
 
-        widthSoFar += size.width;
+        const thumbnailGroup = {mediaFiles: thumbnails, name: group.name};
 
-        if (widthSoFar < rowSizePx) {
-            // not the end of the row yet, continue
+        const shouldBeInNewRow = (groupWidth + widthSoFar) >= rowSizePx;
+
+        if (shouldBeInNewRow) {
+            // group is as wide or wider than a row
+            widthSoFar = 0;
+
+            currentRow.sort(groupSortingFunc);
+            rows.push({groups: currentRow});
+
+            currentRow = [];
+            if (groupWidth >= rowSizePx) {
+                rows.push({groups: [thumbnailGroup]});
+            } else {
+                currentRow.push(thumbnailGroup);
+                widthSoFar = groupWidth;
+            }
             return;
         }
 
-        // reached the end of the row, reset
-        rows.push(currentRow);
-        currentRow = [];
-        widthSoFar = 0;
+        // add to existing row
+
+        widthSoFar += groupWidth;
+        currentRow.push(thumbnailGroup);
     });
+
+    if (currentRow.length !== 0) {
+        rows.push({groups: currentRow});
+    }
 
     return rows;
 }

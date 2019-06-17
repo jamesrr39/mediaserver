@@ -9,7 +9,8 @@ import { MediaFileType } from '../../domain/MediaFileType';
 import { FitTrack, Record } from '../../domain/FitTrack';
 import { getScreenWidth } from '../../util/screen_size';
 import { joinUrlFragments } from '../../util/url';
-import { filesToRows, GalleryRow, BuildLinkFunc } from './GalleryRow';
+import { filesToRows, GalleryRow, BuildLinkFunc, Row } from './GalleryRow';
+import { mediaFilesToDateGroups, groupsMapToGroups } from '../../domain/MediaFileGroup';
 
 export type GalleryProps = {
   mediaFiles: MediaFile[];
@@ -31,9 +32,6 @@ export type InnerGalleryProps = {
 } & GalleryProps;
 
 const styles = {
-  // wideScreenContainer: {
-  //   margin: '0 20px',
-  // },
   thumbnail: {
       margin: '0 10px 10px 0',
   },
@@ -44,11 +42,13 @@ const styles = {
 
 type InnerGalleryState = {
   lastIndexShown: number,
+  rows: Row[],
 };
 
 export class InnerGallery extends React.Component<InnerGalleryProps, InnerGalleryState> {
   state = {
     lastIndexShown: 0,
+    rows: []
   };
   
   componentDidMount() {
@@ -134,11 +134,8 @@ export class InnerGallery extends React.Component<InnerGalleryProps, InnerGaller
   }
 
   private renderThumbnails = () => {
-    const {mediaFiles, scrollObservable, onClickThumbnail, mediaFileUrlBase, filterJson} = this.props;
-    // const rowWidth = getScreenWidth() - 50; // 50 = padding
-    const rowWidth = getScreenWidth();
-
-    const rows = filesToRows(rowWidth, mediaFiles);
+    const {scrollObservable, onClickThumbnail, mediaFileUrlBase, filterJson} = this.props;
+    const {rows} = this.state;
 
     let buildLink: (undefined | BuildLinkFunc)  = undefined;
     if (mediaFileUrlBase) {
@@ -149,16 +146,16 @@ export class InnerGallery extends React.Component<InnerGalleryProps, InnerGaller
       };
     }
 
-    return rows.map((mediaFilesWithSizes, index) => {
+    return rows.map((row, index) => {
       const {lastIndexShown} = this.state;
       if (index > (lastIndexShown + ROWS_IN_INCREMENT)) {
+        // don't render anything below the cut
         return null;
       }
 
       const rowProps = {
-        mediaFilesWithSizes,
+        row,
         scrollObservable,
-        rowWidth,
         onClickThumbnail,
         buildLink,
       };
@@ -208,6 +205,8 @@ export class InnerGallery extends React.Component<InnerGalleryProps, InnerGaller
       return;
     }
 
+    this.setRowsState();
+
     const scrolledTo = window.scrollY;
     const bodyHeight = document.documentElement.scrollHeight;
     const viewportHeight = document.documentElement.clientHeight;
@@ -222,9 +221,22 @@ export class InnerGallery extends React.Component<InnerGalleryProps, InnerGaller
   }
 
   private onResize = () => {
-    // trigger re-render
-    this.setState(state => ({
-      ...state,
-    }));
+    this.setRowsState();
+  }
+
+  private setRowsState() {
+    const {mediaFiles} = this.props;
+    const rowWidth = getScreenWidth();
+
+    const groupsMap = mediaFilesToDateGroups(mediaFiles);
+    const groups = groupsMapToGroups(groupsMap);
+    const rows = filesToRows(rowWidth, groups);
+
+    if (rows.length !== this.state.rows.length) {
+      this.setState((state) => ({
+        ...state,
+        rows,
+      }));
+    }
   }
 }

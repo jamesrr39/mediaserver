@@ -3,5 +3,5 @@ declare global {
 }
 
 // TODO: fix
-export const SERVER_BASE_URL = (window.env.serverUrl && window.env.serverUrl !== '%REACT_APP_SERVER_URL%')
-  ? window.env.serverUrl : '';
+export const SERVER_BASE_URL = window.env ? (window.env.serverUrl && window.env.serverUrl !== '%REACT_APP_SERVER_URL%')
+  ? window.env.serverUrl : '' : '';
