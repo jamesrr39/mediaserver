@@ -10,10 +10,14 @@ export type Row = {
     groups: GroupWithSizes[],
 };
 
+export const GALLERY_GROUP_LEFT_MARGIN_PX = 50;
+
+export const GALLERY_FILE_LEFT_MARGIN_PX = 10;
+
 const styles = {
     row: {
         display: 'flex',
-        justifyContent: 'space-between',
+        // justifyContent: 'space-between',
         padding: '10px',
         margin: '10px',
     },
@@ -55,8 +59,12 @@ export class GalleryRow extends React.Component<Props> {
         return (
             <div style={styles.row}>
             {groups.map((group, index) => {
+                const style: React.CSSProperties = {};
+                if (index !== 0) {
+                    style.marginLeft = `${GALLERY_GROUP_LEFT_MARGIN_PX}px`;
+                }
                 return (
-                    <div key={index}>
+                    <div key={index} style={style}>
                         <h4>{group.name}</h4>
                         <div style={styles.pictureContainer}>
                         {group.mediaFiles.map((mediaFileWithSize, index) => {
@@ -87,7 +95,12 @@ export class GalleryRow extends React.Component<Props> {
                                 thumbnail = <a href="#" onClick={onClickThumbnailCb}>{thumbnail}</a>;
                             }
 
-                            return thumbnail;
+                            const leftPx = index === 0 ? 0 : GALLERY_FILE_LEFT_MARGIN_PX;
+                            const style = {
+                                marginLeft: `${leftPx}px`,
+                                flexWrap: 'wrap' as 'wrap',
+                            };
+                            return <div style={style}>{thumbnail}</div>;
                         })}
                         </div>
                     </div>
@@ -102,8 +115,9 @@ export function filesToRows(rowSizePx: number, mediaFileGroups: MediaFileGroup[]
     const rows: Row[] = [];
     let currentRow: GroupWithSizes[] = [];
     let widthSoFar = 0;
-    const reduceFunc = (prev: number, curr: MediaFileWithSize) => {
-        return prev + curr.size.width;
+    const reduceFunc = (prev: number, curr: MediaFileWithSize, index: number) => {
+        const leftMargin = (index === 0) ? 0 : GALLERY_FILE_LEFT_MARGIN_PX;
+        return prev + curr.size.width + leftMargin;
     };
     const groupSortingFunc = (a: GroupWithSizes, b: GroupWithSizes) => {
         return a.name < b.name ? 1 : -1;
@@ -113,13 +127,17 @@ export function filesToRows(rowSizePx: number, mediaFileGroups: MediaFileGroup[]
         const thumbnails = group.mediaFiles.map(mediaFile => ({size: getSizeForThumbnail(mediaFile), mediaFile}));
 
         const groupWidth = thumbnails.reduce(reduceFunc, 0);
+        let groupWidthWithMargin = groupWidth;
+        if (widthSoFar !== 0) {
+            groupWidthWithMargin += GALLERY_GROUP_LEFT_MARGIN_PX;
+        }
 
         const thumbnailGroup = {mediaFiles: thumbnails, name: group.name};
 
-        const shouldBeInNewRow = (groupWidth + widthSoFar) >= rowSizePx;
+        const shouldBeInNewRow = (groupWidthWithMargin + widthSoFar) >= rowSizePx;
 
         if (shouldBeInNewRow) {
-            // group is as wide or wider than a row
+            // group can't fit in this row
             widthSoFar = 0;
 
             currentRow.sort(groupSortingFunc);
@@ -127,6 +145,7 @@ export function filesToRows(rowSizePx: number, mediaFileGroups: MediaFileGroup[]
 
             currentRow = [];
             if (groupWidth >= rowSizePx) {
+                // group is as wide or wider than a row
                 rows.push({groups: [thumbnailGroup]});
             } else {
                 currentRow.push(thumbnailGroup);
@@ -136,8 +155,7 @@ export function filesToRows(rowSizePx: number, mediaFileGroups: MediaFileGroup[]
         }
 
         // add to existing row
-
-        widthSoFar += groupWidth;
+        widthSoFar += (groupWidthWithMargin);
         currentRow.push(thumbnailGroup);
     });
 
