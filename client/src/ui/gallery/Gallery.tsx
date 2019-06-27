@@ -20,6 +20,7 @@ export type GalleryProps = {
   onClickThumbnail?: (pictureMetadata: MediaFile) => void;
   showMap?: boolean;
   fetchRecordsForTracks: (trackSummary: FitTrack[]) => Promise<Map<string, Record[]>>;
+  getRowWidth(): number;
 };
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
@@ -69,6 +70,7 @@ class GalleryWrapper extends React.Component<GalleryWrapperProps, GalleryState> 
   }
 
   render() {
+    const {getRowWidth} = this.props;
     const { showMap, tracks, galleryFilter } = this.state;
     const mediaFiles = this.props.mediaFiles.filter(galleryFilter.filter);
 
@@ -80,6 +82,7 @@ class GalleryWrapper extends React.Component<GalleryWrapperProps, GalleryState> 
       tracks,
       showMap,
       filterJson: JSON.stringify(galleryFilter.toJsObject()),
+      getRowWidth,
     };
 
     return (

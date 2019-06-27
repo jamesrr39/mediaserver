@@ -1,25 +1,14 @@
 import * as React from 'react';
 import { createCompareTimeTakenFunc } from '../../domain/PictureMetadata';
 
-import { Observable } from '../../util/Observable';
 import MapComponent, { MapMarker, TrackMapData } from '../MapComponent';
 import { SERVER_BASE_URL } from '../../configs';
 import { MediaFile } from '../../domain/MediaFile';
 import { MediaFileType } from '../../domain/MediaFileType';
-import { FitTrack, Record } from '../../domain/FitTrack';
-import { getScreenWidth } from '../../util/screen_size';
 import { joinUrlFragments } from '../../util/url';
 import { filesToRows, GalleryRow, BuildLinkFunc, Row } from './GalleryRow';
 import { mediaFilesToDateGroups, groupsMapToGroups } from '../../domain/MediaFileGroup';
-
-export type GalleryProps = {
-  mediaFiles: MediaFile[];
-  scrollObservable: Observable<{}>;
-  mediaFileUrlBase?: string; // example: `/gallery/detail`. If undefined, no link should be added.
-  onClickThumbnail?: (pictureMetadata: MediaFile) => void;
-  showMap?: boolean;
-  fetchRecordsForTracks: (trackSummary: FitTrack[]) => Promise<Map<string, Record[]>>;
-};
+import { GalleryProps } from './Gallery';
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
@@ -134,7 +123,7 @@ export class InnerGallery extends React.Component<InnerGalleryProps, InnerGaller
   }
 
   private renderThumbnails = () => {
-    const {scrollObservable, onClickThumbnail, mediaFileUrlBase, filterJson} = this.props;
+    const {scrollObservable, onClickThumbnail, mediaFileUrlBase, filterJson, getRowWidth} = this.props;
     const {rows} = this.state;
 
     let buildLink: (undefined | BuildLinkFunc)  = undefined;
@@ -158,6 +147,7 @@ export class InnerGallery extends React.Component<InnerGalleryProps, InnerGaller
         scrollObservable,
         onClickThumbnail,
         buildLink,
+        getRowWidth,
       };
 
       return <GalleryRow key={index} {...rowProps} />;
@@ -225,12 +215,11 @@ export class InnerGallery extends React.Component<InnerGalleryProps, InnerGaller
   }
 
   private setRowsState() {
-    const {mediaFiles} = this.props;
-    const rowWidth = getScreenWidth();
+    const {mediaFiles, getRowWidth} = this.props;
 
     const groupsMap = mediaFilesToDateGroups(mediaFiles);
     const groups = groupsMapToGroups(groupsMap);
-    const rows = filesToRows(rowWidth, groups);
+    const rows = filesToRows(getRowWidth(), groups);
 
     if (rows.length !== this.state.rows.length) {
       this.setState((state) => ({

@@ -8,6 +8,7 @@ import { connect } from 'react-redux';
 import { saveCollection } from '../../collectionsActions';
 import { themeStyles } from '../../theme/theme';
 import { uploadFile } from '../../actions/mediaFileActions';
+import { getScreenWidth } from '../../util/screen_size';
 
 const styles = {
   nameInput: {
@@ -28,8 +29,6 @@ const styles = {
 type Props = {
   mediaFiles: MediaFile[],
   collection: CustomCollection,
-  // dispatch: Dispatch<CollectionsAction | NotifyAction>;
-  // uploadQueue: FileQueue;
   saveCollection: (collection: CustomCollection) => Promise<CustomCollection>,
   uploadFile: (file: File) => Promise<MediaFile>,
 };
@@ -87,8 +86,6 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
 
     const returnedCollection = await saveCollection(newCollection);
 
-    // dispatch(newNotificationAction(new GalleryNotification(NotificationLevel.INFO, 'Saved!')));
-
     const encodedType = encodeURIComponent(returnedCollection.type);
     const encodedIdentifier = encodeURIComponent(returnedCollection.identifier());
     window.location.hash = `#/collections/${encodedType}/${encodedIdentifier}`;
@@ -116,11 +113,13 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
     const itemsInCollectionGalleryProps = {
       mediaFiles: filesInCollection,
       onClickThumbnail: onClickFilesInCollectionThumbnail,
+      getRowWidth: () => getScreenWidth(),
     };
 
     const itemsOutOfCollectionGalleryProps = {
       mediaFiles: filesOutOfCollection,
       onClickThumbnail: onClickFilesOutOfCollectionThumbnail,
+      getRowWidth: () => getScreenWidth(),
     };
 
     return (

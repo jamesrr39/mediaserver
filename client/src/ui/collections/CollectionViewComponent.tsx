@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { joinUrlFragments } from '../../util/url';
 import { MediaFile } from '../../domain/MediaFile';
 import { State } from '../../reducers/fileReducer';
+import { getScreenWidth } from '../../util/screen_size';
 
 type Props = {
   mediaFilesMap: Map<string, MediaFile>;
@@ -36,6 +37,7 @@ class CollectionViewComponent extends React.Component<Props> {
       mediaFiles,
       mediaFileUrlBase: '/' + joinUrlFragments(routeUrl, 'detail'),
       showMap: true,
+      getRowWidth: () => getScreenWidth(),
     };
 
     return (

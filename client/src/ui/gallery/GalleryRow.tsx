@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 
 export type Row = {
     groups: GroupWithSizes[],
+    fitsInOneLine: boolean,
 };
 
 export const GALLERY_GROUP_LEFT_MARGIN_PX = 50;
@@ -17,12 +18,8 @@ export const GALLERY_FILE_LEFT_MARGIN_PX = 10;
 const styles = {
     row: {
         display: 'flex',
-        // justifyContent: 'space-between',
         padding: '10px',
         margin: '10px',
-    },
-    pictureContainer: {
-        display: 'flex'
     },
 };
 
@@ -43,16 +40,12 @@ type Props = {
     scrollObservable: Observable<{}>;
     onClickThumbnail?: (mediaFile: MediaFile) => void;
     buildLink?: BuildLinkFunc;
+    getRowWidth(): number;
 };
 
 export class GalleryRow extends React.Component<Props> {
     render() {
-        const {
-            row,
-            scrollObservable,
-            onClickThumbnail,
-            buildLink,
-        } = this.props;
+        const { row } = this.props;
 
         const {groups} = row;
 
@@ -66,48 +59,111 @@ export class GalleryRow extends React.Component<Props> {
                 return (
                     <div key={index} style={style}>
                         <h4>{group.name}</h4>
-                        <div style={styles.pictureContainer}>
-                        {group.mediaFiles.map((mediaFileWithSize, index) => {
-                            const {mediaFile, size} = mediaFileWithSize;
-
-                            const thumbnailProps = {
-                                size,
-                                mediaFile,
-                                scrollObservable,
-                            };
-
-                            let thumbnail = <Thumbnail key={index} {...thumbnailProps} />;
-
-                            if (buildLink) {
-                                thumbnail = (
-                                    <Link key={index} to={buildLink(mediaFile)}>
-                                        {thumbnail}
-                                    </Link>
-                                );
-                            }
-
-                            if (onClickThumbnail) {
-                                const onClickThumbnailCb = (event: React.MouseEvent<HTMLAnchorElement>) => {
-                                    event.preventDefault();
-                                    onClickThumbnail(mediaFile);
-                                };
-
-                                thumbnail = <a href="#" onClick={onClickThumbnailCb}>{thumbnail}</a>;
-                            }
-
-                            const leftPx = index === 0 ? 0 : GALLERY_FILE_LEFT_MARGIN_PX;
-                            const style = {
-                                marginLeft: `${leftPx}px`,
-                                flexWrap: 'wrap' as 'wrap',
-                            };
-                            return <div style={style}>{thumbnail}</div>;
-                        })}
+                        <div>
+                            {this.renderGroup(group)}
                         </div>
                     </div>
                 );
             })}
             </div>
         );
+    }
+
+    private renderGroup(group: GroupWithSizes) {
+        const {
+            getRowWidth,
+            row,
+        } = this.props;
+
+        const rowWidth = getRowWidth();
+
+        if (row.fitsInOneLine) {
+            return group.mediaFiles.map((mediaFileWithSize, index) => {
+                const leftPx = (index === 0) ? 0 : GALLERY_FILE_LEFT_MARGIN_PX;
+                const style = {
+                    marginLeft: `${leftPx}px`,
+                };
+
+                const thumbnail = this.mediaFileWithSizeToThumbnail(mediaFileWithSize);
+                
+                return <div key={index} style={style}>{thumbnail}</div>;
+            });
+        }
+
+        let distanceThroughContainer = 0;
+        const rows: MediaFileWithSize[][] = [];
+        let currentRow: MediaFileWithSize[] = [];
+        
+        group.mediaFiles.forEach((mediaFileWithSize, index) => {
+            const {size} = mediaFileWithSize;
+
+            if (distanceThroughContainer + size.width > rowWidth) {
+                rows.push(currentRow);
+                currentRow = [mediaFileWithSize];
+                distanceThroughContainer = size.width;
+            } else {
+                const leftPx = (index === 0) ? 0 : GALLERY_FILE_LEFT_MARGIN_PX;
+                distanceThroughContainer += (size.width + leftPx);
+                currentRow.push(mediaFileWithSize);
+            }
+        });
+
+        if (currentRow.length !== 0) {
+            rows.push(currentRow);
+        }
+
+        return rows.map((row, index) => {
+            const rowThumbnails = row.map((mediaFileWithSize, index) => {
+                const thumbnail = this.mediaFileWithSizeToThumbnail(mediaFileWithSize);
+                
+                const leftPx = (index === 0) ? 0 : GALLERY_FILE_LEFT_MARGIN_PX;
+
+                const style = {
+                    marginLeft: `${leftPx}px`,
+                };
+
+                return <div key={index} style={style}>{thumbnail}</div>;
+            });
+
+            const style = {
+                display: 'flex',
+                marginTop: (index === 0) ? 0 : '10px',
+            };
+
+            return <div key={index} style={style}>{rowThumbnails}</div>;
+        });
+    }
+
+    private mediaFileWithSizeToThumbnail = (mediaFileWithSize: MediaFileWithSize) => {
+        const {mediaFile, size} = mediaFileWithSize;
+        const {scrollObservable, buildLink, onClickThumbnail} = this.props;
+
+        const thumbnailProps = {
+            size,
+            mediaFile,
+            scrollObservable,
+        };
+
+        let thumbnail = <Thumbnail {...thumbnailProps} />;
+
+        if (buildLink) {
+            thumbnail = (
+                <Link to={buildLink(mediaFile)}>
+                    {thumbnail}
+                </Link>
+            );
+        }
+
+        if (onClickThumbnail) {
+            const onClickThumbnailCb = (event: React.MouseEvent<HTMLAnchorElement>) => {
+                event.preventDefault();
+                onClickThumbnail(mediaFile);
+            };
+
+            thumbnail = <a href="#" onClick={onClickThumbnailCb}>{thumbnail}</a>;
+        }
+
+        return thumbnail;
     }
 }
 
@@ -141,12 +197,13 @@ export function filesToRows(rowSizePx: number, mediaFileGroups: MediaFileGroup[]
             widthSoFar = 0;
 
             currentRow.sort(groupSortingFunc);
-            rows.push({groups: currentRow});
+            rows.push({groups: currentRow, fitsInOneLine: false});
 
             currentRow = [];
             if (groupWidth >= rowSizePx) {
                 // group is as wide or wider than a row
-                rows.push({groups: [thumbnailGroup]});
+                const fitsInOneLine = groupWidth === rowSizePx;
+                rows.push({groups: [thumbnailGroup], fitsInOneLine});
             } else {
                 currentRow.push(thumbnailGroup);
                 widthSoFar = groupWidth;
@@ -160,7 +217,7 @@ export function filesToRows(rowSizePx: number, mediaFileGroups: MediaFileGroup[]
     });
 
     if (currentRow.length !== 0) {
-        rows.push({groups: currentRow});
+        rows.push({groups: currentRow, fitsInOneLine: true});
     }
 
     return rows;
