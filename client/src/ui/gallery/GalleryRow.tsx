@@ -85,7 +85,7 @@ export class GalleryRow extends React.Component<Props> {
                 };
 
                 const thumbnail = this.mediaFileWithSizeToThumbnail(mediaFileWithSize);
-                
+
                 return <div key={index} style={style}>{thumbnail}</div>;
             });
         }
@@ -166,6 +166,9 @@ export class GalleryRow extends React.Component<Props> {
         return thumbnail;
     }
 }
+
+// const THUMBNAIL_HEIGHT_LOWER_BOUND = 170;
+// const THUMBNAIL_HEIGHT_UPPER_BOUND = 230;
 
 export function filesToRows(rowSizePx: number, mediaFileGroups: MediaFileGroup[]): Row[] {
     const rows: Row[] = [];

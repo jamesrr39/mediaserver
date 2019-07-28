@@ -12,7 +12,7 @@ import { GalleryProps } from './Gallery';
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
-const ROWS_IN_INCREMENT = 1;
+const ROWS_IN_INCREMENT = 10;
 
 export type InnerGalleryProps = {
   showMap: boolean;

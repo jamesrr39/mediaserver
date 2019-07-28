@@ -67,11 +67,15 @@ export function getSizeForThumbnail(mediaFile: MediaFile) {
       const height = narrowScreen ? NARROW_SCREEN_THUMBNAIL_HEIGHT : WIDE_SCREEN_THUMBNAIL_HEIGHT;
       return {height, width};
     }
-    default: {
+    case MediaFileType.Video:
       const height = narrowScreen ? NARROW_SCREEN_THUMBNAIL_HEIGHT : WIDE_SCREEN_THUMBNAIL_HEIGHT;
       const width = narrowScreen ? NARROW_SCREEN_THUMBNAIL_WIDTH : (height * 16 / 9);
       return {height, width};
-    }
+    default:
+      return {
+        width: WIDE_SCREEN_THUMBNAIL_HEIGHT,
+        height: WIDE_SCREEN_THUMBNAIL_HEIGHT,
+      };
   }
 }
 

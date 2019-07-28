@@ -77,6 +77,8 @@ var ErrContentTypeNotSupported = errors.New("content type not supported")
 
 // Create adds a new picture to the collection
 func (dal *MediaServerDAL) Create(tx *sql.Tx, file io.ReadSeeker, filename, contentType string, profileRun *profile.Run) (domain.MediaFile, errorsx.Error) {
+	createFileMeasurement := profileRun.Measure("create file")
+	defer createFileMeasurement.Stop()
 
 	if dirtraversal.IsTryingToTraverseUp(filename) {
 		return nil, errorsx.Wrap(ErrIllegalPathTraversingUp)
@@ -88,29 +90,36 @@ func (dal *MediaServerDAL) Create(tx *sql.Tx, file io.ReadSeeker, filename, cont
 		return nil, errorsx.Wrap(err)
 	}
 
+	createFileMeasurement.MeasureStep("calculating hash")
+
 	hashValue, err := domain.NewHash(file)
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}
+
+	createFileMeasurement.MeasureStep("checking for existing file")
 
 	existingFile := dal.MediaFilesDAL.Get(hashValue)
 	if existingFile != nil {
 		return nil, errorsx.Wrap(ErrFileAlreadyExists)
 	}
 
+	createFileMeasurement.MeasureStep("seeking to start of file")
+
 	fileLen, err := file.Seek(0, io.SeekStart)
 	if err != nil {
 		return nil, errorsx.Wrap(err)
 	}
+
+	createFileMeasurement.MeasureStep("file type specific action")
 
 	doAtEnd := func() error { return nil }
 	var mediaFile domain.MediaFile
 	switch contentType {
 	case "image/jpg", "image/jpeg", "image/png":
 		var pictureMetadata *domain.PictureMetadata
-		profileRun.Measure("generate picture metadata from bytes", func() {
-			pictureMetadata, _, err = domain.NewPictureMetadataAndPictureFromBytes(file, relativePath, hashValue)
-		})
+		profileRun.Measure("generate picture metadata from bytes")
+		pictureMetadata, _, err = domain.NewPictureMetadataAndPictureFromBytes(file, relativePath, hashValue)
 		if nil != err {
 			return nil, errorsx.Wrap(err)
 		}
@@ -123,13 +132,11 @@ func (dal *MediaServerDAL) Create(tx *sql.Tx, file io.ReadSeeker, filename, cont
 		mediaFile = pictureMetadata
 
 		doAtEnd = func() error {
-			var err error
-			profileRun.Measure("generate thumbnails for picture", func() {
-				err = dal.ThumbnailsDAL.EnsureAllThumbnailsForPicture(
-					pictureMetadata,
-					dal.PicturesDAL.GetPicture,
-				)
-			})
+			profileRun.Measure("generate thumbnails for picture")
+			err := dal.ThumbnailsDAL.EnsureAllThumbnailsForPicture(
+				pictureMetadata,
+				dal.PicturesDAL.GetPicture,
+			)
 			if err != nil {
 				return errorsx.Wrap(err)
 			}
@@ -207,9 +214,7 @@ func (dal *MediaServerDAL) Create(tx *sql.Tx, file io.ReadSeeker, filename, cont
 		return nil, errorsx.Wrap(ErrContentTypeNotSupported)
 	}
 
-	if nil != dal.MediaFilesDAL.Get(mediaFile.GetMediaFileInfo().HashValue) {
-		return nil, errorsx.Wrap(ErrFileAlreadyExists)
-	}
+	createFileMeasurement.MeasureStep("making uploads dir if necessary")
 
 	err = dal.fs.MkdirAll(filepath.Dir(absoluteFilePath), 0755)
 	if nil != err {
@@ -228,15 +233,21 @@ func (dal *MediaServerDAL) Create(tx *sql.Tx, file io.ReadSeeker, filename, cont
 		return nil, errorsx.Wrap(err)
 	}
 
+	createFileMeasurement.MeasureStep("writing new file")
+
 	_, err = io.Copy(newFile, file)
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}
 
+	createFileMeasurement.MeasureStep("doing action at end")
+
 	err = doAtEnd()
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}
+
+	createFileMeasurement.MeasureStep("adding file to mediafiles")
 
 	dal.MediaFilesDAL.add(mediaFile)
 

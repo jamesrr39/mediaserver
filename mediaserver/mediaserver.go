@@ -45,21 +45,18 @@ func NewMediaServerAndScan(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDi
 		if err != nil {
 			message = fmt.Sprintf("failed. Error: %q", err)
 		}
-		profileRun.Record(message)
+		profileRun.StopAndRecord(message)
 	}()
 
 	var mediaServerDAL *dal.MediaServerDAL
-	profileRun.Measure("new MediaServerDAL", func() {
-		mediaServerDAL, err = dal.NewMediaServerDAL(logger, fs, rootpath, cachesDir, dataDir, maxConcurrentCPUJobs, maxConcurrentVideoConversions, thumbnailCachePolicy, maxConcurrentTrackRecordsParsing, maxConcurrentResizes)
-	})
+	mediaServerDAL, err = dal.NewMediaServerDAL(logger, fs, rootpath, cachesDir, dataDir, maxConcurrentCPUJobs, maxConcurrentVideoConversions, thumbnailCachePolicy, maxConcurrentTrackRecordsParsing, maxConcurrentResizes)
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}
 
 	var dbConn *mediaserverdb.DBConn
-	profileRun.Measure("new DB Conn", func() {
-		dbConn, err = mediaserverdb.NewDBConn(filepath.Join(dataDir, "mediaserver.db"), logger)
-	})
+	profileRun.Measure("new DB Conn")
+	dbConn, err = mediaserverdb.NewDBConn(filepath.Join(dataDir, "mediaserver.db"), logger)
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}
@@ -75,50 +72,47 @@ func NewMediaServerAndScan(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDi
 		picturesService:         pictureswebservice.NewPicturesService(logger, mediaServerDAL),
 		picturesMetadataService: pictureswebservice.NewMediaFilesService(logger, dbConn, mediaServerDAL, profiler),
 		videosWebService:        pictureswebservice.NewVideoWebService(mediaServerDAL.VideosDAL, mediaServerDAL.MediaFilesDAL),
-		collectionsService:      pictureswebservice.NewCollectionsWebService(logger, dbConn, mediaServerDAL.CollectionsDAL),
+		collectionsService:      pictureswebservice.NewCollectionsWebService(logger, dbConn, mediaServerDAL.CollectionsDAL, profiler),
 		tracksService:           pictureswebservice.NewTracksWebService(logger, mediaServerDAL.TracksDAL, mediaServerDAL.MediaFilesDAL),
 		graphQLService:          graphQLAPIService,
 		logger:                  logger,
 	}
 
+	startupMeasurement := profileRun.Measure("startup")
+
 	var tx *sql.Tx
-	profileRun.Measure("begin tx", func() {
-		tx, err = dbConn.Begin()
-	})
+	startupMeasurement.MeasureStep("begin tx")
+	tx, err = dbConn.Begin()
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}
 	defer mediaserverdb.CommitOrRollback(tx)
 
-	profileRun.Measure("update pictures cache", func() {
-		err = mediaServer.mediaServerDAL.MediaFilesDAL.UpdatePicturesCache(tx, profileRun)
-	})
+	startupMeasurement.MeasureStep("update pictures cache")
+	err = mediaServer.mediaServerDAL.MediaFilesDAL.UpdatePicturesCache(tx, profileRun)
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}
 
 	mediaServer.mediaServerDAL.MediaFilesDAL.QueueSuggestedLocationJob()
 
-	var mediaFiles []domain.MediaFile
-	profileRun.Measure("get all media files", func() {
-		mediaFiles = mediaServer.mediaServerDAL.MediaFilesDAL.GetAll()
-	})
+	startupMeasurement.MeasureStep("get all media files")
+	mediaFiles := mediaServer.mediaServerDAL.MediaFilesDAL.GetAll()
 
-	profileRun.Measure("ensure thumbnails for all mediafiles", func() {
-		for _, mediaFile := range mediaFiles {
-			if mediaFile.GetMediaFileInfo().MediaFileType != domain.MediaFileTypePicture {
-				continue
-			}
-			pictureMetadata := mediaFile.(*domain.PictureMetadata)
-			err = mediaServer.mediaServerDAL.ThumbnailsDAL.EnsureAllThumbnailsForPicture(
-				pictureMetadata,
-				mediaServer.mediaServerDAL.PicturesDAL.GetPicture,
-			)
-			if err != nil {
-				break
-			}
+	startupMeasurement.MeasureStep("ensure thumbnails for all mediafiles")
+	for _, mediaFile := range mediaFiles {
+		if mediaFile.GetMediaFileInfo().MediaFileType != domain.MediaFileTypePicture {
+			continue
 		}
-	})
+		pictureMetadata := mediaFile.(*domain.PictureMetadata)
+		err = mediaServer.mediaServerDAL.ThumbnailsDAL.EnsureAllThumbnailsForPicture(
+			pictureMetadata,
+			mediaServer.mediaServerDAL.PicturesDAL.GetPicture,
+		)
+		if err != nil {
+			break
+		}
+	}
 	if err != nil {
 		return nil, errorsx.Wrap(err)
 	}

@@ -13,12 +13,14 @@ import (
 	"github.com/go-chi/render"
 	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/jamesrr39/goutil/logpkg"
+	"github.com/jamesrr39/goutil/profile"
 )
 
 type CollectionsWebService struct {
 	log                   *logpkg.Logger
 	collectionsRepository *dal.CollectionsDAL
 	dbConn                *mediaserverdb.DBConn
+	profiler              *profile.Profiler
 	chi.Router
 }
 
@@ -26,10 +28,11 @@ func NewCollectionsWebService(
 	log *logpkg.Logger,
 	dbConn *mediaserverdb.DBConn,
 	collectionsRepository *dal.CollectionsDAL,
+	profiler *profile.Profiler,
 ) *CollectionsWebService {
 	router := chi.NewRouter()
 
-	ws := &CollectionsWebService{log, collectionsRepository, dbConn, router}
+	ws := &CollectionsWebService{log, collectionsRepository, dbConn, profiler, router}
 
 	router.Get("/", ws.handleGetAll)
 	router.Post("/", ws.handleCreate)
@@ -39,6 +42,9 @@ func NewCollectionsWebService(
 }
 
 func (ws *CollectionsWebService) handleGetAll(w http.ResponseWriter, r *http.Request) {
+	profileRun := ws.profiler.NewRun("get all collections")
+	defer profileRun.StopAndRecord("")
+
 	tx, err := ws.dbConn.Begin()
 	if err != nil {
 		errorsx.HTTPError(w, ws.log, err, 500)
@@ -46,7 +52,7 @@ func (ws *CollectionsWebService) handleGetAll(w http.ResponseWriter, r *http.Req
 	}
 	defer tx.Rollback()
 
-	collectionList, err := ws.collectionsRepository.GetAll(tx)
+	collectionList, err := ws.collectionsRepository.GetAll(tx, profileRun)
 	if err != nil {
 		errorsx.HTTPError(w, ws.log, err, 500)
 		return

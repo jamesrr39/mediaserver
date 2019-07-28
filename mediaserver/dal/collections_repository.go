@@ -2,10 +2,12 @@ package dal
 
 import (
 	"database/sql"
+	"fmt"
 	"mediaserver/mediaserver/collections"
 	"mediaserver/mediaserver/domain"
 
 	"github.com/jamesrr39/goutil/errorsx"
+	"github.com/jamesrr39/goutil/profile"
 )
 
 type CollectionsDAL struct {
@@ -15,7 +17,11 @@ func NewCollectionsDAL() *CollectionsDAL {
 	return &CollectionsDAL{}
 }
 
-func (r *CollectionsDAL) GetAll(tx *sql.Tx) ([]*collections.Collection, errorsx.Error) {
+func (r *CollectionsDAL) GetAll(tx *sql.Tx, profileRun *profile.Run) ([]*collections.Collection, errorsx.Error) {
+	measurement := profileRun.Measure("fetch collections")
+	defer measurement.Stop()
+
+	collectionDataStep := measurement.MeasureStep("fetch collection data")
 	result, err := tx.Query(`
 SELECT id(), name FROM collections;
     `)
@@ -39,14 +45,20 @@ SELECT id(), name FROM collections;
 		})
 	}
 
+	collectionDataStep.Stop()
+
+	collectionsStep := measurement.MeasureStep("fetch hashes for collections")
 	for _, collection := range collectionList {
+		fetchHashesStep := collectionsStep.MeasureStep(fmt.Sprintf("get picture hashes for collection %d", collection.ID))
 		hashes, err := getPictureHashesForCollectionId(tx, collection.ID)
 		if err != nil {
 			return nil, errorsx.Wrap(err)
 		}
 
 		collection.FileHashes = hashes
+		fetchHashesStep.Stop()
 	}
+	collectionsStep.Stop()
 
 	return collectionList, nil
 }

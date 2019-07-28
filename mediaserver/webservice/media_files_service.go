@@ -51,7 +51,7 @@ func (ms *MediaFilesService) refresh(profileRun *profile.Run) errorsx.Error {
 func (ms *MediaFilesService) serveAllPicturesMetadata(w http.ResponseWriter, r *http.Request) {
 	profileRun := ms.profiler.NewRun("serve all pictures metadata")
 	defer func() {
-		profileRun.Record("")
+		profileRun.StopAndRecord("")
 	}()
 
 	shouldRefresh := ("true" == r.URL.Query().Get("refresh"))
@@ -76,7 +76,7 @@ func (ms *MediaFilesService) serveFileUpload(w http.ResponseWriter, r *http.Requ
 	successfullyUploaded := false
 	profileRun := ms.profiler.NewRun("upload file")
 	defer func() {
-		profileRun.Record(fmt.Sprintf("successfully uploaded: %t", successfullyUploaded))
+		profileRun.StopAndRecord(fmt.Sprintf("successfully uploaded?: %t", successfullyUploaded))
 	}()
 
 	tx, err := ms.dbConn.Begin()
@@ -100,7 +100,11 @@ func (ms *MediaFilesService) serveFileUpload(w http.ResponseWriter, r *http.Requ
 
 	contentType := fileHeader.Header.Get("Content-Type")
 
-	mediaFile, err := ms.mediaServerDAL.Create(tx, file, fileHeader.Filename, contentType, profileRun)
+	var mediaFile domain.MediaFile
+
+	createFileMeasurement := profileRun.Measure("create file on disk")
+
+	mediaFile, err = ms.mediaServerDAL.Create(tx, file, fileHeader.Filename, contentType, profileRun)
 	if nil != err {
 		switch errorsx.Cause(err) {
 		case dal.ErrFileAlreadyExists:
@@ -114,6 +118,8 @@ func (ms *MediaFilesService) serveFileUpload(w http.ResponseWriter, r *http.Requ
 		}
 		return
 	}
+
+	createFileMeasurement.Stop()
 
 	successfullyUploaded = true
 

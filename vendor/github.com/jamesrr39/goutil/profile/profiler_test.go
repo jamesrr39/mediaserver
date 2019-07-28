@@ -21,7 +21,8 @@ func Test_Profiler(t *testing.T) {
 
 	testRun := profiler.NewRun("add ints and strings")
 	defer func() {
-		testRun.Record("finished successfully")
+		testRun.StopAndRecord("finished successfully")
+
 		expected := `1970-01-01: "add ints and strings": 10µs, started at 01:00:00.70
 finished successfully
 	"adding 1 and 2": 2µs (start: 01:00:00.70)
@@ -32,12 +33,11 @@ finished successfully
 
 	discarder := bytes.NewBuffer(nil)
 
-	testRun.Measure("adding 1 and 2", func() {
-		discarder.Write([]byte(fmt.Sprintf("%d", 1+2)))
-	})
+	addingMeasurement := testRun.Measure("adding 1 and 2")
+	discarder.Write([]byte(fmt.Sprintf("%d", 1+2)))
+	addingMeasurement.Stop()
 
-	testRun.Measure("building a string", func() {
-		discarder.Write([]byte("a + b"))
-	})
-
+	buildingStringMeasurement := testRun.Measure("building a string")
+	discarder.Write([]byte("a + b"))
+	buildingStringMeasurement.Stop()
 }

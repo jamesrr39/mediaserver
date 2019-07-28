@@ -1,12 +1,14 @@
 package dal
 
 import (
+	"io/ioutil"
 	"mediaserver/mediaserver/collections"
 	"mediaserver/mediaserver/domain"
 	"mediaserver/mediaserver/testutil"
 	"testing"
 
 	"github.com/alecthomas/assert"
+	"github.com/jamesrr39/goutil/profile"
 	"github.com/stretchr/testify/require"
 )
 
@@ -33,7 +35,7 @@ func Test_CrudCollection(t *testing.T) {
 		err = collectionsRepo.Create(tx, collection2)
 		require.Nil(t, err)
 
-		collectionList, err := collectionsRepo.GetAll(tx)
+		collectionList, err := collectionsRepo.GetAll(tx, profile.NewProfiler(ioutil.Discard).NewRun(""))
 		require.Nil(t, err)
 
 		assert.Len(t, collectionList, 2)
@@ -71,7 +73,7 @@ func Test_CrudCollection(t *testing.T) {
 		err = collectionsRepo.Delete(tx, changedCollection2.ID)
 		require.Nil(t, err)
 
-		collectionList, err := collectionsRepo.GetAll(tx)
+		collectionList, err := collectionsRepo.GetAll(tx, profile.NewProfiler(ioutil.Discard).NewRun(""))
 		require.Nil(t, err)
 
 		assert.Equal(t, collectionList, []*collections.Collection{collection1})
