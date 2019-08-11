@@ -9,6 +9,7 @@ export class PictureMetadata extends AbstractMediaFile {
     public readonly hashValue: string,
     public readonly relativePath: string,
     public readonly fileSizeBytes: number,
+    public readonly participantIds: number[],
     public readonly exif: null|ExifData,
     public readonly rawSize: RawSize,
     public readonly suggestedLocation?: SuggestedLocation) {

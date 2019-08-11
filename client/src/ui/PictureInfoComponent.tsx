@@ -36,6 +36,10 @@ class PictureInfoComponent extends React.Component<Props> {
       <div>
         <p>{mediaFile.getName()}</p>
         <p>{timeTakenText}</p>
+        <ul>
+          {mediaFile.participantIds.map(participantId => <li>`user ${participantId}`</li>)}
+          <li>Tag someone who was here</li>
+        </ul>
         {mapContainer}
         {reason}
       </div>

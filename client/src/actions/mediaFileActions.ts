@@ -6,6 +6,7 @@ import { MediaFile } from '../domain/MediaFile';
 import { MediaFileJSON, fromJSON } from '../domain/deserialise';
 import { FitTrack, Record } from '../domain/FitTrack';
 import { State } from '../reducers/fileReducer';
+import { Person } from '../domain/People';
 
 export enum FilesActionTypes {
   FETCH_MEDIA_FILES,
@@ -13,6 +14,7 @@ export enum FilesActionTypes {
   QUEUE_FOR_UPLOAD,
   FILE_SUCCESSFULLY_UPLOADED,
   TRACK_RECORDS_FETCHED_ACTION,
+  PEOPLE_FETCHED_ACTION,
 }
 
 export interface FetchPicturesMetadataAction extends Action {
@@ -39,12 +41,18 @@ export type QueueForUploadAction = {
   file: File,
 };
 
+export type PeopleFetchedAction = {
+  type: FilesActionTypes.PEOPLE_FETCHED_ACTION,
+  people: Person[],
+};
+
 export type MediaserverAction = (
   PicturesMetadataFetchedAction |
   PictureSuccessfullyUploadedAction |
   FetchPicturesMetadataAction | 
   TrackRecordsFetchedAction |
-  QueueForUploadAction
+  QueueForUploadAction |
+  PeopleFetchedAction
 );
 
 type TrackJSON = {
@@ -208,4 +216,25 @@ export function uploadFile(file: File) {
 
     return mediaFile;
   };
+}
+
+type PeopleJSON = {
+  data: Person[]
+};
+
+export function fetchAllPeople() {
+  return async(
+    dispatch: (action: MediaserverAction) => void) => {
+      const response = await fetch(`${SERVER_BASE_URL}/api/graphql?query={people{id,name}}`);
+      if (!response.ok) {
+        throw new Error('failed to fetch people');
+      }
+
+      const peopleJSON: PeopleJSON = await response.json();
+
+      dispatch({
+        type: FilesActionTypes.PEOPLE_FETCHED_ACTION,
+        people: peopleJSON.data,
+      });
+    };
 }

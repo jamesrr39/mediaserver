@@ -9,6 +9,7 @@ export class VideoMetadata extends AbstractMediaFile {
     public readonly hashValue: string,
     public readonly relativePath: string,
     public readonly fileSizeBytes: number,
+    public readonly participantIds: number[],
     public readonly suggestedLocation?: SuggestedLocation
   ) {
     super(hashValue, relativePath, fileSizeBytes);

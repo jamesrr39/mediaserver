@@ -33,6 +33,7 @@ type FitFileMetadataJSON = {
 
 export type MediaFileJSON = {
   fileType: MediaFileType;
+  participantIds: number[];
   suggestedLocation?: SuggestedLocation;
 } & (PictureMetadataJSON | VideoMetadataJSON | FitFileMetadataJSON);
 
@@ -42,18 +43,26 @@ export function fromJSON(json: MediaFileJSON) {
     return new PictureMetadata(
       json.hashValue, 
       json.relativePath, 
-      json.fileSizeBytes, 
+      json.fileSizeBytes,
+      json.participantIds,
       json.exif, 
       json.rawSize, 
       json.suggestedLocation,
     );
   case MediaFileType.Video:
-    return new VideoMetadata(json.hashValue, json.relativePath, json.fileSizeBytes, json.suggestedLocation);
+    return new VideoMetadata(
+      json.hashValue, 
+      json.relativePath, 
+      json.fileSizeBytes, 
+      json.participantIds, 
+      json.suggestedLocation
+    );
   case MediaFileType.FitTrack:
     return new FitTrack(
       json.hashValue,
       json.relativePath,
       json.fileSizeBytes,
+      json.participantIds,
       new Date(json.startTime),
       new Date(json.endTime),
       json.deviceManufacturer,

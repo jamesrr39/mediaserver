@@ -10,8 +10,9 @@ import { FileQueue } from '../fileQueue';
 import { notificationsReducer, NotificationsState } from './notificationReducer';
 import { MediaFile } from '../domain/MediaFile';
 import { Record } from '../domain/FitTrack';
+import { Person } from '../domain/People';
 
-const scrollObservable = new DebouncedObservable(150);
+const scrollObservable = new DebouncedObservable<{}>(150);
 
 window.addEventListener('scroll', (thing) => scrollObservable.triggerEvent(thing));
 window.addEventListener('resize', (thing) => scrollObservable.triggerEvent(thing));
@@ -24,6 +25,7 @@ type MediaFilesState = {
   mediaFilesMap: Map<string, MediaFile>,
   uploadQueue: FileQueue,
   trackRecordsMap: Map<string, Promise<Record[]>>,
+  people: Person[],
 };
 
 export type State = {
@@ -42,6 +44,7 @@ const mediaFilesInitialState = {
   mediaFilesMap: new Map<string, MediaFile>(),
   uploadQueue: new FileQueue(maxConcurrentUploads),
   trackRecordsMap: new Map<string, Promise<Record[]>>(),
+  people: []
 };
 
 function mediaFilesReducer(
@@ -78,6 +81,12 @@ function mediaFilesReducer(
       return {
         ...state,
         trackRecordsMap: newMap,
+      };
+    case FilesActionTypes.PEOPLE_FETCHED_ACTION:
+      const {people} = action;
+      return {
+        ...state,
+        people,
       };
     default:
       return state;

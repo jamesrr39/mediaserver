@@ -37,6 +37,7 @@ export class FitTrack extends AbstractMediaFile {
     public readonly hashValue: string,
     public readonly relativePath: string,
     public readonly fileSizeBytes: number,
+    public readonly participantIds: number[],
     public readonly startTime: Date,
     public readonly endTime: Date,
     public readonly deviceManufacturer: string,
