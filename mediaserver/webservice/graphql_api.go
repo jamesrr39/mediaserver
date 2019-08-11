@@ -1,9 +1,11 @@
 package webservice
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"mediaserver/mediaserver/dal/diskstorage/mediaserverdb"
 	"mediaserver/mediaserver/domain"
 	"net/http"
 	"strings"
@@ -17,8 +19,10 @@ import (
 type GraphQLAPIService struct {
 	logger        *logpkg.Logger
 	schema        *graphql.Schema
+	dbConn        *mediaserverdb.DBConn
 	tracksDAL     tracksDALInterface
 	mediaFilesDAL mediaFilesDALInterface
+	peopleDAL     pepoleDALInterface
 	chi.Router
 }
 
@@ -30,9 +34,13 @@ type mediaFilesDALInterface interface {
 	Get(hash domain.HashValue) domain.MediaFile
 }
 
-func NewGraphQLAPIService(logger *logpkg.Logger, tracksDAL tracksDALInterface, mediaFilesDAL mediaFilesDALInterface) (*GraphQLAPIService, errorsx.Error) {
+type pepoleDALInterface interface {
+	GetAllPeople(tx *sql.Tx) ([]*domain.Person, errorsx.Error)
+}
+
+func NewGraphQLAPIService(logger *logpkg.Logger, dbConn *mediaserverdb.DBConn, tracksDAL tracksDALInterface, mediaFilesDAL mediaFilesDALInterface, peopleDAL pepoleDALInterface) (*GraphQLAPIService, errorsx.Error) {
 	router := chi.NewRouter()
-	ws := &GraphQLAPIService{logger, nil, tracksDAL, mediaFilesDAL, router}
+	ws := &GraphQLAPIService{logger, nil, dbConn, tracksDAL, mediaFilesDAL, peopleDAL, router}
 
 	var schema, err = graphql.NewSchema(
 		graphql.SchemaConfig{
@@ -119,38 +127,7 @@ func (ws *GraphQLAPIService) setupQueryType() *graphql.Object {
 				   http://localhost:9050/api/graphql?query={tracks(hashes:[%22abc%22,%20%22def%22]){records{timestamp}}}
 				*/
 				"tracks": &graphql.Field{
-					Type: graphql.NewList(graphql.NewObject(graphql.ObjectConfig{
-						Name: "track",
-						Fields: graphql.Fields{
-							"hash": &graphql.Field{
-								Name: "hash",
-								Type: graphql.String,
-							},
-							"records": &graphql.Field{
-								Name: "records",
-								Type: graphql.NewList(graphql.NewObject(graphql.ObjectConfig{
-									Name: "record",
-									Fields: graphql.Fields{
-										"timestamp": &graphql.Field{
-											Type: graphql.DateTime,
-										},
-										"posLat": &graphql.Field{
-											Type: graphql.Float,
-										},
-										"posLong": &graphql.Field{
-											Type: graphql.Float,
-										},
-										"distance": &graphql.Field{
-											Type: graphql.Float,
-										},
-										"altitude": &graphql.Field{
-											Type: graphql.Float,
-										},
-									},
-								})),
-							},
-						},
-					})),
+					Type:        tracksType,
 					Description: "Get tracks",
 					Args: graphql.FieldConfigArgument{
 						"hashes": &graphql.ArgumentConfig{
@@ -188,6 +165,72 @@ func (ws *GraphQLAPIService) setupQueryType() *graphql.Object {
 						return tracks, nil
 					},
 				},
+				"people": &graphql.Field{
+					Type:        peopleType,
+					Description: "get people",
+					Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+						tx, err := ws.dbConn.Begin()
+						if err != nil {
+							return nil, errorsx.Wrap(err)
+						}
+						defer tx.Rollback()
+
+						people, err := ws.peopleDAL.GetAllPeople(tx)
+						if err != nil {
+							return nil, errorsx.Wrap(err)
+						}
+
+						return people, nil
+					},
+				},
 			},
 		})
 }
+
+var (
+	tracksType = graphql.NewList(graphql.NewObject(graphql.ObjectConfig{
+		Name: "track",
+		Fields: graphql.Fields{
+			"hash": &graphql.Field{
+				Name: "hash",
+				Type: graphql.String,
+			},
+			"records": &graphql.Field{
+				Name: "records",
+				Type: graphql.NewList(graphql.NewObject(graphql.ObjectConfig{
+					Name: "record",
+					Fields: graphql.Fields{
+						"timestamp": &graphql.Field{
+							Type: graphql.DateTime,
+						},
+						"posLat": &graphql.Field{
+							Type: graphql.Float,
+						},
+						"posLong": &graphql.Field{
+							Type: graphql.Float,
+						},
+						"distance": &graphql.Field{
+							Type: graphql.Float,
+						},
+						"altitude": &graphql.Field{
+							Type: graphql.Float,
+						},
+					},
+				})),
+			},
+		},
+	}))
+	peopleType = graphql.NewList(graphql.NewObject(graphql.ObjectConfig{
+		Name: "person",
+		Fields: graphql.Fields{
+			"id": &graphql.Field{
+				Name: "id",
+				Type: graphql.Int,
+			},
+			"name": &graphql.Field{
+				Name: "name",
+				Type: graphql.String,
+			},
+		},
+	}))
+)

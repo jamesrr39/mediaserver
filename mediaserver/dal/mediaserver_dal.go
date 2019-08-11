@@ -35,6 +35,7 @@ type MediaServerDAL struct {
 	VideosDAL      videodal.VideoDAL
 	TracksDAL      *TracksDAL
 	ThumbnailsDAL  *ThumbnailsDAL
+	PeopleDAL *PeopleDAL
 }
 
 func NewMediaServerDAL(logger *logpkg.Logger, fs gofs.Fs, picturesBasePath, cachesBasePath, dataDir string, maxConcurrentCPUJobs, maxConcurrentVideoConversions uint, thumbnailCachePolicy ThumbnailCachePolicy, maxConcurrentTrackRecordsParsing, maxConcurrentResizes uint) (*MediaServerDAL, error) {
@@ -53,8 +54,9 @@ func NewMediaServerDAL(logger *logpkg.Logger, fs gofs.Fs, picturesBasePath, cach
 
 	picturesDAL := NewPicturesDAL(cachesBasePath, thumbnailsDAL, openFileFunc, maxConcurrentCPUJobs)
 	tracksDAL := NewTracksDAL(openFileFunc, maxConcurrentTrackRecordsParsing)
+	peopleDAL := NewPeopleDAL()
 
-	mediaFilesDAL := NewMediaFilesDAL(logger, fs, picturesBasePath, thumbnailsDAL, videosDAL, picturesDAL, jobRunner, tracksDAL)
+	mediaFilesDAL := NewMediaFilesDAL(logger, fs, picturesBasePath, thumbnailsDAL, videosDAL, picturesDAL, jobRunner, tracksDAL, peopleDAL)
 
 	err = fs.MkdirAll(dataDir, 0700)
 	if nil != err {
@@ -70,6 +72,7 @@ func NewMediaServerDAL(logger *logpkg.Logger, fs gofs.Fs, picturesBasePath, cach
 		videosDAL,
 		tracksDAL,
 		thumbnailsDAL,
+		peopleDAL,
 	}, nil
 }
 
@@ -112,6 +115,13 @@ func (dal *MediaServerDAL) Create(tx *sql.Tx, file io.ReadSeeker, filename, cont
 	}
 
 	createFileMeasurement.MeasureStep("file type specific action")
+
+	participantIDs, err := dal.MediaFilesDAL.peopleDAL.GetPeopleIDsInMediaFile(tx, hashValue)
+	if nil != err {
+		return nil, errorsx.Wrap(err)
+	}
+
+	mediaFileInfo := domain.NewMediaFileInfo(relativePath, hashValue, domain.MediaFileTypeFitTrack, fileLen, participantIDs)
 
 	doAtEnd := func() error { return nil }
 	var mediaFile domain.MediaFile
@@ -168,7 +178,7 @@ func (dal *MediaServerDAL) Create(tx *sql.Tx, file io.ReadSeeker, filename, cont
 			return nil
 		}
 	case "video/mp4":
-		videoFile := domain.NewVideoFileMetadata(hashValue, relativePath, fileLen)
+		videoFile := domain.NewVideoFileMetadata(mediaFileInfo)
 		mediaFile = videoFile
 
 		doAtEnd = func() error {
@@ -176,7 +186,6 @@ func (dal *MediaServerDAL) Create(tx *sql.Tx, file io.ReadSeeker, filename, cont
 		}
 	case "application/octet-stream":
 		// try parsing fit file
-		mediaFileInfo := domain.NewMediaFileInfo(relativePath, hashValue, domain.MediaFileTypeFitTrack, fileLen)
 
 		fitFileSummary, err := domain.NewFitFileSummaryFromReader(mediaFileInfo, file)
 		if err != nil {

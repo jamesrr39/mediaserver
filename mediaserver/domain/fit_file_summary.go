@@ -6,9 +6,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/tormoder/fit"
-
 	"github.com/jamesrr39/goutil/errorsx"
+	"github.com/tormoder/fit"
 )
 
 // FitFileSummary is a summary of a fit file

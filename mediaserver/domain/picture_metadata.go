@@ -11,9 +11,8 @@ import (
 	"io"
 	"log"
 
-	"github.com/jamesrr39/goutil/image-processing/imageprocessingutil"
-
 	"github.com/jamesrr39/goutil/errorsx"
+	"github.com/jamesrr39/goutil/image-processing/imageprocessingutil"
 )
 
 type HashValue string
@@ -46,8 +45,8 @@ func (pm *PictureMetadata) GetMediaFileInfo() MediaFileInfo {
 	return pm.MediaFileInfo
 }
 
-func NewPictureMetadata(hashValue HashValue, relativePath string, fileSizeBytes int64, exifData *ExifData, rawSize RawSize, format string) *PictureMetadata {
-	return &PictureMetadata{MediaFileInfo{relativePath, hashValue, MediaFileTypePicture, fileSizeBytes}, exifData, rawSize, format, nil}
+func NewPictureMetadata(hashValue HashValue, relativePath string, fileSizeBytes int64, exifData *ExifData, rawSize RawSize, format string, participantIDs []int64) *PictureMetadata {
+	return &PictureMetadata{MediaFileInfo{relativePath, hashValue, MediaFileTypePicture, fileSizeBytes, participantIDs}, exifData, rawSize, format, nil}
 }
 
 func NewPictureMetadataAndPictureFromBytes(file io.ReadSeeker, relativePath string, hash HashValue) (*PictureMetadata, image.Image, error) {
@@ -75,7 +74,7 @@ func NewPictureMetadataAndPictureFromBytes(file io.ReadSeeker, relativePath stri
 		}
 	}
 
-	return NewPictureMetadata(hash, relativePath, fileLen, exifData, RawSizeFromImage(picture), format), picture, nil
+	return NewPictureMetadata(hash, relativePath, fileLen, exifData, RawSizeFromImage(picture), format, nil), picture, nil
 }
 
 func (pictureMetadata *PictureMetadata) String() string {

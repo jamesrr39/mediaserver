@@ -4,8 +4,8 @@ type VideoFileMetadata struct {
 	MediaFileInfo
 }
 
-func NewVideoFileMetadata(hashValue HashValue, relativePath string, fileSizeBytes int64) *VideoFileMetadata {
-	return &VideoFileMetadata{MediaFileInfo{relativePath, hashValue, MediaFileTypeVideo, fileSizeBytes}}
+func NewVideoFileMetadata(mediaFileInfo MediaFileInfo) *VideoFileMetadata {
+	return &VideoFileMetadata{mediaFileInfo}
 }
 
 func (pm *VideoFileMetadata) GetMediaFileInfo() MediaFileInfo {

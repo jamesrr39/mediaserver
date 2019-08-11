@@ -9,10 +9,11 @@ const (
 )
 
 type MediaFileInfo struct {
-	RelativePath  string        `json:"relativePath"`
-	HashValue     HashValue     `json:"hashValue"`
-	MediaFileType MediaFileType `json:"fileType"`
-	FileSizeBytes int64         `json:"fileSizeBytes"`
+	RelativePath   string        `json:"relativePath"`
+	HashValue      HashValue     `json:"hashValue"`
+	MediaFileType  MediaFileType `json:"fileType"`
+	FileSizeBytes  int64         `json:"fileSizeBytes"`
+	ParticipantIDs []int64       `json:"participantIds"`
 }
 
 func NewMediaFileInfo(
@@ -20,8 +21,9 @@ func NewMediaFileInfo(
 	hashValue HashValue,
 	mediaFileType MediaFileType,
 	fileSizeBytes int64,
+	participantIDs []int64,
 ) MediaFileInfo {
-	return MediaFileInfo{relativePath, hashValue, mediaFileType, fileSizeBytes}
+	return MediaFileInfo{relativePath, hashValue, mediaFileType, fileSizeBytes, participantIDs}
 }
 
 type MediaFile interface {

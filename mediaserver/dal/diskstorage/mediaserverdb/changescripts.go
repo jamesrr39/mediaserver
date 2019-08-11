@@ -24,6 +24,17 @@ CREATE TABLE IF NOT EXISTS join_pictures_hash_collections (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_join_pictures_hash_collections_unique_id ON join_pictures_hash_collections (picture_hash, collection_id);
+`, `
+CREATE TABLE IF NOT EXISTS people (
+  name string,
+);
+
+CREATE TABLE IF NOT EXISTS people_mediafiles (
+  person_id int64,
+  mediafile_hash string,
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_people_mediafiles_unique_id ON people_mediafiles (person_id, mediafile_hash);
 `}
 
 // FIXME foreign keys

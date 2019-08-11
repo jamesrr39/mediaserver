@@ -79,7 +79,7 @@ func (dal *PicturesDAL) GetPicture(pictureMetadata *domain.PictureMetadata) (ima
 
 var ErrNotFound = errors.New("not found")
 
-func (pr *PicturesDAL) GetPictureMetadata(tx *sql.Tx, hash domain.HashValue, relativePath string) (*domain.PictureMetadata, error) {
+func (pr *PicturesDAL) GetPictureMetadata(tx *sql.Tx, hash domain.HashValue, relativePath string, participantIDs []int64) (*domain.PictureMetadata, error) {
 
 	row := tx.QueryRow(`
 SELECT file_size_bytes, exif_data_json, raw_size_width, raw_size_height, format
@@ -112,7 +112,7 @@ WHERE hash == $1
 		Height: rawSizeHeight,
 	}
 
-	return domain.NewPictureMetadata(hash, relativePath, fileSizeBytes, exifData, rawSize, format), nil
+	return domain.NewPictureMetadata(hash, relativePath, fileSizeBytes, exifData, rawSize, format, participantIDs), nil
 }
 
 func (pr *PicturesDAL) CreatePictureMetadata(tx *sql.Tx, pictureMetadata *domain.PictureMetadata) error {

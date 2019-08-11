@@ -2,10 +2,12 @@ package webservice
 
 import (
 	"bytes"
+	"database/sql"
+	"io/ioutil"
 	"mediaserver/mediaserver/domain"
+	"mediaserver/mediaserver/testutil"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 
@@ -15,8 +17,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_GraphQLAPIService(t *testing.T) {
-	logger := logpkg.NewLogger(os.Stderr, logpkg.LogLevelInfo)
+func Test_GraphQLAPIService_tracks(t *testing.T) {
+	logger := logpkg.NewLogger(ioutil.Discard, logpkg.LogLevelInfo)
 	tracksDAL := &mockTrackDAL{
 		GetRecordsFunc: func(mediaFile *domain.FitFileSummary) (domain.Records, errorsx.Error) {
 			return domain.Records{{
@@ -34,7 +36,7 @@ func Test_GraphQLAPIService(t *testing.T) {
 		},
 	}
 
-	ws, err := NewGraphQLAPIService(logger, tracksDAL, mediaFilesDAL)
+	ws, err := NewGraphQLAPIService(logger, nil, tracksDAL, mediaFilesDAL, nil)
 	require.NoError(t, err)
 
 	t.Run("GET", func(t *testing.T) {
@@ -101,3 +103,49 @@ type mockMediaFileDAL struct {
 func (m *mockMediaFileDAL) Get(hash domain.HashValue) domain.MediaFile {
 	return m.GetFunc(hash)
 }
+
+type mockPeopleDAL struct {
+	GetAllPeopleFunc func(tx *sql.Tx) ([]*domain.Person, errorsx.Error)
+}
+
+func (m *mockPeopleDAL) GetAllPeople(tx *sql.Tx) ([]*domain.Person, errorsx.Error) {
+	return m.GetAllPeopleFunc(tx)
+}
+
+func Test_GraphQLAPIService_people(t *testing.T) {
+	logger := logpkg.NewLogger(ioutil.Discard, logpkg.LogLevelInfo)
+
+	peopleDAL := &mockPeopleDAL{
+		GetAllPeopleFunc: func(tx *sql.Tx) ([]*domain.Person, errorsx.Error) {
+			return []*domain.Person{
+				{
+					ID:   1,
+					Name: "Test User 1",
+				},
+				{
+					ID:   2,
+					Name: "Test User 2",
+				},
+			}, nil
+		},
+	}
+
+	dbConn := testutil.NewTestDB(t)
+	defer dbConn.Close()
+
+	ws, err := NewGraphQLAPIService(logger, dbConn.DBConn, nil, nil, peopleDAL)
+	require.NoError(t, err)
+
+	t.Run("GET", func(t *testing.T) {
+		r, err := http.NewRequest(http.MethodGet, `/?query={people{id,name}}`, nil)
+		require.NoError(t, err)
+		w := httptest.NewRecorder()
+		ws.ServeHTTP(w, r)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, expectedPeopleResponse, w.Body.String())
+	})
+}
+
+const expectedPeopleResponse = `{"data":{"people":[{"id":1,"name":"Test User 1"},{"id":2,"name":"Test User 2"}]}}
+`

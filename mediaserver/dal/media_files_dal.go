@@ -34,10 +34,11 @@ type MediaFilesDAL struct {
 	picturesDAL      *PicturesDAL
 	jobRunner        *mediaserverjobs.JobRunner
 	tracksDAL        *TracksDAL
+	peopleDAL        *PeopleDAL
 }
 
-func NewMediaFilesDAL(log *logpkg.Logger, fs gofs.Fs, picturesBasePath string, thumbnailsDAL *ThumbnailsDAL, videosDAL videodal.VideoDAL, picturesDAL *PicturesDAL, jobRunner *mediaserverjobs.JobRunner, tracksDAL *TracksDAL) *MediaFilesDAL {
-	return &MediaFilesDAL{log, fs, picturesBasePath, picturesmetadatacache.NewMediaFilesCache(), thumbnailsDAL, videosDAL, picturesDAL, jobRunner, tracksDAL}
+func NewMediaFilesDAL(log *logpkg.Logger, fs gofs.Fs, picturesBasePath string, thumbnailsDAL *ThumbnailsDAL, videosDAL videodal.VideoDAL, picturesDAL *PicturesDAL, jobRunner *mediaserverjobs.JobRunner, tracksDAL *TracksDAL, peopleDAL *PeopleDAL) *MediaFilesDAL {
+	return &MediaFilesDAL{log, fs, picturesBasePath, picturesmetadatacache.NewMediaFilesCache(), thumbnailsDAL, videosDAL, picturesDAL, jobRunner, tracksDAL, peopleDAL}
 }
 
 func (dal *MediaFilesDAL) GetAll() []domain.MediaFile {
@@ -63,53 +64,21 @@ func (dal *MediaFilesDAL) OpenFile(mediaFile domain.MediaFile) (gofs.File, error
 	return dal.fs.Open(filepath.Join(dal.picturesBasePath, mediaFile.GetMediaFileInfo().RelativePath))
 }
 
-func (dal *MediaFilesDAL) processFitFile(tx *sql.Tx, path string, fileInfo os.FileInfo) (*domain.FitFileSummary, error) {
-	file, err := dal.fs.Open(path)
-	if nil != err {
-		return nil, errorsx.Wrap(err)
-	}
-	defer file.Close()
-
+func (dal *MediaFilesDAL) processFitFile(tx *sql.Tx, path string, hash domain.HashValue, fileInfo os.FileInfo, participantIDs []int64, file io.Reader) (*domain.FitFileSummary, error) {
 	relativePath := strings.TrimPrefix(path, dal.picturesBasePath)
 
-	hashValue, err := domain.NewHash(file)
-	if nil != err {
-		return nil, errorsx.Wrap(err)
-	}
-
-	mediaFileInfo := domain.NewMediaFileInfo(relativePath, hashValue, domain.MediaFileTypeFitTrack, fileInfo.Size())
-
-	_, err = file.Seek(0, 0)
-	if nil != err {
-		return nil, errorsx.Wrap(err)
-	}
+	mediaFileInfo := domain.NewMediaFileInfo(relativePath, hash, domain.MediaFileTypeFitTrack, fileInfo.Size(), participantIDs)
 
 	return domain.NewFitFileSummaryFromReader(mediaFileInfo, file)
 }
 
-func (dal *MediaFilesDAL) processVideoFile(tx *sql.Tx, path string, fileInfo os.FileInfo) (*domain.VideoFileMetadata, error) {
-
-	file, err := dal.fs.Open(path)
-	if nil != err {
-		return nil, errorsx.Wrap(err)
-	}
-	defer file.Close()
+func (dal *MediaFilesDAL) processVideoFile(tx *sql.Tx, path string, hashValue domain.HashValue, fileInfo os.FileInfo, participantIDs []int64) (*domain.VideoFileMetadata, error) {
 
 	relativePath := strings.TrimPrefix(path, dal.picturesBasePath)
 
-	hashValue, err := domain.NewHash(file)
-	if nil != err {
-		return nil, errorsx.Wrap(err)
-	}
+	videoFileMetadata := domain.NewVideoFileMetadata(domain.NewMediaFileInfo(relativePath, hashValue, domain.MediaFileTypeVideo, fileInfo.Size(), participantIDs))
 
-	_, err = file.Seek(0, 0)
-	if nil != err {
-		return nil, errorsx.Wrap(err)
-	}
-
-	videoFileMetadata := domain.NewVideoFileMetadata(hashValue, relativePath, fileInfo.Size())
-
-	err = dal.videosDAL.EnsureSupportedFile(videoFileMetadata)
+	err := dal.videosDAL.EnsureSupportedFile(videoFileMetadata)
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}
@@ -117,7 +86,7 @@ func (dal *MediaFilesDAL) processVideoFile(tx *sql.Tx, path string, fileInfo os.
 	return videoFileMetadata, nil
 }
 
-func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string, profileRun *profile.Run) (*domain.PictureMetadata, error) {
+func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string, hash domain.HashValue, profileRun *profile.Run, participantIDs []int64) (*domain.PictureMetadata, error) {
 	openFileMeasurement := profileRun.Measure("open file")
 	file, err := dal.fs.Open(path)
 	if nil != err {
@@ -129,10 +98,6 @@ func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string, profileRun
 	relativePath := strings.TrimPrefix(path, dal.picturesBasePath)
 
 	calculateFileHashMeasurement := profileRun.Measure("calculate file hash")
-	hash, err := domain.NewHash(file)
-	if nil != err {
-		return nil, errorsx.Wrap(err)
-	}
 
 	calculateFileHashMeasurement.Stop()
 
@@ -142,7 +107,7 @@ func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string, profileRun
 	}
 
 	getMetadataMeasurement := profileRun.Measure("get metadata from db")
-	pictureMetadata, err := dal.picturesDAL.GetPictureMetadata(tx, hash, relativePath)
+	pictureMetadata, err := dal.picturesDAL.GetPictureMetadata(tx, hash, relativePath, participantIDs)
 	if nil != err {
 		if err != ErrNotFound {
 			return nil, fmt.Errorf("unexpected error getting picture metadata from database for relative path '%s': '%s'", relativePath, err)
@@ -255,23 +220,44 @@ func (dal *MediaFilesDAL) processFile(fs gofs.Fs, profileRun *profile.Run, tx *s
 	var mediaFile domain.MediaFile
 	var err error
 
+	file, err := dal.fs.Open(path)
+	if nil != err {
+		return nil, errorsx.Wrap(err)
+	}
+	defer file.Close()
+
+	hash, err := domain.NewHash(file)
+	if nil != err {
+		return nil, errorsx.Wrap(err)
+	}
+
+	_, err = file.Seek(0, 0)
+	if nil != err {
+		return nil, errorsx.Wrap(err)
+	}
+
+	participantIDs, err := dal.peopleDAL.GetPeopleIDsInMediaFile(tx, hash)
+	if nil != err {
+		return nil, errorsx.Wrap(err)
+	}
+
 	fileExtensionLower := strings.ToLower(filepath.Ext(path))
 	switch fileExtensionLower {
 	case ".jpg", ".jpeg", ".png":
 		profileRun.Measure("process picture file")
-		mediaFile, err = dal.processPictureFile(tx, path, profileRun)
+		mediaFile, err = dal.processPictureFile(tx, path, hash, profileRun, participantIDs)
 		if err != nil {
 			return nil, errorsx.Wrap(err)
 		}
 	case ".mp4":
 		profileRun.Measure("process video file")
-		mediaFile, err = dal.processVideoFile(tx, path, fileInfo)
+		mediaFile, err = dal.processVideoFile(tx, path, hash, fileInfo, participantIDs)
 		if err != nil {
 			return nil, errorsx.Wrap(err)
 		}
 	case ".fit":
 		profileRun.Measure("process fit file")
-		mediaFile, err = dal.processFitFile(tx, path, fileInfo)
+		mediaFile, err = dal.processFitFile(tx, path, hash, fileInfo, participantIDs, file)
 		if err != nil {
 			return nil, errorsx.Wrap(err)
 		}

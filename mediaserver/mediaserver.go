@@ -61,7 +61,7 @@ func NewMediaServerAndScan(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDi
 		return nil, errorsx.Wrap(err)
 	}
 
-	graphQLAPIService, err := pictureswebservice.NewGraphQLAPIService(logger, mediaServerDAL.TracksDAL, mediaServerDAL.MediaFilesDAL)
+	graphQLAPIService, err := pictureswebservice.NewGraphQLAPIService(logger, dbConn, mediaServerDAL.TracksDAL, mediaServerDAL.MediaFilesDAL, mediaServerDAL.PeopleDAL)
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}
