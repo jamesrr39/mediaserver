@@ -15,6 +15,7 @@ export enum FilesActionTypes {
   FILE_SUCCESSFULLY_UPLOADED,
   TRACK_RECORDS_FETCHED_ACTION,
   PEOPLE_FETCHED_ACTION,
+  PARTICIPANT_ADDED_TO_MEDIAFILE,
 }
 
 export interface FetchPicturesMetadataAction extends Action {
@@ -46,13 +47,20 @@ export type PeopleFetchedAction = {
   people: Person[],
 };
 
+export type ParticipantAddedToMediaFile = {
+  type: FilesActionTypes.PARTICIPANT_ADDED_TO_MEDIAFILE,
+  mediaFile: MediaFile,
+  participant: Person,
+};
+
 export type MediaserverAction = (
   PicturesMetadataFetchedAction |
   PictureSuccessfullyUploadedAction |
   FetchPicturesMetadataAction | 
   TrackRecordsFetchedAction |
   QueueForUploadAction |
-  PeopleFetchedAction
+  PeopleFetchedAction |
+  ParticipantAddedToMediaFile
 );
 
 type TrackJSON = {
@@ -219,7 +227,7 @@ export function uploadFile(file: File) {
 }
 
 type PeopleJSON = {
-  data: Person[]
+  data: {people: Person[]}
 };
 
 export function fetchAllPeople() {
@@ -234,7 +242,27 @@ export function fetchAllPeople() {
 
       dispatch({
         type: FilesActionTypes.PEOPLE_FETCHED_ACTION,
-        people: peopleJSON.data,
+        people: peopleJSON.data.people,
       });
     };
+}
+
+export function addParticipantToMediaFile(mediaFile: MediaFile, participant: Person) {
+  return async(dispatch: (action: MediaserverAction) => void) => {
+    // TODO: Check if new user
+    // TODO: add user to track on BE.
+    const response = await fetch(`${SERVER_BASE_URL}/api/graphql?query={people{id,name}}`, {
+      method: 'POST',
+    });
+
+    if (!response.ok) {
+      throw new Error('failed to save person');
+    }
+
+    dispatch({
+      type: FilesActionTypes.PARTICIPANT_ADDED_TO_MEDIAFILE,
+      mediaFile,
+      participant,
+    });
+  };
 }

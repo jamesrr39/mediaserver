@@ -216,6 +216,10 @@ func (dal *MediaFilesDAL) QueueSuggestedLocationJob() {
 	))
 }
 
+func (dal *MediaFilesDAL) Update(mediaFile domain.MediaFile) errorsx.Error {
+	return errorsx.Errorf("not implemented yet")
+}
+
 func (dal *MediaFilesDAL) processFile(fs gofs.Fs, profileRun *profile.Run, tx *sql.Tx, path string, fileInfo os.FileInfo) (domain.MediaFile, error) {
 	var mediaFile domain.MediaFile
 	var err error

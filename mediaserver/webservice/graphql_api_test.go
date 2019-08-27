@@ -75,8 +75,8 @@ func Test_GraphQLAPIService_tracks(t *testing.T) {
 			}
 		}`)
 		r, err := http.NewRequest(http.MethodPost, "/", postBody)
-		r.Header.Set("content-type", "application/graphql")
 		require.NoError(t, err)
+		r.Header.Set("content-type", "application/graphql")
 		w := httptest.NewRecorder()
 		ws.ServeHTTP(w, r)
 
@@ -97,11 +97,21 @@ func (m *mockTrackDAL) GetRecords(mediaFile *domain.FitFileSummary) (domain.Reco
 }
 
 type mockMediaFileDAL struct {
-	GetFunc func(hash domain.HashValue) domain.MediaFile
+	GetFunc    func(hash domain.HashValue) domain.MediaFile
+	GetAllFunc func() []domain.MediaFile
+	UpdateFunc func(mediaFile domain.MediaFile) errorsx.Error
 }
 
 func (m *mockMediaFileDAL) Get(hash domain.HashValue) domain.MediaFile {
 	return m.GetFunc(hash)
+}
+
+func (m *mockMediaFileDAL) GetAll() []domain.MediaFile {
+	return m.GetAllFunc()
+}
+
+func (m *mockMediaFileDAL) Update(mediaFile domain.MediaFile) errorsx.Error {
+	return m.UpdateFunc(mediaFile)
 }
 
 type mockPeopleDAL struct {
@@ -149,3 +159,70 @@ func Test_GraphQLAPIService_people(t *testing.T) {
 
 const expectedPeopleResponse = `{"data":{"people":[{"id":1,"name":"Test User 1"},{"id":2,"name":"Test User 2"}]}}
 `
+
+func Test_GraphQLAPIService_mediafiles(t *testing.T) {
+	logger := logpkg.NewLogger(ioutil.Discard, logpkg.LogLevelInfo)
+
+	mediaFilesDAL := &mockMediaFileDAL{
+		GetAllFunc: func() []domain.MediaFile {
+			return []domain.MediaFile{
+				&domain.VideoFileMetadata{
+					MediaFileInfo: domain.MediaFileInfo{
+						RelativePath: "a/b/c.ogv",
+					},
+				},
+			}
+		},
+	}
+
+	ws, err := NewGraphQLAPIService(logger, nil, nil, mediaFilesDAL, nil)
+	require.NoError(t, err)
+
+	t.Run("GET", func(t *testing.T) {
+		r, err := http.NewRequest(http.MethodGet, `/?query={mediaFiles{relativePath,participantIds}}`, nil)
+		require.NoError(t, err)
+		w := httptest.NewRecorder()
+		ws.ServeHTTP(w, r)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, expectedMediaFilesResponse, w.Body.String())
+	})
+}
+
+const expectedMediaFilesResponse = `{"data":{"mediaFiles":[{"participantIds":[],"relativePath":"a/b/c.ogv"}]}}
+`
+
+const mutationBody = `mutation {
+	updateMediaFiles(hashes: ["abc"], participantIds: [1, 2]) {hashValue, participantIds}
+}
+`
+
+func Test_mutation(t *testing.T) {
+	logger := logpkg.NewLogger(ioutil.Discard, logpkg.LogLevelInfo)
+
+	mediaFilesDAL := &mockMediaFileDAL{
+		GetAllFunc: func() []domain.MediaFile {
+			return []domain.MediaFile{
+				&domain.VideoFileMetadata{
+					MediaFileInfo: domain.MediaFileInfo{
+						RelativePath: "a/b/c.ogv",
+					},
+				},
+			}
+		},
+	}
+
+	ws, err := NewGraphQLAPIService(logger, nil, nil, mediaFilesDAL, nil)
+	require.NoError(t, err)
+
+	t.Run("POST", func(t *testing.T) {
+		r, err := http.NewRequest(http.MethodPost, `/`, bytes.NewBufferString(mutationBody))
+		require.NoError(t, err)
+		r.Header.Set("content-type", "application/graphql")
+		w := httptest.NewRecorder()
+		ws.ServeHTTP(w, r)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, expectedMediaFilesResponse, w.Body.String())
+	})
+}

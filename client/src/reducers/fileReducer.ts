@@ -17,6 +17,8 @@ const scrollObservable = new DebouncedObservable<{}>(150);
 window.addEventListener('scroll', (thing) => scrollObservable.triggerEvent(thing));
 window.addEventListener('resize', (thing) => scrollObservable.triggerEvent(thing));
 
+export type PeopleMap = Map<number, Person>;
+
 type MediaFilesState = {
   isReady: boolean,
   isFetching: boolean,
@@ -26,6 +28,7 @@ type MediaFilesState = {
   uploadQueue: FileQueue,
   trackRecordsMap: Map<string, Promise<Record[]>>,
   people: Person[],
+  peopleMap: PeopleMap,
 };
 
 export type State = {
@@ -44,7 +47,8 @@ const mediaFilesInitialState = {
   mediaFilesMap: new Map<string, MediaFile>(),
   uploadQueue: new FileQueue(maxConcurrentUploads),
   trackRecordsMap: new Map<string, Promise<Record[]>>(),
-  people: []
+  people: [],
+  peopleMap: new Map<number, Person>(),
 };
 
 function mediaFilesReducer(
@@ -84,9 +88,15 @@ function mediaFilesReducer(
       };
     case FilesActionTypes.PEOPLE_FETCHED_ACTION:
       const {people} = action;
+      const peopleMap = new Map<number, Person>();
+      people.forEach(person => {
+        peopleMap.set(person.id, person);
+      });
+
       return {
         ...state,
         people,
+        peopleMap,
       };
     default:
       return state;
