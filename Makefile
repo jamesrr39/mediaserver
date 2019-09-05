@@ -32,6 +32,9 @@ test:
 	go test ./...
 	cd client && yarn tslint && yarn test:ci
 
+update_go_snapshots:
+	UPDATE_SNAPSHOTS=1 go test ./...
+
 bundle_static_assets:
 	cd client && yarn build
 	go run vendor/github.com/rakyll/statik/statik.go -src=client/build -dest=build/client
