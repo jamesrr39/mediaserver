@@ -21,6 +21,7 @@ import { MediaFile } from '../domain/MediaFile';
 import UploadProgressComponent from './upload/UploadProgressComponent';
 import { gallerySortingFunc } from './gallery/Gallery';
 import { filterFromJson } from '../domain/Filter';
+import { LoadingStatus } from '../domain/LoadingStatus';
 
 type CollectionViewRouteParams = {
   identifier: string;
@@ -39,7 +40,7 @@ type AllPicturesPictureModalRouteParams = {
 };
 
 type MediaServerProps = {
-  isReady: boolean,
+  loadingStatus: LoadingStatus,
   mediaFiles: MediaFile[];
   scrollObservable: Observable<{}>;
   mediaFilesMap: Map<string, MediaFile>;
@@ -200,8 +201,12 @@ class MediaServer extends React.Component<MediaServerProps> {
   renderAllPicturesGallery = () =>  <AllPicturesGallery />;
 
   render() {
-    if (!this.props.isReady) {
+    if (this.props.loadingStatus === LoadingStatus.IN_PROGRESS) {
       return <p>Loading...</p>;
+    }
+
+    if (this.props.loadingStatus === LoadingStatus.FAILED) {
+      return <p>Error: failed to load</p>;
     }
 
     return (
@@ -251,14 +256,30 @@ class MediaServer extends React.Component<MediaServerProps> {
   }
 }
 
+function getLoadingStatus(state: State) {
+  const {mediaFilesReducer, collectionsReducer} = state;
+
+  if (mediaFilesReducer.loadingStatus === LoadingStatus.FAILED || 
+    collectionsReducer.loadingStatus === LoadingStatus.FAILED) {
+    return LoadingStatus.FAILED;
+  }
+  
+  if (mediaFilesReducer.loadingStatus === LoadingStatus.IN_PROGRESS || 
+    collectionsReducer.loadingStatus === LoadingStatus.IN_PROGRESS) {
+    return LoadingStatus.IN_PROGRESS;
+  }
+
+  return LoadingStatus.SUCCESSFUL;
+}
+
 function mapStateToProps(state: State) {
   const { mediaFiles, scrollObservable, mediaFilesMap: mediaFilesMap } = state.mediaFilesReducer;
   const { customCollections } = state.collectionsReducer;
 
-  const isReady = state.mediaFilesReducer.isReady && state.collectionsReducer.isReady;
+  const loadingStatus = getLoadingStatus(state);
 
   return {
-    isReady,
+    loadingStatus,
     mediaFiles,
     scrollObservable,
     mediaFilesMap,

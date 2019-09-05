@@ -11,6 +11,7 @@ import { notificationsReducer, NotificationsState } from './notificationReducer'
 import { MediaFile } from '../domain/MediaFile';
 import { Record } from '../domain/FitTrack';
 import { Person } from '../domain/People';
+import { LoadingStatus } from '../domain/LoadingStatus';
 
 const scrollObservable = new DebouncedObservable<{}>(150);
 
@@ -20,8 +21,7 @@ window.addEventListener('resize', (thing) => scrollObservable.triggerEvent(thing
 export type PeopleMap = Map<number, Person>;
 
 type MediaFilesState = {
-  isReady: boolean,
-  isFetching: boolean,
+  loadingStatus: LoadingStatus,
   mediaFiles: MediaFile[],
   scrollObservable: Observable<{}>,
   mediaFilesMap: Map<string, MediaFile>,
@@ -40,8 +40,7 @@ export type State = {
 const maxConcurrentUploads = 2;
 
 const mediaFilesInitialState = {
-  isReady: false,
-  isFetching: false,
+  loadingStatus: LoadingStatus.NOT_STARTED,
   mediaFiles: [],
   scrollObservable,
   mediaFilesMap: new Map<string, MediaFile>(),
@@ -58,7 +57,7 @@ function mediaFilesReducer(
     case FilesActionTypes.FETCH_MEDIA_FILES:
       return {
         ...state,
-        isFetching: true,
+        loadingStatus: LoadingStatus.IN_PROGRESS,
       };
     case FilesActionTypes.MEDIA_FILES_FETCHED:
       const mediaFilesMap = new Map<string, MediaFile>();
@@ -67,11 +66,15 @@ function mediaFilesReducer(
       });
       return {
         ...state,
-        isReady: true,
-        isFetching: false,
+        loadingStatus: LoadingStatus.SUCCESSFUL,
         mediaFiles: action.mediaFiles,
         mediaFilesMap: mediaFilesMap,
       };
+      case FilesActionTypes.MEDIA_FILES_FETCH_FAILED:
+          return {
+            ...state,
+            loadingStatus: LoadingStatus.FAILED,
+          };
     case FilesActionTypes.FILE_SUCCESSFULLY_UPLOADED:
       return {
         ...state,
@@ -104,21 +107,31 @@ function mediaFilesReducer(
 }
 
 type CollectionReducerState = {
-  isReady: boolean;
+  loadingStatus: LoadingStatus,
   customCollections: CustomCollection[];
 };
 
 const collectionInitialState = {
-  isReady: false,
+  loadingStatus: LoadingStatus.NOT_STARTED,
   customCollections: [],
 };
 
 function collectionsReducer(state: CollectionReducerState = collectionInitialState, action: CollectionsAction) {
   switch (action.type) {
+    case CollectionActions.COLLECTION_FETCH_STARTED:
+      return {
+        ...state,
+        loadingStatus: LoadingStatus.IN_PROGRESS,
+      };
+    case CollectionActions.COLLECTION_FETCH_FAILED:
+      return {
+        ...state,
+        loadingStatus: LoadingStatus.FAILED,
+      };
     case CollectionActions.COLLECTIONS_FETCHED:
       return {
         ...state,
-        isReady: true,
+        loadingStatus: LoadingStatus.SUCCESSFUL,
         customCollections: action.customCollections,
       };
     case CollectionActions.COLLECTION_SAVED:

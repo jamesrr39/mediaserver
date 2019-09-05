@@ -11,11 +11,16 @@ import { Person } from '../domain/People';
 export enum FilesActionTypes {
   FETCH_MEDIA_FILES,
   MEDIA_FILES_FETCHED,
+  MEDIA_FILES_FETCH_FAILED,
   QUEUE_FOR_UPLOAD,
   FILE_SUCCESSFULLY_UPLOADED,
   TRACK_RECORDS_FETCHED_ACTION,
   PEOPLE_FETCHED_ACTION,
   PARTICIPANT_ADDED_TO_MEDIAFILE,
+}
+
+export interface PicturesMetadataFetchFailedAction extends Action {
+  type: FilesActionTypes.MEDIA_FILES_FETCH_FAILED;
 }
 
 export interface FetchPicturesMetadataAction extends Action {
@@ -60,7 +65,8 @@ export type MediaserverAction = (
   TrackRecordsFetchedAction |
   QueueForUploadAction |
   PeopleFetchedAction |
-  ParticipantAddedToMediaFile
+  ParticipantAddedToMediaFile |
+  PicturesMetadataFetchFailedAction
 );
 
 type TrackJSON = {
@@ -77,7 +83,10 @@ type RecordJSON = {
 };
 
 export function fetchPicturesMetadata() {
-  return (dispatch: (action: FetchPicturesMetadataAction | PicturesMetadataFetchedAction | NotifyAction) => void) => {
+  return (dispatch: (
+    action: FetchPicturesMetadataAction | PicturesMetadataFetchedAction | 
+      PicturesMetadataFetchFailedAction | NotifyAction
+    ) => void) => {
     dispatch({
       type: FilesActionTypes.FETCH_MEDIA_FILES,
     } as FetchPicturesMetadataAction);
@@ -96,6 +105,9 @@ export function fetchPicturesMetadata() {
           mediaFiles,
         });
       }).catch((errMessage) => {
+        dispatch({
+          type: FilesActionTypes.MEDIA_FILES_FETCH_FAILED,
+        });
         dispatch(newNotificationAction(new GalleryNotification(NotificationLevel.ERROR, errMessage)));
       });
   };

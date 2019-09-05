@@ -5,9 +5,19 @@ import { Dispatch } from 'react';
 
 export enum CollectionActions {
   FETCH_COLLECTIONS = 'FETCH_COLLECTIONS',
+  COLLECTION_FETCH_STARTED = 'COLLECTION_FETCH_STARTED',
+  COLLECTION_FETCH_FAILED = 'COLLECTION_FETCH_FAILED',
   COLLECTIONS_FETCHED = 'COLLECTIONS_FETCHED',
   COLLECTION_SAVED = 'COLLECTION_SAVED',
   SAVE_COLLECTION = 'SAVE_COLLECTION',
+}
+
+export interface FetchCollectionsStartedAction extends Action {
+  type: CollectionActions.COLLECTION_FETCH_STARTED;
+}
+
+export interface FetchCollectionsFailedAction extends Action {
+  type: CollectionActions.COLLECTION_FETCH_FAILED;
 }
 
 export interface FetchCollectionsAction extends Action {
@@ -30,7 +40,8 @@ export type SaveCollectionAction = {
 };
 
 export type CollectionsAction = CollectionsFetchedAction | 
-  FetchCollectionsAction | CollectionSavedAction | SaveCollectionAction;
+  FetchCollectionsAction | CollectionSavedAction | SaveCollectionAction | 
+  FetchCollectionsFailedAction | FetchCollectionsStartedAction;
 
 type CustomCollectionJSON = {
   id: number;
@@ -52,6 +63,10 @@ export function fetchCollections() {
         dispatch({
           type: CollectionActions.COLLECTIONS_FETCHED,
           customCollections,
+        });
+      }).catch(() => {
+        dispatch({
+          type: CollectionActions.COLLECTION_FETCH_FAILED,
         });
       });
   };
