@@ -118,10 +118,15 @@ func (m *mockMediaFileDAL) Update(tx *sql.Tx, mediaFile domain.MediaFile, proper
 
 type mockPeopleDAL struct {
 	GetAllPeopleFunc func(tx *sql.Tx) ([]*domain.Person, errorsx.Error)
+	CreatePersonFunc func(tx *sql.Tx, person *domain.Person) errorsx.Error
 }
 
 func (m *mockPeopleDAL) GetAllPeople(tx *sql.Tx) ([]*domain.Person, errorsx.Error) {
 	return m.GetAllPeopleFunc(tx)
+}
+
+func (m *mockPeopleDAL) CreatePerson(tx *sql.Tx, person *domain.Person) errorsx.Error {
+	return m.CreatePersonFunc(tx, person)
 }
 
 func Test_GraphQLAPIService_people(t *testing.T) {
@@ -211,7 +216,7 @@ const mutationBody = `mutation {
 }
 `
 
-func Test_mutation(t *testing.T) {
+func Test_mutation_update_mediafiles(t *testing.T) {
 	logger := logpkg.NewLogger(ioutil.Discard, logpkg.LogLevelInfo)
 
 	mediaFilesDAL := &mockMediaFileDAL{
@@ -242,5 +247,36 @@ func Test_mutation(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 		snapshot.AssertMatchesSnapshot(t, "POST_mutation", w.Body.String())
+	})
+}
+
+func Test_mutation_create_people(t *testing.T) {
+	logger := logpkg.NewLogger(ioutil.Discard, logpkg.LogLevelInfo)
+
+	testDBConn := testutil.NewTestDB(t)
+
+	peopleDAL := &mockPeopleDAL{
+		CreatePersonFunc: func(tx *sql.Tx, person *domain.Person) errorsx.Error {
+			person.ID = 1
+			return nil
+		},
+	}
+
+	ws, err := NewGraphQLAPIService(logger, testDBConn.DBConn, nil, nil, peopleDAL)
+	require.NoError(t, err)
+
+	t.Run("POST", func(t *testing.T) {
+		r, err := http.NewRequest(http.MethodPost, `/`, bytes.NewBufferString(`
+		mutation {
+			createPeople(names: ["abc", "def"]) {id, name}
+		}
+		`))
+		require.NoError(t, err)
+		r.Header.Set("content-type", "application/graphql")
+		w := httptest.NewRecorder()
+		ws.ServeHTTP(w, r)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		snapshot.AssertMatchesSnapshot(t, "POST_mutation_create_people", w.Body.String())
 	})
 }

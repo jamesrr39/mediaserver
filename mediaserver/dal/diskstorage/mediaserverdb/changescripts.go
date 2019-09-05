@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS people (
   name string,
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS unique_idx_people_name ON people (name);
+
 CREATE TABLE IF NOT EXISTS people_mediafiles (
   person_id int64,
   mediafile_hash string,

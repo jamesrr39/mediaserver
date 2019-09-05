@@ -26,7 +26,7 @@ type GraphQLAPIService struct {
 	dbConn        *mediaserverdb.DBConn
 	tracksDAL     tracksDALInterface
 	mediaFilesDAL mediaFilesDALInterface
-	peopleDAL     pepoleDALInterface
+	peopleDAL     peopleDALInterface
 	chi.Router
 }
 
@@ -40,11 +40,12 @@ type mediaFilesDALInterface interface {
 	Update(tx *sql.Tx, mediaFile domain.MediaFile, properties ...dal.MediaFileUpdateProperty) errorsx.Error
 }
 
-type pepoleDALInterface interface {
+type peopleDALInterface interface {
 	GetAllPeople(tx *sql.Tx) ([]*domain.Person, errorsx.Error)
+	CreatePerson(tx *sql.Tx, person *domain.Person) errorsx.Error
 }
 
-func NewGraphQLAPIService(logger *logpkg.Logger, dbConn *mediaserverdb.DBConn, tracksDAL tracksDALInterface, mediaFilesDAL mediaFilesDALInterface, peopleDAL pepoleDALInterface) (*GraphQLAPIService, errorsx.Error) {
+func NewGraphQLAPIService(logger *logpkg.Logger, dbConn *mediaserverdb.DBConn, tracksDAL tracksDALInterface, mediaFilesDAL mediaFilesDALInterface, peopleDAL peopleDALInterface) (*GraphQLAPIService, errorsx.Error) {
 	router := chi.NewRouter()
 	ws := &GraphQLAPIService{logger, nil, dbConn, tracksDAL, mediaFilesDAL, peopleDAL, router}
 
@@ -129,6 +130,51 @@ func (ws *GraphQLAPIService) setupMutationType() *graphql.Object {
 		graphql.ObjectConfig{
 			Name: "Mutation",
 			Fields: graphql.Fields{
+				"createPeople": &graphql.Field{
+					Type:        peopleType,
+					Description: "create people",
+					Args: graphql.FieldConfigArgument{
+						"names": &graphql.ArgumentConfig{
+							Type: graphql.NewList(graphql.NewNonNull(graphql.String)),
+						},
+					},
+					Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+						namesInterfaces, ok := params.Args["names"].([]interface{})
+						if !ok {
+							return nil, errorsx.Errorf("couldn't convert 'names' arg to []interface (was %T)", params.Args["names"])
+						}
+
+						var names []string
+						for _, nameInterface := range namesInterfaces {
+							names = append(names, nameInterface.(string))
+						}
+
+						tx, err := ws.dbConn.Begin()
+						if err != nil {
+							return nil, errorsx.Wrap(err)
+						}
+						defer tx.Rollback()
+
+						people := []*domain.Person{}
+
+						for _, name := range names {
+							person := &domain.Person{Name: name}
+							err = ws.peopleDAL.CreatePerson(tx, person)
+							if err != nil {
+								return nil, errorsx.Wrap(err)
+							}
+
+							people = append(people, person)
+						}
+
+						commitErr := tx.Commit()
+						if commitErr != nil {
+							return nil, errorsx.Wrap(commitErr)
+						}
+
+						return people, nil
+					},
+				},
 				"updateMediaFiles": &graphql.Field{
 					Type:        mediaFilesMapType,
 					Description: "mutate mediafile",
