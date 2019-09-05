@@ -81,6 +81,12 @@ func (pictureMetadata *PictureMetadata) String() string {
 	return string(pictureMetadata.HashValue) + " (" + pictureMetadata.RelativePath + ")"
 }
 
+func (pictureMetadata *PictureMetadata) Clone() MediaFile {
+	clone := new(PictureMetadata)
+	gobClone(pictureMetadata, &clone)
+	return clone
+}
+
 func NewHash(file io.Reader) (HashValue, error) {
 	hasher := sha1.New()
 

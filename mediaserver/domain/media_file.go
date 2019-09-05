@@ -28,4 +28,5 @@ func NewMediaFileInfo(
 
 type MediaFile interface {
 	GetMediaFileInfo() MediaFileInfo
+	Clone() MediaFile
 }

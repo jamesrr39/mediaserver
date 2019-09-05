@@ -11,3 +11,9 @@ func NewVideoFileMetadata(mediaFileInfo MediaFileInfo) *VideoFileMetadata {
 func (pm *VideoFileMetadata) GetMediaFileInfo() MediaFileInfo {
 	return pm.MediaFileInfo
 }
+
+func (pm *VideoFileMetadata) Clone() MediaFile {
+	clone := new(VideoFileMetadata)
+	gobClone(pm, &clone)
+	return clone
+}

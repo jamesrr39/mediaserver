@@ -22,6 +22,13 @@ import (
 	"github.com/jamesrr39/semaphore"
 )
 
+type MediaFileUpdateProperty int64
+
+const (
+	MediaFileUpdatePropertyUnknown MediaFileUpdateProperty = iota
+	MediaFileUpdatePropertyParticipantIDs
+)
+
 type getRecordsInTrackFuncType func(trackSummary *domain.FitFileSummary) (domain.Records, error)
 
 type MediaFilesDAL struct {
@@ -216,8 +223,48 @@ func (dal *MediaFilesDAL) QueueSuggestedLocationJob() {
 	))
 }
 
-func (dal *MediaFilesDAL) Update(mediaFile domain.MediaFile) errorsx.Error {
-	return errorsx.Errorf("not implemented yet")
+func (dal *MediaFilesDAL) Update(tx *sql.Tx, mediaFile domain.MediaFile, properties ...MediaFileUpdateProperty) errorsx.Error {
+	if len(properties) == 0 {
+		return errorsx.Errorf("update: expected at least 1 property to update")
+	}
+
+	existingFile := dal.Get(mediaFile.GetMediaFileInfo().HashValue)
+
+	if existingFile == nil {
+		return errorsx.Wrap(os.ErrNotExist)
+	}
+
+	_, err := tx.Exec(`DELETE FROM people_mediafiles WHERE mediafile_hash = $1`, mediaFile.GetMediaFileInfo().HashValue)
+	if err != nil {
+		return errorsx.Wrap(err)
+	}
+
+	for _, participantID := range mediaFile.GetMediaFileInfo().ParticipantIDs {
+		_, err := tx.Exec(`INSERT INTO people_mediafiles (person_id, mediafile_hash) VALUES ($1, $2)`, participantID, mediaFile.GetMediaFileInfo().HashValue)
+		if err != nil {
+			return errorsx.Wrap(err)
+		}
+	}
+
+	for _, property := range properties {
+		switch property {
+		case MediaFileUpdatePropertyParticipantIDs:
+			switch mFile := existingFile.(type) {
+			case *domain.PictureMetadata:
+				mFile.ParticipantIDs = mediaFile.GetMediaFileInfo().ParticipantIDs
+			case *domain.VideoFileMetadata:
+				mFile.ParticipantIDs = mediaFile.GetMediaFileInfo().ParticipantIDs
+			case *domain.FitFileSummary:
+				mFile.ParticipantIDs = mediaFile.GetMediaFileInfo().ParticipantIDs
+			default:
+				return errorsx.Errorf("unknown file type for mediafile: %T", mFile)
+			}
+		default:
+			return errorsx.Errorf("unrecognised property: %q", property)
+		}
+	}
+
+	return nil
 }
 
 func (dal *MediaFilesDAL) processFile(fs gofs.Fs, profileRun *profile.Run, tx *sql.Tx, path string, fileInfo os.FileInfo) (domain.MediaFile, error) {

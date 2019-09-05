@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"mediaserver/mediaserver/dal"
 	"mediaserver/mediaserver/dal/diskstorage/mediaserverdb"
 	"mediaserver/mediaserver/domain"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/go-chi/chi"
@@ -35,7 +37,7 @@ type tracksDALInterface interface {
 type mediaFilesDALInterface interface {
 	Get(hash domain.HashValue) domain.MediaFile
 	GetAll() []domain.MediaFile
-	Update(mediaFile domain.MediaFile) errorsx.Error
+	Update(tx *sql.Tx, mediaFile domain.MediaFile, properties ...dal.MediaFileUpdateProperty) errorsx.Error
 }
 
 type pepoleDALInterface interface {
@@ -144,26 +146,57 @@ func (ws *GraphQLAPIService) setupMutationType() *graphql.Object {
 							return nil, errorsx.Errorf("couldn't convert 'hashes' arg to []interface (was %T)", params.Args["hashes"])
 						}
 
-						participantIds, ok := params.Args["participantIds"].([]interface{})
+						participantIdsInterface, ok := params.Args["participantIds"].([]interface{})
 						if !ok {
 							return nil, errorsx.Errorf("couldn't convert 'participantIds' arg to []interface (was %T)", params.Args["hashes"])
 						}
 
-						println(participantIds)
+						var participantIds []int64
+						for _, p := range participantIdsInterface {
+							participantIds = append(participantIds, int64(p.(int)))
+						}
 
-						var mediaFiles []domain.MediaFile
+						mediaFilesMap := NewMediaFilesMap()
+
+						tx, err := ws.dbConn.Begin()
+						if err != nil {
+							return nil, errorsx.Wrap(err)
+						}
+						defer tx.Rollback()
 
 						for _, hashAsInterface := range hashes {
 							hash := domain.HashValue(hashAsInterface.(string))
 
-							mediaFile := ws.mediaFilesDAL.Get(hash)
+							mediaFile := ws.mediaFilesDAL.Get(hash).Clone()
 
-							ws.mediaFilesDAL.Update(mediaFile)
+							switch mFile := mediaFile.(type) {
+							case *domain.PictureMetadata:
+								mFile.ParticipantIDs = participantIds
+								mediaFilesMap.Pictures = append(mediaFilesMap.Pictures, mFile)
+							case *domain.VideoFileMetadata:
+								mFile.ParticipantIDs = participantIds
+								mediaFilesMap.Videos = append(mediaFilesMap.Videos, mFile)
+							case *domain.FitFileSummary:
+								mFile.ParticipantIDs = participantIds
+								mediaFilesMap.Tracks = append(mediaFilesMap.Tracks, mFile)
+							default:
+								return nil, errorsx.Errorf("unknown type %T", mFile)
+							}
 
-							mediaFiles = append(mediaFiles, mediaFile)
+							err = ws.mediaFilesDAL.Update(tx, mediaFile, dal.MediaFileUpdatePropertyParticipantIDs)
+							if err != nil {
+								return nil, errorsx.Wrap(err)
+							}
+
 						}
 
-						return mediaFiles, nil
+						commitErr := tx.Commit()
+						if commitErr != nil {
+							return nil, errorsx.Wrap(commitErr)
+						}
+
+						json.NewEncoder(os.Stderr).Encode(mediaFilesMap)
+						return mediaFilesMap, nil
 					},
 				},
 			},
@@ -242,19 +275,19 @@ func (ws *GraphQLAPIService) setupQueryType() *graphql.Object {
 					Description: "get mediafiles",
 					Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 						mediaFiles := ws.mediaFilesDAL.GetAll()
-						mediaFileMap := new(MediaFilesMap)
+						mediaFileMap := NewMediaFilesMap()
 
 						for _, mediaFile := range mediaFiles {
-							info := mediaFile.GetMediaFileInfo()
-							switch info.MediaFileType {
-							case domain.MediaFileTypePicture:
-								mediaFileMap.Pictures = append(mediaFileMap.Pictures, mediaFile.(*domain.PictureMetadata))
-							case domain.MediaFileTypeVideo:
-								mediaFileMap.Videos = append(mediaFileMap.Videos, mediaFile.(*domain.VideoFileMetadata))
-							case domain.MediaFileTypeFitTrack:
-								mediaFileMap.Tracks = append(mediaFileMap.Tracks, mediaFile.(*domain.FitFileSummary))
+							switch mFile := mediaFile.(type) {
+							case *domain.PictureMetadata:
+								mediaFileMap.Pictures = append(mediaFileMap.Pictures, mFile)
+							case *domain.VideoFileMetadata:
+								mediaFileMap.Videos = append(mediaFileMap.Videos, mFile)
+							case *domain.FitFileSummary:
+								mediaFileMap.Tracks = append(mediaFileMap.Tracks, mFile)
 							default:
-								ws.logger.Warn("unknown mediafile type: %v. Hash: %s, relative path: %q", info.MediaFileType, info.HashValue, info.RelativePath)
+								info := mFile.GetMediaFileInfo()
+								return nil, errorsx.Errorf("unknown mediafile type: %v. Hash: %s, relative path: %q", info.MediaFileType, info.HashValue, info.RelativePath)
 							}
 						}
 
@@ -266,9 +299,17 @@ func (ws *GraphQLAPIService) setupQueryType() *graphql.Object {
 }
 
 type MediaFilesMap struct {
-	Pictures []*domain.PictureMetadata
-	Videos   []*domain.VideoFileMetadata
-	Tracks   []*domain.FitFileSummary
+	Pictures []*domain.PictureMetadata   `json:"pictures"`
+	Videos   []*domain.VideoFileMetadata `json:"videos"`
+	Tracks   []*domain.FitFileSummary    `json:"tracks"`
+}
+
+func NewMediaFilesMap() *MediaFilesMap {
+	return &MediaFilesMap{
+		[]*domain.PictureMetadata{},
+		[]*domain.VideoFileMetadata{},
+		[]*domain.FitFileSummary{},
+	}
 }
 
 var (
@@ -320,18 +361,38 @@ var (
 	mediaFileBaseFields = graphql.Fields{
 		"relativePath": &graphql.Field{
 			Type: graphql.String,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				// resolve embedded media file base fields workaround: https://github.com/graphql-go/graphql/issues/170#issuecomment-325242640
+				return (p.Source.(domain.MediaFile)).GetMediaFileInfo().RelativePath, nil
+			},
 		},
 		"hashValue": &graphql.Field{
 			Type: graphql.String,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				// resolve embedded media file base fields workaround: https://github.com/graphql-go/graphql/issues/170#issuecomment-325242640
+				return (p.Source.(domain.MediaFile)).GetMediaFileInfo().HashValue, nil
+			},
 		},
 		"fileType": &graphql.Field{
 			Type: graphql.Int,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				// resolve embedded media file base fields workaround: https://github.com/graphql-go/graphql/issues/170#issuecomment-325242640
+				return (p.Source.(domain.MediaFile)).GetMediaFileInfo().MediaFileType, nil
+			},
 		},
 		"fileSizeBytes": &graphql.Field{
 			Type: graphql.Int,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				// resolve embedded media file base fields workaround: https://github.com/graphql-go/graphql/issues/170#issuecomment-325242640
+				return (p.Source.(domain.MediaFile)).GetMediaFileInfo().FileSizeBytes, nil
+			},
 		},
 		"participantIds": &graphql.Field{
 			Type: graphql.NewList(graphql.Int),
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				// resolve embedded media file base fields workaround: https://github.com/graphql-go/graphql/issues/170#issuecomment-325242640
+				return (p.Source.(domain.MediaFile)).GetMediaFileInfo().ParticipantIDs, nil
+			},
 		},
 		// "e2e415c51bb22f4d6336bd93a71a6d0815d9effd","fileType":3,"fileSizeBytes":7143,"participantIds":[],"startTime":"2019-03-29T10:36:15Z","endTime":"2019-03-29T10:54:22Z","deviceManufacturer":"Garmin","deviceProduct":"","totalDistance":2896.85,"activityBounds":{"latMin":55.600090781226754,"latMax":55.607599038630724,"longMin":12.98206178471446,"longMax":12.998274313285947}
 	}

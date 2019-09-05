@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 	"io/ioutil"
+	"mediaserver/mediaserver/dal"
 	"mediaserver/mediaserver/domain"
 	"mediaserver/mediaserver/testutil"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/jamesrr39/goutil/logpkg"
+	"github.com/jamesrr39/goutil/snapshot"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -46,7 +48,7 @@ func Test_GraphQLAPIService_tracks(t *testing.T) {
 		ws.ServeHTTP(w, r)
 
 		require.Equal(t, http.StatusOK, w.Code)
-		assert.Equal(t, expectedResponse, w.Body.String())
+		snapshot.AssertMatchesSnapshot(t, "query_tracks", w.Body.String())
 	})
 	t.Run("POST application/json", func(t *testing.T) {
 		postBody := bytes.NewBufferString(`{
@@ -58,8 +60,8 @@ func Test_GraphQLAPIService_tracks(t *testing.T) {
 		w := httptest.NewRecorder()
 		ws.ServeHTTP(w, r)
 
-		require.Equal(t, http.StatusOK, w.Code)
-		assert.Equal(t, expectedResponse, w.Body.String())
+		assert.Equal(t, http.StatusOK, w.Code)
+		snapshot.AssertMatchesSnapshot(t, "query_tracks", w.Body.String())
 	})
 	t.Run("POST application/graphql", func(t *testing.T) {
 		postBody := bytes.NewBufferString(`{
@@ -81,12 +83,12 @@ func Test_GraphQLAPIService_tracks(t *testing.T) {
 		ws.ServeHTTP(w, r)
 
 		require.Equal(t, http.StatusOK, w.Code)
-		assert.Equal(t, expectedResponse, w.Body.String())
+		snapshot.AssertMatchesSnapshot(t, "query_tracks", w.Body.String())
 	})
 }
 
-const expectedResponse = `{"data":{"tracks":[{"hash":"abcdef123456","records":[{"altitude":3,"distance":1,"posLat":1.5,"posLong":2.5,"timestamp":"1970-01-01T00:00:01Z"}]}]}}
-`
+// const expectedResponse = `{"data":{"tracks":[{"hash":"abcdef123456","records":[{"altitude":3,"distance":1,"posLat":1.5,"posLong":2.5,"timestamp":"1970-01-01T00:00:01Z"}]}]}}
+// `
 
 type mockTrackDAL struct {
 	GetRecordsFunc func(mediaFile *domain.FitFileSummary) (domain.Records, errorsx.Error)
@@ -99,7 +101,7 @@ func (m *mockTrackDAL) GetRecords(mediaFile *domain.FitFileSummary) (domain.Reco
 type mockMediaFileDAL struct {
 	GetFunc    func(hash domain.HashValue) domain.MediaFile
 	GetAllFunc func() []domain.MediaFile
-	UpdateFunc func(mediaFile domain.MediaFile) errorsx.Error
+	UpdateFunc func(tx *sql.Tx, mediaFile domain.MediaFile, properties ...dal.MediaFileUpdateProperty) errorsx.Error
 }
 
 func (m *mockMediaFileDAL) Get(hash domain.HashValue) domain.MediaFile {
@@ -110,8 +112,8 @@ func (m *mockMediaFileDAL) GetAll() []domain.MediaFile {
 	return m.GetAllFunc()
 }
 
-func (m *mockMediaFileDAL) Update(mediaFile domain.MediaFile) errorsx.Error {
-	return m.UpdateFunc(mediaFile)
+func (m *mockMediaFileDAL) Update(tx *sql.Tx, mediaFile domain.MediaFile, properties ...dal.MediaFileUpdateProperty) errorsx.Error {
+	return m.UpdateFunc(tx, mediaFile, properties...)
 }
 
 type mockPeopleDAL struct {
@@ -153,12 +155,12 @@ func Test_GraphQLAPIService_people(t *testing.T) {
 		ws.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Equal(t, expectedPeopleResponse, w.Body.String())
+		snapshot.AssertMatchesSnapshot(t, "GET_people", w.Body.String())
 	})
 }
 
-const expectedPeopleResponse = `{"data":{"people":[{"id":1,"name":"Test User 1"},{"id":2,"name":"Test User 2"}]}}
-`
+// const expectedPeopleResponse = `{"data":{"people":[{"id":1,"name":"Test User 1"},{"id":2,"name":"Test User 2"}]}}
+// `
 
 func Test_GraphQLAPIService_mediafiles(t *testing.T) {
 	logger := logpkg.NewLogger(ioutil.Discard, logpkg.LogLevelInfo)
@@ -168,7 +170,19 @@ func Test_GraphQLAPIService_mediafiles(t *testing.T) {
 			return []domain.MediaFile{
 				&domain.VideoFileMetadata{
 					MediaFileInfo: domain.MediaFileInfo{
-						RelativePath: "a/b/c.ogv",
+						RelativePath:   "a/b/c.ogv",
+						MediaFileType:  domain.MediaFileTypeVideo,
+						ParticipantIDs: []int64{1, 7},
+						FileSizeBytes:  20,
+					},
+				},
+				&domain.PictureMetadata{
+					MediaFileInfo: domain.MediaFileInfo{
+						RelativePath: "d/e.png",
+					},
+					RawSize: domain.RawSize{
+						Width:  1024,
+						Height: 768,
 					},
 				},
 			}
@@ -179,21 +193,21 @@ func Test_GraphQLAPIService_mediafiles(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("GET", func(t *testing.T) {
-		r, err := http.NewRequest(http.MethodGet, `/?query={mediaFiles{relativePath,participantIds}}`, nil)
+		r, err := http.NewRequest(http.MethodGet, `/?query={mediaFiles{videos{relativePath,participantIds,fileSizeBytes},pictures{relativePath,rawSize{width,height},participantIds}}}`, nil)
 		require.NoError(t, err)
 		w := httptest.NewRecorder()
 		ws.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Equal(t, expectedMediaFilesResponse, w.Body.String())
+		snapshot.AssertMatchesSnapshot(t, "GET_mediafiles", w.Body.String())
 	})
 }
 
-const expectedMediaFilesResponse = `{"data":{"mediaFiles":[{"participantIds":[],"relativePath":"a/b/c.ogv"}]}}
-`
+// const expectedMediaFilesResponse = `{"data":{"mediaFiles":{"pictures":[{"participantIds":[],"rawSize":{"height":768,"width":1024},"relativePath":"d/e.png"}],"videos":[{"fileSizeBytes":20,"participantIds":[1,7],"relativePath":"a/b/c.ogv"}]}}}
+// `
 
 const mutationBody = `mutation {
-	updateMediaFiles(hashes: ["abc"], participantIds: [1, 2]) {hashValue, participantIds}
+	updateMediaFiles(hashes: ["abc"], participantIds: [1, 2]) {pictures{hashValue, participantIds},videos{hashValue, participantIds}}
 }
 `
 
@@ -201,18 +215,22 @@ func Test_mutation(t *testing.T) {
 	logger := logpkg.NewLogger(ioutil.Discard, logpkg.LogLevelInfo)
 
 	mediaFilesDAL := &mockMediaFileDAL{
-		GetAllFunc: func() []domain.MediaFile {
-			return []domain.MediaFile{
-				&domain.VideoFileMetadata{
-					MediaFileInfo: domain.MediaFileInfo{
-						RelativePath: "a/b/c.ogv",
-					},
+		GetFunc: func(hash domain.HashValue) domain.MediaFile {
+			return &domain.VideoFileMetadata{
+				MediaFileInfo: domain.MediaFileInfo{
+					RelativePath: "a/b/c.ogv",
+					HashValue:    hash,
 				},
 			}
 		},
+		UpdateFunc: func(tx *sql.Tx, mediaFile domain.MediaFile, properties ...dal.MediaFileUpdateProperty) errorsx.Error {
+			return nil
+		},
 	}
 
-	ws, err := NewGraphQLAPIService(logger, nil, nil, mediaFilesDAL, nil)
+	testDBConn := testutil.NewTestDB(t)
+
+	ws, err := NewGraphQLAPIService(logger, testDBConn.DBConn, nil, mediaFilesDAL, nil)
 	require.NoError(t, err)
 
 	t.Run("POST", func(t *testing.T) {
@@ -223,6 +241,6 @@ func Test_mutation(t *testing.T) {
 		ws.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Equal(t, expectedMediaFilesResponse, w.Body.String())
+		snapshot.AssertMatchesSnapshot(t, "POST_mutation", w.Body.String())
 	})
 }

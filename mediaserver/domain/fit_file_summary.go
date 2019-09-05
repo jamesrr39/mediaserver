@@ -26,6 +26,12 @@ func (s *FitFileSummary) GetMediaFileInfo() MediaFileInfo {
 	return s.MediaFileInfo
 }
 
+func (s *FitFileSummary) Clone() MediaFile {
+	clone := new(FitFileSummary)
+	gobClone(s, &clone)
+	return clone
+}
+
 // NewFitFileSummary creates a new FitFileSummary
 func NewFitFileSummary(mediaFileInfo MediaFileInfo, startTime, endTime time.Time, deviceManufacturer, deviceProduct string, totalDistance float64, activityBounds *ActivityBounds) *FitFileSummary {
 	return &FitFileSummary{mediaFileInfo, startTime, endTime, deviceManufacturer, deviceProduct, totalDistance, activityBounds}
