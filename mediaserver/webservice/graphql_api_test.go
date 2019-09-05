@@ -246,7 +246,7 @@ func Test_mutation_update_mediafiles(t *testing.T) {
 		ws.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		snapshot.AssertMatchesSnapshot(t, "POST_mutation", w.Body.String())
+		snapshot.AssertMatchesSnapshot(t, "update_mediafiles_mutation", w.Body.String())
 	})
 }
 
@@ -277,6 +277,6 @@ func Test_mutation_create_people(t *testing.T) {
 		ws.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		snapshot.AssertMatchesSnapshot(t, "POST_mutation_create_people", w.Body.String())
+		snapshot.AssertMatchesSnapshot(t, "create_people_mutation", w.Body.String())
 	})
 }

@@ -1,0 +1,3 @@
+{
+	"Value": "{\"data\":{\"mediaFiles\":{\"pictures\":[{\"participantIds\":[],\"rawSize\":{\"height\":768,\"width\":1024},\"relativePath\":\"d/e.png\"}],\"videos\":[{\"fileSizeBytes\":20,\"participantIds\":[1,7],\"relativePath\":\"a/b/c.ogv\"}]}}}\n"
+}
