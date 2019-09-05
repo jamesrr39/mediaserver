@@ -164,9 +164,6 @@ func Test_GraphQLAPIService_people(t *testing.T) {
 	})
 }
 
-// const expectedPeopleResponse = `{"data":{"people":[{"id":1,"name":"Test User 1"},{"id":2,"name":"Test User 2"}]}}
-// `
-
 func Test_GraphQLAPIService_mediafiles(t *testing.T) {
 	logger := logpkg.NewLogger(ioutil.Discard, logpkg.LogLevelInfo)
 
@@ -207,9 +204,6 @@ func Test_GraphQLAPIService_mediafiles(t *testing.T) {
 		snapshot.AssertMatchesSnapshot(t, "GET_mediafiles", w.Body.String())
 	})
 }
-
-// const expectedMediaFilesResponse = `{"data":{"mediaFiles":{"pictures":[{"participantIds":[],"rawSize":{"height":768,"width":1024},"relativePath":"d/e.png"}],"videos":[{"fileSizeBytes":20,"participantIds":[1,7],"relativePath":"a/b/c.ogv"}]}}}
-// `
 
 const mutationBody = `mutation {
 	updateMediaFiles(hashes: ["abc"], participantIds: [1, 2]) {pictures{hashValue, participantIds},videos{hashValue, participantIds}}
@@ -255,9 +249,11 @@ func Test_mutation_create_people(t *testing.T) {
 
 	testDBConn := testutil.NewTestDB(t)
 
+	personCount := int64(1)
 	peopleDAL := &mockPeopleDAL{
 		CreatePersonFunc: func(tx *sql.Tx, person *domain.Person) errorsx.Error {
-			person.ID = 1
+			person.ID = personCount
+			personCount++
 			return nil
 		},
 	}
