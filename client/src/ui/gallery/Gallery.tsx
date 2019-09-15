@@ -13,6 +13,7 @@ import { FilterComponent } from './FilterComponent';
 import { GalleryFilter } from '../../domain/Filter';
 import { InnerGallery } from './InnerGallery';
 import { trackSummariesToTrackDatas } from '../../actions/selectors';
+import { CancellablePromise, makeCancelable } from '../../util/promises';
 
 export type GalleryProps = {
   mediaFiles: MediaFile[];
@@ -49,6 +50,8 @@ class GalleryWrapper extends React.Component<GalleryWrapperProps, GalleryState> 
     galleryFilter: new GalleryFilter(null),
   };
 
+  private fetchRecordsPromise?: CancellablePromise<Map<string, Record[]>>;
+
   componentDidMount() {
     const { mediaFiles, onFilterChangeObservable } = this.props;
     const tracks: FitTrack[] = [];
@@ -68,6 +71,9 @@ class GalleryWrapper extends React.Component<GalleryWrapperProps, GalleryState> 
 
   componentWillUnmount() {
     this.props.onFilterChangeObservable.removeListener(this.filterChangeCallback);
+    if (this.fetchRecordsPromise) {
+     this.fetchRecordsPromise.cancel();
+    }
   }
 
   render() {
@@ -92,7 +98,8 @@ class GalleryWrapper extends React.Component<GalleryWrapperProps, GalleryState> 
   }
 
   private fetchRecords = async (trackSummaries: FitTrack[]) => {
-    const tracksDetails = await this.props.fetchRecordsForTracks(trackSummaries);
+    this.fetchRecordsPromise = makeCancelable(this.props.fetchRecordsForTracks(trackSummaries));
+    const tracksDetails = await this.fetchRecordsPromise.promise;
 
     const trackDatas = trackSummariesToTrackDatas(trackSummaries, tracksDetails, this.props.mediaFileUrlBase);
 

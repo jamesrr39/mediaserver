@@ -140,19 +140,15 @@ type Props = {
 export default class MapComponent extends React.Component<Props> {
   private map: Leaflet.Map | null = null;
 
-  shouldComponentUpdate(nextProps: Props, nextState: {}) {
+  shouldComponentUpdate(nextProps: Props) {
     // TODO: better equality comparison
     const hasChanged = !deepEqual(this.props, nextProps);
-
-    console.log('has changed:', hasChanged)
 
     return hasChanged;
   }
 
   render() {
     const { size, markers, tracks } = this.props;
-
-    console.log('rendering')
 
     return (<div style={size} ref={(el) => this.renderMap(el, markers, tracks)} />);
   }

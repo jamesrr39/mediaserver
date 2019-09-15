@@ -26,7 +26,7 @@ type ComponentState = {
 
 class MediafilesMap extends React.Component<Props, ComponentState> {
   state = {
-    tracks: [],
+    tracks: [] as TrackMapData[],
     filter: new GalleryFilter(null),
   };
 
@@ -52,6 +52,10 @@ class MediafilesMap extends React.Component<Props, ComponentState> {
 
   render() {
     const {mediaFiles, mediaFileUrlBase} = this.props;
+    const {filter} = this.state;
+    const tracks = this.state.tracks.filter(track => {
+      return filter.filter(track.trackSummary);
+    });
 
     const filterProps = {
       initialFilter: this.state.filter,
@@ -61,7 +65,7 @@ class MediafilesMap extends React.Component<Props, ComponentState> {
     };
 
     const mapProps = {
-      tracks: this.state.tracks,
+      tracks,
       mediaFileUrlBase,
       mediaFiles,
     };
