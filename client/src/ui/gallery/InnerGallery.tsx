@@ -1,14 +1,12 @@
 import * as React from 'react';
 import { createCompareTimeTakenFunc } from '../../domain/PictureMetadata';
 
-import MapComponent, { MapMarker, TrackMapData } from '../MapComponent';
-import { SERVER_BASE_URL } from '../../configs';
+import { TrackMapData } from '../MapComponent';
 import { MediaFile } from '../../domain/MediaFile';
-import { MediaFileType } from '../../domain/MediaFileType';
-import { joinUrlFragments } from '../../util/url';
 import { filesToRows, GalleryRow, BuildLinkFunc, Row } from './GalleryRow';
 import { mediaFilesToDateGroups, groupsMapToGroups } from '../../domain/MediaFileGroup';
 import { GalleryProps } from './Gallery';
+import { InnerMap } from './InnerMap';
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
@@ -20,14 +18,14 @@ export type InnerGalleryProps = {
   filterJson: string;
 } & GalleryProps;
 
-const styles = {
-  thumbnail: {
-      margin: '0 10px 10px 0',
-  },
-  mapContainer: {
-    margin: '30px 20px',
-  },
-};
+// const styles = {
+//   thumbnail: {
+//       margin: '0 10px 10px 0',
+//   },
+//   mapContainer: {
+//     margin: '30px 20px',
+//   },
+// };
 
 type InnerGalleryState = {
   lastIndexShown: number,
@@ -70,57 +68,68 @@ export class InnerGallery extends React.Component<InnerGalleryProps, InnerGaller
     );
   }
 
-  private showMap = (event: React.MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault();
-    this.setState(state => ({
-      ...state,
-      showMap: true,
-    }));
-  }
+  // private showMap = (event: React.MouseEvent<HTMLAnchorElement>) => {
+  //   event.preventDefault();
+  //   this.setState(state => ({
+  //     ...state,
+  //     showMap: true,
+  //   }));
+  // }
 
-  private hideMap = (event: React.MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault();
-    this.setState(state => ({
-      ...state,
-      showMap: false,
-    }));
-  }
+  // private hideMap = (event: React.MouseEvent<HTMLAnchorElement>) => {
+  //   event.preventDefault();
+  //   this.setState(state => ({
+  //     ...state,
+  //     showMap: false,
+  //   }));
+  // }
 
   private renderMap = () => {
-    const { showMap, mediaFiles, tracks } = this.props;
+    const { tracks, mediaFileUrlBase, mediaFiles } = this.props;
 
-    if (!showMap) {
-      return (
-        <div style={styles.mapContainer}>
-          <a href="#" onClick={this.showMap}>Show Map</a>
-        </div>
-      );
-    }
-
-    const markers = this.getMarkers(mediaFiles);
-
-    if (markers.length === 0 && tracks.length === 0) {
-      return null;
-    }
-
-    const mapProps = {
-      size: {
-        width: '100%',
-        height: '600px',
-      },
-      markers,
+    const props = {
       tracks,
-      extraLatLongMapPadding: 0.001,
-      zoomControl: true,
+      mediaFileUrlBase,
+      mediaFiles,
     };
 
-    return (
-      <div style={styles.mapContainer}>
-        <a href="#" onClick={this.hideMap}>Hide Map</a>
-        <MapComponent {...mapProps} />
-      </div>
-    );
+    return <InnerMap {...props} />;
   }
+  // private renderMap = () => {
+  //   const { showMap, mediaFiles, tracks } = this.props;
+
+  //   if (!showMap) {
+  //     return (
+  //       <div style={styles.mapContainer}>
+  //         <a href="#" onClick={this.showMap}>Show Map</a>
+  //       </div>
+  //     );
+  //   }
+
+  //   const markers = this.getMarkers(mediaFiles);
+
+  //   if (markers.length === 0 && tracks.length === 0) {
+  //     return null;
+  //   }
+
+  //   const mapProps = {
+  //     size: {
+  //       width: '100%',
+  //       height: '600px',
+  //     },
+  //     markers,
+  //     tracks,
+  //     extraLatLongMapPadding: 0.001,
+  //     zoomControl: true,
+  //   };
+
+  //   return (
+  //     <div style={styles.mapContainer}>
+  //       <a href="#" onClick={this.hideMap}>Hide Map</a>
+  //       <MapComponent {...mapProps} />
+  //     </div>
+  //   );
+  // }
 
   private renderThumbnails = () => {
     const {scrollObservable, onClickThumbnail, mediaFileUrlBase, filterJson, getRowWidth} = this.props;
@@ -154,39 +163,39 @@ export class InnerGallery extends React.Component<InnerGalleryProps, InnerGaller
     });
   }
 
-  private getMarkers = (mediaFiles: MediaFile[]) => {
-    const markers: MapMarker[] = [];
-    mediaFiles.forEach((metadata) => {
-      const location = metadata.getLocation();
-      if (!location) {
-        return;
-      }
+  // private getMarkers = (mediaFiles: MediaFile[]) => {
+  //   const markers: MapMarker[] = [];
+  //   mediaFiles.forEach((metadata) => {
+  //     const location = metadata.getLocation();
+  //     if (!location) {
+  //       return;
+  //     }
 
-      const markerData: MapMarker = {
-        location,
-      };
+  //     const markerData: MapMarker = {
+  //       location,
+  //     };
 
-      if (this.props.mediaFileUrlBase) {
-        switch (metadata.fileType) {
-          case MediaFileType.Picture:
-            const linkUrl = `#${this.props.mediaFileUrlBase}/${metadata.hashValue}`;
+  //     if (this.props.mediaFileUrlBase) {
+  //       switch (metadata.fileType) {
+  //         case MediaFileType.Picture:
+  //           const linkUrl = `#${this.props.mediaFileUrlBase}/${metadata.hashValue}`;
 
-            markerData.popupData = {
-              name: metadata.getName(),
-              imagePreviewUrl: joinUrlFragments(SERVER_BASE_URL, 'picture', metadata.hashValue),
-              linkUrl,
-              pictureRawSize: metadata.rawSize,
-            };
-            break;
-          default:
-            // do nothing
-        }
-      }
-      markers.push(markerData);
-    });
+  //           markerData.popupData = {
+  //             name: metadata.getName(),
+  //             imagePreviewUrl: joinUrlFragments(SERVER_BASE_URL, 'picture', metadata.hashValue),
+  //             linkUrl,
+  //             pictureRawSize: metadata.rawSize,
+  //           };
+  //           break;
+  //         default:
+  //           // do nothing
+  //       }
+  //     }
+  //     markers.push(markerData);
+  //   });
 
-    return markers;
-  }
+  //   return markers;
+  // }
 
   private onScroll = () => {
     const {lastIndexShown} = this.state;

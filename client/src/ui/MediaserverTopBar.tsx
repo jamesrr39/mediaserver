@@ -22,6 +22,7 @@ export default class MediaserverTopBar extends React.Component<Props> {
 
     return (
       <div style={styles.container}>
+        <Link to="/map" style={styles.linkContainer}>Map</Link>
         <Link to="/gallery" style={styles.linkContainer}>Gallery</Link>
         <Link to="/collections" style={styles.linkContainer}>Collections</Link>
         {child}

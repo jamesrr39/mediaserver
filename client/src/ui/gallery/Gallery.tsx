@@ -12,6 +12,7 @@ import { fetchRecordsForTracks } from '../../actions/mediaFileActions';
 import { FilterComponent } from './FilterComponent';
 import { GalleryFilter } from '../../domain/Filter';
 import { InnerGallery } from './InnerGallery';
+import { trackSummariesToTrackDatas } from '../../actions/selectors';
 
 export type GalleryProps = {
   mediaFiles: MediaFile[];
@@ -43,7 +44,7 @@ type GalleryWrapperProps = {
 
 class GalleryWrapper extends React.Component<GalleryWrapperProps, GalleryState> {
   state = {
-    showMap: true,
+    showMap: this.props.showMap || false,
     tracks: [],
     galleryFilter: new GalleryFilter(null),
   };
@@ -93,22 +94,7 @@ class GalleryWrapper extends React.Component<GalleryWrapperProps, GalleryState> 
   private fetchRecords = async (trackSummaries: FitTrack[]) => {
     const tracksDetails = await this.props.fetchRecordsForTracks(trackSummaries);
 
-    const trackDatas = trackSummaries.map(trackSummary => {
-      const records = tracksDetails.get(trackSummary.hashValue);
-      if (!records) {
-        throw new Error(`track details not found for track ${trackSummary.hashValue} (${trackSummary.relativePath})`);
-      }
-
-      return {
-        trackSummary,
-        activityBounds: trackSummary.activityBounds,
-        points: records.map(record => ({
-          lat: record.posLat,
-          lon: record.posLong,
-        })),
-        openTrackUrl: this.props.mediaFileUrlBase,
-      };
-    });
+    const trackDatas = trackSummariesToTrackDatas(trackSummaries, tracksDetails, this.props.mediaFileUrlBase);
 
     this.setState(state => ({
       ...state,

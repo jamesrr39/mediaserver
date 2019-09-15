@@ -22,6 +22,7 @@ import UploadProgressComponent from './upload/UploadProgressComponent';
 import { gallerySortingFunc } from './gallery/Gallery';
 import { filterFromJson } from '../domain/Filter';
 import { LoadingStatus } from '../domain/LoadingStatus';
+import MediafilesMap from './MediafilesMap';
 
 type CollectionViewRouteParams = {
   identifier: string;
@@ -200,6 +201,14 @@ class MediaServer extends React.Component<MediaServerProps> {
 
   renderAllPicturesGallery = () =>  <AllPicturesGallery />;
 
+  renderMap = () => {
+    const props = {
+      mediaFileUrlBase: '/gallery/detail',
+    };
+
+    return <MediafilesMap {...props} />;
+  }
+
   render() {
     if (this.props.loadingStatus === LoadingStatus.IN_PROGRESS) {
       return <p>Loading...</p>;
@@ -234,6 +243,7 @@ class MediaServer extends React.Component<MediaServerProps> {
               exact={true}
               render={() => withNavBar(this.renderCollectionsComponent(), <UploadComponent />)}
             />
+            <Route path="/map" render={() => withNavBar(this.renderMap(), <UploadComponent />)} />
             <Route
               path="/gallery"
               render={() => withNavBar(this.renderAllPicturesGallery(), <UploadComponent />)}

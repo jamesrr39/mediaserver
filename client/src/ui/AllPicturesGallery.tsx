@@ -15,7 +15,7 @@ class AllPicturesGallery extends React.Component<GalleryProps> {
     const props = {
       mediaFiles: this.props.mediaFiles,
       mediaFileUrlBase: '/gallery/detail',
-      showMap: true,
+      showMap: false,
       getRowWidth: () => getScreenWidth(),
     };
 

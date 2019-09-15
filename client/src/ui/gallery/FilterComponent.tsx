@@ -45,8 +45,18 @@ export class FilterComponent extends React.Component<Props, ComponentState> {
     showEditFilter: false,
   };
 
-  componentDidUpdate() {
-    this.props.onFilterChange(this.getFilter());
+  componentDidUpdate(prevProps: Props, prevState: ComponentState) {
+    const {state} = this;
+    const hasChanged = (
+      state.startDateValue.getTime() !== prevState.startDateValue.getTime() ||
+      state.endDateValue.getTime() !== prevState.endDateValue.getTime() ||
+      state.dateFilterEnabled !== prevState.dateFilterEnabled ||
+      state.includeFilesWithoutDates !== prevState.includeFilesWithoutDates
+    );
+
+    if (hasChanged) {
+      this.props.onFilterChange(this.getFilter());
+    }
   }
 
   render() {
