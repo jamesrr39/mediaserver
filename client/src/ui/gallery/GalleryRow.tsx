@@ -30,10 +30,11 @@ type MediaFileWithSize = {
     size: Size,
 };
 
-type GroupWithSizes = {
-    name: string,
-    mediaFiles: MediaFileWithSize[],
-};
+interface GroupWithSizes {
+    name: string;
+    mediaFiles: MediaFileWithSize[];
+    value: number; // higher = sorted first
+}
 
 type Props = {
     row: Row;
@@ -167,9 +168,6 @@ export class GalleryRow extends React.Component<Props> {
     }
 }
 
-// const THUMBNAIL_HEIGHT_LOWER_BOUND = 170;
-// const THUMBNAIL_HEIGHT_UPPER_BOUND = 230;
-
 export function filesToRows(rowSizePx: number, mediaFileGroups: MediaFileGroup[]): Row[] {
     const rows: Row[] = [];
     let currentRow: GroupWithSizes[] = [];
@@ -179,7 +177,7 @@ export function filesToRows(rowSizePx: number, mediaFileGroups: MediaFileGroup[]
         return prev + curr.size.width + leftMargin;
     };
     const groupSortingFunc = (a: GroupWithSizes, b: GroupWithSizes) => {
-        return a.name < b.name ? 1 : -1;
+        return a.value < b.value ? 1 : -1;
     };
 
     mediaFileGroups.forEach(group => {
@@ -191,7 +189,7 @@ export function filesToRows(rowSizePx: number, mediaFileGroups: MediaFileGroup[]
             groupWidthWithMargin += GALLERY_GROUP_LEFT_MARGIN_PX;
         }
 
-        const thumbnailGroup = {mediaFiles: thumbnails, name: group.name};
+        const thumbnailGroup = {mediaFiles: thumbnails, name: group.name, value: group.value};
 
         const shouldBeInNewRow = (groupWidthWithMargin + widthSoFar) >= rowSizePx;
 

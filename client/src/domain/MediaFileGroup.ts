@@ -3,10 +3,11 @@ import { MediaFile } from './MediaFile';
 export type MediaFileGroup = {
     name: string;
     mediaFiles: MediaFile[];
+    value: number; // higher = sorted first
 };
 
 export function mediaFilesToDateGroups(mediaFiles: MediaFile[]) {
-    const groupsMap = new Map<string, MediaFile[]>();
+    const groupsMap = new Map<string, {mediaFiles: MediaFile[], value: number}>();
     mediaFiles.forEach(mediaFile => {
         const timeTaken = mediaFile.getTimeTaken();
         let dateAsString = 'unknown';
@@ -16,19 +17,21 @@ export function mediaFilesToDateGroups(mediaFiles: MediaFile[]) {
 
         let group = groupsMap.get(dateAsString);
         if (!group) {
-            group = [];
+            const startOfDate = timeTaken ? timeTaken.getTime() : 0;
+            group = {mediaFiles: [], value: startOfDate};
             groupsMap.set(dateAsString, group);
         }
-        group.push(mediaFile);
+        group.mediaFiles.push(mediaFile);
     });
 
     return groupsMap;
 }
 
-export function groupsMapToGroups(groupsMap: Map<string, MediaFile[]>) {
+export function groupsMapToGroups(groupsMap: Map<string, {value: number, mediaFiles: MediaFile[]}>) {
     const groups: MediaFileGroup[] = [];
-    groupsMap.forEach((mediaFiles, name) => {
-        groups.push({name, mediaFiles});
+    groupsMap.forEach((group, name) => {
+        const {mediaFiles, value} = group;
+        groups.push({name, mediaFiles, value});
     });
     return groups;
 }
