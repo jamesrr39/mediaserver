@@ -3,7 +3,7 @@ import { createCompareTimeTakenFunc } from '../../domain/PictureMetadata';
 
 import { TrackMapData } from '../MapComponent';
 import { MediaFile } from '../../domain/MediaFile';
-import { filesToRows, GalleryRow, BuildLinkFunc, Row } from './GalleryRow';
+import { filesToRows, GalleryRow, BuildLinkFunc, Row, SelectThumbnailEventInfo } from './GalleryRow';
 import { mediaFilesToDateGroups, groupsMapToGroups } from '../../domain/MediaFileGroup';
 import { GalleryProps } from './Gallery';
 import { InnerMap } from './InnerMap';
@@ -30,12 +30,14 @@ export type InnerGalleryProps = {
 type InnerGalleryState = {
   lastIndexShown: number,
   rows: Row[],
+  selectedFiles: MediaFile[],
 };
 
 export class InnerGallery extends React.Component<InnerGalleryProps, InnerGalleryState> {
   state = {
     lastIndexShown: 0,
-    rows: []
+    rows: [],
+    selectedFiles: [],
   };
   
   componentDidMount() {
@@ -144,7 +146,7 @@ export class InnerGallery extends React.Component<InnerGalleryProps, InnerGaller
       };
     }
 
-    return rows.map((row, index) => {
+    const rowsHtml = rows.map((row, index) => {
       const {lastIndexShown} = this.state;
       if (index > (lastIndexShown + ROWS_IN_INCREMENT)) {
         // don't render anything below the cut
@@ -157,10 +159,46 @@ export class InnerGallery extends React.Component<InnerGalleryProps, InnerGaller
         onClickThumbnail,
         buildLink,
         getRowWidth,
+        onSelectThumbnail: (mediaFile: MediaFile, eventInfo: SelectThumbnailEventInfo) => {
+          if (eventInfo.selected) {
+            this.setState(state => ({
+              ...state,
+              selectedFiles: state.selectedFiles.concat([mediaFile]),
+            }));
+            return;
+          }
+
+          this.setState(state => {
+            const copyOfSelectedFiles = state.selectedFiles.concat([]);
+            const indexOfDeletedFile = state.selectedFiles.findIndex((mediaFileInList: MediaFile) => {
+              return (mediaFile.hashValue === mediaFileInList.hashValue);
+            });
+            copyOfSelectedFiles.splice(indexOfDeletedFile, 1);
+            
+            return {
+              ...state,
+              selectedFiles: copyOfSelectedFiles,
+            };
+          });
+        },
       };
 
       return <GalleryRow key={index} {...rowProps} />;
     });
+
+    return (
+      <>
+        <div>{this.renderEditBox()}</div>
+        <div>{rowsHtml}</div>
+      </>
+    );
+  }
+
+  private renderEditBox() {
+    return (
+      <>
+        {this.state.selectedFiles.length} files selected
+      </>);
   }
 
   // private getMarkers = (mediaFiles: MediaFile[]) => {

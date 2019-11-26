@@ -15,6 +15,7 @@ const styles = {
 
 type Props = {
   trackSummary: FitTrack;
+  ts: number;
   fetchRecordsForTracks: (trackSummaries: FitTrack[]) => Promise<Map<string, Record[]>>
 };
 
@@ -41,6 +42,11 @@ class TrackModalContent extends React.Component<Props, State> {
     }
   }
 
+  // shouldComponentUpdate(nextProps: Props, nextState: State) {
+  //   console.log('should component update?');
+  //   return true;
+  // }
+
   fetchRecords = async () => {
     const {trackSummary} = this.props;
     const trackRecordsMap = await this.props.fetchRecordsForTracks([trackSummary]);
@@ -57,7 +63,7 @@ class TrackModalContent extends React.Component<Props, State> {
 
   render() {
     const { trackSummary } = this.props;
-
+    console.log('render (TrackModalContent)')
     const map = this.renderRecordInformation();
 
     const opts = {
@@ -127,6 +133,8 @@ class TrackModalContent extends React.Component<Props, State> {
   private renderMap(trackRecords: Record[]) {
     const { trackSummary } = this.props;
 
+    console.log('renderMap')
+
     const mapProps = {
       size: {
         width: '100%',
@@ -141,6 +149,7 @@ class TrackModalContent extends React.Component<Props, State> {
         activityBounds: trackSummary.activityBounds,
       }],
       zoomControl: true,
+      ts: this.props.ts,
     };
 
     return <MapComponent {...mapProps} />;

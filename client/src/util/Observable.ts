@@ -22,6 +22,10 @@ export class DebouncedObservable<T> {
   removeListener(cb: Callback<T>) {
     const i = this.callbacks.indexOf(cb);
 
+    if (i === -1) {
+      throw new Error('callback being removed is not in list of callbacks');
+    }
+
     this.callbacks.splice(i, 1);
   }
 

@@ -23,6 +23,10 @@ const styles = {
     },
 };
 
+export type SelectThumbnailEventInfo = {
+    selected: boolean;
+};
+
 export type BuildLinkFunc = (mediaFile: MediaFile) => string;
 
 type MediaFileWithSize = {
@@ -41,6 +45,7 @@ type Props = {
     scrollObservable: Observable<{}>;
     onClickThumbnail?: (mediaFile: MediaFile) => void;
     buildLink?: BuildLinkFunc;
+    onSelectThumbnail?: (mediaFile: MediaFile, eventInfo: SelectThumbnailEventInfo) => void;
     getRowWidth(): number;
 };
 
@@ -137,7 +142,7 @@ export class GalleryRow extends React.Component<Props> {
 
     private mediaFileWithSizeToThumbnail = (mediaFileWithSize: MediaFileWithSize) => {
         const {mediaFile, size} = mediaFileWithSize;
-        const {scrollObservable, buildLink, onClickThumbnail} = this.props;
+        const {scrollObservable, buildLink, onClickThumbnail, onSelectThumbnail} = this.props;
 
         const thumbnailProps = {
             size,
@@ -164,7 +169,17 @@ export class GalleryRow extends React.Component<Props> {
             thumbnail = <a href="#" onClick={onClickThumbnailCb}>{thumbnail}</a>;
         }
 
-        return thumbnail;
+        const wrapper = onSelectThumbnail ? 
+            <>
+                <input
+                    type="checkbox" 
+                    onChange={(event) => onSelectThumbnail(mediaFile, {selected: event.target.checked})} 
+                />
+                {thumbnail}
+            </> : 
+            thumbnail;
+
+        return wrapper;
     }
 }
 

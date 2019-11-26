@@ -99,11 +99,11 @@ const generateThumbnailStyle = (mediaFile: MediaFile, isLoaded: boolean) => {
   };
 };
 
-export interface ThumbnailProps {
+export type ThumbnailProps = {
   mediaFile: MediaFile;
   scrollObservable: Observable<{}>;
   size: Size;
-}
+};
 
 type ThumbnailState = {
   isImageQueued: boolean;
@@ -134,16 +134,15 @@ export class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
 
   render() {
     const { mediaFile, size } = this.props;
-    const thumbnailStyle = generateThumbnailStyle(
-      mediaFile, this.state.isImageQueued);
 
     if (!(this.state.isImageQueued)) {
+      const thumbnailStyle = generateThumbnailStyle(
+        mediaFile, this.state.isImageQueued);
+
       return (
         <div style={thumbnailStyle} ref={el => this.element = el} />
       );
     }
-
-    // const { width, height } = getSizeForThumbnail(mediaFile);
 
     switch (mediaFile.fileType) {
       case MediaFileType.Picture: {

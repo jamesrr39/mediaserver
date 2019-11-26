@@ -7,6 +7,7 @@ import { MediaFileJSON, fromJSON } from '../domain/deserialise';
 import { FitTrack, Record } from '../domain/FitTrack';
 import { State } from '../reducers/fileReducer';
 import { Person } from '../domain/People';
+import { nameForMediaFileType } from '../domain/MediaFileType';
 
 export enum FilesActionTypes {
   FETCH_MEDIA_FILES,
@@ -17,6 +18,12 @@ export enum FilesActionTypes {
   TRACK_RECORDS_FETCHED_ACTION,
   PEOPLE_FETCHED_ACTION,
   PARTICIPANT_ADDED_TO_MEDIAFILE,
+  PEOPLE_CREATED,
+}
+
+export interface PersonCreatedAction extends Action {
+  type: FilesActionTypes.PEOPLE_CREATED;
+  people: Person[];
 }
 
 export interface PicturesMetadataFetchFailedAction extends Action {
@@ -66,7 +73,8 @@ export type MediaserverAction = (
   QueueForUploadAction |
   PeopleFetchedAction |
   ParticipantAddedToMediaFile |
-  PicturesMetadataFetchFailedAction
+  PicturesMetadataFetchFailedAction | 
+  PersonCreatedAction
 );
 
 type TrackJSON = {
@@ -259,12 +267,54 @@ export function fetchAllPeople() {
     };
 }
 
-export function addParticipantToMediaFile(mediaFile: MediaFile, participant: Person) {
+export function createPerson(people: Person[]) {
   return async(dispatch: (action: MediaserverAction) => void) => {
-    // TODO: Check if new user
-    // TODO: add user to track on BE.
+    const names = people.map(person => person.name);
+
     const response = await fetch(`${SERVER_BASE_URL}/api/graphql?query={people{id,name}}`, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/graphql',
+      },
+      body: `mutation {
+        createPeople(names: ${JSON.stringify(names)}) {id}
+      }`,
+    });
+
+    if (!response.ok) {
+      throw new Error('failed to save person');
+    }
+
+    const json = await response.json();
+
+    people.forEach((person, index) => {
+      person.id = json.data.createPeople[index].id;
+    });
+
+    dispatch({
+      type: FilesActionTypes.PEOPLE_CREATED,
+      people,
+    });
+  };
+}
+
+export function addParticipantToMediaFile(mediaFile: MediaFile, participant: Person) {
+  return async(dispatch: (action: MediaserverAction) => void) => {
+    if (participant.id === 0) {
+      await createPerson([participant])(dispatch);
+    }
+
+    const participantIds = mediaFile.participantIds.concat(participant.id);
+
+    const response = await fetch(`${SERVER_BASE_URL}/api/graphql?query={people{id,name}}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/graphql',
+      },
+      body: `mutation {
+        updateMediaFiles(hashes: ["${mediaFile.hashValue}"], participantIds: ${JSON.stringify(participantIds)})
+        {${nameForMediaFileType(mediaFile.fileType)}{participantIds}}
+      }`,
     });
 
     if (!response.ok) {
@@ -277,4 +327,4 @@ export function addParticipantToMediaFile(mediaFile: MediaFile, participant: Per
       participant,
     });
   };
-}
+};

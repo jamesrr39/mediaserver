@@ -74,7 +74,7 @@ func NewPictureMetadataAndPictureFromBytes(file io.ReadSeeker, relativePath stri
 		}
 	}
 
-	return NewPictureMetadata(hash, relativePath, fileLen, exifData, RawSizeFromImage(picture), format, nil), picture, nil
+	return NewPictureMetadata(hash, relativePath, fileLen, exifData, RawSizeFromImage(picture), format, []int64{}), picture, nil
 }
 
 func (pictureMetadata *PictureMetadata) String() string {

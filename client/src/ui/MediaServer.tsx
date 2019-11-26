@@ -283,7 +283,8 @@ function getLoadingStatus(state: State) {
 }
 
 function mapStateToProps(state: State) {
-  const { mediaFiles, scrollObservable, mediaFilesMap: mediaFilesMap } = state.mediaFilesReducer;
+  const { mediaFiles, mediaFilesMap: mediaFilesMap } = state.mediaFilesReducer;
+  const { scrollObservable } = state.dependencyInjection;
   const { customCollections } = state.collectionsReducer;
 
   const loadingStatus = getLoadingStatus(state);

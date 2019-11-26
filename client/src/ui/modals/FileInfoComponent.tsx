@@ -1,16 +1,23 @@
 import * as React from 'react';
-import { SMALL_SCREEN_WIDTH } from '../util/screen_size';
-import MapComponent, { newDivIcon } from './MapComponent';
-import { MediaFile } from '../domain/MediaFile';
+import { SMALL_SCREEN_WIDTH } from '../../util/screen_size';
+import MapComponent, { newDivIcon } from '../MapComponent';
+import { MediaFile } from '../../domain/MediaFile';
 import CreateableSelect from 'react-select/creatable';
 import { ValueType } from 'react-select/src/types';
 import { connect } from 'react-redux';
-import { State, PeopleMap } from '../reducers/fileReducer';
-import { Person } from '../domain/People';
+import { State, PeopleMap } from '../../reducers/fileReducer';
+import { Person } from '../../domain/People';
+import { addParticipantToMediaFile } from '../../actions/mediaFileActions';
 
 export const INFO_CONTAINER_WIDTH = SMALL_SCREEN_WIDTH;
 
 type SelectedOption = {value: string, label: string};
+
+const styles = {
+  selectStyles: {
+    color: 'black',
+  },
+};
 
 const mapContainerSize = {
   width: `${INFO_CONTAINER_WIDTH}px`,
@@ -21,11 +28,14 @@ type Props = {
   mediaFile: MediaFile;
   people: Person[];
   peopleMap: PeopleMap;
+  addParticipantToMediaFile: (mediaFile: MediaFile, participant: Person) => void;
 };
 
-class PictureInfoComponent extends React.Component<Props> {
+class FileInfoComponent extends React.Component<Props> {
   render() {
     const { mediaFile, people, peopleMap } = this.props;
+
+    console.log('mediafile:', mediaFile)
 
     const dateTaken = mediaFile.getTimeTaken();
     const timeTakenText = dateTaken ? dateTaken.toUTCString() : 'Unknown Date';
@@ -60,13 +70,15 @@ class PictureInfoComponent extends React.Component<Props> {
         <p>{mediaFile.getName()}</p>
         <p>{timeTakenText}</p>
         <ul>
-          {participantNames.map(participantName => <li>{participantName}</li>)}
+          {participantNames.map((participantName, index) => <li key={index}>{participantName}</li>)}
           <li>
             Tag someone who was here
-            <CreateableSelect
-              options={peopleOptions} 
-              onChange={(selected) => this.onChoosePerson(selected)}
-            />
+            <span style={styles.selectStyles}>
+              <CreateableSelect
+                options={peopleOptions} 
+                onChange={(selected) => this.onChoosePerson(selected)}
+              />
+            </span>
           </li>
         </ul>
         {mapContainer}
@@ -85,8 +97,15 @@ class PictureInfoComponent extends React.Component<Props> {
     const attachPersonToMediaFile = (selected: SelectedOption) => {
       const id = parseInt(selected.value, 10);
 
-      const person = peopleMap.get(id);
-      console.log(selected, person);
+      let person = peopleMap.get(id);
+      if (!person) {
+        person = {
+          id: 0,
+          name: selected.value,
+        };
+      }
+
+      this.props.addParticipantToMediaFile(this.props.mediaFile, person);
     };
 
     if (selected instanceof Array) {
@@ -97,9 +116,11 @@ class PictureInfoComponent extends React.Component<Props> {
   }
 }
 
-export default connect((state: State) => {
+function mapStateToProps(state: State) {
   return {
     people: state.mediaFilesReducer.people,
     peopleMap: state.mediaFilesReducer.peopleMap,
   };
-})(PictureInfoComponent);
+}
+
+export default connect(mapStateToProps, { addParticipantToMediaFile })(FileInfoComponent);

@@ -165,17 +165,24 @@ class GalleryWithFilter extends React.Component<GalleryProps> {
       onFilterChangeObservable: this.onFilterChangeObservable,
     };
 
+    const wrapperStyles = {
+      height: '400px',
+      // overflowY: 'scroll' as 'scroll',
+    };
+
     return (
       <div>
         <FilterComponent {...filterComponentProps} />
-        <GalleryWrapper {...innerGalleryProps} />
+        <div style={wrapperStyles}>
+          <GalleryWrapper {...innerGalleryProps} />
+        </div>
       </div>
     );
   }
 }
 
 function mapStateToProps(state: State) {
-  const { scrollObservable } = state.mediaFilesReducer;
+  const { scrollObservable } = state.dependencyInjection;
 
   return {
     scrollObservable,

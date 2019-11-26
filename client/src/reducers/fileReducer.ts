@@ -14,16 +14,16 @@ import { Person } from '../domain/People';
 import { LoadingStatus } from '../domain/LoadingStatus';
 
 const scrollObservable = new DebouncedObservable<{}>(150);
+const resizeObservable = new DebouncedObservable<{}>(150);
 
 window.addEventListener('scroll', (thing) => scrollObservable.triggerEvent(thing));
-window.addEventListener('resize', (thing) => scrollObservable.triggerEvent(thing));
+window.addEventListener('resize', (thing) => resizeObservable.triggerEvent(thing));
 
 export type PeopleMap = Map<number, Person>;
 
 type MediaFilesState = {
   loadingStatus: LoadingStatus,
   mediaFiles: MediaFile[],
-  scrollObservable: Observable<{}>,
   mediaFilesMap: Map<string, MediaFile>,
   uploadQueue: FileQueue,
   trackRecordsMap: Map<string, Promise<Record[]>>,
@@ -31,10 +31,16 @@ type MediaFilesState = {
   peopleMap: PeopleMap,
 };
 
+type DIState = {
+  scrollObservable: Observable<{}>,
+  resizeObservable: Observable<{}>,
+};
+
 export type State = {
   mediaFilesReducer: MediaFilesState,
   collectionsReducer: CollectionReducerState,
   notificationsReducer: NotificationsState,
+  dependencyInjection: DIState,
 };
 
 const maxConcurrentUploads = 2;
@@ -42,7 +48,6 @@ const maxConcurrentUploads = 2;
 const mediaFilesInitialState = {
   loadingStatus: LoadingStatus.NOT_STARTED,
   mediaFiles: [],
-  scrollObservable,
   mediaFilesMap: new Map<string, MediaFile>(),
   uploadQueue: new FileQueue(maxConcurrentUploads),
   trackRecordsMap: new Map<string, Promise<Record[]>>(),
@@ -89,7 +94,7 @@ function mediaFilesReducer(
         ...state,
         trackRecordsMap: newMap,
       };
-    case FilesActionTypes.PEOPLE_FETCHED_ACTION:
+    case FilesActionTypes.PEOPLE_FETCHED_ACTION: {
       const {people} = action;
       const peopleMap = new Map<number, Person>();
       people.forEach(person => {
@@ -101,6 +106,30 @@ function mediaFilesReducer(
         people,
         peopleMap,
       };
+    }
+    case FilesActionTypes.PARTICIPANT_ADDED_TO_MEDIAFILE:
+      const {mediaFile} = action;
+      const indexOfExistingFile = state.mediaFiles.findIndex(
+        fileInList => fileInList.hashValue === mediaFile.hashValue
+      );
+      const mediaFiles = state.mediaFiles.concat([]); // copy
+      mediaFiles[indexOfExistingFile] = mediaFile;
+
+      state.mediaFilesMap.set(mediaFile.hashValue, mediaFile);
+
+      return {
+        ...state,
+        mediaFiles,
+      };
+    case FilesActionTypes.PEOPLE_CREATED: {
+      const {people} = action;
+
+      people.forEach(person => state.peopleMap.set(person.id, person));
+      return {
+        ...state,
+        people: state.people.concat(people),
+      };
+    }
     default:
       return state;
   }
@@ -148,8 +177,13 @@ function collectionsReducer(state: CollectionReducerState = collectionInitialSta
   }
 }
 
+function dependencyInjection(state: DIState = {scrollObservable, resizeObservable}) {
+  return state;
+}
+
 export default combineReducers({
   mediaFilesReducer,
   collectionsReducer,
   notificationsReducer,
+  dependencyInjection,
 });

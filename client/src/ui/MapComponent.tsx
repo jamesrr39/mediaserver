@@ -9,6 +9,9 @@ import { joinUrlFragments } from '../util/url';
 import markerIcon from '../../node_modules/leaflet/dist/images/marker-icon.png';
 import markerShadow from '../../node_modules/leaflet/dist/images/marker-shadow.png';
 import { deepEqual } from '../util/equal';
+import { Observable } from '../util/Observable';
+import { connect } from 'react-redux';
+import { State } from '../reducers/fileReducer';
 
 const StartIcon = Leaflet.Icon.extend({
   createIcon: () => {
@@ -135,9 +138,10 @@ type Props = {
   tracks?: TrackMapData[],
   extraLatLongMapPadding?: number,
   zoomControl: boolean,
+  resizeObservable: Observable<{}>,
 };
 
-export default class MapComponent extends React.Component<Props> {
+class MapComponent extends React.Component<Props> {
   private map: Leaflet.Map | null = null;
 
   shouldComponentUpdate(nextProps: Props) {
@@ -145,6 +149,14 @@ export default class MapComponent extends React.Component<Props> {
     const hasChanged = !deepEqual(this.props, nextProps);
 
     return hasChanged;
+  }
+
+  componentDidMount() {
+    this.props.resizeObservable.addListener(this.onResize);
+  }
+
+  componentWillUnmount() {
+    this.props.resizeObservable.removeListener(this.onResize);
   }
 
   render() {
@@ -164,6 +176,8 @@ export default class MapComponent extends React.Component<Props> {
       this.map.remove();
       this.map = null;
     }
+
+    console.log('MapComponent:renderMap', element.innerHTML)
 
     const map = Leaflet.map(element, {
       zoomControl,
@@ -287,6 +301,10 @@ export default class MapComponent extends React.Component<Props> {
       </div>
     `;
   }
+
+  private onResize = () => {
+    this.setState(state => ({...state}));
+  }
 }
 
 export function newDivIcon() {
@@ -313,4 +331,10 @@ export function newDivIcon() {
   });
 
   return icon;
-} 
+}
+
+export default connect((state: State) => {
+  return {
+    resizeObservable: state.dependencyInjection.resizeObservable,
+  };
+})(MapComponent);

@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import { Action, Dispatch } from 'redux';
 import { Observable } from '../../util/Observable';
 import { compose } from 'redux';
-import PictureInfoComponent, { INFO_CONTAINER_WIDTH } from '../PictureInfoComponent';
+import FileInfoComponent from './FileInfoComponent';
 import { isNarrowScreen } from '../../util/screen_size';
 import { MediaFile } from '../../domain/MediaFile';
 import { MediaFileType } from '../../domain/MediaFileType';
@@ -31,27 +31,26 @@ type Props = {
   mediaFiles: MediaFile[],
   dispatch: Dispatch<Action>,
   scrollObservable: Observable<{}>,
+  resizeObservable: Observable<{}>,
   baseUrl: string, // for example, /gallery
   subview?: Subview,
 };
 
 const styles = {
   modalBody: {
-    display: 'flex' as 'flex',
+  //   display: 'flex' as 'flex',
     height: '100%',
   },
-  pictureInfoContainer: {
+  narrowScreenPictureInfoContainer: {
     backgroundColor: '#333',
     height: '100%',
     padding: '40px 10px 0',
-    flex: `0 0 ${INFO_CONTAINER_WIDTH}px`,
-  },
-  contentContainer: {
+    // flex: `0 0 ${INFO_CONTAINER_WIDTH}px`,
+    flex: `0 1 auto`,
     width: '100%',
-    height: '100%',
-    display: 'flex' as 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  },
+  narrowScreenContentContainer: {
+    width: 'auto',
   },
   navigationButton: {
     color: 'white',
@@ -66,20 +65,35 @@ const styles = {
     borderStyle: 'none',
   },
   topBar: {
-    position: 'fixed' as 'fixed',
+    // position: 'fixed' as 'fixed',
     display: 'flex',
     justifyContent: 'space-between',
     width: '100%',
+  },
+  wideScreen: {
+    contentContainer: {
+      height: '100%',
+      display: 'flex' as 'flex',
+      // alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    pictureInfoContainer: {
+      backgroundColor: '#333',
+      height: '100%',
+      padding: '40px 10px 0',
+      width: '400px',
+    },  
   },
 };
 
 const navButtonTextStyle = {
   ...styles.navigationButton,
-  position: 'absolute' as 'absolute',
   backgroundColor: '#666',
   opacity: 0.8,
   zIndex: 1000,
   textAlign: 'center',
+  marginTop: '50%',
+  position: 'absolute' as 'absolute',
 };
 
 type ComponentState = {
@@ -95,45 +109,18 @@ class MediaFileModal extends React.Component<Props, ComponentState> {
   private previousPictureMetadata: MediaFile | null = null;
   private nextPictureMetadata: MediaFile | null = null;
 
-  setRenderData() {
-    const { mediaFiles: mediaFiles, hash } = this.props;
-    let i;
-
-    for (i = 0; i < mediaFiles.length; i++) {
-      if (mediaFiles[i].hashValue === hash) {
-        if (i !== 0) {
-          this.previousPictureMetadata = mediaFiles[i - 1];
-        } else {
-          this.previousPictureMetadata = null;
-        }
-        this.mediaFile = mediaFiles[i];
-        if (i !== mediaFiles.length - 1) {
-          this.nextPictureMetadata = mediaFiles[i + 1];
-        } else {
-          this.nextPictureMetadata = null;
-        }
-
-        break;
-      }
-    }
-  }
-
-  listenToResize = () => {
-    this.setState(state => ({...state}));
-  }
-
   componentDidMount() {
     document.addEventListener('keyup', this.listenToKeyUp);
-    this.props.scrollObservable.addListener(this.listenToResize);
+    this.props.resizeObservable.addListener(this.listenToResize);
   }
 
   componentWillUnmount() {
     document.removeEventListener('keyup', this.listenToKeyUp);
-    this.props.scrollObservable.removeListener(this.listenToResize);
+    this.props.resizeObservable.removeListener(this.listenToResize);
   }
 
   render() {
-    this.setRenderData();
+    this.setPreviousNextData();
 
     if (this.mediaFile === null) {
       return (<p>Image not found</p>);
@@ -142,48 +129,50 @@ class MediaFileModal extends React.Component<Props, ComponentState> {
     return (
       <Modal>
         {this.renderTopBar(this.mediaFile)}
-        <div style={styles.modalBody}>
-          {this.renderModalBody(this.mediaFile)}
-        </div>
+        {this.renderModalBody(this.mediaFile)}
       </Modal>
     );
   }
 
   private renderModalBody = (mediaFile: MediaFile) => {
-    if (isNarrowScreen()) {
-      if (this.state.showInfo) {
-        return this.renderInfoContainer(mediaFile);
-      }
-      return this.renderMediaFile(mediaFile);
-    }
-    return (
-      <React.Fragment>
-        {this.renderMediaFile(mediaFile)}
-        {this.state.showInfo && this.renderInfoContainer(mediaFile)}
-      </React.Fragment>
-    );
+    const narrowScreen = isNarrowScreen();
+    return narrowScreen ? this.renderNarrowScreenModalBody(mediaFile) : this.renderWideScreenModalBody(mediaFile);
   }
 
-  private renderInfoContainer = (mediaFile: MediaFile) => {
+  private renderWideScreenModalBody = (mediaFile: MediaFile) => {
     return (
-      <div style={styles.pictureInfoContainer}>
-        <PictureInfoComponent {...{mediaFile}} />
+      <div style={styles.wideScreen.contentContainer}>
+        <>{this.renderMediaFile(mediaFile, false)}</>
+        {this.state.showInfo && (
+          <div style={styles.wideScreen.pictureInfoContainer}>
+            <FileInfoComponent {...{mediaFile}} />
+          </div>
+        )}
       </div>
     );
   }
 
-  private renderMediaFile = (mediaFile: MediaFile) => {
+  private renderNarrowScreenModalBody = (mediaFile: MediaFile) => { 
+      if (this.state.showInfo) {
+        return (
+          <div style={styles.narrowScreenPictureInfoContainer}>
+            <FileInfoComponent {...{mediaFile}} />
+          </div>
+        );
+      }
+      return this.renderMediaFile(mediaFile, true);    
+  }
+
+  private renderMediaFile = (mediaFile: MediaFile, narrowScreen: boolean) => {
     const previousLink = this.renderPreviousLink();
     const nextLink = this.renderNextLink();
 
     return (
-      <div style={styles.contentContainer}>
-        <div>{previousLink}</div>
-        <React.Fragment>
-          {this.renderMediaFileContent(mediaFile)}
-        </React.Fragment>
-        <div>{nextLink}</div>
-      </div>
+      <>
+        {previousLink}
+        {this.renderMediaFileContent(mediaFile)}
+        {nextLink}
+      </>
     );
   }
 
@@ -204,7 +193,9 @@ class MediaFileModal extends React.Component<Props, ComponentState> {
       case MediaFileType.FitTrack: {
         const props = {
           trackSummary: mediaFile,
+          ts: Date.now(),
         };
+        console.log('renderMediaFileContent:TrackModalContent')
         return <TrackModalContent {...props} />;
       }
       default:
@@ -218,6 +209,7 @@ class MediaFileModal extends React.Component<Props, ComponentState> {
     return (
       <div style={styles.topBar}>
         <Link to={this.props.baseUrl} style={styles.navigationButton}>&#x274C;</Link>
+        {pictureMetadata.getName()}
         <div>
           <button
             onClick={() => this.setState((state) => ({...state, showInfo: !state.showInfo}))}
@@ -306,13 +298,41 @@ class MediaFileModal extends React.Component<Props, ComponentState> {
         return;
     }
   }
+
+  private setPreviousNextData() {
+    const { mediaFiles: mediaFiles, hash } = this.props;
+    let i;
+
+    for (i = 0; i < mediaFiles.length; i++) {
+      if (mediaFiles[i].hashValue === hash) {
+        if (i !== 0) {
+          this.previousPictureMetadata = mediaFiles[i - 1];
+        } else {
+          this.previousPictureMetadata = null;
+        }
+        this.mediaFile = mediaFiles[i];
+        if (i !== mediaFiles.length - 1) {
+          this.nextPictureMetadata = mediaFiles[i + 1];
+        } else {
+          this.nextPictureMetadata = null;
+        }
+
+        break;
+      }
+    }
+  }
+
+  private listenToResize = () => {
+    this.setState(state => ({...state}));
+  }
 }
 
 function mapStateToProps(state: State) {
-  const { scrollObservable } = state.mediaFilesReducer;
+  const { scrollObservable, resizeObservable } = state.dependencyInjection;
 
   return {
     scrollObservable,
+    resizeObservable
   };
 }
 

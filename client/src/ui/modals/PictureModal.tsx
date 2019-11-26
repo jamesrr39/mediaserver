@@ -2,7 +2,7 @@ import * as React from 'react';
 import { PictureMetadata } from '../../domain/PictureMetadata';
 import { SERVER_BASE_URL } from '../../configs';
 import { THUMBNAIL_HEIGHTS } from '../../generated/thumbnail_sizes';
-import { INFO_CONTAINER_WIDTH } from '../PictureInfoComponent';
+import { INFO_CONTAINER_WIDTH } from './FileInfoComponent';
 import { joinUrlFragments } from '../../util/url';
 
 const styles = {
@@ -27,7 +27,7 @@ class PictureModal extends React.Component<Props> {
 
   render() {
     return (
-      <div ref={el => this.createRefCallback(el)} style={styles.container}>
+      <div ref={el => this.createRefCallback(el)} style={styles.container} className="picture-modal-container">
         <img style={styles.image} ref={(el) => {this.pictureEl = el; }} />
       </div>
     );
@@ -44,7 +44,10 @@ class PictureModal extends React.Component<Props> {
   }
 
   private createRefCallbackForPicture = (
-    divContainerEl: HTMLDivElement, pictureEl: HTMLImageElement, pictureMetadata: PictureMetadata) => {
+    divContainerEl: HTMLDivElement,
+    pictureEl: HTMLImageElement,
+    pictureMetadata: PictureMetadata
+  ) => {
     const idealHeight = (divContainerEl.clientHeight);
     const infoContainerWidth = this.props.showInfo ? INFO_CONTAINER_WIDTH : 0;
     const idealWidth = divContainerEl.clientWidth - infoContainerWidth;
