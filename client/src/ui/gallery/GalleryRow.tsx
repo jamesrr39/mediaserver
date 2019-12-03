@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { MediaFile } from '../../domain/MediaFile';
-import { getSizeForThumbnail, Thumbnail } from '../Thumbnail';
-import { Observable } from '../../util/Observable';
+import Thumbnail, { getSizeForThumbnail } from '../Thumbnail';
 import { Size } from '../../domain/Size';
 import { MediaFileGroup } from '../../domain/MediaFileGroup';
 import { Link } from 'react-router-dom';
+import { Observable } from '../../util/Observable';
 
 export type Row = {
     groups: GroupWithSizes[],
@@ -43,10 +43,12 @@ interface GroupWithSizes {
 type Props = {
     row: Row;
     scrollObservable: Observable<{}>;
+    resizeObservable: Observable<{}>;
     onClickThumbnail?: (mediaFile: MediaFile) => void;
     buildLink?: BuildLinkFunc;
     onSelectThumbnail?: (mediaFile: MediaFile, eventInfo: SelectThumbnailEventInfo) => void;
     getRowWidth(): number;
+    isThumbnailVisible(el: HTMLElement): void;
 };
 
 export class GalleryRow extends React.Component<Props> {
@@ -142,12 +144,21 @@ export class GalleryRow extends React.Component<Props> {
 
     private mediaFileWithSizeToThumbnail = (mediaFileWithSize: MediaFileWithSize) => {
         const {mediaFile, size} = mediaFileWithSize;
-        const {scrollObservable, buildLink, onClickThumbnail, onSelectThumbnail} = this.props;
+        const {
+            buildLink, 
+            onClickThumbnail, 
+            onSelectThumbnail, 
+            isThumbnailVisible, 
+            scrollObservable, 
+            resizeObservable,
+        } = this.props;
 
         const thumbnailProps = {
             size,
             mediaFile,
+            isThumbnailVisible,
             scrollObservable,
+            resizeObservable,
         };
 
         let thumbnail = <Thumbnail {...thumbnailProps} />;

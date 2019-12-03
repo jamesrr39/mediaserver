@@ -110,16 +110,20 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
       this.addToFilesInCollection(mediaFile.hashValue);
     };
 
-    const itemsInCollectionGalleryProps = {
-      mediaFiles: filesInCollection,
-      onClickThumbnail: onClickFilesInCollectionThumbnail,
+    const commonGalleryProps = {
       getRowWidth: () => getScreenWidth(),
     };
 
+    const itemsInCollectionGalleryProps = {
+      ...commonGalleryProps,
+      mediaFiles: filesInCollection,
+      onClickThumbnail: onClickFilesInCollectionThumbnail,
+    };
+
     const itemsOutOfCollectionGalleryProps = {
+      ...commonGalleryProps,
       mediaFiles: filesOutOfCollection,
       onClickThumbnail: onClickFilesOutOfCollectionThumbnail,
-      getRowWidth: () => getScreenWidth(),
     };
 
     return (

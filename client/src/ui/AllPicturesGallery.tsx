@@ -19,9 +19,7 @@ class AllPicturesGallery extends React.Component<GalleryProps> {
       getRowWidth: () => getScreenWidth(),
     };
 
-    return (
-      <GalleryWithFilter {...props} />
-    );
+    return <GalleryWithFilter {...props} />;
   }
 }
 

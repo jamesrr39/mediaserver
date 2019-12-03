@@ -1,6 +1,5 @@
 import * as React from 'react';
 import AllPicturesGallery from './AllPicturesGallery';
-import { Observable } from '../util/Observable';
 import { Route, Redirect, RouteComponentProps, Switch } from 'react-router';
 import MediaFileModal from './modals/MediaFileModal';
 import { connect } from 'react-redux';
@@ -43,7 +42,6 @@ type AllPicturesPictureModalRouteParams = {
 type MediaServerProps = {
   loadingStatus: LoadingStatus,
   mediaFiles: MediaFile[];
-  scrollObservable: Observable<{}>;
   mediaFilesMap: Map<string, MediaFile>;
   customCollections: CustomCollection[];
   dispatch: Dispatch<Action>;
@@ -284,7 +282,6 @@ function getLoadingStatus(state: State) {
 
 function mapStateToProps(state: State) {
   const { mediaFiles, mediaFilesMap: mediaFilesMap } = state.mediaFilesReducer;
-  const { scrollObservable } = state.dependencyInjection;
   const { customCollections } = state.collectionsReducer;
 
   const loadingStatus = getLoadingStatus(state);
@@ -292,7 +289,6 @@ function mapStateToProps(state: State) {
   return {
     loadingStatus,
     mediaFiles,
-    scrollObservable,
     mediaFilesMap,
     customCollections,
   };

@@ -72,7 +72,8 @@ const styles = {
   },
   wideScreen: {
     contentContainer: {
-      height: '100%',
+      // height: '100%',
+      flexGrow: 1,
       display: 'flex' as 'flex',
       // alignItems: 'center',
       justifyContent: 'space-between',
@@ -92,7 +93,7 @@ const navButtonTextStyle = {
   opacity: 0.8,
   zIndex: 1000,
   textAlign: 'center',
-  marginTop: '50%',
+  top: '50%',
   position: 'absolute' as 'absolute',
 };
 
@@ -195,7 +196,6 @@ class MediaFileModal extends React.Component<Props, ComponentState> {
           trackSummary: mediaFile,
           ts: Date.now(),
         };
-        console.log('renderMediaFileContent:TrackModalContent')
         return <TrackModalContent {...props} />;
       }
       default:

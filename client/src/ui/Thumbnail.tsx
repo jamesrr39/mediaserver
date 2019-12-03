@@ -102,34 +102,30 @@ const generateThumbnailStyle = (mediaFile: MediaFile, isLoaded: boolean) => {
 export type ThumbnailProps = {
   mediaFile: MediaFile;
   scrollObservable: Observable<{}>;
+  resizeObservable: Observable<{}>;
   size: Size;
+  isThumbnailVisible(el: HTMLElement): void;
 };
 
 type ThumbnailState = {
   isImageQueued: boolean;
 };
 
-export class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
+class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
   state = {
     isImageQueued: false,
   };
 
   private element: null|HTMLElement = null;
 
-  private scrollListener: () => void;
-
-  constructor(props: ThumbnailProps) {
-    super(props);
-
-    this.scrollListener = this._scrollListener.bind(this);
-  }
-
   componentWillMount() {
-    this.props.scrollObservable.addListener(this.scrollListener);
+    this.props.scrollObservable.addListener(this.onScroll);
+    this.props.resizeObservable.addListener(this.onScroll);
   }
 
   componentWillUnmount() {
-    this.props.scrollObservable.removeListener(this.scrollListener);
+    this.props.scrollObservable.removeListener(this.onScroll);
+    this.props.resizeObservable.removeListener(this.onScroll);
   }
 
   render() {
@@ -171,7 +167,7 @@ export class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
     }
   }
 
-  private _scrollListener() {
+  private onScroll = () => {
     if (!this.isInViewport()) {
       return;
     }
@@ -186,9 +182,18 @@ export class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
       return false;
     }
 
-    const top = this.element.getBoundingClientRect().top;
-    const offset = this.element.offsetHeight;
-    const isInViewport = (top + offset) >= 0 && (top - offset) <= window.innerHeight;
-    return isInViewport;
+    return this.props.isThumbnailVisible(this.element);
+
+    // const top = this.element.getBoundingClientRect().top;
+    // const offset = this.element.offsetHeight;
+    // const isInViewport = (top + offset) >= 0 && (top - offset) <= window.innerHeight;
+
+    // if (this.props.mediaFile.hashValue === '8573a9d421317569db8f87ba93a3ee451bedbf20') {
+    //   console.log('is in viewport?', isInViewport, this.element);
+    // }
+    
+    // return isInViewport;
   }
 }
+
+export default Thumbnail;

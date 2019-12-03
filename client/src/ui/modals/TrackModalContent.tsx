@@ -9,7 +9,7 @@ const styles = {
   container: {
     width: '100%',
     overflow: 'auto',
-    height: '100vh',
+    height: '100%',
   },
 };
 

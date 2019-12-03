@@ -177,8 +177,6 @@ class MapComponent extends React.Component<Props> {
       this.map = null;
     }
 
-    console.log('MapComponent:renderMap', element.innerHTML)
-
     const map = Leaflet.map(element, {
       zoomControl,
       scrollWheelZoom: zoomControl,

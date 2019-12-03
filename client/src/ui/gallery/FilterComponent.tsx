@@ -5,8 +5,9 @@ import { themeStyles } from '../../theme/theme';
 const styles = {
   container: {
     padding: '10px',
-    background: 'lightgreen',
+    // background: 'lightgreen',
     margin: '10px',
+    border: '2px solid black',
   },
   customiseButton: {
     ...themeStyles.button,

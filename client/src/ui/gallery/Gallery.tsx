@@ -1,23 +1,18 @@
 import * as React from 'react';
 import { createCompareTimeTakenFunc } from '../../domain/PictureMetadata';
 
-import { Observable, DebouncedObservable } from '../../util/Observable';
-import { State } from '../../reducers/fileReducer';
+import { DebouncedObservable } from '../../util/Observable';
 import { connect } from 'react-redux';
-import { TrackMapData } from '../MapComponent';
 import { MediaFile } from '../../domain/MediaFile';
-import { MediaFileType } from '../../domain/MediaFileType';
 import { FitTrack, Record } from '../../domain/FitTrack';
 import { fetchRecordsForTracks } from '../../actions/mediaFileActions';
 import { FilterComponent } from './FilterComponent';
 import { GalleryFilter } from '../../domain/Filter';
-import { InnerGallery } from './InnerGallery';
-import { trackSummariesToTrackDatas } from '../../actions/selectors';
-import { CancellablePromise, makeCancelable } from '../../util/promises';
+import { InnerGalleryWrapper } from './InnerGalleryWrapper';
+import { getScreenHeight } from '../../util/screen_size';
 
 export type GalleryProps = {
   mediaFiles: MediaFile[];
-  scrollObservable: Observable<{}>;
   mediaFileUrlBase?: string; // example: `/gallery/detail`. If undefined, no link should be added.
   onClickThumbnail?: (pictureMetadata: MediaFile) => void;
   showMap?: boolean;
@@ -26,96 +21,6 @@ export type GalleryProps = {
 };
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
-
-type GalleryState = {
-  showMap: boolean;
-  tracks: TrackMapData[];
-  galleryFilter: GalleryFilter;
-};
-
-export type InnerGalleryProps = {
-  showMap: boolean;
-  tracks: TrackMapData[];
-  filterJson: string;
-} & GalleryProps;
-
-type GalleryWrapperProps = {
-  onFilterChangeObservable: Observable<GalleryFilter>;
-} & GalleryProps;
-
-class GalleryWrapper extends React.Component<GalleryWrapperProps, GalleryState> {
-  state = {
-    showMap: this.props.showMap || false,
-    tracks: [],
-    galleryFilter: new GalleryFilter(null),
-  };
-
-  private fetchRecordsPromise?: CancellablePromise<Map<string, Record[]>>;
-
-  componentDidMount() {
-    const { mediaFiles, onFilterChangeObservable } = this.props;
-    const tracks: FitTrack[] = [];
-
-    mediaFiles.forEach(mediaFile => {
-      if (mediaFile.fileType !== MediaFileType.FitTrack) {
-        return;
-      }
-
-      tracks.push(mediaFile);
-    });
-
-    this.fetchRecords(tracks);
-
-    onFilterChangeObservable.addListener(this.filterChangeCallback);
-  }
-
-  componentWillUnmount() {
-    this.props.onFilterChangeObservable.removeListener(this.filterChangeCallback);
-    if (this.fetchRecordsPromise) {
-     this.fetchRecordsPromise.cancel();
-    }
-  }
-
-  render() {
-    const {getRowWidth} = this.props;
-    const { showMap, tracks, galleryFilter } = this.state;
-    const mediaFiles = this.props.mediaFiles.filter(galleryFilter.filter);
-
-    mediaFiles.sort(gallerySortingFunc);
-
-    const statelessGalleryProps = {
-      ...this.props,
-      mediaFiles,
-      tracks,
-      showMap,
-      filterJson: JSON.stringify(galleryFilter.toJsObject()),
-      getRowWidth,
-    };
-
-    return (
-      <InnerGallery {...statelessGalleryProps} />
-    );
-  }
-
-  private fetchRecords = async (trackSummaries: FitTrack[]) => {
-    this.fetchRecordsPromise = makeCancelable(this.props.fetchRecordsForTracks(trackSummaries));
-    const tracksDetails = await this.fetchRecordsPromise.promise;
-
-    const trackDatas = trackSummariesToTrackDatas(trackSummaries, tracksDetails, this.props.mediaFileUrlBase);
-
-    this.setState(state => ({
-      ...state,
-      tracks: state.tracks.concat(trackDatas),
-    }));
-  }
-
-  private filterChangeCallback = (galleryFilter: GalleryFilter) => {
-    this.setState(state => ({
-      ...state,
-      galleryFilter,
-    }));
-  }
-}
 
 type DateRange = {
   start?: Date,
@@ -144,11 +49,25 @@ function getDateRange(mediaFiles: MediaFile[]): DateRange {
   return { start, end };
 }
 
-class GalleryWithFilter extends React.Component<GalleryProps> {
+type GalleryState = {
+  elementPosTopOffset: number;
+};
+
+class GalleryWithFilter extends React.Component<GalleryProps, GalleryState> {
+  state = {
+    elementPosTopOffset: 0,
+  };
 
   private onFilterChangeObservable = new DebouncedObservable<GalleryFilter>(50);
 
+  private scrollObservable = new DebouncedObservable<{}>(150);
+  private resizeObservable = new DebouncedObservable<{}>(150);
+
+  private galleryContainerEl: HTMLElement|null = null;
+
   render() {
+    const {scrollObservable, resizeObservable} = this;
+
     const dateRange = getDateRange(this.props.mediaFiles);
 
     const filterComponentProps = {
@@ -162,33 +81,57 @@ class GalleryWithFilter extends React.Component<GalleryProps> {
 
     const innerGalleryProps = {
       ...this.props,
+      scrollObservable,
+      resizeObservable,
       onFilterChangeObservable: this.onFilterChangeObservable,
+      isThumbnailVisible: (thumbnailEl: HTMLElement) => {
+        if (!this.galleryContainerEl) {
+          return false;
+        }
+
+        const thumbnailRect = thumbnailEl.getBoundingClientRect();
+
+        if (thumbnailRect.top < window.innerHeight && thumbnailRect.bottom > 0) {
+          return true;
+        }
+
+        return false;
+      }
     };
 
     const wrapperStyles = {
-      height: '400px',
-      // overflowY: 'scroll' as 'scroll',
+      height: getScreenHeight() - this.state.elementPosTopOffset,
+      overflowY: 'scroll' as 'scroll',
     };
 
     return (
-      <div>
+      <>
         <FilterComponent {...filterComponentProps} />
-        <div style={wrapperStyles}>
-          <GalleryWrapper {...innerGalleryProps} />
+        <div style={wrapperStyles} ref={el => {this.setGalleryHeight(el); this.galleryContainerEl = el; }}>
+          <InnerGalleryWrapper {...innerGalleryProps} />
         </div>
-      </div>
+      </>
     );
+  }
+
+  private setGalleryHeight(el: HTMLElement|null) {
+    if (!el) {
+      return;
+    }
+
+    el.addEventListener('scroll', () => this.scrollObservable.triggerEvent({}));
+    el.addEventListener('resize', () => this.resizeObservable.triggerEvent({}));
+
+    const elementPosTopOffset = el.getBoundingClientRect().top;
+
+    if (elementPosTopOffset === this.state.elementPosTopOffset) {
+      return;
+    }
+
+    this.setState(state => ({...state, elementPosTopOffset }));
   }
 }
 
-function mapStateToProps(state: State) {
-  const { scrollObservable } = state.dependencyInjection;
-
-  return {
-    scrollObservable,
-  };
-}
-
-export default connect(mapStateToProps, {
+export default connect(undefined, {
   fetchRecordsForTracks
 })(GalleryWithFilter);

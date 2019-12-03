@@ -5,8 +5,8 @@ import { TrackMapData } from '../MapComponent';
 import { MediaFile } from '../../domain/MediaFile';
 import { filesToRows, GalleryRow, BuildLinkFunc, Row, SelectThumbnailEventInfo } from './GalleryRow';
 import { mediaFilesToDateGroups, groupsMapToGroups } from '../../domain/MediaFileGroup';
-import { GalleryProps } from './Gallery';
 import { InnerMap } from './InnerMap';
+import { Observable } from '../../util/Observable';
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
@@ -16,16 +16,14 @@ export type InnerGalleryProps = {
   showMap: boolean;
   tracks: TrackMapData[];
   filterJson: string;
-} & GalleryProps;
-
-// const styles = {
-//   thumbnail: {
-//       margin: '0 10px 10px 0',
-//   },
-//   mapContainer: {
-//     margin: '30px 20px',
-//   },
-// };
+  scrollObservable: Observable<{}>,
+  resizeObservable: Observable<{}>,
+  onClickThumbnail?: (mediaFile: MediaFile) => void,
+  mediaFiles: MediaFile[],
+  mediaFileUrlBase?: string,
+  getRowWidth: () => number
+  isThumbnailVisible(el: HTMLElement): void;
+};
 
 type InnerGalleryState = {
   lastIndexShown: number,
@@ -33,7 +31,7 @@ type InnerGalleryState = {
   selectedFiles: MediaFile[],
 };
 
-export class InnerGallery extends React.Component<InnerGalleryProps, InnerGalleryState> {
+class InnerGallery extends React.Component<InnerGalleryProps, InnerGalleryState> {
   state = {
     lastIndexShown: 0,
     rows: [],
@@ -41,50 +39,39 @@ export class InnerGallery extends React.Component<InnerGalleryProps, InnerGaller
   };
   
   componentDidMount() {
-    const {scrollObservable} = this.props;
+    const {scrollObservable, resizeObservable} = this.props;
 
-    scrollObservable.triggerEvent({});
-    scrollObservable.addListener(this.onScroll);
-    scrollObservable.addListener(this.onResize);
+    [scrollObservable, resizeObservable].forEach(observable => {
+      observable.triggerEvent({});
+      observable.addListener(this.onScroll);
+      observable.addListener(this.onResize);
+    });
   }
 
   componentWillUnmount() {
-    const {scrollObservable} = this.props;
+    const {scrollObservable, resizeObservable} = this.props;
 
-    scrollObservable.removeListener(this.onScroll);
-    scrollObservable.removeListener(this.onResize);
+    [scrollObservable, resizeObservable].forEach(observable => {
+      observable.removeListener(this.onScroll);
+      observable.removeListener(this.onResize);
+    });
   }
 
   componentDidUpdate() {
     this.props.scrollObservable.triggerEvent({});
+    this.props.resizeObservable.triggerEvent({});
   }
 
   render() {
     return (
-      <React.Fragment>
+      <>
         {this.props.showMap && this.renderMap()}
         <div>
           {this.renderThumbnails()}
         </div>
-      </React.Fragment>
+      </>
     );
   }
-
-  // private showMap = (event: React.MouseEvent<HTMLAnchorElement>) => {
-  //   event.preventDefault();
-  //   this.setState(state => ({
-  //     ...state,
-  //     showMap: true,
-  //   }));
-  // }
-
-  // private hideMap = (event: React.MouseEvent<HTMLAnchorElement>) => {
-  //   event.preventDefault();
-  //   this.setState(state => ({
-  //     ...state,
-  //     showMap: false,
-  //   }));
-  // }
 
   private renderMap = () => {
     const { tracks, mediaFileUrlBase, mediaFiles } = this.props;
@@ -97,44 +84,17 @@ export class InnerGallery extends React.Component<InnerGalleryProps, InnerGaller
 
     return <InnerMap {...props} />;
   }
-  // private renderMap = () => {
-  //   const { showMap, mediaFiles, tracks } = this.props;
-
-  //   if (!showMap) {
-  //     return (
-  //       <div style={styles.mapContainer}>
-  //         <a href="#" onClick={this.showMap}>Show Map</a>
-  //       </div>
-  //     );
-  //   }
-
-  //   const markers = this.getMarkers(mediaFiles);
-
-  //   if (markers.length === 0 && tracks.length === 0) {
-  //     return null;
-  //   }
-
-  //   const mapProps = {
-  //     size: {
-  //       width: '100%',
-  //       height: '600px',
-  //     },
-  //     markers,
-  //     tracks,
-  //     extraLatLongMapPadding: 0.001,
-  //     zoomControl: true,
-  //   };
-
-  //   return (
-  //     <div style={styles.mapContainer}>
-  //       <a href="#" onClick={this.hideMap}>Hide Map</a>
-  //       <MapComponent {...mapProps} />
-  //     </div>
-  //   );
-  // }
 
   private renderThumbnails = () => {
-    const {scrollObservable, onClickThumbnail, mediaFileUrlBase, filterJson, getRowWidth} = this.props;
+    const {
+      onClickThumbnail, 
+      mediaFileUrlBase, 
+      filterJson, 
+      getRowWidth, 
+      isThumbnailVisible,
+      scrollObservable,
+      resizeObservable,
+    } = this.props;
     const {rows} = this.state;
 
     let buildLink: (undefined | BuildLinkFunc)  = undefined;
@@ -155,10 +115,12 @@ export class InnerGallery extends React.Component<InnerGalleryProps, InnerGaller
 
       const rowProps = {
         row,
-        scrollObservable,
         onClickThumbnail,
         buildLink,
         getRowWidth,
+        isThumbnailVisible,
+        scrollObservable,
+        resizeObservable,
         onSelectThumbnail: (mediaFile: MediaFile, eventInfo: SelectThumbnailEventInfo) => {
           if (eventInfo.selected) {
             this.setState(state => ({
@@ -201,40 +163,6 @@ export class InnerGallery extends React.Component<InnerGalleryProps, InnerGaller
       </>);
   }
 
-  // private getMarkers = (mediaFiles: MediaFile[]) => {
-  //   const markers: MapMarker[] = [];
-  //   mediaFiles.forEach((metadata) => {
-  //     const location = metadata.getLocation();
-  //     if (!location) {
-  //       return;
-  //     }
-
-  //     const markerData: MapMarker = {
-  //       location,
-  //     };
-
-  //     if (this.props.mediaFileUrlBase) {
-  //       switch (metadata.fileType) {
-  //         case MediaFileType.Picture:
-  //           const linkUrl = `#${this.props.mediaFileUrlBase}/${metadata.hashValue}`;
-
-  //           markerData.popupData = {
-  //             name: metadata.getName(),
-  //             imagePreviewUrl: joinUrlFragments(SERVER_BASE_URL, 'picture', metadata.hashValue),
-  //             linkUrl,
-  //             pictureRawSize: metadata.rawSize,
-  //           };
-  //           break;
-  //         default:
-  //           // do nothing
-  //       }
-  //     }
-  //     markers.push(markerData);
-  //   });
-
-  //   return markers;
-  // }
-
   private onScroll = () => {
     const {lastIndexShown} = this.state;
     if (lastIndexShown >= this.props.mediaFiles.length) {
@@ -276,3 +204,5 @@ export class InnerGallery extends React.Component<InnerGalleryProps, InnerGaller
     }
   }
 }
+
+export default InnerGallery;
