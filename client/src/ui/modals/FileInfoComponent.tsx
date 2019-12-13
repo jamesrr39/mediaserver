@@ -8,6 +8,7 @@ import { connect } from 'react-redux';
 import { State, PeopleMap } from '../../reducers/fileReducer';
 import { Person } from '../../domain/People';
 import { addParticipantToMediaFile } from '../../actions/mediaFileActions';
+import { styles as TopBarStyles } from './ModalTopBar';
 
 export const INFO_CONTAINER_WIDTH = SMALL_SCREEN_WIDTH;
 
@@ -16,6 +17,11 @@ type SelectedOption = {value: string, label: string};
 const styles = {
   selectStyles: {
     color: 'black',
+  },
+  container: {
+    backgroundColor: '#333',
+    padding: '40px 10px 0',
+    height: '100%',
   },
 };
 
@@ -29,13 +35,12 @@ type Props = {
   people: Person[];
   peopleMap: PeopleMap;
   addParticipantToMediaFile: (mediaFile: MediaFile, participant: Person) => void;
+  onCloseButtonClicked?: () => void;
 };
 
 class FileInfoComponent extends React.Component<Props> {
   render() {
-    const { mediaFile, people, peopleMap } = this.props;
-
-    console.log('mediafile:', mediaFile)
+    const { mediaFile, people, peopleMap, onCloseButtonClicked } = this.props;
 
     const dateTaken = mediaFile.getTimeTaken();
     const timeTakenText = dateTaken ? dateTaken.toUTCString() : 'Unknown Date';
@@ -66,7 +71,15 @@ class FileInfoComponent extends React.Component<Props> {
     }));
 
     return (
-      <div>
+      <div style={styles.container}>
+        {onCloseButtonClicked && <div style={TopBarStyles.topBar}>
+          <button
+            onClick={onCloseButtonClicked}
+            style={TopBarStyles.navigationButton}
+            className="fa fa-info-circle"
+            aria-label="Info"
+          />
+        </div>}
         <p>{mediaFile.getName()}</p>
         <p>{timeTakenText}</p>
         <ul>

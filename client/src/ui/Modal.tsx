@@ -2,7 +2,7 @@ import * as React from 'react';
 
 const styles = {
   modal: {
-    position: 'fixed',
+    position: 'fixed' as 'fixed',
     height: '100%',
     width: '100%',
     top: 0,
@@ -11,8 +11,9 @@ const styles = {
     zIndex: 10000,
     color: 'white',
     display: 'flex',
-    flexDirection: 'column',
-  } as React.CSSProperties,
+    flexDirection: 'column' as 'column',
+    overflowY: 'scroll' as 'scroll',
+  },
 };
 
 export default class Modal extends React.Component {

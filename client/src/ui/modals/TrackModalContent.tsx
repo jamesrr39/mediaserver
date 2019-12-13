@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { FitTrack, Record, getLapsFromRecords, getSpeedsFromRecords } from '../../domain/FitTrack';
+import { FitTrack, Record, getLapsFromRecords } from '../../domain/FitTrack';
 import MapComponent from '../MapComponent';
 import { fetchRecordsForTracks } from '../../actions/mediaFileActions';
 import { connect } from 'react-redux';
@@ -42,11 +42,6 @@ class TrackModalContent extends React.Component<Props, State> {
     }
   }
 
-  // shouldComponentUpdate(nextProps: Props, nextState: State) {
-  //   console.log('should component update?');
-  //   return true;
-  // }
-
   fetchRecords = async () => {
     const {trackSummary} = this.props;
     const trackRecordsMap = await this.props.fetchRecordsForTracks([trackSummary]);
@@ -63,7 +58,7 @@ class TrackModalContent extends React.Component<Props, State> {
 
   render() {
     const { trackSummary } = this.props;
-    console.log('render (TrackModalContent)')
+
     const map = this.renderRecordInformation();
 
     const opts = {
@@ -96,44 +91,13 @@ class TrackModalContent extends React.Component<Props, State> {
       <React.Fragment >
         {this.renderMap(trackRecords)}
         {this.renderTable(trackRecords)}
-        {this.renderSpeedChart(trackRecords)}
+        <SpeedChart {...{trackRecords}} />
       </React.Fragment>
     ) ;
   }
 
-  private renderSpeedChart(trackRecords: Record[]) {
-    const {trackSummary} = this.props;
-
-    const speeds = getSpeedsFromRecords(trackRecords, 10);
-    if (speeds.length === 0) {
-      return null;
-    }
-
-    const maxTimeThroughSeconds = speeds[speeds.length - 1].startTimeThroughSeconds;
-    const maxSpeed = Math.max(...speeds.map(speedWithTime => speedWithTime.speed));
-
-    const points = speeds.map((speed, index) => {
-      const y = speed.speed / maxSpeed;
-      const x = speed.startTimeThroughSeconds / maxTimeThroughSeconds;
-
-      return {
-        x,
-        y,
-      };
-    });
-
-    const speedChartProps = {
-      points,
-      k: trackSummary.hashValue,
-    };
-    
-    return <SpeedChart {...speedChartProps} />;
-  }
-
   private renderMap(trackRecords: Record[]) {
     const { trackSummary } = this.props;
-
-    console.log('renderMap')
 
     const mapProps = {
       size: {

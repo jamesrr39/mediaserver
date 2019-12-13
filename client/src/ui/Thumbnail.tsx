@@ -183,16 +183,6 @@ class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
     }
 
     return this.props.isThumbnailVisible(this.element);
-
-    // const top = this.element.getBoundingClientRect().top;
-    // const offset = this.element.offsetHeight;
-    // const isInViewport = (top + offset) >= 0 && (top - offset) <= window.innerHeight;
-
-    // if (this.props.mediaFile.hashValue === '8573a9d421317569db8f87ba93a3ee451bedbf20') {
-    //   console.log('is in viewport?', isInViewport, this.element);
-    // }
-    
-    // return isInViewport;
   }
 }
 

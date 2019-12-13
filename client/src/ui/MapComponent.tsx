@@ -166,7 +166,7 @@ class MapComponent extends React.Component<Props> {
   }
 
   private renderMap = (element: HTMLElement|null, markers?: MapMarker[], tracks?: TrackMapData[]) => {
-    if (element === null) {
+    if (!element) {
       return;
     }
 

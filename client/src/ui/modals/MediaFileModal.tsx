@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { State } from '../../reducers/fileReducer';
 import { connect } from 'react-redux';
-import { SERVER_BASE_URL } from '../../configs';
 import { Link } from 'react-router-dom';
 import { Action, Dispatch } from 'redux';
 import { Observable } from '../../util/Observable';
@@ -12,9 +11,9 @@ import { MediaFile } from '../../domain/MediaFile';
 import { MediaFileType } from '../../domain/MediaFileType';
 import Modal from '../Modal';
 import TrackModalContent from './TrackModalContent';
-import { joinUrlFragments } from '../../util/url';
 import VideoModal from './VideoModal';
 import PictureModal from './PictureModal';
+import ModalTopBar from './ModalTopBar';
 
 const KeyCodes = {
   ESCAPE: 27,
@@ -37,10 +36,10 @@ type Props = {
 };
 
 const styles = {
-  modalBody: {
-  //   display: 'flex' as 'flex',
-    height: '100%',
-  },
+  // modalBody: {
+  // //   display: 'flex' as 'flex',
+  //   height: '100%',
+  // },
   narrowScreenPictureInfoContainer: {
     backgroundColor: '#333',
     height: '100%',
@@ -64,12 +63,12 @@ const styles = {
     backgroundColor: 'transparent',
     borderStyle: 'none',
   },
-  topBar: {
-    // position: 'fixed' as 'fixed',
-    display: 'flex',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
+  // topBar: {
+  //   // position: 'fixed' as 'fixed',
+  //   display: 'flex',
+  //   justifyContent: 'space-between',
+  //   width: '100%',
+  // },
   wideScreen: {
     contentContainer: {
       // height: '100%',
@@ -79,9 +78,7 @@ const styles = {
       justifyContent: 'space-between',
     },
     pictureInfoContainer: {
-      backgroundColor: '#333',
       height: '100%',
-      padding: '40px 10px 0',
       width: '400px',
     },  
   },
@@ -122,15 +119,52 @@ class MediaFileModal extends React.Component<Props, ComponentState> {
 
   render() {
     this.setPreviousNextData();
+    const {mediaFile} = this;
+    const {baseUrl} = this.props;
 
-    if (this.mediaFile === null) {
+    if (mediaFile === null) {
       return (<p>Image not found</p>);
     }
 
+    const narrowScreen = isNarrowScreen();
+    if (this.state.showInfo && narrowScreen) {
+      const onCloseButtonClicked = () => this.setState(state => ({...state, showInfo: false}));
+      return (
+        <Modal>
+          <FileInfoComponent {...{mediaFile, onCloseButtonClicked}} />
+        </Modal>
+      );
+    }
+
+    const topBarProps = {
+      mediaFile,
+      baseUrl,
+      onInfoButtonClicked: () => this.setState((state) => ({...state, showInfo: !state.showInfo}))
+    };
+
+    const s = {
+      display: 'flex',
+      width: '100%',
+    };
+
+    const childS = {
+      // width: '100%',
+      flex: '1'
+    };
+
     return (
       <Modal>
-        {this.renderTopBar(this.mediaFile)}
-        {this.renderModalBody(this.mediaFile)}
+        <div style={s}>
+          <div style={childS}>
+            <ModalTopBar {...topBarProps} />
+            {this.renderModalBody(mediaFile)}
+          </div>
+          {this.state.showInfo && (
+            <div style={styles.wideScreen.pictureInfoContainer}>
+              <FileInfoComponent {...{mediaFile}} />
+            </div>
+          )}
+        </div>
       </Modal>
     );
   }
@@ -143,12 +177,7 @@ class MediaFileModal extends React.Component<Props, ComponentState> {
   private renderWideScreenModalBody = (mediaFile: MediaFile) => {
     return (
       <div style={styles.wideScreen.contentContainer}>
-        <>{this.renderMediaFile(mediaFile, false)}</>
-        {this.state.showInfo && (
-          <div style={styles.wideScreen.pictureInfoContainer}>
-            <FileInfoComponent {...{mediaFile}} />
-          </div>
-        )}
+        {this.renderMediaFile(mediaFile, false)}
       </div>
     );
   }
@@ -201,32 +230,6 @@ class MediaFileModal extends React.Component<Props, ComponentState> {
       default:
         return <p>Unknown format</p>;
     }
-  }
-
-  private renderTopBar = (pictureMetadata: MediaFile) => {
-    const pictureURL = joinUrlFragments(SERVER_BASE_URL, 'picture', pictureMetadata.hashValue);
-
-    return (
-      <div style={styles.topBar}>
-        <Link to={this.props.baseUrl} style={styles.navigationButton}>&#x274C;</Link>
-        {pictureMetadata.getName()}
-        <div>
-          <button
-            onClick={() => this.setState((state) => ({...state, showInfo: !state.showInfo}))}
-            style={styles.navigationButton}
-            className="fa fa-info-circle"
-            aria-label="Info"
-          />
-          <a
-            href={pictureURL}
-            download={encodeURIComponent(pictureMetadata.getName())}
-            style={styles.navigationButton}
-            className="fa fa-download"
-            aria-label="Download"
-          />
-        </div>
-      </div>
-    );
   }
 
   private renderPreviousLink = () => {

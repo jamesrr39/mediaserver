@@ -104,9 +104,11 @@ export function getLapsFromRecords(records: Record[], interval: number) {
 }
 
 type SpeedWithTime = {
-  speed: number,
+  speedMetresPerSecond: number,
   startTimeThroughSeconds: number,
   endTimeThroughSeconds: number,
+  startDistanceMetres: number,
+  endDistanceMetres: number,
 };
 
 export function getSpeedsFromRecords(records: Record[], intervalDistanceSeconds: number) {
@@ -119,18 +121,20 @@ export function getSpeedsFromRecords(records: Record[], intervalDistanceSeconds:
   const firstRecordTime = lastRecord.timestamp;
 
   records.slice(1).forEach((record, index) => {
-    const timeSinceLastInterval = record.timestamp.getTime() - lastRecord.timestamp.getTime();
+    const timeSinceLastIntervalSeconds = (record.timestamp.getTime() - lastRecord.timestamp.getTime()) / 1000;
     const isLastRecord = index === records.length - 1;
-    if (timeSinceLastInterval >= intervalDistanceSeconds * 1000 || isLastRecord) {
-      const distanceTravelled = record.distance - lastRecord.distance;
-      const speed = distanceTravelled / timeSinceLastInterval;
-
+    if (timeSinceLastIntervalSeconds >= intervalDistanceSeconds || isLastRecord) {
+      const distanceTravelledMetres = record.distance - lastRecord.distance;
+      const speedMetresPerSecond = distanceTravelledMetres / timeSinceLastIntervalSeconds;
       const startTimeThroughSeconds = (lastRecord.timestamp.getTime() - firstRecordTime.getTime()) / 1000;
       const endTimeThroughSeconds = (record.timestamp.getTime() - firstRecordTime.getTime()) / 1000;
+
       speeds.push({
-        speed,
+        speedMetresPerSecond,
         startTimeThroughSeconds,
         endTimeThroughSeconds,
+        startDistanceMetres: record.distance,
+        endDistanceMetres: lastRecord.distance,
       });
       lastRecord = record;
     }
