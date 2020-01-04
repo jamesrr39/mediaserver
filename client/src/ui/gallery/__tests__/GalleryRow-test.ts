@@ -15,31 +15,35 @@ test('filesToRows', () => {
     const mediaFileGroups: MediaFileGroup[] = [{
         // one group in row, 2 files
         name: '1970-01-01',
+        value: new Date('1970-01-01').getTime(),
         mediaFiles: [
-            new PictureMetadata('', '', 0, null, {width: 1024, height: 768}, undefined),
-            new FitTrack('', '', 0, new Date(0), new Date(0), '', '', 0, activityBounds, undefined),
+            new PictureMetadata('', '', 0, [], null, {width: 1024, height: 768}, undefined),
+            new FitTrack('', '', 0, [], new Date(0), new Date(0), '', '', 0, activityBounds, undefined),
         ],
     }, {
         // two groups in row, 1 picture in this group
         name: '1970-01-02',
+        value: new Date('1970-01-02').getTime(),
         mediaFiles: [
-            new PictureMetadata('', '', 0, null, {width: 1024, height: 768}, undefined),
+            new PictureMetadata('', '', 0, [], null, {width: 1024, height: 768}, undefined),
         ],
     }, {
         // two groups in row, 2 pictures in this group
         name: '1970-01-03',
+        value: new Date('1970-01-03').getTime(),
         mediaFiles: [
-            new PictureMetadata('', '', 0, null, {width: 768, height: 1024}, undefined),
-            new PictureMetadata('', '', 0, null, {width: 768, height: 1024}, undefined),
+            new PictureMetadata('', '', 0, [], null, {width: 768, height: 1024}, undefined),
+            new PictureMetadata('', '', 0, [], null, {width: 768, height: 1024}, undefined),
         ],
     }, {
         // one group in row, 4 pictures in this group
         name: '1970-01-04',
+        value: new Date('1970-01-04').getTime(),
         mediaFiles: [
-            new PictureMetadata('', '', 0, null, {width: 1024, height: 768}, undefined),
-            new PictureMetadata('', '', 0, null, {width: 1024, height: 768}, undefined),
-            new PictureMetadata('', '', 0, null, {width: 1024, height: 768}, undefined),
-            new PictureMetadata('', '', 0, null, {width: 1024, height: 768}, undefined),
+            new PictureMetadata('', '', 0, [], null, {width: 1024, height: 768}, undefined),
+            new PictureMetadata('', '', 0, [], null, {width: 1024, height: 768}, undefined),
+            new PictureMetadata('', '', 0, [], null, {width: 1024, height: 768}, undefined),
+            new PictureMetadata('', '', 0, [], null, {width: 1024, height: 768}, undefined),
         ],        
     }];
     const rows = filesToRows(rowSizePx, mediaFileGroups);

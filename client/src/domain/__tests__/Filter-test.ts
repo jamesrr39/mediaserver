@@ -14,6 +14,7 @@ test('filter', () => {
         '', 
         '', 
         0, 
+        [],
         {DateTime: '2000:01:01 00:00:01'}, // new Date(1000)
         {width: 0, height: 0});
 
@@ -23,6 +24,7 @@ test('filter', () => {
         '', 
         '', 
         0, 
+        [],
         {DateTime: '1999:01:01 00:00:00'}, // new Date(1000)
         {width: 0, height: 0});
 
@@ -32,6 +34,7 @@ test('filter', () => {
         '', 
         '', 
         0, 
+        [],
         {DateTime: '2001:01:01 00:00:01'}, // new Date(1000)
         {width: 0, height: 0});
 

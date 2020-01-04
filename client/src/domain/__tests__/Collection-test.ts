@@ -5,8 +5,8 @@ test('extractFolderCollectionsFrommediaFiles', () => {
   const mockSize = {height: 200, width: 200};
 
   const mediaFiles = [
-    new PictureMetadata('a', '/IMG1.jpg', 0, null, mockSize),
-    new PictureMetadata('b', '/uploads/2000-08-01/IMG2.jpg', 0, null, mockSize),
+    new PictureMetadata('a', '/IMG1.jpg', 0, [], null, mockSize),
+    new PictureMetadata('b', '/uploads/2000-08-01/IMG2.jpg', 0, [], null, mockSize),
   ];
 
   const collections = extractFolderCollectionsFrommediaFiles(mediaFiles);

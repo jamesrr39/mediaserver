@@ -30,15 +30,16 @@ func Test_CrudPictureMetadataNoExif(t *testing.T) {
 	require.Nil(t, err)
 
 	pictureMetadata := domain.NewPictureMetadata(
-		"abcdef123456", "/a/b/c.jpg",
+		"abcdef123456",
+		"/a/b/c.jpg",
 		12345,
 		nil,
-		domain.RawSize{Width: 400, Height: 400}, "jpeg")
+		domain.RawSize{Width: 400, Height: 400}, "jpeg", nil)
 
 	err = picturesMetadataRepository.CreatePictureMetadata(tx, pictureMetadata)
 	require.Nil(t, err)
 
-	fetchedPictureMetadata, err := picturesMetadataRepository.GetPictureMetadata(tx, pictureMetadata.HashValue, pictureMetadata.RelativePath)
+	fetchedPictureMetadata, err := picturesMetadataRepository.GetPictureMetadata(tx, pictureMetadata.HashValue, pictureMetadata.RelativePath, nil)
 	require.Nil(t, err)
 
 	assert.Equal(t, pictureMetadata, fetchedPictureMetadata)

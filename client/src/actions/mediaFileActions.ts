@@ -327,4 +327,4 @@ export function addParticipantToMediaFile(mediaFile: MediaFile, participant: Per
       participant,
     });
   };
-};
+}

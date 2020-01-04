@@ -4,10 +4,10 @@ test('createCompareTimeTakenFunc creates a sorting function based on the time th
   const mockSize = {height: 200, width: 200};
 
   const pictureMetadatas = [
-    new PictureMetadata('', 'a', 0, {DateTime: '2018:01:22 16:29:03'}, mockSize),
-    new PictureMetadata('', 'b', 0, {DateTime: '2018:01:22 17:29:03'}, mockSize),
-    new PictureMetadata('', 'c', 0, {DateTime: '2018:01:22 16:49:03'}, mockSize),
-    new PictureMetadata('', 'd', 0, null, mockSize),
+    new PictureMetadata('', 'a', 0, [], {DateTime: '2018:01:22 16:29:03'}, mockSize),
+    new PictureMetadata('', 'b', 0, [], {DateTime: '2018:01:22 17:29:03'}, mockSize),
+    new PictureMetadata('', 'c', 0, [], {DateTime: '2018:01:22 16:49:03'}, mockSize),
+    new PictureMetadata('', 'd', 0, [], null, mockSize),
   ];
 
   const compareFunc = createCompareTimeTakenFunc(true);
@@ -39,7 +39,7 @@ describe('PictureMetadata', () => {
       GPSMapDatum: 'WGS-84',
     } as ExifData;
 
-    const metadata = new PictureMetadata('', '', 0, exif, {height: 200, width: 200});
+    const metadata = new PictureMetadata('', '', 0, [], exif, {height: 200, width: 200});
     const location = metadata.getLocation();
     if (location === null) {
       throw new Error('location should not be null');
