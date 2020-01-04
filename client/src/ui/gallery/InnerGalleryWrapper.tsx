@@ -13,8 +13,8 @@ import { CancellablePromise, makeCancelable } from '../../util/promises';
 
 export type GalleryProps = {
   mediaFiles: MediaFile[];
-  scrollObservable: Observable<{}>;
-  resizeObservable: Observable<{}>;
+  scrollObservable: Observable<void>;
+  resizeObservable: Observable<void>;
   mediaFileUrlBase?: string; // example: `/gallery/detail`. If undefined, no link should be added.
   onClickThumbnail?: (pictureMetadata: MediaFile) => void;
   showMap?: boolean;

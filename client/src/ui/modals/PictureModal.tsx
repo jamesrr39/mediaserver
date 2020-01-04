@@ -4,6 +4,9 @@ import { SERVER_BASE_URL } from '../../configs';
 import { THUMBNAIL_HEIGHTS } from '../../generated/thumbnail_sizes';
 import { INFO_CONTAINER_WIDTH } from './FileInfoComponent';
 import { joinUrlFragments } from '../../util/url';
+import { Observable } from '../../util/Observable';
+import { connect } from 'react-redux';
+import { State } from '../../reducers/fileReducer';
 
 const styles = {
   container: {
@@ -20,34 +23,64 @@ const styles = {
 type Props = {
   pictureMetadata: PictureMetadata,
   showInfo: boolean,
+  resizeObservable: Observable<void>,
 };
 
 class PictureModal extends React.Component<Props> {
   private pictureEl: HTMLImageElement|null = null;
+  private divContainerEl: HTMLDivElement|null = null;
+
+  componentDidMount() {
+    this.props.resizeObservable.addListener(this.onResize);
+  }
+
+  componentWillUnmount() {
+    this.props.resizeObservable.removeListener(this.onResize);
+  }
 
   render() {
     return (
-      <div ref={el => this.createRefCallback(el)} style={styles.container} className="picture-modal-container">
-        <img style={styles.image} ref={(el) => {this.pictureEl = el; }} />
+      <div
+        ref={el => this.createRefCallback(el)}
+        style={styles.container}
+        className="picture-modal-container"
+      >
+        <img style={styles.image} ref={(el) => this.createPictureEl(el)} />
       </div>
     );
   }
 
-  private createRefCallback = (divContainerEl: HTMLDivElement|null) => {
-    const {pictureMetadata} = this.props;
+  private onResize = () => {
+    this.setState(state => ({...state}));
+  }
 
-    if (divContainerEl === null || this.pictureEl === null) {
+  private createPictureEl = (el: HTMLImageElement|null) => {
+    if (!el) {
       return;
     }
 
-    this.createRefCallbackForPicture(divContainerEl, this.pictureEl, pictureMetadata);
+    this.pictureEl = el;
+
+    if (this.pictureEl && this.divContainerEl) {
+      this.createRefCallbackForPicture(this.divContainerEl, this.pictureEl);
+    }
   }
 
-  private createRefCallbackForPicture = (
-    divContainerEl: HTMLDivElement,
-    pictureEl: HTMLImageElement,
-    pictureMetadata: PictureMetadata
-  ) => {
+  private createRefCallback = (el: HTMLDivElement|null) => {
+    if (!el) {
+      return;
+    }
+    console.log('size', el.clientWidth, el.clientHeight, el);
+    this.divContainerEl = el;
+
+    if (this.pictureEl && this.divContainerEl) {
+      this.createRefCallbackForPicture(this.divContainerEl, this.pictureEl);
+    }
+  }
+
+  private createRefCallbackForPicture = (divContainerEl: HTMLDivElement, pictureEl: HTMLImageElement) => {
+    const {pictureMetadata} = this.props;
+
     const idealHeight = (divContainerEl.clientHeight);
     const infoContainerWidth = this.props.showInfo ? INFO_CONTAINER_WIDTH : 0;
     const idealWidth = divContainerEl.clientWidth - infoContainerWidth;
@@ -69,4 +102,10 @@ class PictureModal extends React.Component<Props> {
   }
 }
 
-export default PictureModal;
+export default connect((state: State) => {
+  const { resizeObservable } = state.dependencyInjection;
+  
+  return {
+    resizeObservable
+  };
+})(PictureModal);

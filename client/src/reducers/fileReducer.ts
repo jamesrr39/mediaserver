@@ -13,11 +13,11 @@ import { Record } from '../domain/FitTrack';
 import { Person } from '../domain/People';
 import { LoadingStatus } from '../domain/LoadingStatus';
 
-const scrollObservable = new DebouncedObservable<{}>(150);
-const resizeObservable = new DebouncedObservable<{}>(150);
+const scrollObservable = new DebouncedObservable<void>(150);
+const resizeObservable = new DebouncedObservable<void>(150);
 
-window.addEventListener('scroll', (thing) => scrollObservable.triggerEvent(thing));
-window.addEventListener('resize', (thing) => resizeObservable.triggerEvent(thing));
+window.addEventListener('scroll', () => scrollObservable.triggerEvent());
+window.addEventListener('resize', () => resizeObservable.triggerEvent());
 
 export type PeopleMap = Map<number, Person>;
 
@@ -32,8 +32,8 @@ type MediaFilesState = {
 };
 
 type DIState = {
-  scrollObservable: Observable<{}>,
-  resizeObservable: Observable<{}>,
+  scrollObservable: Observable<void>,
+  resizeObservable: Observable<void>,
 };
 
 export type State = {

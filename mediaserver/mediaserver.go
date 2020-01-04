@@ -31,6 +31,7 @@ type MediaServer struct {
 	collectionsService      *pictureswebservice.CollectionsWebService
 	tracksService           *pictureswebservice.TracksWebService
 	graphQLService          *pictureswebservice.GraphQLAPIService
+	backupService           *pictureswebservice.BackupWebService
 	dbConn                  *mediaserverdb.DBConn
 	jobRunner               *mediaserverjobs.JobRunner
 	logger                  *logpkg.Logger
@@ -75,7 +76,10 @@ func NewMediaServerAndScan(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDi
 		collectionsService:      pictureswebservice.NewCollectionsWebService(logger, dbConn, mediaServerDAL.CollectionsDAL, profiler),
 		tracksService:           pictureswebservice.NewTracksWebService(logger, mediaServerDAL.TracksDAL, mediaServerDAL.MediaFilesDAL),
 		graphQLService:          graphQLAPIService,
-		logger:                  logger,
+		backupService: pictureswebservice.NewBackupService(
+			logger, profiler, dbConn, mediaServerDAL.CollectionsDAL, mediaServerDAL.PeopleDAL, mediaServerDAL.MediaFilesDAL,
+		),
+		logger: logger,
 	}
 
 	startupMeasurement := profileRun.Measure("startup")
@@ -137,6 +141,7 @@ func (ms *MediaServer) ListenAndServe(addr string) error {
 		r.Mount("/collections/", ms.collectionsService)
 		r.Mount("/tracks/", ms.tracksService)
 		r.Mount("/graphql", ms.graphQLService)
+		r.Mount("/backup", ms.backupService)
 	})
 
 	mainRouter.Mount("/video/", http.StripPrefix("/video/", ms.videosWebService))

@@ -42,8 +42,8 @@ interface GroupWithSizes {
 
 type Props = {
     row: Row;
-    scrollObservable: Observable<{}>;
-    resizeObservable: Observable<{}>;
+    scrollObservable: Observable<void>;
+    resizeObservable: Observable<void>;
     onClickThumbnail?: (mediaFile: MediaFile) => void;
     buildLink?: BuildLinkFunc;
     onSelectThumbnail?: (mediaFile: MediaFile, eventInfo: SelectThumbnailEventInfo) => void;

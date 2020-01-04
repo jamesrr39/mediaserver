@@ -35,7 +35,7 @@ type MediaServerDAL struct {
 	VideosDAL      videodal.VideoDAL
 	TracksDAL      *TracksDAL
 	ThumbnailsDAL  *ThumbnailsDAL
-	PeopleDAL *PeopleDAL
+	PeopleDAL      *PeopleDAL
 }
 
 func NewMediaServerDAL(logger *logpkg.Logger, fs gofs.Fs, picturesBasePath, cachesBasePath, dataDir string, maxConcurrentCPUJobs, maxConcurrentVideoConversions uint, thumbnailCachePolicy ThumbnailCachePolicy, maxConcurrentTrackRecordsParsing, maxConcurrentResizes uint) (*MediaServerDAL, error) {

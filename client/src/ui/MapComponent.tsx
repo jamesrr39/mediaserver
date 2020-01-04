@@ -138,7 +138,7 @@ type Props = {
   tracks?: TrackMapData[],
   extraLatLongMapPadding?: number,
   zoomControl: boolean,
-  resizeObservable: Observable<{}>,
+  resizeObservable: Observable<void>,
 };
 
 class MapComponent extends React.Component<Props> {

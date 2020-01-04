@@ -29,8 +29,8 @@ type Props = {
   hash: string,
   mediaFiles: MediaFile[],
   dispatch: Dispatch<Action>,
-  scrollObservable: Observable<{}>,
-  resizeObservable: Observable<{}>,
+  scrollObservable: Observable<void>,
+  resizeObservable: Observable<void>,
   baseUrl: string, // for example, /gallery
   subview?: Subview,
 };
@@ -71,7 +71,7 @@ const styles = {
   // },
   wideScreen: {
     contentContainer: {
-      // height: '100%',
+      height: '100%',
       flexGrow: 1,
       display: 'flex' as 'flex',
       // alignItems: 'center',
@@ -145,10 +145,10 @@ class MediaFileModal extends React.Component<Props, ComponentState> {
     const s = {
       display: 'flex',
       width: '100%',
+      height: '100%',
     };
 
     const childS = {
-      // width: '100%',
       flex: '1'
     };
 

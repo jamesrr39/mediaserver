@@ -10,8 +10,8 @@ const styles = {
     backgroundColor: 'black',
     zIndex: 10000,
     color: 'white',
-    display: 'flex',
-    flexDirection: 'column' as 'column',
+    // display: 'flex',
+    // flexDirection: 'column' as 'column',
     overflowY: 'scroll' as 'scroll',
   },
 };

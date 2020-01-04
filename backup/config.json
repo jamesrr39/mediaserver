@@ -1,0 +1,17 @@
+{
+  "requiredVariables": ["SERVER_BASE_URL"],
+  "listingUrl": "${SERVER_BASE_URL}/api/graphql?query={mediaFiles{videos{relativePath,participantIds,fileSizeBytes,hashValue},pictures{relativePath,participantIds,fileSizeBytes,hashValue},tracks{relativePath,participantIds,fileSizeBytes,hashValue}},people{name,id}}",
+  "files": [{
+    "immutable": true,
+    "urlPrefix": "${SERVER_BASE_URL}/file/${VALUE}/",
+    "valueFromListing": ["mediaFiles", "videos", "hashValue"]
+  }, {
+    "immutable": true,
+    "urlPrefix": "${SERVER_BASE_URL}/file/${VALUE}/",
+    "valueFromListing": ["mediaFiles", "pictures", "hashValue"]
+  }, {
+    "immutable": true,
+    "urlPrefix": "${SERVER_BASE_URL}/file/${VALUE}/",
+    "valueFromListing": ["mediaFiles", "tracks", "hashValue"]
+  }]
+}

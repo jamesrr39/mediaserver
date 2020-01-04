@@ -16,8 +16,8 @@ export type InnerGalleryProps = {
   showMap: boolean;
   tracks: TrackMapData[];
   filterJson: string;
-  scrollObservable: Observable<{}>,
-  resizeObservable: Observable<{}>,
+  scrollObservable: Observable<void>,
+  resizeObservable: Observable<void>,
   onClickThumbnail?: (mediaFile: MediaFile) => void,
   mediaFiles: MediaFile[],
   mediaFileUrlBase?: string,
@@ -42,7 +42,7 @@ class InnerGallery extends React.Component<InnerGalleryProps, InnerGalleryState>
     const {scrollObservable, resizeObservable} = this.props;
 
     [scrollObservable, resizeObservable].forEach(observable => {
-      observable.triggerEvent({});
+      observable.triggerEvent();
       observable.addListener(this.onScroll);
       observable.addListener(this.onResize);
     });
@@ -58,8 +58,8 @@ class InnerGallery extends React.Component<InnerGalleryProps, InnerGalleryState>
   }
 
   componentDidUpdate() {
-    this.props.scrollObservable.triggerEvent({});
-    this.props.resizeObservable.triggerEvent({});
+    this.props.scrollObservable.triggerEvent();
+    this.props.resizeObservable.triggerEvent();
   }
 
   render() {

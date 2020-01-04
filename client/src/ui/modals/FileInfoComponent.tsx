@@ -72,14 +72,16 @@ class FileInfoComponent extends React.Component<Props> {
 
     return (
       <div style={styles.container}>
-        {onCloseButtonClicked && <div style={TopBarStyles.topBar}>
-          <button
-            onClick={onCloseButtonClicked}
-            style={TopBarStyles.navigationButton}
-            className="fa fa-info-circle"
-            aria-label="Info"
-          />
-        </div>}
+        {onCloseButtonClicked && (
+          <div style={TopBarStyles.topBar}>
+            <button
+              onClick={onCloseButtonClicked}
+              style={TopBarStyles.navigationButton}
+              className="fa fa-info-circle"
+              aria-label="Info"
+            />
+        </div>
+        )}
         <p>{mediaFile.getName()}</p>
         <p>{timeTakenText}</p>
         <ul>

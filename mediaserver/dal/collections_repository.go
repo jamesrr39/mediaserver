@@ -30,7 +30,7 @@ SELECT id(), name FROM collections;
 	}
 	defer result.Close()
 
-	var collectionList []*collections.Collection
+	collectionList := []*collections.Collection{}
 	for result.Next() {
 		var id int64
 		var name string

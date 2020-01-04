@@ -101,8 +101,8 @@ const generateThumbnailStyle = (mediaFile: MediaFile, isLoaded: boolean) => {
 
 export type ThumbnailProps = {
   mediaFile: MediaFile;
-  scrollObservable: Observable<{}>;
-  resizeObservable: Observable<{}>;
+  scrollObservable: Observable<void>;
+  resizeObservable: Observable<void>;
   size: Size;
   isThumbnailVisible(el: HTMLElement): void;
 };

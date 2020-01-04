@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
 	"github.com/graphql-go/graphql"
 	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/jamesrr39/goutil/logpkg"
@@ -118,11 +119,7 @@ func (ws *GraphQLAPIService) handleGraphQLRequest(w http.ResponseWriter, r *http
 		return
 	}
 
-	err := json.NewEncoder(w).Encode(result)
-	if err != nil {
-		errorsx.HTTPError(w, ws.logger, errorsx.Wrap(err), http.StatusInternalServerError)
-		return
-	}
+	render.JSON(w, r, result)
 }
 
 func (ws *GraphQLAPIService) setupMutationType() *graphql.Object {

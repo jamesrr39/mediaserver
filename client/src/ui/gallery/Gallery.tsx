@@ -60,8 +60,8 @@ class GalleryWithFilter extends React.Component<GalleryProps, GalleryState> {
 
   private onFilterChangeObservable = new DebouncedObservable<GalleryFilter>(50);
 
-  private scrollObservable = new DebouncedObservable<{}>(150);
-  private resizeObservable = new DebouncedObservable<{}>(150);
+  private scrollObservable = new DebouncedObservable<void>(150);
+  private resizeObservable = new DebouncedObservable<void>(150);
 
   private galleryContainerEl: HTMLElement|null = null;
 
@@ -119,8 +119,8 @@ class GalleryWithFilter extends React.Component<GalleryProps, GalleryState> {
       return;
     }
 
-    el.addEventListener('scroll', () => this.scrollObservable.triggerEvent({}));
-    el.addEventListener('resize', () => this.resizeObservable.triggerEvent({}));
+    el.addEventListener('scroll', () => this.scrollObservable.triggerEvent());
+    el.addEventListener('resize', () => this.resizeObservable.triggerEvent());
 
     const elementPosTopOffset = el.getBoundingClientRect().top;
 
