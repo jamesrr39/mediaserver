@@ -69,7 +69,7 @@ func (dal *PicturesDAL) GetPicture(pictureMetadata *domain.PictureMetadata) (ima
 	}
 	defer file.Close()
 
-	_, picture, err := domain.NewPictureMetadataAndPictureFromBytes(file, pictureMetadata.RelativePath, pictureMetadata.HashValue)
+	_, picture, err := domain.NewPictureMetadataAndPictureFromBytes(file, pictureMetadata.GetMediaFileInfo())
 	if nil != err {
 		return nil, "", errorsx.Wrap(err)
 	}
@@ -79,13 +79,13 @@ func (dal *PicturesDAL) GetPicture(pictureMetadata *domain.PictureMetadata) (ima
 
 var ErrNotFound = errors.New("not found")
 
-func (pr *PicturesDAL) GetPictureMetadata(tx *sql.Tx, hash domain.HashValue, relativePath string, participantIDs []int64) (*domain.PictureMetadata, error) {
+func (pr *PicturesDAL) GetPictureMetadata(tx *sql.Tx, mediaFileInfo domain.MediaFileInfo) (*domain.PictureMetadata, error) {
 
 	row := tx.QueryRow(`
 SELECT file_size_bytes, exif_data_json, raw_size_width, raw_size_height, format
 FROM pictures_metadatas
 WHERE hash == $1
-    `, hash)
+    `, mediaFileInfo.HashValue)
 
 	var fileSizeBytes int64
 	var exifDataJSON, format string
@@ -112,7 +112,7 @@ WHERE hash == $1
 		Height: rawSizeHeight,
 	}
 
-	return domain.NewPictureMetadata(hash, relativePath, fileSizeBytes, exifData, rawSize, format, participantIDs), nil
+	return domain.NewPictureMetadata(mediaFileInfo, exifData, rawSize, format), nil
 }
 
 func (pr *PicturesDAL) CreatePictureMetadata(tx *sql.Tx, pictureMetadata *domain.PictureMetadata) error {

@@ -45,19 +45,14 @@ func (pm *PictureMetadata) GetMediaFileInfo() MediaFileInfo {
 	return pm.MediaFileInfo
 }
 
-func NewPictureMetadata(hashValue HashValue, relativePath string, fileSizeBytes int64, exifData *ExifData, rawSize RawSize, format string, participantIDs []int64) *PictureMetadata {
-	return &PictureMetadata{MediaFileInfo{relativePath, hashValue, MediaFileTypePicture, fileSizeBytes, participantIDs}, exifData, rawSize, format, nil}
+func NewPictureMetadata(fileInfo MediaFileInfo, exifData *ExifData, rawSize RawSize, format string) *PictureMetadata {
+	return &PictureMetadata{fileInfo, exifData, rawSize, format, nil}
 }
 
-func NewPictureMetadataAndPictureFromBytes(file io.ReadSeeker, relativePath string, hash HashValue) (*PictureMetadata, image.Image, error) {
+func NewPictureMetadataAndPictureFromBytes(file io.ReadSeeker, mediaFileInfo MediaFileInfo) (*PictureMetadata, image.Image, error) {
 	picture, format, err := image.Decode(file)
 	if nil != err {
 		return nil, nil, fmt.Errorf("couldn't decode image. Error: %s", err)
-	}
-
-	fileLen, err := file.Seek(0, io.SeekStart)
-	if err != nil {
-		return nil, nil, errorsx.Wrap(err)
 	}
 
 	exifData, err := DecodeExifFromFile(file)
@@ -68,13 +63,12 @@ func NewPictureMetadataAndPictureFromBytes(file io.ReadSeeker, relativePath stri
 	if exifData != nil {
 		orientation, err := exifData.GetOrientation()
 		if err != nil {
-			log.Printf("couldn't get exif orientation information for picture with hash '%s' and relative path '%s'. Error: '%s'\n", hash, relativePath, err)
+			log.Printf("couldn't get exif orientation information for picture with hash '%s' and relative path '%s'. Error: '%s'\n", mediaFileInfo.HashValue, mediaFileInfo.RelativePath, err)
 		} else {
 			picture = imageprocessingutil.FlipAndRotatePictureByExif(picture, orientation)
 		}
 	}
-
-	return NewPictureMetadata(hash, relativePath, fileLen, exifData, RawSizeFromImage(picture), format, []int64{}), picture, nil
+	return NewPictureMetadata(mediaFileInfo, exifData, RawSizeFromImage(picture), format), picture, nil
 }
 
 func (pictureMetadata *PictureMetadata) String() string {

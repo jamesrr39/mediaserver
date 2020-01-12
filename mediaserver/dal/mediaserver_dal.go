@@ -23,7 +23,6 @@ import (
 
 var (
 	ErrIllegalPathTraversingUp = errors.New("file path is traversing up")
-	ErrFileAlreadyExists       = errors.New("a file with this hash already exists")
 )
 
 type MediaServerDAL struct {
@@ -79,7 +78,7 @@ func NewMediaServerDAL(logger *logpkg.Logger, fs gofs.Fs, picturesBasePath, cach
 var ErrContentTypeNotSupported = errors.New("content type not supported")
 
 // Create adds a new picture to the collection
-func (dal *MediaServerDAL) Create(tx *sql.Tx, file io.ReadSeeker, filename, contentType string, profileRun *profile.Run) (domain.MediaFile, errorsx.Error) {
+func (dal *MediaServerDAL) CreateOrGetExisting(tx *sql.Tx, file io.ReadSeeker, filename, contentType string, profileRun *profile.Run) (domain.MediaFile, errorsx.Error) {
 	createFileMeasurement := profileRun.Measure("create file")
 	defer createFileMeasurement.Stop()
 
@@ -104,7 +103,7 @@ func (dal *MediaServerDAL) Create(tx *sql.Tx, file io.ReadSeeker, filename, cont
 
 	existingFile := dal.MediaFilesDAL.Get(hashValue)
 	if existingFile != nil {
-		return nil, errorsx.Wrap(ErrFileAlreadyExists)
+		return existingFile, nil
 	}
 
 	createFileMeasurement.MeasureStep("seeking to start of file")
@@ -121,15 +120,50 @@ func (dal *MediaServerDAL) Create(tx *sql.Tx, file io.ReadSeeker, filename, cont
 		return nil, errorsx.Wrap(err)
 	}
 
-	mediaFileInfo := domain.NewMediaFileInfo(relativePath, hashValue, domain.MediaFileTypeFitTrack, fileLen, participantIDs)
+	createFileMeasurement.MeasureStep("making uploads dir if necessary")
+
+	err = dal.fs.MkdirAll(filepath.Dir(absoluteFilePath), 0755)
+	if nil != err {
+		return nil, errorsx.Wrap(err)
+	}
+
+	log.Println("writing to " + absoluteFilePath)
+
+	newFile, err := dal.fs.Create(absoluteFilePath)
+	if nil != err {
+		return nil, errorsx.Wrap(err)
+	}
+	defer newFile.Close()
+
+	_, err = file.Seek(0, io.SeekStart)
+	if err != nil {
+		return nil, errorsx.Wrap(err)
+	}
+
+	createFileMeasurement.MeasureStep("writing new file")
+
+	_, err = io.Copy(newFile, file)
+	if nil != err {
+		return nil, errorsx.Wrap(err)
+	}
+
+	_, err = file.Seek(0, io.SeekStart)
+	if err != nil {
+		return nil, errorsx.Wrap(err)
+	}
+
+	osFileInfo, err := dal.fs.Stat(absoluteFilePath)
+
+	mediaFileInfo := domain.NewMediaFileInfo(relativePath, hashValue, domain.MediaFileTypeFitTrack, fileLen, participantIDs, osFileInfo.ModTime(), osFileInfo.Mode())
 
 	doAtEnd := func() error { return nil }
 	var mediaFile domain.MediaFile
+
 	switch contentType {
 	case "image/jpg", "image/jpeg", "image/png":
 		var pictureMetadata *domain.PictureMetadata
 		profileRun.Measure("generate picture metadata from bytes")
-		pictureMetadata, _, err = domain.NewPictureMetadataAndPictureFromBytes(file, relativePath, hashValue)
+		pictureMetadata, _, err = domain.NewPictureMetadataAndPictureFromBytes(file, mediaFileInfo)
 		if nil != err {
 			return nil, errorsx.Wrap(err)
 		}
@@ -220,33 +254,11 @@ func (dal *MediaServerDAL) Create(tx *sql.Tx, file io.ReadSeeker, filename, cont
 
 	default:
 		log.Printf("content type not supported: %q\n", contentType)
+		err = os.Remove(absoluteFilePath)
+		if err != nil {
+			return nil, errorsx.Wrap(err)
+		}
 		return nil, errorsx.Wrap(ErrContentTypeNotSupported)
-	}
-
-	createFileMeasurement.MeasureStep("making uploads dir if necessary")
-
-	err = dal.fs.MkdirAll(filepath.Dir(absoluteFilePath), 0755)
-	if nil != err {
-		return nil, errorsx.Wrap(err)
-	}
-
-	log.Println("writing to " + absoluteFilePath)
-
-	newFile, err := dal.fs.Create(absoluteFilePath)
-	if nil != err {
-		return nil, errorsx.Wrap(err)
-	}
-
-	_, err = file.Seek(0, io.SeekStart)
-	if err != nil {
-		return nil, errorsx.Wrap(err)
-	}
-
-	createFileMeasurement.MeasureStep("writing new file")
-
-	_, err = io.Copy(newFile, file)
-	if nil != err {
-		return nil, errorsx.Wrap(err)
 	}
 
 	createFileMeasurement.MeasureStep("doing action at end")

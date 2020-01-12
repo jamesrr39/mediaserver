@@ -23,17 +23,17 @@ import (
 
 // MediaServer is a server used for showing pieces of media
 type MediaServer struct {
-	Rootpath                string
-	mediaServerDAL          *dal.MediaServerDAL
-	picturesService         *pictureswebservice.PicturesService
-	picturesMetadataService *pictureswebservice.MediaFilesService
-	videosWebService        *pictureswebservice.VideoWebService
-	collectionsService      *pictureswebservice.CollectionsWebService
-	tracksService           *pictureswebservice.TracksWebService
-	graphQLService          *pictureswebservice.GraphQLAPIService
-	dbConn                  *mediaserverdb.DBConn
-	jobRunner               *mediaserverjobs.JobRunner
-	logger                  *logpkg.Logger
+	Rootpath           string
+	mediaServerDAL     *dal.MediaServerDAL
+	picturesService    *pictureswebservice.PicturesService
+	filesService       *pictureswebservice.MediaFilesService
+	videosWebService   *pictureswebservice.VideoWebService
+	collectionsService *pictureswebservice.CollectionsWebService
+	tracksService      *pictureswebservice.TracksWebService
+	graphQLService     *pictureswebservice.GraphQLAPIService
+	dbConn             *mediaserverdb.DBConn
+	jobRunner          *mediaserverjobs.JobRunner
+	logger             *logpkg.Logger
 }
 
 // NewMediaServerAndScan creates a new MediaServer and builds a cache of pictures by scanning the rootpath
@@ -67,15 +67,15 @@ func NewMediaServerAndScan(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDi
 	}
 
 	mediaServer := &MediaServer{
-		Rootpath:                rootpath,
-		mediaServerDAL:          mediaServerDAL,
-		picturesService:         pictureswebservice.NewPicturesService(logger, mediaServerDAL),
-		picturesMetadataService: pictureswebservice.NewMediaFilesService(logger, dbConn, mediaServerDAL, profiler),
-		videosWebService:        pictureswebservice.NewVideoWebService(mediaServerDAL.VideosDAL, mediaServerDAL.MediaFilesDAL),
-		collectionsService:      pictureswebservice.NewCollectionsWebService(logger, dbConn, mediaServerDAL.CollectionsDAL, profiler),
-		tracksService:           pictureswebservice.NewTracksWebService(logger, mediaServerDAL.TracksDAL, mediaServerDAL.MediaFilesDAL),
-		graphQLService:          graphQLAPIService,
-		logger:                  logger,
+		Rootpath:           rootpath,
+		mediaServerDAL:     mediaServerDAL,
+		picturesService:    pictureswebservice.NewPicturesService(logger, mediaServerDAL),
+		filesService:       pictureswebservice.NewMediaFilesService(logger, dbConn, mediaServerDAL, profiler),
+		videosWebService:   pictureswebservice.NewVideoWebService(mediaServerDAL.VideosDAL, mediaServerDAL.MediaFilesDAL),
+		collectionsService: pictureswebservice.NewCollectionsWebService(logger, dbConn, mediaServerDAL.CollectionsDAL, profiler),
+		tracksService:      pictureswebservice.NewTracksWebService(logger, mediaServerDAL.TracksDAL, mediaServerDAL.MediaFilesDAL),
+		graphQLService:     graphQLAPIService,
+		logger:             logger,
 	}
 
 	startupMeasurement := profileRun.Measure("startup")
@@ -133,7 +133,7 @@ func (ms *MediaServer) ListenAndServe(addr string) error {
 	mainRouter.Use(mediaservermiddleware.CreateRequestLoggerMiddleware(ms.logger))
 
 	mainRouter.Route("/api/", func(r chi.Router) {
-		r.Mount("/files/", ms.picturesMetadataService)
+		r.Mount("/files/", ms.filesService)
 		r.Mount("/collections/", ms.collectionsService)
 		r.Mount("/tracks/", ms.tracksService)
 		r.Mount("/graphql", ms.graphQLService)

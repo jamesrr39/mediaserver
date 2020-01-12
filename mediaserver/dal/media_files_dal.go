@@ -29,6 +29,8 @@ const (
 	MediaFileUpdatePropertyParticipantIDs
 )
 
+var ErrFileNotSupported = errors.New("file not supported")
+
 type getRecordsInTrackFuncType func(trackSummary *domain.FitFileSummary) (domain.Records, error)
 
 type MediaFilesDAL struct {
@@ -71,19 +73,12 @@ func (dal *MediaFilesDAL) OpenFile(mediaFile domain.MediaFile) (gofs.File, error
 	return dal.fs.Open(filepath.Join(dal.picturesBasePath, mediaFile.GetMediaFileInfo().RelativePath))
 }
 
-func (dal *MediaFilesDAL) processFitFile(tx *sql.Tx, path string, hash domain.HashValue, fileInfo os.FileInfo, participantIDs []int64, file io.Reader) (*domain.FitFileSummary, error) {
-	relativePath := strings.TrimPrefix(path, dal.picturesBasePath)
-
-	mediaFileInfo := domain.NewMediaFileInfo(relativePath, hash, domain.MediaFileTypeFitTrack, fileInfo.Size(), participantIDs)
-
+func (dal *MediaFilesDAL) processFitFile(tx *sql.Tx, mediaFileInfo domain.MediaFileInfo, file io.Reader) (*domain.FitFileSummary, error) {
 	return domain.NewFitFileSummaryFromReader(mediaFileInfo, file)
 }
 
-func (dal *MediaFilesDAL) processVideoFile(tx *sql.Tx, path string, hashValue domain.HashValue, fileInfo os.FileInfo, participantIDs []int64) (*domain.VideoFileMetadata, error) {
-
-	relativePath := strings.TrimPrefix(path, dal.picturesBasePath)
-
-	videoFileMetadata := domain.NewVideoFileMetadata(domain.NewMediaFileInfo(relativePath, hashValue, domain.MediaFileTypeVideo, fileInfo.Size(), participantIDs))
+func (dal *MediaFilesDAL) processVideoFile(tx *sql.Tx, mediaFileInfo domain.MediaFileInfo) (*domain.VideoFileMetadata, error) {
+	videoFileMetadata := domain.NewVideoFileMetadata(mediaFileInfo)
 
 	err := dal.videosDAL.EnsureSupportedFile(videoFileMetadata)
 	if nil != err {
@@ -93,37 +88,25 @@ func (dal *MediaFilesDAL) processVideoFile(tx *sql.Tx, path string, hashValue do
 	return videoFileMetadata, nil
 }
 
-func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string, hash domain.HashValue, profileRun *profile.Run, participantIDs []int64) (*domain.PictureMetadata, error) {
-	openFileMeasurement := profileRun.Measure("open file")
-	file, err := dal.fs.Open(path)
-	if nil != err {
-		return nil, errorsx.Wrap(err)
-	}
+func (dal *MediaFilesDAL) GetFullPath(relativePath string) string {
+	return filepath.Join(dal.picturesBasePath, relativePath)
+}
 
-	openFileMeasurement.Stop()
-
-	relativePath := strings.TrimPrefix(path, dal.picturesBasePath)
-
-	calculateFileHashMeasurement := profileRun.Measure("calculate file hash")
-
-	calculateFileHashMeasurement.Stop()
-
-	_, err = file.Seek(0, io.SeekStart)
+func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, mediaFileInfo domain.MediaFileInfo, profileRun *profile.Run) (*domain.PictureMetadata, error) {
+	file, err := dal.fs.Open(dal.GetFullPath(mediaFileInfo.RelativePath))
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}
 
 	getMetadataMeasurement := profileRun.Measure("get metadata from db")
-	pictureMetadata, err := dal.picturesDAL.GetPictureMetadata(tx, hash, relativePath, participantIDs)
+	pictureMetadata, err := dal.picturesDAL.GetPictureMetadata(tx, mediaFileInfo)
 	if nil != err {
 		if err != ErrNotFound {
-			return nil, fmt.Errorf("unexpected error getting picture metadata from database for relative path '%s': '%s'", relativePath, err)
+			return nil, fmt.Errorf("unexpected error getting picture metadata from database for relative path '%s': '%s'", mediaFileInfo.RelativePath, err)
 		}
 
-		getMetadataMeasurement.MeasureStep("calculate picture metadata and write")
-
 		getMetadataMeasurement.MeasureStep("read picture metadata and picture: ")
-		pictureMetadata, _, err = domain.NewPictureMetadataAndPictureFromBytes(file, relativePath, hash)
+		pictureMetadata, _, err = domain.NewPictureMetadataAndPictureFromBytes(file, mediaFileInfo)
 		if nil != err {
 			return nil, errorsx.Wrap(err)
 		}
@@ -131,7 +114,7 @@ func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, path string, hash domai
 		getMetadataMeasurement.MeasureStep("write picture metadata")
 		err = dal.picturesDAL.CreatePictureMetadata(tx, pictureMetadata)
 		if nil != err {
-			return nil, fmt.Errorf("unexpected error setting picture metadata to database for relative file path '%s': '%s'", relativePath, err)
+			return nil, fmt.Errorf("unexpected error setting picture metadata to database for relative file path '%s': '%s'", mediaFileInfo.RelativePath, err)
 		}
 	}
 
@@ -277,6 +260,13 @@ func (dal *MediaFilesDAL) processFile(fs gofs.Fs, profileRun *profile.Run, tx *s
 	}
 	defer file.Close()
 
+	osFileInfo, err := dal.fs.Stat(path)
+	if nil != err {
+		return nil, errorsx.Wrap(err)
+	}
+
+	relativePath := strings.TrimPrefix(path, dal.picturesBasePath)
+
 	hash, err := domain.NewHash(file)
 	if nil != err {
 		return nil, errorsx.Wrap(err)
@@ -292,23 +282,26 @@ func (dal *MediaFilesDAL) processFile(fs gofs.Fs, profileRun *profile.Run, tx *s
 		return nil, errorsx.Wrap(err)
 	}
 
-	fileExtensionLower := strings.ToLower(filepath.Ext(path))
-	switch fileExtensionLower {
-	case ".jpg", ".jpeg", ".png":
+	fileType := domain.GetFileTypeFromPath(path)
+
+	mediaFileInfo := domain.NewMediaFileInfo(relativePath, hash, fileType, osFileInfo.Size(), participantIDs, osFileInfo.ModTime(), osFileInfo.Mode())
+
+	switch fileType {
+	case domain.MediaFileTypePicture:
 		profileRun.Measure("process picture file")
-		mediaFile, err = dal.processPictureFile(tx, path, hash, profileRun, participantIDs)
+		mediaFile, err = dal.processPictureFile(tx, mediaFileInfo, profileRun)
 		if err != nil {
 			return nil, errorsx.Wrap(err)
 		}
-	case ".mp4":
+	case domain.MediaFileTypeVideo:
 		profileRun.Measure("process video file")
-		mediaFile, err = dal.processVideoFile(tx, path, hash, fileInfo, participantIDs)
+		mediaFile, err = dal.processVideoFile(tx, mediaFileInfo)
 		if err != nil {
 			return nil, errorsx.Wrap(err)
 		}
-	case ".fit":
+	case domain.MediaFileTypeFitTrack:
 		profileRun.Measure("process fit file")
-		mediaFile, err = dal.processFitFile(tx, path, hash, fileInfo, participantIDs, file)
+		mediaFile, err = dal.processFitFile(tx, mediaFileInfo, file)
 		if err != nil {
 			return nil, errorsx.Wrap(err)
 		}
@@ -318,5 +311,3 @@ func (dal *MediaFilesDAL) processFile(fs gofs.Fs, profileRun *profile.Run, tx *s
 
 	return mediaFile, nil
 }
-
-var ErrFileNotSupported = errors.New("file not supported")

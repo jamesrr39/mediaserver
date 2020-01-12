@@ -1,17 +1,36 @@
 {
+  "version": 1,
   "requiredVariables": ["SERVER_BASE_URL"],
-  "listingUrl": "${SERVER_BASE_URL}/api/graphql?query={mediaFiles{videos{relativePath,participantIds,fileSizeBytes,hashValue},pictures{relativePath,participantIds,fileSizeBytes,hashValue},tracks{relativePath,participantIds,fileSizeBytes,hashValue}},people{name,id}}",
+  "listingUrl": "${SERVER_BASE_URL}/api/graphql?query={mediaFiles{videos{relativePath,participantIds,fileSizeBytes,hashValue,fileModTime,fileMode},pictures{relativePath,participantIds,fileSizeBytes,hashValue,fileModTime,fileMode},tracks{relativePath,participantIds,fileSizeBytes,hashValue,fileModTime,fileMode}},people{name,id}}",
   "files": [{
-    "immutable": true,
-    "urlPrefix": "${SERVER_BASE_URL}/file/${VALUE}/",
-    "valueFromListing": ["mediaFiles", "videos", "hashValue"]
+    "modTimeKey": "fileModTime",
+    "sizeKey": "fileSizeBytes",
+    "relativePathKey": "relativePath",
+    "fileModeKey": "fileMode",
+    "downloadUrlPattern": "${SERVER_BASE_URL}/api/files/${HASH_VALUE}",
+    "forEach": ["data", "mediaFiles", "videos"],
+    "variableMappings": {
+      "HASH_VALUE": "hashValue"
+    }
   }, {
-    "immutable": true,
-    "urlPrefix": "${SERVER_BASE_URL}/file/${VALUE}/",
-    "valueFromListing": ["mediaFiles", "pictures", "hashValue"]
+    "modTimeKey": "fileModTime",
+    "sizeKey": "fileSizeBytes",
+    "relativePathKey": "relativePath",
+    "fileModeKey": "fileMode",
+    "downloadUrlPattern": "${SERVER_BASE_URL}/api/files/${HASH_VALUE}",
+    "forEach": ["data", "mediaFiles", "pictures"],
+    "variableMappings": {
+      "HASH_VALUE": "hashValue"
+    }
   }, {
-    "immutable": true,
-    "urlPrefix": "${SERVER_BASE_URL}/file/${VALUE}/",
-    "valueFromListing": ["mediaFiles", "tracks", "hashValue"]
+    "modTimeKey": "fileModTime",
+    "sizeKey": "fileSizeBytes",
+    "relativePathKey": "relativePath",
+    "fileModeKey": "fileMode",
+    "downloadUrlPattern": "${SERVER_BASE_URL}/api/files/${HASH_VALUE}",
+    "forEach": ["data", "mediaFiles", "tracks"],
+    "variableMappings": {
+      "HASH_VALUE": "hashValue"
+    }
   }]
 }

@@ -1,8 +1,14 @@
 package domain
 
+import (
+	"os"
+	"time"
+)
+
 type MediaFileType int
 
 const (
+	MediaFileTypeUnknown  MediaFileType = 0
 	MediaFileTypePicture  MediaFileType = 1
 	MediaFileTypeVideo    MediaFileType = 2
 	MediaFileTypeFitTrack MediaFileType = 3
@@ -14,6 +20,8 @@ type MediaFileInfo struct {
 	MediaFileType  MediaFileType `json:"fileType"`
 	FileSizeBytes  int64         `json:"fileSizeBytes"`
 	ParticipantIDs []int64       `json:"participantIds"`
+	FileModTime    time.Time     `json:"fileModTime"`
+	FileMode       os.FileMode   `json:"fileMode"`
 }
 
 func NewMediaFileInfo(
@@ -22,8 +30,10 @@ func NewMediaFileInfo(
 	mediaFileType MediaFileType,
 	fileSizeBytes int64,
 	participantIDs []int64,
+	fileModTime time.Time,
+	fileMode os.FileMode,
 ) MediaFileInfo {
-	return MediaFileInfo{relativePath, hashValue, mediaFileType, fileSizeBytes, participantIDs}
+	return MediaFileInfo{relativePath, hashValue, mediaFileType, fileSizeBytes, participantIDs, fileModTime, fileMode}
 }
 
 type MediaFile interface {

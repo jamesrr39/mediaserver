@@ -2,6 +2,7 @@ package webservice
 
 import (
 	"fmt"
+	"io"
 	"mediaserver/mediaserver/dal"
 	"mediaserver/mediaserver/dal/diskstorage/mediaserverdb"
 	"mediaserver/mediaserver/domain"
@@ -25,12 +26,40 @@ type MediaFilesService struct {
 
 func NewMediaFilesService(log *logpkg.Logger, dbConn *mediaserverdb.DBConn, picturesDAL *dal.MediaServerDAL, profiler *profile.Profiler) *MediaFilesService {
 	router := chi.NewRouter()
-	picturesService := &MediaFilesService{log, picturesDAL, dbConn, router, profiler}
+	fileService := &MediaFilesService{log, picturesDAL, dbConn, router, profiler}
 
-	router.Get("/", picturesService.serveAllPicturesMetadata)
-	router.Post("/", picturesService.serveFileUpload)
+	router.Get("/", fileService.serveAllPicturesMetadata)
+	router.Get("/{hash}", fileService.serveFile)
+	router.Post("/", fileService.serveFileUpload)
 
-	return picturesService
+	return fileService
+}
+
+func (ms *MediaFilesService) serveFile(w http.ResponseWriter, r *http.Request) {
+	hash := chi.URLParam(r, "hash")
+	if hash == "" {
+		errorsx.HTTPError(w, ms.log, errorsx.Errorf("no hash supplied"), http.StatusBadRequest)
+		return
+	}
+
+	mediaFile := ms.mediaServerDAL.MediaFilesDAL.Get(domain.HashValue(hash))
+	if mediaFile == nil {
+		errorsx.HTTPError(w, ms.log, errorsx.Errorf("hash %q not found", hash), http.StatusNotFound)
+		return
+	}
+
+	file, err := ms.mediaServerDAL.MediaFilesDAL.OpenFile(mediaFile)
+	if err != nil {
+		errorsx.HTTPError(w, ms.log, errorsx.Errorf("couldn't find file for hash %q, relative path %q. It should be present, however, as it was in the listing.", hash, mediaFile.GetMediaFileInfo().RelativePath), http.StatusInternalServerError)
+		return
+	}
+	defer file.Close()
+
+	_, err = io.Copy(w, file)
+	if err != nil {
+		errorsx.HTTPError(w, ms.log, errorsx.Wrap(err), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (ms *MediaFilesService) refresh(profileRun *profile.Run) errorsx.Error {
@@ -100,15 +129,11 @@ func (ms *MediaFilesService) serveFileUpload(w http.ResponseWriter, r *http.Requ
 
 	contentType := fileHeader.Header.Get("Content-Type")
 
-	var mediaFile domain.MediaFile
-
 	createFileMeasurement := profileRun.Measure("create file on disk")
 
-	mediaFile, err = ms.mediaServerDAL.Create(tx, file, fileHeader.Filename, contentType, profileRun)
+	mediaFile, err := ms.mediaServerDAL.CreateOrGetExisting(tx, file, fileHeader.Filename, contentType, profileRun)
 	if nil != err {
 		switch errorsx.Cause(err) {
-		case dal.ErrFileAlreadyExists:
-			errorsx.HTTPError(w, ms.log, err, 409)
 		case dal.ErrIllegalPathTraversingUp:
 			errorsx.HTTPError(w, ms.log, err, 400)
 		case dal.ErrContentTypeNotSupported:

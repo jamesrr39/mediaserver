@@ -10,6 +10,7 @@ import (
 	"mediaserver/mediaserver/domain"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi"
@@ -430,6 +431,22 @@ var (
 				return (p.Source.(domain.MediaFile)).GetMediaFileInfo().FileSizeBytes, nil
 			},
 		},
+		"fileModTime": &graphql.Field{
+			Type: graphql.Float,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				// resolve embedded media file base fields workaround: https://github.com/graphql-go/graphql/issues/170#issuecomment-325242640
+				modTime := (p.Source.(domain.MediaFile)).GetMediaFileInfo().FileModTime
+				return modTime.UnixNano(), nil
+			},
+		},
+		"fileMode": &graphql.Field{
+			Type: graphql.String,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				// resolve embedded media file base fields workaround: https://github.com/graphql-go/graphql/issues/170#issuecomment-325242640
+				fileMode := (p.Source.(domain.MediaFile)).GetMediaFileInfo().FileMode
+				return strconv.FormatUint(uint64(fileMode), 8), nil
+			},
+		},
 		"participantIds": &graphql.Field{
 			Type: graphql.NewList(graphql.Int),
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
@@ -437,7 +454,6 @@ var (
 				return (p.Source.(domain.MediaFile)).GetMediaFileInfo().ParticipantIDs, nil
 			},
 		},
-		// "e2e415c51bb22f4d6336bd93a71a6d0815d9effd","fileType":3,"fileSizeBytes":7143,"participantIds":[],"startTime":"2019-03-29T10:36:15Z","endTime":"2019-03-29T10:54:22Z","deviceManufacturer":"Garmin","deviceProduct":"","totalDistance":2896.85,"activityBounds":{"latMin":55.600090781226754,"latMax":55.607599038630724,"longMin":12.98206178471446,"longMax":12.998274313285947}
 	}
 	picturesType = graphql.NewList(graphql.NewObject(graphql.ObjectConfig{
 		Name: "picture",
