@@ -5,6 +5,7 @@ import (
 	"mediaserver/mediaserver/testutil"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/alecthomas/assert"
 	"github.com/jamesrr39/goutil/gofs"
@@ -29,17 +30,27 @@ func Test_CrudPictureMetadataNoExif(t *testing.T) {
 	tx, err := dbConn.Begin()
 	require.Nil(t, err)
 
-	pictureMetadata := domain.NewPictureMetadata(
+	fileInfo := domain.NewMediaFileInfo(
 		"abcdef123456",
 		"/a/b/c.jpg",
 		12345,
+		0,
+		[]int64{},
+		time.Unix(0, 0),
+		0700,
+	)
+
+	pictureMetadata := domain.NewPictureMetadata(
+		fileInfo,
 		nil,
-		domain.RawSize{Width: 400, Height: 400}, "jpeg", nil)
+		domain.RawSize{Width: 400, Height: 400},
+		"jpeg",
+	)
 
 	err = picturesMetadataRepository.CreatePictureMetadata(tx, pictureMetadata)
 	require.Nil(t, err)
 
-	fetchedPictureMetadata, err := picturesMetadataRepository.GetPictureMetadata(tx, pictureMetadata.HashValue, pictureMetadata.RelativePath, nil)
+	fetchedPictureMetadata, err := picturesMetadataRepository.GetPictureMetadata(tx, fileInfo)
 	require.Nil(t, err)
 
 	assert.Equal(t, pictureMetadata, fetchedPictureMetadata)
