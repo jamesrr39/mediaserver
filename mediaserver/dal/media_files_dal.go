@@ -11,7 +11,6 @@ import (
 	"mediaserver/mediaserver/mediaserverjobs"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"sync"
 
@@ -105,6 +104,8 @@ func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, mediaFileInfo domain.Me
 			return nil, fmt.Errorf("unexpected error getting picture metadata from database for relative path '%s': '%s'", mediaFileInfo.RelativePath, err)
 		}
 
+		dal.log.Info("picture not found for %q (hash: %q). Error type: %T", pictureMetadata.RelativePath, pictureMetadata.HashValue, err)
+
 		getMetadataMeasurement.MeasureStep("read picture metadata and picture: ")
 		pictureMetadata, _, err = domain.NewPictureMetadataAndPictureFromBytes(file, mediaFileInfo)
 		if nil != err {
@@ -116,13 +117,15 @@ func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, mediaFileInfo domain.Me
 		if nil != err {
 			return nil, fmt.Errorf("unexpected error setting picture metadata to database for relative file path '%s': '%s'", mediaFileInfo.RelativePath, err)
 		}
+	} else {
+		dal.log.Info("picture metadata found for %q (hash: %q).", pictureMetadata.RelativePath, pictureMetadata.HashValue)
 	}
 
 	return pictureMetadata, nil
 }
 
 func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx, profileRun *profile.Run) errorsx.Error {
-	sema := semaphore.NewSemaphore(uint(runtime.NumCPU()))
+	sema := semaphore.NewSemaphore(50)
 
 	var mediaFiles []domain.MediaFile
 
@@ -254,6 +257,15 @@ func (dal *MediaFilesDAL) processFile(fs gofs.Fs, profileRun *profile.Run, tx *s
 	var mediaFile domain.MediaFile
 	var err error
 
+	dal.log.Info("start processing %q", path)
+	defer func() {
+		t := "skipped"
+		if mediaFile != nil {
+			t = mediaFile.GetMediaFileInfo().MediaFileType.String()
+		}
+		dal.log.Info("finished processing %q (%q)", path, t)
+	}()
+
 	file, err := dal.fs.Open(path)
 	if nil != err {
 		return nil, errorsx.Wrap(err)
@@ -285,7 +297,6 @@ func (dal *MediaFilesDAL) processFile(fs gofs.Fs, profileRun *profile.Run, tx *s
 	fileType := domain.GetFileTypeFromPath(path)
 
 	mediaFileInfo := domain.NewMediaFileInfo(relativePath, hash, fileType, osFileInfo.Size(), participantIDs, osFileInfo.ModTime(), osFileInfo.Mode())
-
 	switch fileType {
 	case domain.MediaFileTypePicture:
 		profileRun.Measure("process picture file")

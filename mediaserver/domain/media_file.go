@@ -14,6 +14,17 @@ const (
 	MediaFileTypeFitTrack MediaFileType = 3
 )
 
+var names = []string{
+	"unknown",
+	"picture",
+	"video",
+	"track",
+}
+
+func (m MediaFileType) String() string {
+	return names[m]
+}
+
 type MediaFileInfo struct {
 	RelativePath   string        `json:"relativePath"`
 	HashValue      HashValue     `json:"hashValue"`
