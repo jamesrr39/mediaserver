@@ -311,6 +311,12 @@
 			"revisionTime": "2019-07-28T21:08:53Z"
 		},
 		{
+			"checksumSHA1": "zxUCcbzosdXVG4xzEEaghr3uswU=",
+			"path": "github.com/jamesrr39/goutil/snapshot",
+			"revision": "43b743c899b7ba6c6cbf58519de8505858859d28",
+			"revisionTime": "2020-01-12T18:43:33Z"
+		},
+		{
 			"checksumSHA1": "TPuL2HiK459EhwUY29Ecb4MGC3I=",
 			"path": "github.com/jamesrr39/goutil/userextra",
 			"revision": "2d7dc6d2de328f77599883bcae23d93928f8262d",

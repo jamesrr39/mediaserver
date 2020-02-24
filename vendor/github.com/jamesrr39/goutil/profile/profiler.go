@@ -103,7 +103,7 @@ func (m *measurement) MeasureStep(eventName string) *measurement {
 	return subMeasurement
 }
 
-var timeFormat = "03:04:05.06"
+var timeFormat = "15:04:05.06"
 
 func (run *Run) StopAndRecord(summaryMessage string) error {
 	endTime := run.profiler.nowFunc()

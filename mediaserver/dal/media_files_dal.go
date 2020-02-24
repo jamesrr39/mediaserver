@@ -104,7 +104,7 @@ func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, mediaFileInfo domain.Me
 			return nil, fmt.Errorf("unexpected error getting picture metadata from database for relative path '%s': '%s'", mediaFileInfo.RelativePath, err)
 		}
 
-		dal.log.Info("picture not found for %q (hash: %q). Error type: %T", pictureMetadata.RelativePath, pictureMetadata.HashValue, err)
+		// dal.log.Info("picture not found for %q (hash: %q). Error type: %T", pictureMetadata.RelativePath, pictureMetadata.HashValue, err)
 
 		getMetadataMeasurement.MeasureStep("read picture metadata and picture: ")
 		pictureMetadata, _, err = domain.NewPictureMetadataAndPictureFromBytes(file, mediaFileInfo)
@@ -260,7 +260,7 @@ func (dal *MediaFilesDAL) processFile(fs gofs.Fs, profileRun *profile.Run, tx *s
 	dal.log.Info("start processing %q", path)
 	defer func() {
 		t := "skipped"
-		if mediaFile != nil {
+		if mediaFile != nil && err == nil {
 			t = mediaFile.GetMediaFileInfo().MediaFileType.String()
 		}
 		dal.log.Info("finished processing %q (%q)", path, t)
