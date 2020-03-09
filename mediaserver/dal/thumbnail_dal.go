@@ -111,7 +111,7 @@ func (c *ThumbnailsDAL) getNewSizesRequiredForPicture(pictureMetadata *domain.Pi
 	return requiredSizes, nil
 }
 
-func (c *ThumbnailsDAL) EnsureAllThumbnailsForPicture(pictureMetadata *domain.PictureMetadata, getPictureFunc domain.GetPictureFunc) error {
+func (c *ThumbnailsDAL) QueueThumbnailCreationForPicture(pictureMetadata *domain.PictureMetadata, getPictureFunc domain.GetPictureFunc) error {
 	if c.thumbnailCachePolicy != ThumbnailCachePolicyAheadOfTime {
 		c.logger.Info("skipping ensure thumbnails for picture (due to thumbnail cache policy)")
 		return nil

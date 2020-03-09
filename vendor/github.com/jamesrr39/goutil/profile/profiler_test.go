@@ -2,12 +2,13 @@ package profile
 
 import (
 	"bytes"
-	"fmt"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_Profiler(t *testing.T) {
@@ -20,24 +21,30 @@ func Test_Profiler(t *testing.T) {
 	}
 
 	testRun := profiler.NewRun("add ints and strings")
-	defer func() {
-		testRun.StopAndRecord("finished successfully")
 
-		expected := `1970-01-01: "add ints and strings": 10µs, started at 01:00:00.70
-finished successfully
-	"adding 1 and 2": 2µs (start: 01:00:00.70)
-	"building a string": 2µs (start: 01:00:00.70)
-`
-		assert.Equal(t, expected, byteBuffer.String())
-	}()
+	profiler.Mark(testRun, "adding 1 and 2")
+	// some work here
 
-	discarder := bytes.NewBuffer(nil)
+	profiler.Mark(testRun, "building a string")
+	// some work here
 
-	addingMeasurement := testRun.Measure("adding 1 and 2")
-	discarder.Write([]byte(fmt.Sprintf("%d", 1+2)))
-	addingMeasurement.Stop()
+	err := profiler.StopAndRecord(testRun, "finished successfully")
+	require.NoError(t, err)
 
-	buildingStringMeasurement := testRun.Measure("building a string")
-	discarder.Write([]byte("a + b"))
-	buildingStringMeasurement.Stop()
+	t.Run("recorded info correct", func(t *testing.T) {
+		var run Run
+		err := proto.Unmarshal(byteBuffer.Bytes(), &run)
+		require.NoError(t, err)
+
+		assert.Equal(t, "add ints and strings", run.RunName)
+		assert.Equal(t, "finished successfully", run.Summary)
+		assert.Equal(t, int64(0), run.StartTimeNanos)
+		assert.Equal(t, int64(6000), run.EndTimeNanos)
+		require.Len(t, run.Events, 2)
+		expectedEvents := []*Event{
+			{Name: "adding 1 and 2", TimeNanos: 2000},
+			{Name: "building a string", TimeNanos: 4000},
+		}
+		assert.Equal(t, expectedEvents, run.Events)
+	})
 }

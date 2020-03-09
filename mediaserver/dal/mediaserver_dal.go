@@ -35,10 +35,19 @@ type MediaServerDAL struct {
 	TracksDAL      *TracksDAL
 	ThumbnailsDAL  *ThumbnailsDAL
 	PeopleDAL      *PeopleDAL
+	profiler       *profile.Profiler
 }
 
-func NewMediaServerDAL(logger *logpkg.Logger, fs gofs.Fs, picturesBasePath, cachesBasePath, dataDir string, maxConcurrentCPUJobs, maxConcurrentVideoConversions uint, thumbnailCachePolicy ThumbnailCachePolicy, maxConcurrentTrackRecordsParsing, maxConcurrentResizes uint) (*MediaServerDAL, error) {
-	jobRunner := mediaserverjobs.NewJobRunner(logger, maxConcurrentCPUJobs)
+func NewMediaServerDAL(
+	logger *logpkg.Logger,
+	fs gofs.Fs,
+	profiler *profile.Profiler,
+	picturesBasePath, cachesBasePath, dataDir string,
+	maxConcurrentCPUJobs, maxConcurrentVideoConversions uint,
+	thumbnailCachePolicy ThumbnailCachePolicy,
+	maxConcurrentTrackRecordsParsing, maxConcurrentResizes uint,
+	jobRunner *mediaserverjobs.JobRunner,
+) (*MediaServerDAL, error) {
 
 	thumbnailsDAL, err := NewThumbnailsDAL(fs, logger, filepath.Join(cachesBasePath, "thumbnails"), jobRunner, thumbnailCachePolicy)
 	if nil != err {
@@ -55,7 +64,7 @@ func NewMediaServerDAL(logger *logpkg.Logger, fs gofs.Fs, picturesBasePath, cach
 	tracksDAL := NewTracksDAL(openFileFunc, maxConcurrentTrackRecordsParsing)
 	peopleDAL := NewPeopleDAL()
 
-	mediaFilesDAL := NewMediaFilesDAL(logger, fs, picturesBasePath, thumbnailsDAL, videosDAL, picturesDAL, jobRunner, tracksDAL, peopleDAL)
+	mediaFilesDAL := NewMediaFilesDAL(logger, fs, profiler, picturesBasePath, thumbnailsDAL, videosDAL, picturesDAL, jobRunner, tracksDAL, peopleDAL)
 
 	err = fs.MkdirAll(dataDir, 0700)
 	if nil != err {
@@ -67,11 +76,12 @@ func NewMediaServerDAL(logger *logpkg.Logger, fs gofs.Fs, picturesBasePath, cach
 		picturesBasePath,
 		picturesDAL,
 		mediaFilesDAL,
-		NewCollectionsDAL(),
+		NewCollectionsDAL(profiler),
 		videosDAL,
 		tracksDAL,
 		thumbnailsDAL,
 		peopleDAL,
+		profiler,
 	}, nil
 }
 
@@ -79,8 +89,8 @@ var ErrContentTypeNotSupported = errors.New("content type not supported")
 
 // Create adds a new picture to the collection
 func (dal *MediaServerDAL) CreateOrGetExisting(tx *sql.Tx, file io.ReadSeeker, filename, contentType string, profileRun *profile.Run) (domain.MediaFile, errorsx.Error) {
-	createFileMeasurement := profileRun.Measure("create file")
-	defer createFileMeasurement.Stop()
+	dal.profiler.Mark(profileRun, "start creating or get existing file")
+	defer dal.profiler.Mark(profileRun, "finish creating or get existing file")
 
 	if dirtraversal.IsTryingToTraverseUp(filename) {
 		return nil, errorsx.Wrap(ErrIllegalPathTraversingUp)
@@ -92,35 +102,35 @@ func (dal *MediaServerDAL) CreateOrGetExisting(tx *sql.Tx, file io.ReadSeeker, f
 		return nil, errorsx.Wrap(err)
 	}
 
-	createFileMeasurement.MeasureStep("calculating hash")
+	dal.profiler.Mark(profileRun, "calculating hash")
 
 	hashValue, err := domain.NewHash(file)
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}
 
-	createFileMeasurement.MeasureStep("checking for existing file")
+	dal.profiler.Mark(profileRun, "checking for existing file")
 
 	existingFile := dal.MediaFilesDAL.Get(hashValue)
 	if existingFile != nil {
 		return existingFile, nil
 	}
 
-	createFileMeasurement.MeasureStep("seeking to start of file")
+	dal.profiler.Mark(profileRun, "seeking to start of file")
 
 	fileLen, err := file.Seek(0, io.SeekStart)
 	if err != nil {
 		return nil, errorsx.Wrap(err)
 	}
 
-	createFileMeasurement.MeasureStep("file type specific action")
+	dal.profiler.Mark(profileRun, "file type specific action")
 
 	participantIDs, err := dal.MediaFilesDAL.peopleDAL.GetPeopleIDsInMediaFile(tx, hashValue)
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}
 
-	createFileMeasurement.MeasureStep("making uploads dir if necessary")
+	dal.profiler.Mark(profileRun, "making uploads dir if necessary")
 
 	err = dal.fs.MkdirAll(filepath.Dir(absoluteFilePath), 0755)
 	if nil != err {
@@ -140,7 +150,7 @@ func (dal *MediaServerDAL) CreateOrGetExisting(tx *sql.Tx, file io.ReadSeeker, f
 		return nil, errorsx.Wrap(err)
 	}
 
-	createFileMeasurement.MeasureStep("writing new file")
+	dal.profiler.Mark(profileRun, "writing new file")
 
 	_, err = io.Copy(newFile, file)
 	if nil != err {
@@ -162,7 +172,7 @@ func (dal *MediaServerDAL) CreateOrGetExisting(tx *sql.Tx, file io.ReadSeeker, f
 	switch contentType {
 	case "image/jpg", "image/jpeg", "image/png":
 		var pictureMetadata *domain.PictureMetadata
-		profileRun.Measure("generate picture metadata from bytes")
+		dal.profiler.Mark(profileRun, "generate picture metadata from bytes")
 		pictureMetadata, _, err = domain.NewPictureMetadataAndPictureFromBytes(file, mediaFileInfo)
 		if nil != err {
 			return nil, errorsx.Wrap(err)
@@ -176,36 +186,23 @@ func (dal *MediaServerDAL) CreateOrGetExisting(tx *sql.Tx, file io.ReadSeeker, f
 		mediaFile = pictureMetadata
 
 		doAtEnd = func() error {
-			profileRun.Measure("generate thumbnails for picture")
-			err := dal.ThumbnailsDAL.EnsureAllThumbnailsForPicture(
+			dal.profiler.Mark(profileRun, "generate thumbnails for picture")
+			err := dal.ThumbnailsDAL.QueueThumbnailCreationForPicture(
 				pictureMetadata,
 				dal.PicturesDAL.GetPicture,
 			)
+
 			if err != nil {
 				return errorsx.Wrap(err)
 			}
 
-			// suggested locations job
-			var pictureMetadatas []*domain.PictureMetadata
-			var tracks []*domain.FitFileSummary
-			for _, mediaFile := range dal.MediaFilesDAL.GetAll() {
-				switch castedMediaFile := mediaFile.(type) {
-				case *domain.PictureMetadata:
-					pictureMetadatas = append(pictureMetadatas, castedMediaFile)
-				case *domain.FitFileSummary:
-					tracks = append(tracks, castedMediaFile)
-				}
-			}
+			dal.profiler.Mark(profileRun, "generate suggested locations for picture")
 
 			dal.MediaFilesDAL.jobRunner.QueueJob(
 				mediaserverjobs.NewApproximateLocationsJob(
-					pictureMetadatas,
-					tracks,
+					dal.MediaFilesDAL.GetAll,
 					dal.MediaFilesDAL.tracksDAL.GetRecords,
-					func(pictureMetadata *domain.PictureMetadata, suggestedLocation domain.LocationSuggestion) errorsx.Error {
-						pictureMetadata.SuggestedLocation = &suggestedLocation
-						return nil
-					},
+					[]*domain.PictureMetadata{pictureMetadata},
 				),
 			)
 
@@ -228,6 +225,8 @@ func (dal *MediaServerDAL) CreateOrGetExisting(tx *sql.Tx, file io.ReadSeeker, f
 		mediaFile = fitFileSummary
 
 		doAtEnd = func() error {
+			dal.profiler.Mark(profileRun, "generate suggested locations for picture")
+
 			// suggested locations job
 			var pictureMetadatas []*domain.PictureMetadata
 			for _, mediaFile := range dal.MediaFilesDAL.GetAll() {
@@ -239,13 +238,9 @@ func (dal *MediaServerDAL) CreateOrGetExisting(tx *sql.Tx, file io.ReadSeeker, f
 
 			dal.MediaFilesDAL.jobRunner.QueueJob(
 				mediaserverjobs.NewApproximateLocationsJob(
-					pictureMetadatas,
-					[]*domain.FitFileSummary{fitFileSummary},
+					func() []domain.MediaFile { return []domain.MediaFile{fitFileSummary} },
 					dal.MediaFilesDAL.tracksDAL.GetRecords,
-					func(pictureMetadata *domain.PictureMetadata, suggestedLocation domain.LocationSuggestion) errorsx.Error {
-						pictureMetadata.SuggestedLocation = &suggestedLocation
-						return nil
-					},
+					dal.MediaFilesDAL.GetAllPictureMetadatas(),
 				),
 			)
 
@@ -261,14 +256,14 @@ func (dal *MediaServerDAL) CreateOrGetExisting(tx *sql.Tx, file io.ReadSeeker, f
 		return nil, errorsx.Wrap(ErrContentTypeNotSupported)
 	}
 
-	createFileMeasurement.MeasureStep("doing action at end")
+	dal.profiler.Mark(profileRun, "doing action at end")
 
 	err = doAtEnd()
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}
 
-	createFileMeasurement.MeasureStep("adding file to mediafiles")
+	dal.profiler.Mark(profileRun, "adding file to mediafiles")
 
 	dal.MediaFilesDAL.add(mediaFile)
 

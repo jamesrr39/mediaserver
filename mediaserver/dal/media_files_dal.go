@@ -35,6 +35,7 @@ type getRecordsInTrackFuncType func(trackSummary *domain.FitFileSummary) (domain
 type MediaFilesDAL struct {
 	log              *logpkg.Logger
 	fs               gofs.Fs
+	profiler         *profile.Profiler
 	picturesBasePath string
 	cache            *picturesmetadatacache.MediaFilesCache
 	thumbnailsDAL    *ThumbnailsDAL
@@ -45,8 +46,32 @@ type MediaFilesDAL struct {
 	peopleDAL        *PeopleDAL
 }
 
-func NewMediaFilesDAL(log *logpkg.Logger, fs gofs.Fs, picturesBasePath string, thumbnailsDAL *ThumbnailsDAL, videosDAL videodal.VideoDAL, picturesDAL *PicturesDAL, jobRunner *mediaserverjobs.JobRunner, tracksDAL *TracksDAL, peopleDAL *PeopleDAL) *MediaFilesDAL {
-	return &MediaFilesDAL{log, fs, picturesBasePath, picturesmetadatacache.NewMediaFilesCache(), thumbnailsDAL, videosDAL, picturesDAL, jobRunner, tracksDAL, peopleDAL}
+func NewMediaFilesDAL(
+	log *logpkg.Logger,
+	fs gofs.Fs,
+	profiler *profile.Profiler,
+	picturesBasePath string,
+	thumbnailsDAL *ThumbnailsDAL,
+	videosDAL videodal.VideoDAL,
+	picturesDAL *PicturesDAL,
+	jobRunner *mediaserverjobs.JobRunner,
+	tracksDAL *TracksDAL,
+	peopleDAL *PeopleDAL,
+) *MediaFilesDAL {
+	return &MediaFilesDAL{log, fs, profiler, picturesBasePath, picturesmetadatacache.NewMediaFilesCache(), thumbnailsDAL, videosDAL, picturesDAL, jobRunner, tracksDAL, peopleDAL}
+}
+
+func (dal *MediaFilesDAL) GetAllPictureMetadatas() []*domain.PictureMetadata {
+	// suggested locations job
+	var pictureMetadatas []*domain.PictureMetadata
+	for _, mediaFile := range dal.GetAll() {
+		switch castedMediaFile := mediaFile.(type) {
+		case *domain.PictureMetadata:
+			pictureMetadatas = append(pictureMetadatas, castedMediaFile)
+		}
+	}
+
+	return pictureMetadatas
 }
 
 func (dal *MediaFilesDAL) GetAll() []domain.MediaFile {
@@ -97,7 +122,8 @@ func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, mediaFileInfo domain.Me
 		return nil, errorsx.Wrap(err)
 	}
 
-	getMetadataMeasurement := profileRun.Measure("get metadata from db")
+	dal.profiler.Mark(profileRun, "get metadata from db")
+
 	pictureMetadata, err := dal.picturesDAL.GetPictureMetadata(tx, mediaFileInfo)
 	if nil != err {
 		if err != ErrNotFound {
@@ -106,13 +132,13 @@ func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, mediaFileInfo domain.Me
 
 		// dal.log.Info("picture not found for %q (hash: %q). Error type: %T", pictureMetadata.RelativePath, pictureMetadata.HashValue, err)
 
-		getMetadataMeasurement.MeasureStep("read picture metadata and picture: ")
+		dal.profiler.Mark(profileRun, "read picture metadata and picture: ")
 		pictureMetadata, _, err = domain.NewPictureMetadataAndPictureFromBytes(file, mediaFileInfo)
 		if nil != err {
 			return nil, errorsx.Wrap(err)
 		}
 
-		getMetadataMeasurement.MeasureStep("write picture metadata")
+		dal.profiler.Mark(profileRun, "write picture metadata")
 		err = dal.picturesDAL.CreatePictureMetadata(tx, pictureMetadata)
 		if nil != err {
 			return nil, fmt.Errorf("unexpected error setting picture metadata to database for relative file path '%s': '%s'", mediaFileInfo.RelativePath, err)
@@ -124,8 +150,12 @@ func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, mediaFileInfo domain.Me
 	return pictureMetadata, nil
 }
 
+const (
+	MaxConcurrentPictureFileProcessings = 50
+)
+
 func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx, profileRun *profile.Run) errorsx.Error {
-	sema := semaphore.NewSemaphore(50)
+	sema := semaphore.NewSemaphore(MaxConcurrentPictureFileProcessings)
 
 	var mediaFiles []domain.MediaFile
 
@@ -179,34 +209,6 @@ func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx, profileRun *profile.Ru
 	dal.cache = newCache
 	mu.Unlock()
 	return nil
-}
-
-func (dal *MediaFilesDAL) QueueSuggestedLocationJob() {
-	var picturesMetadatas []*domain.PictureMetadata
-	var trackSummaries []*domain.FitFileSummary
-
-	for _, mediaFile := range dal.GetAll() {
-		switch mediaFile.GetMediaFileInfo().MediaFileType {
-		case domain.MediaFileTypePicture:
-			picturesMetadatas = append(picturesMetadatas, mediaFile.(*domain.PictureMetadata))
-		case domain.MediaFileTypeFitTrack:
-			trackSummaries = append(trackSummaries, mediaFile.(*domain.FitFileSummary))
-		}
-	}
-
-	var setLocationsOnPictureFunc = func(pictureMetadata *domain.PictureMetadata, suggestedLocation domain.LocationSuggestion) errorsx.Error {
-		pm := dal.Get(pictureMetadata.HashValue).(*domain.PictureMetadata)
-		pm.SuggestedLocation = &suggestedLocation
-		dal.log.Info("set suggested location on %s", pictureMetadata.HashValue)
-		return nil
-	}
-
-	dal.jobRunner.QueueJob(mediaserverjobs.NewApproximateLocationsJob(
-		picturesMetadatas,
-		trackSummaries,
-		dal.tracksDAL.GetRecords,
-		setLocationsOnPictureFunc,
-	))
 }
 
 func (dal *MediaFilesDAL) Update(tx *sql.Tx, mediaFile domain.MediaFile, properties ...MediaFileUpdateProperty) errorsx.Error {
@@ -299,19 +301,19 @@ func (dal *MediaFilesDAL) processFile(fs gofs.Fs, profileRun *profile.Run, tx *s
 	mediaFileInfo := domain.NewMediaFileInfo(relativePath, hash, fileType, osFileInfo.Size(), participantIDs, osFileInfo.ModTime(), osFileInfo.Mode())
 	switch fileType {
 	case domain.MediaFileTypePicture:
-		profileRun.Measure("process picture file")
+		dal.profiler.Mark(profileRun, "process picture file")
 		mediaFile, err = dal.processPictureFile(tx, mediaFileInfo, profileRun)
 		if err != nil {
 			return nil, errorsx.Wrap(err)
 		}
 	case domain.MediaFileTypeVideo:
-		profileRun.Measure("process video file")
+		dal.profiler.Mark(profileRun, "process video file")
 		mediaFile, err = dal.processVideoFile(tx, mediaFileInfo)
 		if err != nil {
 			return nil, errorsx.Wrap(err)
 		}
 	case domain.MediaFileTypeFitTrack:
-		profileRun.Measure("process fit file")
+		dal.profiler.Mark(profileRun, "process fit file")
 		mediaFile, err = dal.processFitFile(tx, mediaFileInfo, file)
 		if err != nil {
 			return nil, errorsx.Wrap(err)

@@ -43,7 +43,7 @@ func NewCollectionsWebService(
 
 func (ws *CollectionsWebService) handleGetAll(w http.ResponseWriter, r *http.Request) {
 	profileRun := ws.profiler.NewRun("get all collections")
-	defer profileRun.StopAndRecord("")
+	defer ws.profiler.StopAndRecord(profileRun, "finished handling get all collections request")
 
 	tx, err := ws.dbConn.Begin()
 	if err != nil {

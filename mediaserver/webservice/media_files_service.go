@@ -78,10 +78,8 @@ func (ms *MediaFilesService) refresh(profileRun *profile.Run) errorsx.Error {
 }
 
 func (ms *MediaFilesService) serveAllPicturesMetadata(w http.ResponseWriter, r *http.Request) {
-	profileRun := ms.profiler.NewRun("serve all pictures metadata")
-	defer func() {
-		profileRun.StopAndRecord("")
-	}()
+	profileRun := ms.profiler.NewRun("start serve all pictures metadata")
+	defer ms.profiler.StopAndRecord(profileRun, "finished handling serve all pictures metadata")
 
 	shouldRefresh := ("true" == r.URL.Query().Get("refresh"))
 	if shouldRefresh {
@@ -104,9 +102,7 @@ func (ms *MediaFilesService) serveAllPicturesMetadata(w http.ResponseWriter, r *
 func (ms *MediaFilesService) serveFileUpload(w http.ResponseWriter, r *http.Request) {
 	successfullyUploaded := false
 	profileRun := ms.profiler.NewRun("upload file")
-	defer func() {
-		profileRun.StopAndRecord(fmt.Sprintf("successfully uploaded?: %t", successfullyUploaded))
-	}()
+	defer ms.profiler.StopAndRecord(profileRun, fmt.Sprintf("successfully uploaded?: %t", successfullyUploaded))
 
 	tx, err := ms.dbConn.Begin()
 	if nil != err {
@@ -129,7 +125,7 @@ func (ms *MediaFilesService) serveFileUpload(w http.ResponseWriter, r *http.Requ
 
 	contentType := fileHeader.Header.Get("Content-Type")
 
-	createFileMeasurement := profileRun.Measure("create file on disk")
+	ms.profiler.Mark(profileRun, "start creating or getting file on disk")
 
 	mediaFile, err := ms.mediaServerDAL.CreateOrGetExisting(tx, file, fileHeader.Filename, contentType, profileRun)
 	if nil != err {
@@ -144,7 +140,7 @@ func (ms *MediaFilesService) serveFileUpload(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	createFileMeasurement.Stop()
+	ms.profiler.Mark(profileRun, "finish creating or getting file on disk")
 
 	successfullyUploaded = true
 

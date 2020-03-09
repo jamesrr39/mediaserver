@@ -11,17 +11,19 @@ import (
 )
 
 type CollectionsDAL struct {
+	profiler *profile.Profiler
 }
 
-func NewCollectionsDAL() *CollectionsDAL {
-	return &CollectionsDAL{}
+func NewCollectionsDAL(profiler *profile.Profiler) *CollectionsDAL {
+	return &CollectionsDAL{profiler}
 }
 
 func (r *CollectionsDAL) GetAll(tx *sql.Tx, profileRun *profile.Run) ([]*collections.Collection, errorsx.Error) {
-	measurement := profileRun.Measure("fetch collections")
-	defer measurement.Stop()
+	r.profiler.Mark(profileRun, "start fetch collections")
+	defer r.profiler.Mark(profileRun, "finished fetching collections")
 
-	collectionDataStep := measurement.MeasureStep("fetch collection data")
+	r.profiler.Mark(profileRun, "fetch collections from DB")
+
 	result, err := tx.Query(`
 SELECT id(), name FROM collections;
     `)
@@ -45,20 +47,18 @@ SELECT id(), name FROM collections;
 		})
 	}
 
-	collectionDataStep.Stop()
+	r.profiler.Mark(profileRun, "get hashes for collections")
 
-	collectionsStep := measurement.MeasureStep("fetch hashes for collections")
 	for _, collection := range collectionList {
-		fetchHashesStep := collectionsStep.MeasureStep(fmt.Sprintf("get picture hashes for collection %d", collection.ID))
+		r.profiler.Mark(profileRun, fmt.Sprintf("get picture hashes for collection %d", collection.ID))
+
 		hashes, err := getPictureHashesForCollectionId(tx, collection.ID)
 		if err != nil {
 			return nil, errorsx.Wrap(err)
 		}
 
 		collection.FileHashes = hashes
-		fetchHashesStep.Stop()
 	}
-	collectionsStep.Stop()
 
 	return collectionList, nil
 }

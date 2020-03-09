@@ -45,17 +45,19 @@ func NewMediaServerAndScan(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDi
 		if err != nil {
 			message = fmt.Sprintf("failed. Error: %q", err)
 		}
-		profileRun.StopAndRecord(message)
+		profiler.StopAndRecord(profileRun, message)
 	}()
 
+	jobRunner := mediaserverjobs.NewJobRunner(logger, maxConcurrentCPUJobs)
+
 	var mediaServerDAL *dal.MediaServerDAL
-	mediaServerDAL, err = dal.NewMediaServerDAL(logger, fs, rootpath, cachesDir, dataDir, maxConcurrentCPUJobs, maxConcurrentVideoConversions, thumbnailCachePolicy, maxConcurrentTrackRecordsParsing, maxConcurrentResizes)
+	mediaServerDAL, err = dal.NewMediaServerDAL(logger, fs, profiler, rootpath, cachesDir, dataDir, maxConcurrentCPUJobs, maxConcurrentVideoConversions, thumbnailCachePolicy, maxConcurrentTrackRecordsParsing, maxConcurrentResizes, jobRunner)
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}
 
 	var dbConn *mediaserverdb.DBConn
-	profileRun.Measure("new DB Conn")
+	profiler.Mark(profileRun, "new DB Conn")
 	dbConn, err = mediaserverdb.NewDBConn(filepath.Join(dataDir, "mediaserver.db"), logger)
 	if nil != err {
 		return nil, errorsx.Wrap(err)
@@ -78,34 +80,38 @@ func NewMediaServerAndScan(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDi
 		logger:             logger,
 	}
 
-	startupMeasurement := profileRun.Measure("startup")
+	profiler.Mark(profileRun, "startup")
 
 	var tx *sql.Tx
-	startupMeasurement.MeasureStep("begin tx")
+	profiler.Mark(profileRun, "begin tx")
 	tx, err = dbConn.Begin()
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}
 	defer mediaserverdb.CommitOrRollback(tx)
 
-	startupMeasurement.MeasureStep("update pictures cache")
+	profiler.Mark(profileRun, "update pictures cache")
 	err = mediaServer.mediaServerDAL.MediaFilesDAL.UpdatePicturesCache(tx, profileRun)
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}
 
-	mediaServer.mediaServerDAL.MediaFilesDAL.QueueSuggestedLocationJob()
+	jobRunner.QueueJob(mediaserverjobs.NewApproximateLocationsJob(
+		mediaServerDAL.MediaFilesDAL.GetAll,
+		mediaServerDAL.TracksDAL.GetRecords,
+		mediaServerDAL.MediaFilesDAL.GetAllPictureMetadatas(),
+	))
 
-	startupMeasurement.MeasureStep("get all media files")
+	profiler.Mark(profileRun, "get all media files")
 	mediaFiles := mediaServer.mediaServerDAL.MediaFilesDAL.GetAll()
 
-	startupMeasurement.MeasureStep("ensure thumbnails for all mediafiles")
+	profiler.Mark(profileRun, "ensure thumbnails for all mediafiles")
 	for _, mediaFile := range mediaFiles {
 		if mediaFile.GetMediaFileInfo().MediaFileType != domain.MediaFileTypePicture {
 			continue
 		}
 		pictureMetadata := mediaFile.(*domain.PictureMetadata)
-		err = mediaServer.mediaServerDAL.ThumbnailsDAL.EnsureAllThumbnailsForPicture(
+		err = mediaServer.mediaServerDAL.ThumbnailsDAL.QueueThumbnailCreationForPicture(
 			pictureMetadata,
 			mediaServer.mediaServerDAL.PicturesDAL.GetPicture,
 		)

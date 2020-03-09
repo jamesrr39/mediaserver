@@ -11,31 +11,30 @@ import (
 
 type fetchTrackRecordsFuncType func(trackSummary *domain.FitFileSummary) (domain.Records, errorsx.Error)
 
-type setLocationsOnPictureFuncType func(pictureMetadata *domain.PictureMetadata, suggestedLocation domain.LocationSuggestion) errorsx.Error
+type getAllMediaFilesFuncType func() []domain.MediaFile
 
+// ApproximateLocationsJob is a job to suggest where a mediafile can be located geographically
+// TODO: output 2 or more suggested locations, if suitable
 type ApproximateLocationsJob struct {
-	allPictureMetadatas   []*domain.PictureMetadata
-	trackSummaries        []*domain.FitFileSummary
-	fetchTrackRecords     fetchTrackRecordsFuncType
-	setLocationsOnPicture setLocationsOnPictureFuncType
+	getAllMediaFilesFunc getAllMediaFilesFuncType
+	fetchTrackRecords    fetchTrackRecordsFuncType
+	mediaFilesForJob     []*domain.PictureMetadata
 }
 
 func NewApproximateLocationsJob(
-	allPictureMetadatas []*domain.PictureMetadata,
-	trackSummaries []*domain.FitFileSummary,
+	getAllMediaFilesFunc getAllMediaFilesFuncType,
 	fetchTrackRecordsFunc fetchTrackRecordsFuncType,
-	setLocationsOnPictureFunc setLocationsOnPictureFuncType,
+	mediaFilesForJob []*domain.PictureMetadata,
 ) *ApproximateLocationsJob {
 	return &ApproximateLocationsJob{
-		allPictureMetadatas,
-		trackSummaries,
+		getAllMediaFilesFunc,
 		fetchTrackRecordsFunc,
-		setLocationsOnPictureFunc,
+		mediaFilesForJob,
 	}
 }
 
 func (j *ApproximateLocationsJob) run() errorsx.Error {
-	for _, pictureMetadata := range j.allPictureMetadatas {
+	for _, pictureMetadata := range j.mediaFilesForJob {
 		err := j.setLocationOnPicture(pictureMetadata)
 		if err != nil {
 			return errorsx.Wrap(err)
@@ -69,73 +68,106 @@ func (j *ApproximateLocationsJob) setLocationOnPicture(pictureMetadata *domain.P
 		return errorsx.Wrap(err)
 	}
 
-	// if it's in a track, add that
-	for _, trackSummary := range j.trackSummaries {
-		if trackSummary.StartTime.Before(*pictureDate) && trackSummary.EndTime.After(*pictureDate) {
-			// found a match
-			records, err := j.fetchTrackRecords(trackSummary)
+	// now on to cross-matching with other media files
+	for _, mediaFile := range j.getAllMediaFilesFunc() {
+		switch mediaFile.GetMediaFileInfo().MediaFileType {
+		case domain.MediaFileTypePicture:
+			matchFound, err := j.tryAndMatchWithPicture(pictureMetadata, *pictureDate, mediaFile.(*domain.PictureMetadata))
 			if err != nil {
 				return errorsx.Wrap(err)
 			}
-
-			record, _, err := records.GetRecordClosestToTime(*pictureDate)
+			if matchFound {
+				return nil
+			}
+		case domain.MediaFileTypeFitTrack:
+			matchFound, err := j.tryAndMatchWithTrack(pictureMetadata, *pictureDate, mediaFile.(*domain.FitFileSummary))
 			if err != nil {
 				return errorsx.Wrap(err)
 			}
-
-			return j.setLocationsOnPicture(pictureMetadata, domain.LocationSuggestion{
-				Location: domain.Location{
-					Lat: record.PositionLat,
-					Lon: record.PositionLong,
-				},
-				Reason: fmt.Sprintf("suggested by track %s", trackSummary.HashValue),
-			})
+			if matchFound {
+				return nil
+			}
 		}
 	}
 
-	// if it's near another photo with a location, suggest that
-	for _, pictureMetadataInList := range j.allPictureMetadatas {
-		if pictureMetadataInList.ExifData == nil {
-			continue
-		}
-
-		location, err := pictureMetadataInList.ExifData.GetLocation()
-		if err != nil {
-			if errorsx.Cause(err) == domain.ErrNotExist {
-				// no location for this picture = try next picture
-				continue
-			}
-			return errorsx.Wrap(err)
-		}
-
-		pictureInListDate, err := pictureMetadataInList.ExifData.GetDate()
-		if err != nil {
-			if errorsx.Cause(err) == domain.ErrNotExist {
-				// no date for this picture = try next picture
-				continue
-			}
-			return errorsx.Wrap(err)
-		}
-
-		pictureTimeTakenBeforeListPicture := pictureDate.Sub(*pictureInListDate)
-
-		if math.Abs(float64(pictureTimeTakenBeforeListPicture)) < float64(7*time.Minute) {
-			isTakenBeforeText := "before"
-			if pictureTimeTakenBeforeListPicture < 0 {
-				isTakenBeforeText = "after"
-			}
-
-			return j.setLocationsOnPicture(pictureMetadata, domain.LocationSuggestion{
-				Location: *location,
-				Reason:   fmt.Sprintf("taken %s %s picture %s", pictureTimeTakenBeforeListPicture.String(), isTakenBeforeText, pictureMetadataInList.HashValue),
-			})
-		}
-	}
 	return nil
 }
 
+// match found, error
+func (j *ApproximateLocationsJob) tryAndMatchWithTrack(pictureMetadata *domain.PictureMetadata, pictureDate time.Time, trackSummary *domain.FitFileSummary) (bool, error) {
+	if trackSummary.StartTime.Before(pictureDate) && trackSummary.EndTime.After(pictureDate) {
+		// found a match
+		records, err := j.fetchTrackRecords(trackSummary)
+		if err != nil {
+			return false, errorsx.Wrap(err)
+		}
+
+		record, _, err := records.GetRecordClosestToTime(pictureDate)
+		if err != nil {
+			return false, errorsx.Wrap(err)
+		}
+
+		pictureMetadata.SuggestedLocation = &domain.LocationSuggestion{
+			Location: domain.Location{
+				Lat: record.PositionLat,
+				Lon: record.PositionLong,
+			},
+			Reason: fmt.Sprintf("suggested by track %s", trackSummary.HashValue),
+		}
+
+		return true, nil
+	}
+
+	return false, nil
+}
+
+func (j *ApproximateLocationsJob) tryAndMatchWithPicture(
+	pictureMetadata *domain.PictureMetadata,
+	pictureDate time.Time,
+	pictureMetadataInList *domain.PictureMetadata,
+) (bool, error) {
+	if pictureMetadataInList.ExifData == nil {
+		return false, nil
+	}
+
+	location, err := pictureMetadataInList.ExifData.GetLocation()
+	if err != nil {
+		if errorsx.Cause(err) == domain.ErrNotExist {
+			// no location for this picture = try next picture
+			return false, nil
+		}
+		return false, errorsx.Wrap(err)
+	}
+
+	pictureInListDate, err := pictureMetadataInList.ExifData.GetDate()
+	if err != nil {
+		if errorsx.Cause(err) == domain.ErrNotExist {
+			// no date for this picture = try next picture
+			return false, nil
+		}
+		return false, errorsx.Wrap(err)
+	}
+
+	pictureTimeTakenBeforeListPicture := pictureDate.Sub(*pictureInListDate)
+
+	if math.Abs(float64(pictureTimeTakenBeforeListPicture)) < float64(7*time.Minute) {
+		isTakenBeforeText := "before"
+		if pictureTimeTakenBeforeListPicture < 0 {
+			isTakenBeforeText = "after"
+		}
+
+		pictureMetadata.SuggestedLocation = &domain.LocationSuggestion{
+			Location: *location,
+			Reason:   fmt.Sprintf("taken %s %s picture %s", pictureTimeTakenBeforeListPicture.String(), isTakenBeforeText, pictureMetadataInList.HashValue),
+		}
+		return true, nil
+	}
+
+	return false, nil
+}
+
 func (j *ApproximateLocationsJob) String() string {
-	return fmt.Sprintf("approximate locations job (qty tracks: %d, qty pictures: %d)", len(j.trackSummaries), len(j.allPictureMetadatas))
+	return "approximate locations job"
 }
 
 func (j *ApproximateLocationsJob) JobType() JobType {

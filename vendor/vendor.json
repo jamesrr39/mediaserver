@@ -166,6 +166,96 @@
 			"revisionTime": "2017-12-31T23:41:54Z"
 		},
 		{
+			"checksumSHA1": "rasgUuf7DVFShc3hKeh9wjWBWO0=",
+			"path": "github.com/gogo/protobuf/gogoproto",
+			"revision": "382325bbbb4d1c850eec1f3ec92a1a16f502d68b",
+			"revisionTime": "2019-03-24T16:07:22Z"
+		},
+		{
+			"checksumSHA1": "zwnriu7wqxiBf4OTS11mTUaUJVA=",
+			"path": "github.com/gogo/protobuf/proto",
+			"revision": "382325bbbb4d1c850eec1f3ec92a1a16f502d68b",
+			"revisionTime": "2019-03-24T16:07:22Z"
+		},
+		{
+			"checksumSHA1": "UOpwKJPNOnN3MO4uUmYIbqOrXqo=",
+			"path": "github.com/gogo/protobuf/proto/proto3_proto",
+			"revision": "382325bbbb4d1c850eec1f3ec92a1a16f502d68b",
+			"revisionTime": "2019-03-24T16:07:22Z"
+		},
+		{
+			"checksumSHA1": "iJKomW5UgUd1mQCK8aEM0+bJfBc=",
+			"path": "github.com/gogo/protobuf/proto/test_proto",
+			"revision": "382325bbbb4d1c850eec1f3ec92a1a16f502d68b",
+			"revisionTime": "2019-03-24T16:07:22Z"
+		},
+		{
+			"checksumSHA1": "5yAWa5gKMF3qlvgSjZW9uroYBxs=",
+			"path": "github.com/gogo/protobuf/protoc-gen-gogo/descriptor",
+			"revision": "382325bbbb4d1c850eec1f3ec92a1a16f502d68b",
+			"revisionTime": "2019-03-24T16:07:22Z"
+		},
+		{
+			"checksumSHA1": "HPVQZu059/Rfw2bAWM538bVTcUc=",
+			"path": "github.com/gogo/protobuf/sortkeys",
+			"revision": "382325bbbb4d1c850eec1f3ec92a1a16f502d68b",
+			"revisionTime": "2019-03-24T16:07:22Z"
+		},
+		{
+			"checksumSHA1": "ae0YVzIhwqF0GHQ8awJXIyOEyGs=",
+			"path": "github.com/gogo/protobuf/types",
+			"revision": "382325bbbb4d1c850eec1f3ec92a1a16f502d68b",
+			"revisionTime": "2019-03-24T16:07:22Z"
+		},
+		{
+			"checksumSHA1": "S0XLXEMFxjBEiaRC2rGhQYJxoK0=",
+			"path": "github.com/golang/protobuf/proto",
+			"revision": "e91709a02e0e8ff8b86b7aa913fdc9ae9498e825",
+			"revisionTime": "2019-04-09T05:09:43Z"
+		},
+		{
+			"checksumSHA1": "cQvjaQ6YsQ2s/QOmJeSGMjbyLhU=",
+			"path": "github.com/golang/protobuf/proto/proto3_proto",
+			"revision": "e91709a02e0e8ff8b86b7aa913fdc9ae9498e825",
+			"revisionTime": "2019-04-09T05:09:43Z"
+		},
+		{
+			"checksumSHA1": "Ap3fxoENMwxwOM77e56TlCVt+7o=",
+			"path": "github.com/golang/protobuf/proto/test_proto",
+			"revision": "e91709a02e0e8ff8b86b7aa913fdc9ae9498e825",
+			"revisionTime": "2019-04-09T05:09:43Z"
+		},
+		{
+			"checksumSHA1": "WOkXetG3AqJnfVVuqTJvdukcHps=",
+			"path": "github.com/golang/protobuf/protoc-gen-go/descriptor",
+			"revision": "e91709a02e0e8ff8b86b7aa913fdc9ae9498e825",
+			"revisionTime": "2019-04-09T05:09:43Z"
+		},
+		{
+			"checksumSHA1": "qspo5Xz9Snq5nzKzuQGnDL5LTSU=",
+			"path": "github.com/golang/protobuf/ptypes",
+			"revision": "e91709a02e0e8ff8b86b7aa913fdc9ae9498e825",
+			"revisionTime": "2019-04-09T05:09:43Z"
+		},
+		{
+			"checksumSHA1": "2/Xg4L9IVGQRJB8zCELZx7/Z4HU=",
+			"path": "github.com/golang/protobuf/ptypes/any",
+			"revision": "e91709a02e0e8ff8b86b7aa913fdc9ae9498e825",
+			"revisionTime": "2019-04-09T05:09:43Z"
+		},
+		{
+			"checksumSHA1": "RE9rLveNHapyMKQC8p10tbkUE9w=",
+			"path": "github.com/golang/protobuf/ptypes/duration",
+			"revision": "e91709a02e0e8ff8b86b7aa913fdc9ae9498e825",
+			"revisionTime": "2019-04-09T05:09:43Z"
+		},
+		{
+			"checksumSHA1": "seEwY2xETpK9yHJ9+bHqkLZ0VMU=",
+			"path": "github.com/golang/protobuf/ptypes/timestamp",
+			"revision": "e91709a02e0e8ff8b86b7aa913fdc9ae9498e825",
+			"revisionTime": "2019-04-09T05:09:43Z"
+		},
+		{
 			"checksumSHA1": "Thg9sicXr23/02y0VqmmJoEZIzI=",
 			"origin": "github.com/gorilla/mux/vendor/github.com/gorilla/context",
 			"path": "github.com/gorilla/context",
@@ -305,16 +395,22 @@
 			"revisionTime": "2018-06-30T19:10:31Z"
 		},
 		{
-			"checksumSHA1": "P1ErjWVg/03Yuu0sVuUvxmxAq+s=",
+			"checksumSHA1": "wV6LUkYtWIJn/fjM+6y/roQUF+Y=",
 			"path": "github.com/jamesrr39/goutil/profile",
-			"revision": "84f2e61447cdbbd61c5e0fd7ff22002014d066eb",
-			"revisionTime": "2019-07-28T21:08:53Z"
+			"revision": "9766c8e52386187ac3fd30ee60ac696162c0b1f3",
+			"revisionTime": "2020-01-18T17:18:28Z"
 		},
 		{
 			"checksumSHA1": "zxUCcbzosdXVG4xzEEaghr3uswU=",
 			"path": "github.com/jamesrr39/goutil/snapshot",
 			"revision": "43b743c899b7ba6c6cbf58519de8505858859d28",
 			"revisionTime": "2020-01-12T18:43:33Z"
+		},
+		{
+			"checksumSHA1": "0+5RbRGf/QHebuWsfXTf0eKwiUU=",
+			"path": "github.com/jamesrr39/goutil/streamtostorage",
+			"revision": "9766c8e52386187ac3fd30ee60ac696162c0b1f3",
+			"revisionTime": "2020-01-18T17:18:28Z"
 		},
 		{
 			"checksumSHA1": "TPuL2HiK459EhwUY29Ecb4MGC3I=",

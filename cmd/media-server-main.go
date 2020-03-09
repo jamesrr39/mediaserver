@@ -14,6 +14,7 @@ import (
 	"github.com/jamesrr39/goutil/gofs"
 	"github.com/jamesrr39/goutil/logpkg"
 	"github.com/jamesrr39/goutil/profile"
+	"github.com/jamesrr39/goutil/streamtostorage"
 	"github.com/jamesrr39/goutil/userextra"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
@@ -82,18 +83,21 @@ func main() {
 			log.Fatalf("Couldn't expand the profile directory path from %q. Error: %q\n", *profileDir, err)
 		}
 
-		profileFilePath := filepath.Join(expandedProfileDir, fmt.Sprintf("profile_%s.txt", time.Now().Format("2006-01-02_15_04_05")))
-		profileWriter, err = os.Create(profileFilePath)
+		profileFilePath := filepath.Join(expandedProfileDir, fmt.Sprintf("profile_%s.pbf", time.Now().Format("2006-01-02_15_04_05")))
+		profileFile, err := os.Create(profileFilePath)
 		if err != nil {
 			log.Fatalf("Couldn't create profile writer file at %q. Error: %q\n", profileFilePath, err)
 		}
+		defer profileFile.Close()
+
+		profileWriter = streamtostorage.NewWriter(profileFile)
 	}
 
 	profiler := profile.NewProfiler(profileWriter)
 
 	thumbnailCachePolicy, err := getThumbnailCachePolicy(*thumbnailCachePolicyFlag)
 	if err != nil {
-		log.Fatalf("couldn't figure out the thumbnail cache policy")
+		log.Fatalf("couldn't figure out the thumbnail cache policy. Error: %q", err)
 	}
 	logger.Info("thumbnail cache policy: %q", thumbnailCachePolicy)
 

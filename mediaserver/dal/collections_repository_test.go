@@ -20,7 +20,9 @@ func Test_CrudCollection(t *testing.T) {
 	require.Nil(t, err)
 	defer tx.Rollback()
 
-	collectionsRepo := NewCollectionsDAL()
+	profiler := profile.NewProfiler(ioutil.Discard)
+
+	collectionsRepo := NewCollectionsDAL(profiler)
 	collection1 := &collections.Collection{
 		Name: "test 1",
 	}
