@@ -15,6 +15,7 @@ import (
 	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/jamesrr39/goutil/gofs"
 	"github.com/jamesrr39/goutil/logpkg"
+	"github.com/jamesrr39/goutil/profile"
 )
 
 type ThumbnailCachePolicy int
@@ -45,6 +46,7 @@ type ThumbnailsDAL struct {
 	mu                   *sync.Mutex
 	jobRunner            *mediaserverjobs.JobRunner
 	thumbnailCachePolicy ThumbnailCachePolicy
+	profiler             *profile.Profiler
 }
 
 type serializedThumbnail struct {
@@ -52,12 +54,18 @@ type serializedThumbnail struct {
 	GzippedThumbnailBytes []byte
 }
 
-func NewThumbnailsDAL(fs gofs.Fs, logger *logpkg.Logger, basePath string, jobRunner *mediaserverjobs.JobRunner, thumbnailCachePolicy ThumbnailCachePolicy) (*ThumbnailsDAL, error) {
+func NewThumbnailsDAL(
+	fs gofs.Fs,
+	logger *logpkg.Logger,
+	basePath string,
+	jobRunner *mediaserverjobs.JobRunner,
+	thumbnailCachePolicy ThumbnailCachePolicy,
+	profiler *profile.Profiler) (*ThumbnailsDAL, error) {
 	err := fs.MkdirAll(basePath, 0700)
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}
-	return &ThumbnailsDAL{fs, logger, basePath, new(sync.Mutex), jobRunner, thumbnailCachePolicy}, nil
+	return &ThumbnailsDAL{fs, logger, basePath, new(sync.Mutex), jobRunner, thumbnailCachePolicy, profiler}, nil
 }
 
 // Get fetches the gzipped thumbnail file bytes and the mime type it's saved in
@@ -111,7 +119,10 @@ func (c *ThumbnailsDAL) getNewSizesRequiredForPicture(pictureMetadata *domain.Pi
 	return requiredSizes, nil
 }
 
-func (c *ThumbnailsDAL) QueueThumbnailCreationForPicture(pictureMetadata *domain.PictureMetadata, getPictureFunc domain.GetPictureFunc) error {
+func (c *ThumbnailsDAL) QueueThumbnailCreationForPicture(profileRun *profile.Run, pictureMetadata *domain.PictureMetadata, getPictureFunc domain.GetPictureFunc) error {
+	c.profiler.Mark(profileRun, "start queuing thumbnail creation for picture")
+	defer c.profiler.Mark(profileRun, "finish queuing thumbnail creation for picture")
+
 	if c.thumbnailCachePolicy != ThumbnailCachePolicyAheadOfTime {
 		c.logger.Info("skipping ensure thumbnails for picture (due to thumbnail cache policy)")
 		return nil

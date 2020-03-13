@@ -112,6 +112,7 @@ func NewMediaServerAndScan(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDi
 		}
 		pictureMetadata := mediaFile.(*domain.PictureMetadata)
 		err = mediaServer.mediaServerDAL.ThumbnailsDAL.QueueThumbnailCreationForPicture(
+			profileRun,
 			pictureMetadata,
 			mediaServer.mediaServerDAL.PicturesDAL.GetPicture,
 		)

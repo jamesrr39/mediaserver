@@ -49,7 +49,7 @@ func NewMediaServerDAL(
 	jobRunner *mediaserverjobs.JobRunner,
 ) (*MediaServerDAL, error) {
 
-	thumbnailsDAL, err := NewThumbnailsDAL(fs, logger, filepath.Join(cachesBasePath, "thumbnails"), jobRunner, thumbnailCachePolicy)
+	thumbnailsDAL, err := NewThumbnailsDAL(fs, logger, filepath.Join(cachesBasePath, "thumbnails"), jobRunner, thumbnailCachePolicy, profiler)
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}
@@ -188,6 +188,7 @@ func (dal *MediaServerDAL) CreateOrGetExisting(tx *sql.Tx, file io.ReadSeeker, f
 		doAtEnd = func() error {
 			dal.profiler.Mark(profileRun, "generate thumbnails for picture")
 			err := dal.ThumbnailsDAL.QueueThumbnailCreationForPicture(
+				profileRun,
 				pictureMetadata,
 				dal.PicturesDAL.GetPicture,
 			)
