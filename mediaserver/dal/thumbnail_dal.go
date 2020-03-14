@@ -7,7 +7,6 @@ import (
 	"io"
 	"mediaserver/mediaserver/domain"
 	"mediaserver/mediaserver/generated"
-	"mediaserver/mediaserver/mediaserverjobs"
 	"os"
 	"path/filepath"
 	"sync"
@@ -44,8 +43,7 @@ type ThumbnailsDAL struct {
 	logger               *logpkg.Logger
 	BasePath             string
 	mu                   *sync.Mutex
-	jobRunner            *mediaserverjobs.JobRunner
-	thumbnailCachePolicy ThumbnailCachePolicy
+	ThumbnailCachePolicy ThumbnailCachePolicy
 	profiler             *profile.Profiler
 }
 
@@ -58,14 +56,13 @@ func NewThumbnailsDAL(
 	fs gofs.Fs,
 	logger *logpkg.Logger,
 	basePath string,
-	jobRunner *mediaserverjobs.JobRunner,
 	thumbnailCachePolicy ThumbnailCachePolicy,
 	profiler *profile.Profiler) (*ThumbnailsDAL, error) {
 	err := fs.MkdirAll(basePath, 0700)
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}
-	return &ThumbnailsDAL{fs, logger, basePath, new(sync.Mutex), jobRunner, thumbnailCachePolicy, profiler}, nil
+	return &ThumbnailsDAL{fs, logger, basePath, new(sync.Mutex), thumbnailCachePolicy, profiler}, nil
 }
 
 // Get fetches the gzipped thumbnail file bytes and the mime type it's saved in
@@ -89,7 +86,7 @@ func (c *ThumbnailsDAL) Get(hash domain.HashValue, size domain.Size) (io.Reader,
 	return bytes.NewBuffer(thumbnail.GzippedThumbnailBytes), thumbnail.PictureFormat, nil
 }
 
-func (c *ThumbnailsDAL) getNewSizesRequiredForPicture(pictureMetadata *domain.PictureMetadata) ([]domain.Size, error) {
+func (c *ThumbnailsDAL) GetNewSizesRequiredForPicture(pictureMetadata *domain.PictureMetadata) ([]domain.Size, error) {
 	var requiredSizes []domain.Size
 	for _, thumbnailHeight := range generated.ThumbnailHeights {
 		if pictureMetadata.RawSize.Height < thumbnailHeight {
@@ -119,40 +116,11 @@ func (c *ThumbnailsDAL) getNewSizesRequiredForPicture(pictureMetadata *domain.Pi
 	return requiredSizes, nil
 }
 
-func (c *ThumbnailsDAL) QueueThumbnailCreationForPicture(profileRun *profile.Run, pictureMetadata *domain.PictureMetadata, getPictureFunc domain.GetPictureFunc) error {
-	c.profiler.Mark(profileRun, "start queuing thumbnail creation for picture")
-	defer c.profiler.Mark(profileRun, "finish queuing thumbnail creation for picture")
-
-	if c.thumbnailCachePolicy != ThumbnailCachePolicyAheadOfTime {
-		c.logger.Info("skipping ensure thumbnails for picture (due to thumbnail cache policy)")
-		return nil
-	}
-
-	requiredSizes, err := c.getNewSizesRequiredForPicture(pictureMetadata)
-	if err != nil {
-		return errorsx.Wrap(err)
-	}
-
-	if len(requiredSizes) == 0 {
-		// skip getting the picture, if there are no sizes required
-		return nil
-	}
-
-	for _, resizeSize := range requiredSizes {
-		resizeJob := mediaserverjobs.NewThumbnailResizerJob(pictureMetadata, resizeSize, getPictureFunc, c.save)
-		c.jobRunner.QueueJob(resizeJob)
-	}
-	return nil
-}
-
-func (c *ThumbnailsDAL) save(hash domain.HashValue, size domain.Size, pictureFormat string, gzippedThumbnailBytes []byte) error {
-	if c.thumbnailCachePolicy == ThumbnailCachePolicyNoSave {
+func (c *ThumbnailsDAL) Save(hash domain.HashValue, size domain.Size, pictureFormat string, gzippedThumbnailBytes []byte) error {
+	if c.ThumbnailCachePolicy == ThumbnailCachePolicyNoSave {
 		c.logger.Info("skipping save thumbnail for picture (due to thumbnail cache policy)")
 		return nil
 	}
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
 
 	filePath := c.getFilePath(hash, size.Height)
 
@@ -191,6 +159,9 @@ func (c *ThumbnailsDAL) IsSizeCacheable(size domain.Size) bool {
 }
 
 func (c *ThumbnailsDAL) getFilePath(hash domain.HashValue, height uint) string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	firstPart := string(hash)[0:2]
 	rest := string(hash)[2:]
 	return filepath.Join(c.BasePath, firstPart, fmt.Sprintf("%s_h%d", rest, height))

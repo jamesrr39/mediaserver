@@ -2,41 +2,73 @@ package mediaserverjobs
 
 import (
 	"fmt"
+	"mediaserver/mediaserver/dal"
 	"mediaserver/mediaserver/domain"
 
 	"github.com/jamesrr39/goutil/errorsx"
+	"github.com/jamesrr39/goutil/logpkg"
 )
 
 type ThumbnailResizerJob struct {
 	pictureMetadata *domain.PictureMetadata
-	requestedSize   domain.Size
-	getPictureFunc  domain.GetPictureFunc
-	save            saveFunc
+	picturesDAL     *dal.PicturesDAL
+	logger          *logpkg.Logger
+	thumbnailsDAL   *dal.ThumbnailsDAL
 }
-
-type saveFunc func(hash domain.HashValue, size domain.Size, pictureFormat string, gzippedThumbnailBytes []byte) error
 
 func NewThumbnailResizerJob(
 	pictureMetadata *domain.PictureMetadata,
-	requestedSize domain.Size,
-	getPictureFunc domain.GetPictureFunc,
-	save saveFunc,
+	picturesDAL *dal.PicturesDAL,
+	logger *logpkg.Logger,
+	thumbnailsDAL *dal.ThumbnailsDAL,
 ) *ThumbnailResizerJob {
-	return &ThumbnailResizerJob{pictureMetadata, requestedSize, getPictureFunc, save}
+	return &ThumbnailResizerJob{pictureMetadata, picturesDAL, logger, thumbnailsDAL}
 }
 
 func (j *ThumbnailResizerJob) run() errorsx.Error {
-	picture, _, err := j.getPictureFunc(j.pictureMetadata)
+	if j.thumbnailsDAL.ThumbnailCachePolicy != dal.ThumbnailCachePolicyAheadOfTime {
+		j.logger.Info("skipping ensure thumbnails for picture (due to thumbnail cache policy)")
+		return nil
+	}
+
+	requiredSizes, err := j.thumbnailsDAL.GetNewSizesRequiredForPicture(j.pictureMetadata)
 	if err != nil {
 		return errorsx.Wrap(err)
 	}
-	newPicture := domain.ResizePicture(picture, j.requestedSize)
+
+	j.logger.Info("require %d new thumbnails for picture %s (%q), sizes: %v",
+		len(requiredSizes),
+		j.pictureMetadata.HashValue,
+		j.pictureMetadata.RelativePath,
+		requiredSizes,
+	)
+
+	if len(requiredSizes) == 0 {
+		// skip getting the picture, if there are no sizes required
+		return nil
+	}
+
+	for _, resizeSize := range requiredSizes {
+		err = j.resizeAndSave(resizeSize)
+		if err != nil {
+			return errorsx.Wrap(err)
+		}
+	}
+	return nil
+}
+
+func (j *ThumbnailResizerJob) resizeAndSave(requestedSize domain.Size) errorsx.Error {
+	picture, _, err := j.picturesDAL.GetPicture(j.pictureMetadata)
+	if err != nil {
+		return errorsx.Wrap(err)
+	}
+	newPicture := domain.ResizePicture(picture, requestedSize)
 	pictureBytes, err := domain.EncodePicture(newPicture, j.pictureMetadata.Format)
 	if err != nil {
 		return errorsx.Wrap(err)
 	}
 
-	err = j.save(j.pictureMetadata.HashValue, j.requestedSize, j.pictureMetadata.Format, pictureBytes)
+	err = j.thumbnailsDAL.Save(j.pictureMetadata.HashValue, requestedSize, j.pictureMetadata.Format, pictureBytes)
 	if err != nil {
 		return errorsx.Wrap(err)
 	}
@@ -46,11 +78,9 @@ func (j *ThumbnailResizerJob) run() errorsx.Error {
 
 func (j *ThumbnailResizerJob) String() string {
 	return fmt.Sprintf(
-		"thumbnail for %s (%q) to size x: %d, y: %d",
+		"thumbnails for %s (%q)",
 		j.pictureMetadata.HashValue,
 		j.pictureMetadata.RelativePath,
-		j.requestedSize.Width,
-		j.requestedSize.Height,
 	)
 }
 

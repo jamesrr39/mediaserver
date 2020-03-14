@@ -57,7 +57,7 @@ func (dal *PicturesDAL) GetPictureBytes(pictureMetadata *domain.PictureMetadata,
 	}
 
 	if isSizeCachable {
-		go dal.thumbnailsDAL.save(pictureMetadata.HashValue, size, pictureFormat, pictureBytes)
+		go dal.thumbnailsDAL.Save(pictureMetadata.HashValue, size, pictureFormat, pictureBytes)
 	}
 	return bytes.NewBuffer(pictureBytes), pictureFormat, nil
 }

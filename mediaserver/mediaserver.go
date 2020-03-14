@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"mediaserver/mediaserver/dal"
 	"mediaserver/mediaserver/dal/diskstorage/mediaserverdb"
-	"mediaserver/mediaserver/domain"
 	"mediaserver/mediaserver/mediaserverjobs"
 	"mediaserver/mediaserver/static_assets_handler"
 	pictureswebservice "mediaserver/mediaserver/webservice"
@@ -51,7 +50,19 @@ func NewMediaServerAndScan(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDi
 	jobRunner := mediaserverjobs.NewJobRunner(logger, maxConcurrentCPUJobs)
 
 	var mediaServerDAL *dal.MediaServerDAL
-	mediaServerDAL, err = dal.NewMediaServerDAL(logger, fs, profiler, rootpath, cachesDir, dataDir, maxConcurrentCPUJobs, maxConcurrentVideoConversions, thumbnailCachePolicy, maxConcurrentTrackRecordsParsing, maxConcurrentResizes, jobRunner)
+	mediaServerDAL, err = dal.NewMediaServerDAL(
+		logger,
+		fs,
+		profiler,
+		rootpath,
+		cachesDir,
+		dataDir,
+		maxConcurrentCPUJobs,
+		maxConcurrentVideoConversions,
+		thumbnailCachePolicy,
+		maxConcurrentTrackRecordsParsing,
+		maxConcurrentResizes,
+	)
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}
@@ -72,7 +83,7 @@ func NewMediaServerAndScan(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDi
 		Rootpath:           rootpath,
 		mediaServerDAL:     mediaServerDAL,
 		picturesService:    pictureswebservice.NewPicturesService(logger, mediaServerDAL),
-		filesService:       pictureswebservice.NewMediaFilesService(logger, dbConn, mediaServerDAL, profiler),
+		filesService:       pictureswebservice.NewMediaFilesService(logger, dbConn, mediaServerDAL, profiler, jobRunner),
 		videosWebService:   pictureswebservice.NewVideoWebService(mediaServerDAL.VideosDAL, mediaServerDAL.MediaFilesDAL),
 		collectionsService: pictureswebservice.NewCollectionsWebService(logger, dbConn, mediaServerDAL.CollectionsDAL, profiler),
 		tracksService:      pictureswebservice.NewTracksWebService(logger, mediaServerDAL.TracksDAL, mediaServerDAL.MediaFilesDAL),
@@ -96,32 +107,23 @@ func NewMediaServerAndScan(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDi
 		return nil, errorsx.Wrap(err)
 	}
 
-	jobRunner.QueueJob(mediaserverjobs.NewApproximateLocationsJob(
-		mediaServerDAL.MediaFilesDAL.GetAll,
-		mediaServerDAL.TracksDAL.GetRecords,
-		mediaServerDAL.MediaFilesDAL.GetAllPictureMetadatas(),
-	))
+	allPictureMetadatas := mediaServerDAL.MediaFilesDAL.GetAllPictureMetadatas()
 
-	profiler.Mark(profileRun, "get all media files")
-	mediaFiles := mediaServer.mediaServerDAL.MediaFilesDAL.GetAll()
+	jobRunner.QueueJob(mediaserverjobs.NewApproximateLocationsJob(
+		mediaServerDAL.MediaFilesDAL,
+		mediaServerDAL.TracksDAL,
+		allPictureMetadatas,
+	), nil)
 
 	profiler.Mark(profileRun, "ensure thumbnails for all mediafiles")
-	for _, mediaFile := range mediaFiles {
-		if mediaFile.GetMediaFileInfo().MediaFileType != domain.MediaFileTypePicture {
-			continue
-		}
-		pictureMetadata := mediaFile.(*domain.PictureMetadata)
-		err = mediaServer.mediaServerDAL.ThumbnailsDAL.QueueThumbnailCreationForPicture(
-			profileRun,
-			pictureMetadata,
-			mediaServer.mediaServerDAL.PicturesDAL.GetPicture,
-		)
-		if err != nil {
-			break
-		}
-	}
-	if err != nil {
-		return nil, errorsx.Wrap(err)
+	for _, pictureMetadata := range allPictureMetadatas {
+		jobRunner.QueueJob(
+			mediaserverjobs.NewThumbnailResizerJob(
+				pictureMetadata,
+				mediaServerDAL.PicturesDAL,
+				logger,
+				mediaServerDAL.ThumbnailsDAL,
+			), nil)
 	}
 
 	return mediaServer, nil

@@ -91,5 +91,3 @@ func NewHash(file io.Reader) (HashValue, error) {
 
 	return HashValue(hex.EncodeToString(hasher.Sum(nil))), nil
 }
-
-type GetPictureFunc func(pictureMetadata *PictureMetadata) (image.Image, string, error)

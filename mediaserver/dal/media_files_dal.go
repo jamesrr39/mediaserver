@@ -8,7 +8,6 @@ import (
 	"mediaserver/mediaserver/dal/picturesmetadatacache"
 	"mediaserver/mediaserver/dal/videodal"
 	"mediaserver/mediaserver/domain"
-	"mediaserver/mediaserver/mediaserverjobs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -41,7 +40,6 @@ type MediaFilesDAL struct {
 	thumbnailsDAL    *ThumbnailsDAL
 	videosDAL        videodal.VideoDAL
 	picturesDAL      *PicturesDAL
-	jobRunner        *mediaserverjobs.JobRunner
 	tracksDAL        *TracksDAL
 	peopleDAL        *PeopleDAL
 }
@@ -54,11 +52,10 @@ func NewMediaFilesDAL(
 	thumbnailsDAL *ThumbnailsDAL,
 	videosDAL videodal.VideoDAL,
 	picturesDAL *PicturesDAL,
-	jobRunner *mediaserverjobs.JobRunner,
 	tracksDAL *TracksDAL,
 	peopleDAL *PeopleDAL,
 ) *MediaFilesDAL {
-	return &MediaFilesDAL{log, fs, profiler, picturesBasePath, picturesmetadatacache.NewMediaFilesCache(), thumbnailsDAL, videosDAL, picturesDAL, jobRunner, tracksDAL, peopleDAL}
+	return &MediaFilesDAL{log, fs, profiler, picturesBasePath, picturesmetadatacache.NewMediaFilesCache(), thumbnailsDAL, videosDAL, picturesDAL, tracksDAL, peopleDAL}
 }
 
 func (dal *MediaFilesDAL) GetAllPictureMetadatas() []*domain.PictureMetadata {
@@ -72,6 +69,19 @@ func (dal *MediaFilesDAL) GetAllPictureMetadatas() []*domain.PictureMetadata {
 	}
 
 	return pictureMetadatas
+}
+
+func (dal *MediaFilesDAL) Add(tx *sql.Tx, mediaFile domain.MediaFile) errorsx.Error {
+	switch mediaFile.GetMediaFileInfo().MediaFileType {
+	case domain.MediaFileTypePicture:
+		err := dal.picturesDAL.CreatePictureMetadata(tx, mediaFile.(*domain.PictureMetadata))
+		if err != nil {
+			return errorsx.Wrap(err)
+		}
+	}
+
+	dal.add(mediaFile)
+	return nil
 }
 
 func (dal *MediaFilesDAL) GetAll() []domain.MediaFile {

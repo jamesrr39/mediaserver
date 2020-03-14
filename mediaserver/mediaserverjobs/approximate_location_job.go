@@ -3,32 +3,29 @@ package mediaserverjobs
 import (
 	"fmt"
 	"math"
+	"mediaserver/mediaserver/dal"
 	"mediaserver/mediaserver/domain"
 	"time"
 
 	"github.com/jamesrr39/goutil/errorsx"
 )
 
-type fetchTrackRecordsFuncType func(trackSummary *domain.FitFileSummary) (domain.Records, errorsx.Error)
-
-type getAllMediaFilesFuncType func() []domain.MediaFile
-
 // ApproximateLocationsJob is a job to suggest where a mediafile can be located geographically
 // TODO: output 2 or more suggested locations, if suitable
 type ApproximateLocationsJob struct {
-	getAllMediaFilesFunc getAllMediaFilesFuncType
-	fetchTrackRecords    fetchTrackRecordsFuncType
-	mediaFilesForJob     []*domain.PictureMetadata
+	mediaFilesDAL    *dal.MediaFilesDAL
+	tracksDAL        *dal.TracksDAL
+	mediaFilesForJob []*domain.PictureMetadata
 }
 
 func NewApproximateLocationsJob(
-	getAllMediaFilesFunc getAllMediaFilesFuncType,
-	fetchTrackRecordsFunc fetchTrackRecordsFuncType,
+	mediaFilesDAL *dal.MediaFilesDAL,
+	tracksDAL *dal.TracksDAL,
 	mediaFilesForJob []*domain.PictureMetadata,
 ) *ApproximateLocationsJob {
 	return &ApproximateLocationsJob{
-		getAllMediaFilesFunc,
-		fetchTrackRecordsFunc,
+		mediaFilesDAL,
+		tracksDAL,
 		mediaFilesForJob,
 	}
 }
@@ -69,7 +66,7 @@ func (j *ApproximateLocationsJob) setLocationOnPicture(pictureMetadata *domain.P
 	}
 
 	// now on to cross-matching with other media files
-	for _, mediaFile := range j.getAllMediaFilesFunc() {
+	for _, mediaFile := range j.mediaFilesDAL.GetAll() {
 		switch mediaFile.GetMediaFileInfo().MediaFileType {
 		case domain.MediaFileTypePicture:
 			matchFound, err := j.tryAndMatchWithPicture(pictureMetadata, *pictureDate, mediaFile.(*domain.PictureMetadata))
@@ -97,7 +94,7 @@ func (j *ApproximateLocationsJob) setLocationOnPicture(pictureMetadata *domain.P
 func (j *ApproximateLocationsJob) tryAndMatchWithTrack(pictureMetadata *domain.PictureMetadata, pictureDate time.Time, trackSummary *domain.FitFileSummary) (bool, error) {
 	if trackSummary.StartTime.Before(pictureDate) && trackSummary.EndTime.After(pictureDate) {
 		// found a match
-		records, err := j.fetchTrackRecords(trackSummary)
+		records, err := j.tracksDAL.GetRecords(trackSummary)
 		if err != nil {
 			return false, errorsx.Wrap(err)
 		}

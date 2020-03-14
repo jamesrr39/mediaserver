@@ -31,7 +31,7 @@ func NewJobRunner(logger *logpkg.Logger, maxConcurrentJobs uint) *JobRunner {
 	return &JobRunner{logger, cpuJobsSema}
 }
 
-func (j *JobRunner) QueueJob(job Job) {
+func (j *JobRunner) QueueJob(job Job, onSuccessful func()) {
 	j.logger.Info("JOB: running job: %q", job)
 
 	switch job.JobType() {
@@ -45,6 +45,9 @@ func (j *JobRunner) QueueJob(job Job) {
 				j.logger.Error("JOB: error running job %q. Error: %q. Stack:\n%s", job, err, err.Stack())
 			} else {
 				j.logger.Info("JOB: job finished successfully (%q)", job)
+			}
+			if onSuccessful != nil {
+				onSuccessful()
 			}
 		}()
 	default:
