@@ -22,7 +22,7 @@ func Test_CrudPictureMetadataNoExif(t *testing.T) {
 		return nil, os.ErrNotExist
 	}
 
-	thumbnailsDAL, err := NewThumbnailsDAL(fs, nil, "", nil, ThumbnailCachePolicyNoSave)
+	thumbnailsDAL, err := NewThumbnailsDAL(fs, nil, "", ThumbnailCachePolicyNoSave, nil)
 	require.Nil(t, err)
 
 	picturesMetadataRepository := NewPicturesDAL("", thumbnailsDAL, openFileFunc, 4)
