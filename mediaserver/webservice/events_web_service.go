@@ -3,6 +3,7 @@ package webservice
 import (
 	"bytes"
 	"log"
+	"mediaserver/mediaserver/events"
 	"net/http"
 	"sync"
 	"time"
@@ -15,18 +16,29 @@ import (
 
 type WebsocketClient struct {
 	conn   *websocket.Conn
-	sendCh chan []byte
+	sendCh chan events.Event
 }
 
 type EventsWebService struct {
 	chi.Router
 	logger    *logpkg.Logger
 	clients   []*WebsocketClient
-	clientsMu sync.Mutex
+	clientsMu sync.RWMutex
 }
 
-func NewEventsWebService(logger *logpkg.Logger) *EventsWebService {
-	ws := &EventsWebService{chi.NewMux(), logger, nil, sync.Mutex{}}
+func NewEventsWebService(logger *logpkg.Logger, eventChan chan events.Event) *EventsWebService {
+	ws := &EventsWebService{chi.NewMux(), logger, nil, sync.RWMutex{}}
+
+	go func() {
+		for {
+			ev := <-eventChan
+			ws.clientsMu.RLock()
+			defer ws.clientsMu.RUnlock()
+			for _, client := range ws.clients {
+				client.sendCh <- ev
+			}
+		}
+	}()
 
 	return ws
 }
@@ -42,7 +54,7 @@ func (ws *EventsWebService) handleGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	websocketClient := &WebsocketClient{conn, make(chan []byte, 256)}
+	websocketClient := &WebsocketClient{conn, make(chan events.Event, 256)}
 
 	go ws.writeMessages(websocketClient)
 	go ws.readMessages(websocketClient)
@@ -56,7 +68,7 @@ func (ws *EventsWebService) writeMessages(c *WebsocketClient) {
 	}()
 	for {
 		select {
-		case message, ok := <-c.sendCh:
+		case event, ok := <-c.sendCh:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				// The hub closed the channel.
@@ -68,13 +80,14 @@ func (ws *EventsWebService) writeMessages(c *WebsocketClient) {
 			if err != nil {
 				return
 			}
-			w.Write(message)
+			w.Write([]byte(event.Name()))
 
 			// Add queued chat messages to the current websocket message.
 			n := len(c.sendCh)
 			for i := 0; i < n; i++ {
 				w.Write(newline)
-				w.Write(<-c.sendCh)
+				event := <-c.sendCh
+				w.Write([]byte(event.Name()))
 			}
 
 			if err := w.Close(); err != nil {
@@ -117,7 +130,7 @@ func (ws *EventsWebService) readMessages(c *WebsocketClient) {
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-
+		ws.logger.Info("received message from websocket but nothing to do")
 	}
 }
 

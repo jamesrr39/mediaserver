@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"mediaserver/mediaserver/dal"
 	"mediaserver/mediaserver/dal/diskstorage/mediaserverdb"
+	"mediaserver/mediaserver/events"
 	"mediaserver/mediaserver/mediaserverjobs"
 	"mediaserver/mediaserver/static_assets_handler"
 	pictureswebservice "mediaserver/mediaserver/webservice"
@@ -30,6 +31,7 @@ type MediaServer struct {
 	collectionsService *pictureswebservice.CollectionsWebService
 	tracksService      *pictureswebservice.TracksWebService
 	graphQLService     *pictureswebservice.GraphQLAPIService
+	eventsService      *pictureswebservice.EventsWebService
 	dbConn             *mediaserverdb.DBConn
 	jobRunner          *mediaserverjobs.JobRunner
 	logger             *logpkg.Logger
@@ -47,7 +49,9 @@ func NewMediaServerAndScan(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDi
 		profiler.StopAndRecord(profileRun, message)
 	}()
 
-	jobRunner := mediaserverjobs.NewJobRunner(logger, maxConcurrentCPUJobs)
+	eventBus := events.NewEventBus()
+
+	jobRunner := mediaserverjobs.NewJobRunner(logger, maxConcurrentCPUJobs, eventBus)
 
 	var mediaServerDAL *dal.MediaServerDAL
 	mediaServerDAL, err = dal.NewMediaServerDAL(
@@ -79,6 +83,15 @@ func NewMediaServerAndScan(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDi
 		return nil, errorsx.Wrap(err)
 	}
 
+	eventsServiceSubscriber, err := events.NewSubscriber("events_websocket_subscriber", "(.*?)")
+	if nil != err {
+		return nil, errorsx.Wrap(err)
+	}
+
+	eventBus.Subscribe(eventsServiceSubscriber)
+
+	eventsService := pictureswebservice.NewEventsWebService(logger, eventsServiceSubscriber.Chan)
+
 	mediaServer := &MediaServer{
 		Rootpath:           rootpath,
 		mediaServerDAL:     mediaServerDAL,
@@ -87,6 +100,7 @@ func NewMediaServerAndScan(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDi
 		videosWebService:   pictureswebservice.NewVideoWebService(mediaServerDAL.VideosDAL, mediaServerDAL.MediaFilesDAL),
 		collectionsService: pictureswebservice.NewCollectionsWebService(logger, dbConn, mediaServerDAL.CollectionsDAL, profiler),
 		tracksService:      pictureswebservice.NewTracksWebService(logger, mediaServerDAL.TracksDAL, mediaServerDAL.MediaFilesDAL),
+		eventsService:      eventsService,
 		graphQLService:     graphQLAPIService,
 		logger:             logger,
 	}
@@ -150,6 +164,7 @@ func (ms *MediaServer) ListenAndServe(addr string) error {
 
 	mainRouter.Mount("/video/", http.StripPrefix("/video/", ms.videosWebService))
 	mainRouter.Mount("/picture/", ms.picturesService)
+	mainRouter.Mount("/events/", ms.eventsService)
 	mainRouter.Mount("/", statichandlers.NewClientHandler())
 
 	server := http.Server{

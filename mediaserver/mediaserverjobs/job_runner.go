@@ -2,6 +2,7 @@ package mediaserverjobs
 
 import (
 	"fmt"
+	"mediaserver/mediaserver/events"
 
 	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/jamesrr39/goutil/logpkg"
@@ -18,21 +19,24 @@ const (
 type Job interface {
 	run() errorsx.Error
 	fmt.Stringer
+	Name() string
 	JobType() JobType
 }
 
 type JobRunner struct {
 	logger      *logpkg.Logger
 	cpuJobsSema *semaphore.Semaphore
+	eventBus    *events.EventBus
 }
 
-func NewJobRunner(logger *logpkg.Logger, maxConcurrentJobs uint) *JobRunner {
+func NewJobRunner(logger *logpkg.Logger, maxConcurrentJobs uint, eventBus *events.EventBus) *JobRunner {
 	cpuJobsSema := semaphore.NewSemaphore(maxConcurrentJobs)
-	return &JobRunner{logger, cpuJobsSema}
+	return &JobRunner{logger, cpuJobsSema, eventBus}
 }
 
 func (j *JobRunner) QueueJob(job Job, onSuccessful func()) {
 	j.logger.Info("JOB: running job: %q", job)
+	j.eventBus.SendEvent(events.EventJobStarted{JobName: job.Name()})
 
 	switch job.JobType() {
 	case JobTypeCPUJob:
@@ -43,8 +47,10 @@ func (j *JobRunner) QueueJob(job Job, onSuccessful func()) {
 			err := job.run()
 			if err != nil {
 				j.logger.Error("JOB: error running job %q. Error: %q. Stack:\n%s", job, err, err.Stack())
+				j.eventBus.SendEvent(events.EventJobFailed{JobName: job.Name()})
 			} else {
 				j.logger.Info("JOB: job finished successfully (%q)", job)
+				j.eventBus.SendEvent(events.EventJobSuccessful{JobName: job.Name()})
 			}
 			if onSuccessful != nil {
 				onSuccessful()
@@ -52,5 +58,6 @@ func (j *JobRunner) QueueJob(job Job, onSuccessful func()) {
 		}()
 	default:
 		j.logger.Error("JOB: unknown job: %q", job)
+		j.eventBus.SendEvent(events.EventJobFailed{JobName: job.Name()})
 	}
 }

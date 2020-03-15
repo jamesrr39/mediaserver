@@ -84,6 +84,10 @@ func (j *ThumbnailResizerJob) String() string {
 	)
 }
 
+func (j *ThumbnailResizerJob) Name() string {
+	return "thumbnail_resize_job"
+}
+
 func (j *ThumbnailResizerJob) JobType() JobType {
 	return JobTypeCPUJob
 }

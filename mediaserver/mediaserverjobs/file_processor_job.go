@@ -96,6 +96,10 @@ func (j *FileProcessorJob) String() string {
 	)
 }
 
+func (j *FileProcessorJob) Name() string {
+	return "file_processor_job"
+}
+
 func (j *FileProcessorJob) JobType() JobType {
 	return JobTypeCPUJob
 }

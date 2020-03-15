@@ -167,6 +167,10 @@ func (j *ApproximateLocationsJob) String() string {
 	return "approximate locations job"
 }
 
+func (j *ApproximateLocationsJob) Name() string {
+	return "approximate_locations_job"
+}
+
 func (j *ApproximateLocationsJob) JobType() JobType {
 	return JobTypeCPUJob
 }
