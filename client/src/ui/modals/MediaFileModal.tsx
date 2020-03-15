@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { State } from '../../reducers/fileReducer';
+import { State } from '../../reducers/rootReducer';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { Action, Dispatch } from 'redux';
@@ -331,7 +331,7 @@ class MediaFileModal extends React.Component<Props, ComponentState> {
 }
 
 function mapStateToProps(state: State) {
-  const { scrollObservable, resizeObservable } = state.dependencyInjection;
+  const { scrollObservable, resizeObservable } = state.dependencyInjectionReducer;
 
   return {
     scrollObservable,

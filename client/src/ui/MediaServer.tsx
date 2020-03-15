@@ -3,7 +3,7 @@ import AllPicturesGallery from './AllPicturesGallery';
 import { Route, Redirect, RouteComponentProps, Switch } from 'react-router';
 import MediaFileModal from './modals/MediaFileModal';
 import { connect } from 'react-redux';
-import { State } from '../reducers/fileReducer';
+import { State } from '../reducers/rootReducer';
 import { fetchPicturesMetadata, fetchAllPeople } from '../actions/mediaFileActions';
 import { HashRouter } from 'react-router-dom';
 import { Action, Dispatch } from 'redux';

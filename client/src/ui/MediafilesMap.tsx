@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { State } from '../reducers/fileReducer';
+import { State } from '../reducers/rootReducer';
 import { connect } from 'react-redux';
 import { MediaFile } from '../domain/MediaFile';
 import { InnerMap } from './gallery/InnerMap';

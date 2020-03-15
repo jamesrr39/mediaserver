@@ -1,27 +1,16 @@
-import { combineReducers } from 'redux';
 import {
   MediaserverAction,
   FilesActionTypes,
  } from '../actions/mediaFileActions';
-import { DebouncedObservable, Observable } from '../util/Observable';
-import { CustomCollection } from '../domain/Collection';
-import { CollectionsAction, CollectionActions } from '../collectionsActions';
 import { FileQueue } from '../fileQueue';
-import { notificationsReducer, NotificationsState } from './notificationReducer';
 import { MediaFile } from '../domain/MediaFile';
 import { Record } from '../domain/FitTrack';
 import { Person } from '../domain/People';
 import { LoadingStatus } from '../domain/LoadingStatus';
 
-const scrollObservable = new DebouncedObservable<void>(150);
-const resizeObservable = new DebouncedObservable<void>(150);
-
-window.addEventListener('scroll', () => scrollObservable.triggerEvent());
-window.addEventListener('resize', () => resizeObservable.triggerEvent());
-
 export type PeopleMap = Map<number, Person>;
 
-type MediaFilesState = {
+export type MediaFilesState = {
   loadingStatus: LoadingStatus,
   mediaFiles: MediaFile[],
   mediaFilesMap: Map<string, MediaFile>,
@@ -29,18 +18,6 @@ type MediaFilesState = {
   trackRecordsMap: Map<string, Promise<Record[]>>,
   people: Person[],
   peopleMap: PeopleMap,
-};
-
-type DIState = {
-  scrollObservable: Observable<void>,
-  resizeObservable: Observable<void>,
-};
-
-export type State = {
-  mediaFilesReducer: MediaFilesState,
-  collectionsReducer: CollectionReducerState,
-  notificationsReducer: NotificationsState,
-  dependencyInjection: DIState,
 };
 
 const maxConcurrentUploads = 2;
@@ -55,7 +32,7 @@ const mediaFilesInitialState = {
   peopleMap: new Map<number, Person>(),
 };
 
-function mediaFilesReducer(
+export function mediaFilesReducer(
   state: MediaFilesState = mediaFilesInitialState, 
   action: MediaserverAction) {
   switch (action.type) {
@@ -134,56 +111,3 @@ function mediaFilesReducer(
       return state;
   }
 }
-
-type CollectionReducerState = {
-  loadingStatus: LoadingStatus,
-  customCollections: CustomCollection[];
-};
-
-const collectionInitialState = {
-  loadingStatus: LoadingStatus.NOT_STARTED,
-  customCollections: [],
-};
-
-function collectionsReducer(state: CollectionReducerState = collectionInitialState, action: CollectionsAction) {
-  switch (action.type) {
-    case CollectionActions.COLLECTION_FETCH_STARTED:
-      return {
-        ...state,
-        loadingStatus: LoadingStatus.IN_PROGRESS,
-      };
-    case CollectionActions.COLLECTION_FETCH_FAILED:
-      return {
-        ...state,
-        loadingStatus: LoadingStatus.FAILED,
-      };
-    case CollectionActions.COLLECTIONS_FETCHED:
-      return {
-        ...state,
-        loadingStatus: LoadingStatus.SUCCESSFUL,
-        customCollections: action.customCollections,
-      };
-    case CollectionActions.COLLECTION_SAVED:
-      const collectionsWithoutUpdated = state.customCollections.filter(
-        customCollection => customCollection.id !== action.collection.id);
-      collectionsWithoutUpdated.push(action.collection);
-
-      return {
-        ...state,
-        customCollections: collectionsWithoutUpdated,
-      };
-    default:
-      return state;
-  }
-}
-
-function dependencyInjection(state: DIState = {scrollObservable, resizeObservable}) {
-  return state;
-}
-
-export default combineReducers({
-  mediaFilesReducer,
-  collectionsReducer,
-  notificationsReducer,
-  dependencyInjection,
-});

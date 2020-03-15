@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { State } from '../../reducers/fileReducer';
+import { State } from '../../reducers/rootReducer';
 import { connect } from 'react-redux';
 import { extractFolderCollectionsFrommediaFiles, CustomCollection } from '../../domain/Collection';
 import CollectionGroupListingComponent from './CollectionGroupListingComponent';

@@ -6,7 +6,7 @@ import { INFO_CONTAINER_WIDTH } from './FileInfoComponent';
 import { joinUrlFragments } from '../../util/url';
 import { Observable } from '../../util/Observable';
 import { connect } from 'react-redux';
-import { State } from '../../reducers/fileReducer';
+import { State } from '../../reducers/rootReducer';
 
 const styles = {
   container: {
@@ -103,7 +103,7 @@ class PictureModal extends React.Component<Props> {
 }
 
 export default connect((state: State) => {
-  const { resizeObservable } = state.dependencyInjection;
+  const { resizeObservable } = state.dependencyInjectionReducer;
   
   return {
     resizeObservable

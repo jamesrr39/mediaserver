@@ -1,10 +1,10 @@
 package webservice
 
 import (
-	"bytes"
 	"log"
 	"mediaserver/mediaserver/events"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -32,22 +32,35 @@ func NewEventsWebService(logger *logpkg.Logger, eventChan chan events.Event) *Ev
 	go func() {
 		for {
 			ev := <-eventChan
-			ws.clientsMu.RLock()
-			defer ws.clientsMu.RUnlock()
-			for _, client := range ws.clients {
-				client.sendCh <- ev
-			}
+			println("received event " + ev.Name())
+			ws.sendMessage(ev)
 		}
 	}()
+
+	// Test TODO: remove
+	go func() {
+		for {
+			time.Sleep(time.Second)
+
+			eventChan <- events.EventJobStarted{JobName: "test::test"}
+		}
+	}()
+
+	ws.Get("/", ws.handleGet)
 
 	return ws
 }
 
-func (ws *EventsWebService) handleGet(w http.ResponseWriter, r *http.Request) {
-	upgrader := websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
+func (ws *EventsWebService) sendMessage(event events.Event) {
+	ws.clientsMu.RLock()
+	defer ws.clientsMu.RUnlock()
+
+	for _, client := range ws.clients {
+		client.sendCh <- event
 	}
+}
+
+func (ws *EventsWebService) handleGet(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		errorsx.HTTPError(w, ws.logger, errorsx.Wrap(err), http.StatusInternalServerError)
@@ -56,11 +69,21 @@ func (ws *EventsWebService) handleGet(w http.ResponseWriter, r *http.Request) {
 
 	websocketClient := &WebsocketClient{conn, make(chan events.Event, 256)}
 
+	ws.addClient(websocketClient)
+
 	go ws.writeMessages(websocketClient)
-	go ws.readMessages(websocketClient)
+}
+
+func (ws *EventsWebService) addClient(client *WebsocketClient) {
+	ws.clientsMu.Lock()
+	defer ws.clientsMu.Unlock()
+
+	ws.clients = append(ws.clients, client)
 }
 
 func (ws *EventsWebService) writeMessages(c *WebsocketClient) {
+	interruptChan := make(chan os.Signal, 1)
+
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
@@ -95,48 +118,31 @@ func (ws *EventsWebService) writeMessages(c *WebsocketClient) {
 			}
 		case <-ticker.C:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
-			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+			err := c.conn.WriteMessage(websocket.PingMessage, nil)
+			if err != nil {
+				ws.logger.Warn("error writing to websocket: %v", err)
+				return
+			}
+		case <-interruptChan:
+			// Cleanly close the connection by sending a close message and then
+			// waiting (with timeout) for the server to close the connection.
+			err := c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+			if err != nil {
+				log.Println("write close:", err)
 				return
 			}
 		}
 	}
 }
 
-func (ws *EventsWebService) readMessages(c *WebsocketClient) {
-	defer func() {
-		for i, client := range ws.clients {
-			if client != c {
-				continue
-			}
-
-			ws.clientsMu.Lock()
-			defer ws.clientsMu.Unlock()
-
-			// remove client from list of subscribed clients
-			ws.clients = append(ws.clients[:i], ws.clients[i+1:]...)
-			break
-		}
-		defer c.conn.Close()
-	}()
-	c.conn.SetReadLimit(maxMessageSize)
-	c.conn.SetReadDeadline(time.Now().Add(pongWait))
-	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-	for {
-		_, message, err := c.conn.ReadMessage()
-		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("error: %v", err)
-			}
-			break
-		}
-		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		ws.logger.Info("received message from websocket but nothing to do")
-	}
-}
-
 var (
-	newline = []byte(`\n`)
-	space   = []byte(` `)
+	newline  = []byte(`\n`)
+	upgrader = websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			// TODO cross-site request forgery protection?
+			return true
+		},
+	}
 )
 
 const (
@@ -148,7 +154,4 @@ const (
 
 	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
-
-	// Maximum message size allowed from peer.
-	maxMessageSize = 512
 )

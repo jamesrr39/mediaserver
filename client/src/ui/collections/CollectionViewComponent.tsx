@@ -6,7 +6,7 @@ import { themeStyles } from '../../theme/theme';
 import { Link } from 'react-router-dom';
 import { joinUrlFragments } from '../../util/url';
 import { MediaFile } from '../../domain/MediaFile';
-import { State } from '../../reducers/fileReducer';
+import { State } from '../../reducers/rootReducer';
 import { getScreenWidth } from '../../util/screen_size';
 
 type Props = {

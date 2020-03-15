@@ -87,10 +87,7 @@ func NewMediaServerAndScan(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDi
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}
-
 	eventBus.Subscribe(eventsServiceSubscriber)
-
-	eventsService := pictureswebservice.NewEventsWebService(logger, eventsServiceSubscriber.Chan)
 
 	mediaServer := &MediaServer{
 		Rootpath:           rootpath,
@@ -100,7 +97,7 @@ func NewMediaServerAndScan(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDi
 		videosWebService:   pictureswebservice.NewVideoWebService(mediaServerDAL.VideosDAL, mediaServerDAL.MediaFilesDAL),
 		collectionsService: pictureswebservice.NewCollectionsWebService(logger, dbConn, mediaServerDAL.CollectionsDAL, profiler),
 		tracksService:      pictureswebservice.NewTracksWebService(logger, mediaServerDAL.TracksDAL, mediaServerDAL.MediaFilesDAL),
-		eventsService:      eventsService,
+		eventsService:      pictureswebservice.NewEventsWebService(logger, eventsServiceSubscriber.Chan),
 		graphQLService:     graphQLAPIService,
 		logger:             logger,
 	}
@@ -160,11 +157,11 @@ func (ms *MediaServer) ListenAndServe(addr string) error {
 		r.Mount("/collections/", ms.collectionsService)
 		r.Mount("/tracks/", ms.tracksService)
 		r.Mount("/graphql", ms.graphQLService)
+		r.Mount("/events/", ms.eventsService)
 	})
 
 	mainRouter.Mount("/video/", http.StripPrefix("/video/", ms.videosWebService))
 	mainRouter.Mount("/picture/", ms.picturesService)
-	mainRouter.Mount("/events/", ms.eventsService)
 	mainRouter.Mount("/", statichandlers.NewClientHandler())
 
 	server := http.Server{

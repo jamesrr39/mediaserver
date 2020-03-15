@@ -11,7 +11,7 @@ import markerShadow from '../../node_modules/leaflet/dist/images/marker-shadow.p
 import { deepEqual } from '../util/equal';
 import { Observable } from '../util/Observable';
 import { connect } from 'react-redux';
-import { State } from '../reducers/fileReducer';
+import { State } from '../reducers/rootReducer';
 
 const StartIcon = Leaflet.Icon.extend({
   createIcon: () => {
@@ -333,6 +333,6 @@ export function newDivIcon() {
 
 export default connect((state: State) => {
   return {
-    resizeObservable: state.dependencyInjection.resizeObservable,
+    resizeObservable: state.dependencyInjectionReducer.resizeObservable,
   };
 })(MapComponent);

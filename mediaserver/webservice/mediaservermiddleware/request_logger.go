@@ -1,8 +1,10 @@
 package mediaservermiddleware
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
+	"net"
 	"net/http"
 	"time"
 
@@ -25,6 +27,15 @@ func NewBodyWriter(w http.ResponseWriter, r *http.Request) *BodyWriter {
 func (bw *BodyWriter) Write(data []byte) (int, error) {
 	bw.ResponseBody.Write(data)
 	return bw.WrapResponseWriter.Write(data)
+}
+
+func (bw *BodyWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	h, ok := bw.WrapResponseWriter.(http.Hijacker)
+	if !ok {
+		panic("underlying response writer is not hijacker")
+	}
+
+	return h.Hijack()
 }
 
 func CreateRequestLoggerMiddleware(log *logpkg.Logger) func(http.Handler) http.Handler {

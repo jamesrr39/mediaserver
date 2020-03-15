@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { Dispatch } from 'redux';
-import { State } from '../reducers/fileReducer';
+import { State } from '../reducers/rootReducer';
 import { Action } from 'redux';
 import { removeNotification } from '../actions/notificationActions';
 
