@@ -84,7 +84,7 @@ func (ws *EventsWebService) writeMessages(c *WebsocketClient) {
 		case event, ok := <-c.sendCh:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
-				// The hub closed the channel.
+				// The client closed the channel.
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
@@ -95,7 +95,7 @@ func (ws *EventsWebService) writeMessages(c *WebsocketClient) {
 			}
 			w.Write([]byte(event.Name()))
 
-			// Add queued chat messages to the current websocket message.
+			// Add queued messages to the current websocket message.
 			n := len(c.sendCh)
 			for i := 0; i < n; i++ {
 				w.Write(newline)
