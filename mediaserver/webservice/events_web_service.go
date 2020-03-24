@@ -36,15 +36,6 @@ func NewEventsWebService(logger *logpkg.Logger, eventChan chan events.Event) *Ev
 		}
 	}()
 
-	// Test TODO: remove
-	go func() {
-		for {
-			time.Sleep(time.Second)
-
-			eventChan <- events.EventJobStarted{JobName: "test::test"}
-		}
-	}()
-
 	ws.Get("/", ws.handleGet)
 
 	return ws
