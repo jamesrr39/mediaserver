@@ -32,7 +32,6 @@ func NewEventsWebService(logger *logpkg.Logger, eventChan chan events.Event) *Ev
 	go func() {
 		for {
 			ev := <-eventChan
-			println("received event " + ev.Name())
 			ws.sendMessage(ev)
 		}
 	}()

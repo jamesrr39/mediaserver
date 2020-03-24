@@ -2,7 +2,6 @@ import { combineReducers } from 'redux';
 import { DIState, dependencyInjectionReducer } from './dependcyInjectionReducer';
 import { MediaFilesState, mediaFilesReducer } from './mediafileReducer';
 import { NotificationsState, notificationsReducer } from './notificationReducer';
-import { EventsState, eventsReducer } from './eventReducer';
 import { CollectionReducerState, collectionsReducer } from './collectionsReducer';
 
 export type State = {
@@ -10,7 +9,6 @@ export type State = {
   collectionsReducer: CollectionReducerState,
   notificationsReducer: NotificationsState,
   dependencyInjectionReducer: DIState,
-  eventsReducer: EventsState,
 };
 
 export default combineReducers({
@@ -18,5 +16,4 @@ export default combineReducers({
   collectionsReducer,
   notificationsReducer,
   dependencyInjectionReducer,
-  eventsReducer,
 });
