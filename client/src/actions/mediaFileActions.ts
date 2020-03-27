@@ -16,7 +16,6 @@ export enum FilesActionTypes {
   QUEUE_FOR_UPLOAD,
   FILE_SUCCESSFULLY_UPLOADED,
   TRACK_RECORDS_FETCHED_ACTION,
-  // TRACK_RECORDS_FETCH_QUEUED_ACTION,
   PEOPLE_FETCHED_ACTION,
   PARTICIPANT_ADDED_TO_MEDIAFILE,
   PEOPLE_CREATED,
@@ -49,11 +48,6 @@ export type TrackRecordsFetchedAction = {
   type: FilesActionTypes.TRACK_RECORDS_FETCHED_ACTION;
   trackSummaryIdsMap: Map<string, Promise<Record[]>>,
 };
-
-// export type TrackRecordsFetchQueuedAction = {
-//   type: FilesActionTypes.TRACK_RECORDS_FETCH_QUEUED_ACTION,
-//   trackSummaryIds: string[],
-// }
 
 export type QueueForUploadAction = {
   type: FilesActionTypes.QUEUE_FOR_UPLOAD,
@@ -200,31 +194,32 @@ export function fetchRecordsForTracks(trackSummaries: FitTrack[]) {
       //   type: FilesActionTypes.TRACK_RECORDS_FETCH_QUEUED_ACTION,
       //   trackSummaryIds: trackSummariesToFetch,
       // });
-      const response = await fetchTrackRecords(trackSummariesToFetch);
-      response.tracks.forEach(track => {
-        const records = track.records.map(record => ({
-          ...record,
-          timestamp: new Date(record.timestamp),
-        }));
-        const resolver = resolverMap.get(track.hash);
-        if (!resolver) {
-          throw new Error(`couldn't find resolver for ${track.hash}`);
-        }
-        resolver(records);
-      });
+      fetchTrackRecords(trackSummariesToFetch).then(response => {
+        response.tracks.forEach(track => {
+          const records = track.records.map(record => ({
+            ...record,
+            timestamp: new Date(record.timestamp),
+          }));
+          const resolver = resolverMap.get(track.hash);
+          if (!resolver) {
+            throw new Error(`couldn't find resolver for ${track.hash}`);
+          }
+          resolver(records);
+        });
 
-      const dispatchMap = new Map<string, Promise<Record[]>>();
-      trackSummariesToFetch.forEach(hash => {
-        const promise = trackSummaryIdsMap.get(hash);
-        if (!promise) {
-          throw new Error(`couldn't find promise for ${hash}`);
-        }
-        dispatchMap.set(hash, promise);
-      });
+        const dispatchMap = new Map<string, Promise<Record[]>>();
+        trackSummariesToFetch.forEach(hash => {
+          const promise = trackSummaryIdsMap.get(hash);
+          if (!promise) {
+            throw new Error(`couldn't find promise for ${hash}`);
+          }
+          dispatchMap.set(hash, promise);
+        });
 
-      dispatch({
-        type: FilesActionTypes.TRACK_RECORDS_FETCHED_ACTION,
-        trackSummaryIdsMap: dispatchMap,
+        dispatch({
+          type: FilesActionTypes.TRACK_RECORDS_FETCHED_ACTION,
+          trackSummaryIdsMap: dispatchMap,
+        });
       });
     }
 
