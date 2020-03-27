@@ -1,5 +1,5 @@
 declare global {
-    interface Window { env: {serverUrl: string}; }
+    interface Window { env?: {serverUrl?: string}; }
 }
 
-export const SERVER_BASE_URL = window.env.serverUrl || window.location.origin;
+export const SERVER_BASE_URL = (window.env && window.env.serverUrl) || window.location.origin;
