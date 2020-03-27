@@ -50,12 +50,6 @@ bundle_static_assets:
 	cd client && yarn build
 	go run vendor/github.com/rakyll/statik/statik.go -src=client/build -dest=build/client
 
-
-# build_docker_raspberry_pi_3:
-#        mkdir -p bin/docker/x86-64/mediaserver
-#        env CGO_ENABLED=0 GOARM=7 GOARCH=arm go build -tags "purego prod" -o docker/tracks-raspberry-pi/bin/tracks-app-raspberry-pi cmd/tracks-app-main.go
-#       docker build -t jamesrr39/tracks-app-raspberry-pi docker/tracks-raspberry-pi
-
 .PHONY: build_docker_linux_x86_64
 build_docker_linux_x86_64: build_prod_x86_64
 	mkdir -p build/docker/x86_64/bin
