@@ -8,8 +8,11 @@ import { MediaFileType } from '../../domain/MediaFileType';
 import { FitTrack, Record } from '../../domain/FitTrack';
 import { GalleryFilter } from '../../domain/Filter';
 import InnerGallery from './InnerGallery';
-import { trackSummariesToTrackDatas } from '../../actions/selectors';
-import { CancellablePromise, makeCancelable } from '../../util/promises';
+// import { trackSummariesToTrackDatas } from '../../actions/selectors';
+// import { CancellablePromise, makeCancelable } from '../../util/promises';
+import { CancellablePromise } from '../../util/promises';
+import { connect } from 'react-redux';
+import { fetchRecordsForTracks } from '../../actions/mediaFileActions';
 
 export type GalleryProps = {
   mediaFiles: MediaFile[];
@@ -35,7 +38,7 @@ type InnerGalleryWrapperProps = {
   onFilterChangeObservable: Observable<GalleryFilter>;
 } & GalleryProps;
 
-export class InnerGalleryWrapper extends React.Component<InnerGalleryWrapperProps, GalleryState> {
+class InnerGalleryWrapper extends React.Component<InnerGalleryWrapperProps, GalleryState> {
   state = {
     showMap: this.props.showMap || false,
     tracks: [],
@@ -56,7 +59,7 @@ export class InnerGalleryWrapper extends React.Component<InnerGalleryWrapperProp
       tracks.push(mediaFile);
     });
 
-    this.fetchRecords(tracks);
+    // this.fetchRecords(tracks);
 
     onFilterChangeObservable.addListener(this.filterChangeCallback);
   }
@@ -92,17 +95,19 @@ export class InnerGalleryWrapper extends React.Component<InnerGalleryWrapperProp
     );
   }
 
-  private fetchRecords = async (trackSummaries: FitTrack[]) => {
-    this.fetchRecordsPromise = makeCancelable(this.props.fetchRecordsForTracks(trackSummaries));
-    const tracksDetails = await this.fetchRecordsPromise.promise;
+  // private fetchRecords = async (trackSummaries: FitTrack[]) => {
+  //   const trackSummariesToFetch = trackSummaries; // TODO: only fetch records in viewport
 
-    const trackDatas = trackSummariesToTrackDatas(trackSummaries, tracksDetails, this.props.mediaFileUrlBase);
+  //   this.fetchRecordsPromise = makeCancelable(this.props.fetchRecordsForTracks(trackSummariesToFetch));
+  //   const tracksDetails = await this.fetchRecordsPromise.promise;
 
-    this.setState(state => ({
-      ...state,
-      tracks: state.tracks.concat(trackDatas),
-    }));
-  }
+  //   const trackDatas = trackSummariesToTrackDatas(trackSummaries, tracksDetails, this.props.mediaFileUrlBase);
+
+  //   this.setState(state => ({
+  //     ...state,
+  //     tracks: state.tracks.concat(trackDatas),
+  //   }));
+  // }
 
   private filterChangeCallback = (galleryFilter: GalleryFilter) => {
     this.setState(state => ({
@@ -111,3 +116,5 @@ export class InnerGalleryWrapper extends React.Component<InnerGalleryWrapperProp
     }));
   }
 }
+
+export default connect(undefined, {fetchRecordsForTracks})(InnerGalleryWrapper);

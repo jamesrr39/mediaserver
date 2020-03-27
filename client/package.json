@@ -25,7 +25,7 @@
   },
   "scripts": {
     "start": "REACT_APP_SERVER_URL=http://localhost:9050 react-scripts start",
-    "build": "react-scripts build",
+    "build": "REACT_APP_SERVER_URL= react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "test:ci": "CI=true react-scripts test --env=jsdom",
     "eject": "react-scripts eject",

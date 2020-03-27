@@ -4,7 +4,7 @@ import {
  } from '../actions/mediaFileActions';
 import { FileQueue } from '../fileQueue';
 import { MediaFile } from '../domain/MediaFile';
-import { Record } from '../domain/FitTrack';
+import { Record, FitTrack } from '../domain/FitTrack';
 import { Person } from '../domain/People';
 import { LoadingStatus } from '../domain/LoadingStatus';
 
@@ -18,6 +18,7 @@ export type MediaFilesState = {
   trackRecordsMap: Map<string, Promise<Record[]>>,
   people: Person[],
   peopleMap: PeopleMap,
+  fetchTrackRecordsQueue: FitTrack[],
 };
 
 const maxConcurrentUploads = 2;
@@ -30,6 +31,7 @@ const mediaFilesInitialState = {
   trackRecordsMap: new Map<string, Promise<Record[]>>(),
   people: [],
   peopleMap: new Map<number, Person>(),
+  fetchTrackRecordsQueue: [],
 };
 
 export function mediaFilesReducer(

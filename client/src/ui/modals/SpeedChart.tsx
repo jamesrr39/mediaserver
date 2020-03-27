@@ -12,6 +12,8 @@ const colors = {
     lightBlue: 'rgb(118, 166, 204)',
 };
 
+const intervalDistanceSeconds = 20;
+
 export default class SpeedChart extends React.Component<Props> {
     private chart?: Chart;
 
@@ -36,13 +38,10 @@ export default class SpeedChart extends React.Component<Props> {
             return;
         }
 
-        const speeds = getSpeedsFromRecords(trackRecords, 10);
+        const speeds = getSpeedsFromRecords(trackRecords, intervalDistanceSeconds);
         if (speeds.length === 0) {
             return;
         }
-
-        // const maxTimeThroughSeconds = speeds[speeds.length - 1].startTimeThroughSeconds;
-        // const maxSpeed = Math.max(...speeds.map(speedWithTime => speedWithTime.speed));
 
         const points = speeds.map(speedWithTime => {
             const {

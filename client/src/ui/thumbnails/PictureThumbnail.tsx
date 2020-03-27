@@ -53,6 +53,7 @@ export class PictureThumbnail extends React.Component<Props, ComponentState> {
 
         return <div style={style} />;
     }
+
     componentDidMount() {
         const { size, pictureMetadata } = this.props;
 
@@ -61,14 +62,11 @@ export class PictureThumbnail extends React.Component<Props, ComponentState> {
         const image = new Image();
         image.onload = () => {
             this.setState(state => ({
-            ...state,
-            isLoaded: true,
+                ...state,
+                isLoaded: true,
             }));
         };
         image.src = imgSrc;
-    }
-    triggerInView() {
-        // no-op
     }
 
 }

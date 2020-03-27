@@ -16,6 +16,7 @@ export enum FilesActionTypes {
   QUEUE_FOR_UPLOAD,
   FILE_SUCCESSFULLY_UPLOADED,
   TRACK_RECORDS_FETCHED_ACTION,
+  // TRACK_RECORDS_FETCH_QUEUED_ACTION,
   PEOPLE_FETCHED_ACTION,
   PARTICIPANT_ADDED_TO_MEDIAFILE,
   PEOPLE_CREATED,
@@ -48,6 +49,11 @@ export type TrackRecordsFetchedAction = {
   type: FilesActionTypes.TRACK_RECORDS_FETCHED_ACTION;
   trackSummaryIdsMap: Map<string, Promise<Record[]>>,
 };
+
+// export type TrackRecordsFetchQueuedAction = {
+//   type: FilesActionTypes.TRACK_RECORDS_FETCH_QUEUED_ACTION,
+//   trackSummaryIds: string[],
+// }
 
 export type QueueForUploadAction = {
   type: FilesActionTypes.QUEUE_FOR_UPLOAD,
@@ -158,7 +164,10 @@ async function fetchTrackRecords(hashes: string[]) {
 type Resolver = (records: Record[]) => void;
 
 export function fetchRecordsForTracks(trackSummaries: FitTrack[]) {
-  return (dispatch: (action: TrackRecordsFetchedAction) => void, getState: () => State) => {
+  return async (
+    dispatch: (action: TrackRecordsFetchedAction) => void, 
+    getState: () => State,
+  ) => {
     const state = getState();
 
     const trackSummaryIdsMap = new Map<string, Promise<Record[]>>();
@@ -186,18 +195,22 @@ export function fetchRecordsForTracks(trackSummaries: FitTrack[]) {
 
         trackSummaryIdsMap.set(hash, promise);
       });
-      fetchTrackRecords(trackSummariesToFetch).then(response => {
-        response.tracks.forEach(track => {
-          const records = track.records.map(record => ({
-            ...record,
-            timestamp: new Date(record.timestamp),
-          }));
-          const resolver = resolverMap.get(track.hash);
-          if (!resolver) {
-            throw new Error(`couldn't find resolver for ${track.hash}`);
-          }
-          resolver(records);
-        });
+      // dispatch queue action here
+      // dispatch({
+      //   type: FilesActionTypes.TRACK_RECORDS_FETCH_QUEUED_ACTION,
+      //   trackSummaryIds: trackSummariesToFetch,
+      // });
+      const response = await fetchTrackRecords(trackSummariesToFetch);
+      response.tracks.forEach(track => {
+        const records = track.records.map(record => ({
+          ...record,
+          timestamp: new Date(record.timestamp),
+        }));
+        const resolver = resolverMap.get(track.hash);
+        if (!resolver) {
+          throw new Error(`couldn't find resolver for ${track.hash}`);
+        }
+        resolver(records);
       });
 
       const dispatchMap = new Map<string, Promise<Record[]>>();

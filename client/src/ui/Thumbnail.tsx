@@ -39,23 +39,6 @@ function getImageHeightToRequest(narrowScreen: boolean, pictureMetadata: Picture
 }
 
 export function getSizeForThumbnail(mediaFile: MediaFile) {
-  // TODO pass in row size
-  // const narrowScreen = isNarrowScreen();
-
-  // switch (mediaFile.fileType) {
-  //   case MediaFileType.Picture: {
-  //     const heightToRequest = getImageHeightToRequest(narrowScreen, mediaFile);
-  //     const ratio = heightToRequest / mediaFile.rawSize.height;
-  //     const width = narrowScreen ? NARROW_SCREEN_THUMBNAIL_WIDTH : (mediaFile.rawSize.width * ratio);
-  //     const height = narrowScreen ? NARROW_SCREEN_THUMBNAIL_HEIGHT : WIDE_SCREEN_THUMBNAIL_HEIGHT;
-  //     return {height, width};
-  //   }
-  //   default: {
-  //     const height = narrowScreen ? NARROW_SCREEN_THUMBNAIL_HEIGHT : WIDE_SCREEN_THUMBNAIL_HEIGHT;
-  //     const width = narrowScreen ? NARROW_SCREEN_THUMBNAIL_WIDTH : (height * 16 / 9);
-  //     return {height, width};
-  //   }
-  // }
 
   const narrowScreen = false;
 
@@ -108,12 +91,12 @@ export type ThumbnailProps = {
 };
 
 type ThumbnailState = {
-  isImageQueued: boolean;
+  isQueued: boolean;
 };
 
 class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
   state = {
-    isImageQueued: false,
+    isQueued: false,
   };
 
   private element: null|HTMLElement = null;
@@ -131,9 +114,9 @@ class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
   render() {
     const { mediaFile, size } = this.props;
 
-    if (!(this.state.isImageQueued)) {
+    if (!(this.state.isQueued)) {
       const thumbnailStyle = generateThumbnailStyle(
-        mediaFile, this.state.isImageQueued);
+        mediaFile, this.state.isQueued);
 
       return (
         <div style={thumbnailStyle} ref={el => this.element = el} />
@@ -173,7 +156,7 @@ class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
     }
 
     this.setState({
-      isImageQueued: true,
+      isQueued: true,
     });
   }
 

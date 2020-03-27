@@ -4,6 +4,7 @@ import MapComponent from '../MapComponent';
 import { fetchRecordsForTracks } from '../../actions/mediaFileActions';
 import { connect } from 'react-redux';
 import SpeedChart from './SpeedChart';
+import { Duration } from '../../domain/duration';
 
 const styles = {
   container: {
@@ -120,25 +121,35 @@ class TrackModalContent extends React.Component<Props, State> {
   }
 
   private renderTable(trackRecords: Record[]) {
+    const {trackSummary} = this.props;
     const lapIntervalDistance = 1000;
     const laps = getLapsFromRecords(trackRecords, lapIntervalDistance);
     const lapsRows = laps.map((lap, index) => (
       <tr key={index}>
-        <td>{index}</td>
+        <td>{index + 1}</td>
+        <td>{lap.distance}m</td>
         <td>{lap.time.getDisplayString()}</td>
       </tr>
     ));
+
+    const duration = new Duration(trackSummary.startTime, trackSummary.endTime);
 
     return (
       <table>
         <thead>
           <tr>
-            <th>Kilometer</th>
+            <th>Lap</th>
+            <th>Distance</th>
             <th>Time</th>
           </tr>
         </thead>
         <tbody>
           {lapsRows}
+          <tr>
+            <td>Total</td>
+            <td>{trackSummary.totalDistance}m</td>
+            <td>{duration.getDisplayString()}</td>
+          </tr>
         </tbody>
       </table>
     );

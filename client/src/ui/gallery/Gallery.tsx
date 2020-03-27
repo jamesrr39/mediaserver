@@ -2,21 +2,17 @@ import * as React from 'react';
 import { createCompareTimeTakenFunc } from '../../domain/PictureMetadata';
 
 import { DebouncedObservable } from '../../util/Observable';
-import { connect } from 'react-redux';
 import { MediaFile } from '../../domain/MediaFile';
-import { FitTrack, Record } from '../../domain/FitTrack';
-import { fetchRecordsForTracks } from '../../actions/mediaFileActions';
 import { FilterComponent } from './FilterComponent';
 import { GalleryFilter } from '../../domain/Filter';
-import { InnerGalleryWrapper } from './InnerGalleryWrapper';
 import { getScreenHeight } from '../../util/screen_size';
+import InnerGalleryWrapper from './InnerGalleryWrapper';
 
 export type GalleryProps = {
   mediaFiles: MediaFile[];
   mediaFileUrlBase?: string; // example: `/gallery/detail`. If undefined, no link should be added.
   onClickThumbnail?: (pictureMetadata: MediaFile) => void;
   showMap?: boolean;
-  fetchRecordsForTracks: (trackSummary: FitTrack[]) => Promise<Map<string, Record[]>>;
   getRowWidth(): number;
 };
 
@@ -132,6 +128,4 @@ class GalleryWithFilter extends React.Component<GalleryProps, GalleryState> {
   }
 }
 
-export default connect(undefined, {
-  fetchRecordsForTracks
-})(GalleryWithFilter);
+export default GalleryWithFilter;

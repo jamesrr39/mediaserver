@@ -29,7 +29,4 @@ export class VideoThumbnail extends React.Component<Props> {
         </div>
         );
     }
-    triggerInView() {
-        // no-op
-    }
 }
