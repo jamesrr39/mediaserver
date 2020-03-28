@@ -73,7 +73,7 @@ class MediafilesMap extends React.Component<Props, ComponentState> {
     return (
       <>
         <FilterComponent {...filterProps} />
-        <InnerMap {...mapProps} />;
+        <InnerMap {...mapProps} />
       </>
     );
   }
