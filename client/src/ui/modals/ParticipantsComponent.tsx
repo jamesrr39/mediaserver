@@ -23,29 +23,57 @@ type Props = {
     addParticipantToMediaFile: (mediaFile: MediaFile, participant: Person) => void;
 };
 
-class PartipantsComponent extends React.Component<Props> {
+type ComponentState = {
+    editing: boolean,
+};
+
+class PartipantsComponent extends React.Component<Props, ComponentState> {
+    state = {
+        editing: false,
+    };
+
     render() {
-        const {mediaFile, peopleMap, people} = this.props;
+        const {mediaFile, peopleMap} = this.props;
+        const {editing} = this.state;
 
         const participantNames = mediaFile.participantIds.map(id => {
             const person = peopleMap.get(id);
-            let name = '(unknown)';
-            if (person) {
-            name = person.name;
+
+            if (!person) {
+                throw new Error(`unknown person. ID: ${id}`);
             }
-            return name;
+
+            return person.name;
         });
     
+        return (
+            <>
+                <h3>Who was here</h3>
+                {editing ? this.renderEditView(participantNames) : this.renderReadView(participantNames)}
+            </>
+        );
+    }
+
+    private renderReadView(names: string[]) {
+        return (
+            <ul>
+                {names.map((name, index) => <li key={index}>{name}</li>)}
+            </ul>
+        );
+    }
+
+    private renderEditView(names: string[]) {
+        const {people} = this.props;
+
         const peopleOptions = people.map(person => ({
             value: person.id + '',
             label: person.name,
         }));
 
         return (
-            <>
-                <h3>Who was here</h3>
-                <ul>
-                {participantNames.map((participantName, index) => <li key={index}>{participantName}</li>)}
+            <ul>
+                {names.map((name, index) => <li key={index}>{name}</li>)}
+
                 <li>
                     Tag someone who was here
                     <span style={styles.selectStyles}>
@@ -55,8 +83,7 @@ class PartipantsComponent extends React.Component<Props> {
                     />
                     </span>
                 </li>
-                </ul>
-            </>
+            </ul>
         );
     }
 
@@ -64,6 +91,8 @@ class PartipantsComponent extends React.Component<Props> {
         if (!selected) {
         return;
         }
+
+        const {addParticipantToMediaFile, mediaFile} = this.props;
 
         const {peopleMap} = this.props;
 
@@ -78,7 +107,7 @@ class PartipantsComponent extends React.Component<Props> {
                 };
             }
 
-            this.props.addParticipantToMediaFile(this.props.mediaFile, person);
+            addParticipantToMediaFile(mediaFile, person);
         };
 
         if (selected instanceof Array) {
