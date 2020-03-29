@@ -89,7 +89,7 @@ const navButtonTextStyle = {
   backgroundColor: '#666',
   opacity: 0.8,
   zIndex: 1000,
-  textAlign: 'center',
+  textAlign: 'center' as 'center',
   top: '50%',
   position: 'absolute' as 'absolute',
 };
