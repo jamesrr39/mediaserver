@@ -5,27 +5,15 @@ import (
 	"io"
 	"math"
 
-	"github.com/tormoder/fit"
-
 	"github.com/jamesrr39/goutil/errorsx"
+	"github.com/tormoder/fit"
 )
-
-// type FitFile struct {
-// 	*FitFileSummary `json:"summary"`
-// 	Records         []*Record `json:"records"`
-// 	*ActivityBounds `json:"activityBounds"`
-// }
 
 func GetTrackRecordsFromReader(mediaFileInfo MediaFileInfo, reader io.Reader) ([]*Record, error) {
 	decodedFile, err := fit.Decode(reader)
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}
-
-	// summary, err := newSummaryFromDecodedFitFile(mediaFileInfo, decodedFile)
-	// if nil != err {
-	// 	return nil, err
-	// }
 
 	activity, err := decodedFile.Activity()
 	if nil != err {

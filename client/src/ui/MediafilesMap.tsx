@@ -22,12 +22,14 @@ type Props = {
 
 type ComponentState = {
   tracks: TrackMapData[];
+  loaded: boolean;
 };
 
 class MediafilesMap extends React.Component<Props, ComponentState> {
   state = {
     tracks: [] as TrackMapData[],
     filter: new GalleryFilter(null),
+    loaded: false,
   };
 
   private onFilterChangeObservable = new DebouncedObservable<GalleryFilter>(50);
@@ -51,11 +53,21 @@ class MediafilesMap extends React.Component<Props, ComponentState> {
   }
 
   render() {
-    const {mediaFiles, mediaFileUrlBase} = this.props;
-    const {filter} = this.state;
-    const tracks = this.state.tracks.filter(track => {
+    const {filter, tracks, loaded} = this.state;
+
+    if (!loaded) {
+      return <p>loading...</p>;
+    }
+    
+    const filteredTracks = tracks.filter(track => {
       return filter.filter(track.trackSummary);
     });
+
+    return this.renderMap(filteredTracks);
+  }
+
+  renderMap(tracks: TrackMapData[]) {
+    const {mediaFiles, mediaFileUrlBase} = this.props;
 
     const filterProps = {
       initialFilter: this.state.filter,
@@ -95,6 +107,7 @@ class MediafilesMap extends React.Component<Props, ComponentState> {
     this.setState(state => ({
       ...state,
       tracks: state.tracks.concat(trackDatas),
+      loaded: true,
     }));
   }
 }
