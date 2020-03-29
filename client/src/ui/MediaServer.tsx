@@ -97,7 +97,7 @@ function collectionIdentifierAndTypeFromRoute(routeInfo: RouteComponentProps<Col
 }
 
 class MediaServer extends React.Component<MediaServerProps> {
-  componentWillMount() {
+  componentDidMount() {
     const { dispatch } = this.props;
     fetchPicturesMetadata()(dispatch);
     fetchCollections()(dispatch);

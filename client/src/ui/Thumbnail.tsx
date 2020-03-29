@@ -101,7 +101,7 @@ class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
 
   private element: null|HTMLElement = null;
 
-  componentWillMount() {
+  componentDidMount() {
     this.props.scrollObservable.addListener(this.onScroll);
     this.props.resizeObservable.addListener(this.onScroll);
   }
