@@ -4,7 +4,7 @@ import { Route, Redirect, RouteComponentProps, Switch } from 'react-router';
 import MediaFileModal from './modals/MediaFileModal';
 import { connect } from 'react-redux';
 import { State } from '../reducers/rootReducer';
-import { fetchPicturesMetadata, fetchAllPeople } from '../actions/mediaFileActions';
+import { fetchPicturesMetadata, fetchAllPeople, PeopleMap } from '../actions/mediaFileActions';
 import { HashRouter } from 'react-router-dom';
 import { Action, Dispatch } from 'redux';
 import MediaserverTopBar from './MediaserverTopBar';
@@ -43,6 +43,7 @@ type MediaServerProps = {
   loadingStatus: LoadingStatus,
   mediaFiles: MediaFile[];
   mediaFilesMap: Map<string, MediaFile>;
+  peopleMap: PeopleMap;
   customCollections: CustomCollection[];
   dispatch: Dispatch<Action>;
 };
@@ -107,7 +108,7 @@ class MediaServer extends React.Component<MediaServerProps> {
   renderCollectionView = (routeInfo: RouteComponentProps<CollectionViewRouteParams>) => {
     const { type, identifier } = collectionIdentifierAndTypeFromRoute(routeInfo);
 
-    const { mediaFiles, customCollections } = this.props;
+    const { mediaFiles, customCollections, peopleMap } = this.props;
 
     const collection = findCollectionFromTypeAndName(
       mediaFiles,
@@ -125,6 +126,7 @@ class MediaServer extends React.Component<MediaServerProps> {
     const props = {
       collection,
       mediaFilesMap: this.props.mediaFilesMap,
+      peopleMap,
       routeUrl: `/collections/${encodedType}/${encodedIdentifier}`,
     };
 
@@ -138,7 +140,7 @@ class MediaServer extends React.Component<MediaServerProps> {
       return <NotFoundComponent message={`can't edit type '${type}'`} />;
     }
 
-    const { customCollections } = this.props;
+    const { customCollections, peopleMap } = this.props;
 
     const collection = customCollections.find(customCollection => customCollection.identifier() === identifier);
     if (!collection) {
@@ -146,7 +148,8 @@ class MediaServer extends React.Component<MediaServerProps> {
     }
 
     const props = {
-      collection
+      collection,
+      peopleMap,
     };
 
     return <EditCustomCollectionComponent {...props} />;
@@ -281,7 +284,7 @@ function getLoadingStatus(state: State) {
 }
 
 function mapStateToProps(state: State) {
-  const { mediaFiles, mediaFilesMap: mediaFilesMap } = state.mediaFilesReducer;
+  const { mediaFiles, mediaFilesMap: mediaFilesMap, peopleMap } = state.mediaFilesReducer;
   const { customCollections } = state.collectionsReducer;
 
   const loadingStatus = getLoadingStatus(state);
@@ -290,6 +293,7 @@ function mapStateToProps(state: State) {
     loadingStatus,
     mediaFiles,
     mediaFilesMap,
+    peopleMap,
     customCollections,
   };
 }

@@ -8,11 +8,9 @@ import { MediaFileType } from '../../domain/MediaFileType';
 import { FitTrack, Record } from '../../domain/FitTrack';
 import { GalleryFilter } from '../../domain/Filter';
 import InnerGallery from './InnerGallery';
-// import { trackSummariesToTrackDatas } from '../../actions/selectors';
-// import { CancellablePromise, makeCancelable } from '../../util/promises';
 import { CancellablePromise } from '../../util/promises';
 import { connect } from 'react-redux';
-import { fetchRecordsForTracks } from '../../actions/mediaFileActions';
+import { fetchRecordsForTracks, PeopleMap } from '../../actions/mediaFileActions';
 
 export type GalleryProps = {
   mediaFiles: MediaFile[];
@@ -21,6 +19,7 @@ export type GalleryProps = {
   mediaFileUrlBase?: string; // example: `/gallery/detail`. If undefined, no link should be added.
   onClickThumbnail?: (pictureMetadata: MediaFile) => void;
   showMap?: boolean;
+  peopleMap: PeopleMap,
   fetchRecordsForTracks: (trackSummary: FitTrack[]) => Promise<Map<string, Record[]>>;
   getRowWidth(): number;
   isThumbnailVisible(el: HTMLElement): void;
@@ -59,8 +58,6 @@ class InnerGalleryWrapper extends React.Component<InnerGalleryWrapperProps, Gall
       tracks.push(mediaFile);
     });
 
-    // this.fetchRecords(tracks);
-
     onFilterChangeObservable.addListener(this.filterChangeCallback);
   }
 
@@ -72,7 +69,7 @@ class InnerGalleryWrapper extends React.Component<InnerGalleryWrapperProps, Gall
   }
 
   render() {
-    const {getRowWidth, isThumbnailVisible, resizeObservable, scrollObservable} = this.props;
+    const {getRowWidth, isThumbnailVisible, resizeObservable, scrollObservable, peopleMap} = this.props;
     const { showMap, tracks, galleryFilter } = this.state;
     const mediaFiles = this.props.mediaFiles.filter(galleryFilter.filter);
 
@@ -88,26 +85,13 @@ class InnerGalleryWrapper extends React.Component<InnerGalleryWrapperProps, Gall
       isThumbnailVisible,
       resizeObservable,
       scrollObservable,
+      peopleMap,
     };
 
     return (
         <InnerGallery {...statelessGalleryProps} />
     );
   }
-
-  // private fetchRecords = async (trackSummaries: FitTrack[]) => {
-  //   const trackSummariesToFetch = trackSummaries; // TODO: only fetch records in viewport
-
-  //   this.fetchRecordsPromise = makeCancelable(this.props.fetchRecordsForTracks(trackSummariesToFetch));
-  //   const tracksDetails = await this.fetchRecordsPromise.promise;
-
-  //   const trackDatas = trackSummariesToTrackDatas(trackSummaries, tracksDetails, this.props.mediaFileUrlBase);
-
-  //   this.setState(state => ({
-  //     ...state,
-  //     tracks: state.tracks.concat(trackDatas),
-  //   }));
-  // }
 
   private filterChangeCallback = (galleryFilter: GalleryFilter) => {
     this.setState(state => ({

@@ -5,9 +5,11 @@ import { connect } from 'react-redux';
 import GalleryWithFilter from './gallery/Gallery';
 import { MediaFile } from '../domain/MediaFile';
 import { getScreenWidth } from '../util/screen_size';
+import { PeopleMap } from '../actions/mediaFileActions';
 
 type GalleryProps = {
   mediaFiles: MediaFile[];
+  peopleMap: PeopleMap;
 };
 
 class AllPicturesGallery extends React.Component<GalleryProps> {
@@ -17,6 +19,7 @@ class AllPicturesGallery extends React.Component<GalleryProps> {
       mediaFileUrlBase: '/gallery/detail',
       showMap: false,
       getRowWidth: () => getScreenWidth(),
+      peopleMap: this.props.peopleMap,
     };
 
     return <GalleryWithFilter {...props} />;
@@ -24,10 +27,11 @@ class AllPicturesGallery extends React.Component<GalleryProps> {
 }
 
 function mapStateToProps(state: State) {
-  const { mediaFiles } = state.mediaFilesReducer;
+  const { mediaFiles, peopleMap } = state.mediaFilesReducer;
 
   return {
     mediaFiles,
+    peopleMap,
   };
 }
 

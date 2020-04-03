@@ -7,9 +7,11 @@ import { FilterComponent } from './FilterComponent';
 import { GalleryFilter } from '../../domain/Filter';
 import { getScreenHeight } from '../../util/screen_size';
 import InnerGalleryWrapper from './InnerGalleryWrapper';
+import { PeopleMap } from '../../actions/mediaFileActions';
 
 export type GalleryProps = {
   mediaFiles: MediaFile[];
+  peopleMap: PeopleMap;
   mediaFileUrlBase?: string; // example: `/gallery/detail`. If undefined, no link should be added.
   onClickThumbnail?: (pictureMetadata: MediaFile) => void;
   showMap?: boolean;

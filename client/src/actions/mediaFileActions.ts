@@ -9,6 +9,8 @@ import { State } from '../reducers/rootReducer';
 import { Person } from '../domain/People';
 import { nameForMediaFileType } from '../domain/MediaFileType';
 
+export type PeopleMap = Map<number, Person>;
+
 export enum FilesActionTypes {
   FETCH_MEDIA_FILES,
   MEDIA_FILES_FETCHED,

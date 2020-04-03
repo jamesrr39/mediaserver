@@ -3,10 +3,11 @@ import { createCompareTimeTakenFunc } from '../../domain/PictureMetadata';
 
 import { TrackMapData } from '../MapComponent';
 import { MediaFile } from '../../domain/MediaFile';
-import { filesToRows, GalleryRow, BuildLinkFunc, Row, SelectThumbnailEventInfo } from './GalleryRow';
+import GalleryRow, { filesToRows, BuildLinkFunc, Row, SelectThumbnailEventInfo } from './GalleryRow';
 import { mediaFilesToDateGroups, groupsMapToGroups } from '../../domain/MediaFileGroup';
 import { InnerMap } from './InnerMap';
 import { Observable } from '../../util/Observable';
+import { PeopleMap } from '../../actions/mediaFileActions';
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
@@ -21,6 +22,7 @@ export type InnerGalleryProps = {
   onClickThumbnail?: (mediaFile: MediaFile) => void,
   mediaFiles: MediaFile[],
   mediaFileUrlBase?: string,
+  peopleMap: PeopleMap,
   getRowWidth: () => number
   isThumbnailVisible(el: HTMLElement): void;
 };
@@ -94,6 +96,7 @@ class InnerGallery extends React.Component<InnerGalleryProps, InnerGalleryState>
       isThumbnailVisible,
       scrollObservable,
       resizeObservable,
+      peopleMap
     } = this.props;
     const {rows} = this.state;
 
@@ -119,6 +122,7 @@ class InnerGallery extends React.Component<InnerGalleryProps, InnerGalleryState>
         buildLink,
         getRowWidth,
         isThumbnailVisible,
+        peopleMap,
         scrollObservable,
         resizeObservable,
         onSelectThumbnail: (mediaFile: MediaFile, eventInfo: SelectThumbnailEventInfo) => {

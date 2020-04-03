@@ -1,14 +1,13 @@
 import {
   MediaserverAction,
   FilesActionTypes,
+  PeopleMap,
  } from '../actions/mediaFileActions';
 import { FileQueue } from '../fileQueue';
 import { MediaFile } from '../domain/MediaFile';
 import { Record, FitTrack } from '../domain/FitTrack';
 import { Person } from '../domain/People';
 import { LoadingStatus } from '../domain/LoadingStatus';
-
-export type PeopleMap = Map<number, Person>;
 
 export type MediaFilesState = {
   loadingStatus: LoadingStatus,

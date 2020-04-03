@@ -4,9 +4,8 @@ import CreateableSelect from 'react-select/creatable';
 import { ValueType } from 'react-select/src/types';
 import { connect } from 'react-redux';
 import { State } from '../../reducers/rootReducer';
-import { PeopleMap } from '../../reducers/mediafileReducer';
 import { Person } from '../../domain/People';
-import { addParticipantToMediaFile } from '../../actions/mediaFileActions';
+import { addParticipantToMediaFile, PeopleMap } from '../../actions/mediaFileActions';
 
 const styles = {
     selectStyles: {
@@ -14,7 +13,7 @@ const styles = {
     },
 };
 
-type SelectedOption = {value: string, label: string};
+type SelectedOption = {value: string, label: string, __isNew__?: boolean};
 
 type Props = {
     mediaFile: MediaFile,
@@ -56,9 +55,14 @@ class PartipantsComponent extends React.Component<Props, ComponentState> {
 
     private renderReadView(names: string[]) {
         return (
-            <ul>
-                {names.map((name, index) => <li key={index}>{name}</li>)}
-            </ul>
+            <>
+                <ul>
+                    {names.map((name, index) => <li key={index}>{name}</li>)}
+                </ul>
+                <button onClick={event => this.setState(state => ({...state, editing: true}))}>
+                    Edit
+                </button>
+            </>
         );
     }
 
@@ -71,50 +75,40 @@ class PartipantsComponent extends React.Component<Props, ComponentState> {
         }));
 
         return (
-            <ul>
-                {names.map((name, index) => <li key={index}>{name}</li>)}
-
-                <li>
-                    Tag someone who was here
-                    <span style={styles.selectStyles}>
+            <>
+                <span style={styles.selectStyles}>
                     <CreateableSelect
-                        options={peopleOptions} 
-                        onChange={(selected) => this.onChoosePerson(selected)}
+                        isMulti={true}
+                        onChange={(selected: ValueType<SelectedOption[]>) => 
+                            this.onChoosePerson(selected as SelectedOption[])}
+                        defaultValue={peopleOptions}
                     />
-                    </span>
-                </li>
-            </ul>
+                </span>
+
+                <button onClick={event => this.setState(state => ({...state, editing: false}))}>
+                        Finished Editing
+                </button>
+            </>
         );
     }
 
-    private onChoosePerson(selected: ValueType<SelectedOption>) {
-        if (!selected) {
-        return;
-        }
+    private onChoosePerson(selectedItems: SelectedOption[]) {
+        
+        const {addParticipantToMediaFile, mediaFile, peopleMap} = this.props;
 
-        const {addParticipantToMediaFile, mediaFile} = this.props;
-
-        const {peopleMap} = this.props;
-
-        const attachPersonToMediaFile = (selected: SelectedOption) => {
+        selectedItems.forEach(selected => {
             const id = parseInt(selected.value, 10);
-
+            
             let person = peopleMap.get(id);
             if (!person) {
                 person = {
-                id: 0,
-                name: selected.value,
+                    id: 0,
+                    name: selected.value,
                 };
             }
 
             addParticipantToMediaFile(mediaFile, person);
-        };
-
-        if (selected instanceof Array) {
-            selected.forEach(selectedItem => attachPersonToMediaFile(selectedItem));
-        } else {
-            attachPersonToMediaFile(selected as SelectedOption);
-        }
+        });
     }
 }
 

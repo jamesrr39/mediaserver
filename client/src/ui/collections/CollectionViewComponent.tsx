@@ -8,11 +8,13 @@ import { joinUrlFragments } from '../../util/url';
 import { MediaFile } from '../../domain/MediaFile';
 import { State } from '../../reducers/rootReducer';
 import { getScreenWidth } from '../../util/screen_size';
+import { PeopleMap } from '../../actions/mediaFileActions';
 
 type Props = {
   mediaFilesMap: Map<string, MediaFile>;
   collection: Collection;
   routeUrl: string;
+  peopleMap: PeopleMap;
 };
 
 const styles = {
@@ -23,7 +25,7 @@ const styles = {
 
 class CollectionViewComponent extends React.Component<Props> {
   render() {
-    const { collection, mediaFilesMap, routeUrl } = this.props;
+    const { collection, mediaFilesMap, routeUrl, peopleMap } = this.props;
 
     const mediaFiles = collection.fileHashes.map((hash, index) => {
       const mediaFile = mediaFilesMap.get(hash);
@@ -35,6 +37,7 @@ class CollectionViewComponent extends React.Component<Props> {
 
     const galleryProps = {
       mediaFiles,
+      peopleMap,
       mediaFileUrlBase: '/' + joinUrlFragments(routeUrl, 'detail'),
       showMap: true,
       getRowWidth: () => getScreenWidth(),

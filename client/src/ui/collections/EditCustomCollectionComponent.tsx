@@ -7,7 +7,7 @@ import { State } from '../../reducers/rootReducer';
 import { connect } from 'react-redux';
 import { saveCollection } from '../../collectionsActions';
 import { themeStyles } from '../../theme/theme';
-import { uploadFile } from '../../actions/mediaFileActions';
+import { uploadFile, PeopleMap } from '../../actions/mediaFileActions';
 import { getScreenWidth } from '../../util/screen_size';
 
 const styles = {
@@ -28,6 +28,7 @@ const styles = {
 
 type Props = {
   mediaFiles: MediaFile[],
+  peopleMap: PeopleMap,
   collection: CustomCollection,
   saveCollection: (collection: CustomCollection) => Promise<CustomCollection>,
   uploadFile: (file: File) => Promise<MediaFile>,
@@ -92,6 +93,8 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
   }
 
   render() {
+    const { peopleMap } = this.props;
+
     const filesInCollection: MediaFile[] = [];
     const filesOutOfCollection: MediaFile[] = [];
     this.props.mediaFiles.forEach((pictureMetadata) => {
@@ -111,6 +114,7 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
     };
 
     const commonGalleryProps = {
+      peopleMap,
       getRowWidth: () => getScreenWidth(),
     };
 

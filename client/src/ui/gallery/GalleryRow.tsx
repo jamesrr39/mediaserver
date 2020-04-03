@@ -5,6 +5,7 @@ import { Size } from '../../domain/Size';
 import { MediaFileGroup } from '../../domain/MediaFileGroup';
 import { Link } from 'react-router-dom';
 import { Observable } from '../../util/Observable';
+import { PeopleMap } from '../../actions/mediaFileActions';
 
 export type Row = {
     groups: GroupWithSizes[],
@@ -21,6 +22,10 @@ const styles = {
         padding: '10px',
         margin: '10px',
     },
+    participantListWrapper: {
+        padding: 0,
+        listStyle: 'none',
+    }
 };
 
 export type SelectThumbnailEventInfo = {
@@ -42,6 +47,7 @@ interface GroupWithSizes {
 
 type Props = {
     row: Row;
+    peopleMap: PeopleMap,
     scrollObservable: Observable<void>;
     resizeObservable: Observable<void>;
     onClickThumbnail?: (mediaFile: MediaFile) => void;
@@ -51,7 +57,7 @@ type Props = {
     isThumbnailVisible(el: HTMLElement): void;
 };
 
-export class GalleryRow extends React.Component<Props> {
+class GalleryRow extends React.Component<Props> {
     render() {
         const { row } = this.props;
 
@@ -151,6 +157,7 @@ export class GalleryRow extends React.Component<Props> {
             isThumbnailVisible, 
             scrollObservable, 
             resizeObservable,
+            peopleMap,
         } = this.props;
 
         const thumbnailProps = {
@@ -180,19 +187,36 @@ export class GalleryRow extends React.Component<Props> {
             thumbnail = <a href="#" onClick={onClickThumbnailCb}>{thumbnail}</a>;
         }
 
-        const wrapper = onSelectThumbnail ? 
-            <>
+        const checkbox = onSelectThumbnail ? 
                 <input
                     type="checkbox" 
                     onChange={(event) => onSelectThumbnail(mediaFile, {selected: event.target.checked})} 
-                />
+                />  : null;
+            
+        return (
+            <>
+                {checkbox}
                 {thumbnail}
-            </> : 
-            thumbnail;
+                {mediaFile.participantIds.length !== 0 && 
+                    <ul style={styles.participantListWrapper}>
+                        {mediaFile.participantIds.map((partipantId, idx) => {
+                            const person = peopleMap.get(partipantId);
 
-        return wrapper;
+                            return (
+                                <li key={idx}>
+                                    <i className="fa fa-user" aria-hidden="true"></i>
+                                    &nbsp;{person ? person.name : '(unknown)'}
+                                </li>
+                            );
+                        })}
+                    </ul>
+                }
+            </>
+        );
     }
 }
+
+export default GalleryRow;
 
 export function filesToRows(rowSizePx: number, mediaFileGroups: MediaFileGroup[]): Row[] {
     const rows: Row[] = [];
