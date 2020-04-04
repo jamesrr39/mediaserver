@@ -19,7 +19,7 @@ export enum FilesActionTypes {
   FILE_SUCCESSFULLY_UPLOADED,
   TRACK_RECORDS_FETCHED_ACTION,
   PEOPLE_FETCHED_ACTION,
-  PARTICIPANT_ADDED_TO_MEDIAFILE,
+  PARTICIPANTS_SET_ON_MEDIAFILE,
   PEOPLE_CREATED,
 }
 
@@ -62,9 +62,9 @@ export type PeopleFetchedAction = {
 };
 
 export type ParticipantAddedToMediaFile = {
-  type: FilesActionTypes.PARTICIPANT_ADDED_TO_MEDIAFILE,
+  type: FilesActionTypes.PARTICIPANTS_SET_ON_MEDIAFILE,
   mediaFile: MediaFile,
-  participant: Person,
+  participants: Person[],
 };
 
 export type MediaserverAction = (
@@ -308,13 +308,15 @@ export function createPerson(people: Person[]) {
   };
 }
 
-export function addParticipantToMediaFile(mediaFile: MediaFile, participant: Person) {
+export function setParticipantsOnMediaFile(mediaFile: MediaFile, participants: Person[]) {
   return async(dispatch: (action: MediaserverAction) => void) => {
-    if (participant.id === 0) {
-      await createPerson([participant])(dispatch);
-    }
+    participants.forEach(async participant => {
+      if (participant.id === 0) {
+        await createPerson([participant])(dispatch);
+      }
+    });
 
-    const participantIds = mediaFile.participantIds.concat(participant.id);
+    const participantIds = participants.map(participant => participant.id);
 
     const response = await fetch(`${SERVER_BASE_URL}/api/graphql?query={people{id,name}}`, {
       method: 'POST',
@@ -332,9 +334,9 @@ export function addParticipantToMediaFile(mediaFile: MediaFile, participant: Per
     }
 
     dispatch({
-      type: FilesActionTypes.PARTICIPANT_ADDED_TO_MEDIAFILE,
+      type: FilesActionTypes.PARTICIPANTS_SET_ON_MEDIAFILE,
       mediaFile,
-      participant,
+      participants,
     });
   };
 }

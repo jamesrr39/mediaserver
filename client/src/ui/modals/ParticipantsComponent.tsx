@@ -5,7 +5,7 @@ import { ValueType } from 'react-select/src/types';
 import { connect } from 'react-redux';
 import { State } from '../../reducers/rootReducer';
 import { Person } from '../../domain/People';
-import { addParticipantToMediaFile, PeopleMap } from '../../actions/mediaFileActions';
+import { PeopleMap, setParticipantsOnMediaFile } from '../../actions/mediaFileActions';
 
 const styles = {
     selectStyles: {
@@ -19,7 +19,7 @@ type Props = {
     mediaFile: MediaFile,
     people: Person[];
     peopleMap: PeopleMap;
-    addParticipantToMediaFile: (mediaFile: MediaFile, participant: Person) => void;
+    setParticipantsOnMediaFile: (mediaFile: MediaFile, participants: Person[]) => void;
 };
 
 type ComponentState = {
@@ -94,9 +94,9 @@ class PartipantsComponent extends React.Component<Props, ComponentState> {
 
     private onChoosePerson(selectedItems: SelectedOption[]) {
         
-        const {addParticipantToMediaFile, mediaFile, peopleMap} = this.props;
+        const {setParticipantsOnMediaFile, mediaFile, peopleMap} = this.props;
 
-        selectedItems.forEach(selected => {
+        const people = selectedItems.map(selected => {
             const id = parseInt(selected.value, 10);
             
             let person = peopleMap.get(id);
@@ -107,8 +107,10 @@ class PartipantsComponent extends React.Component<Props, ComponentState> {
                 };
             }
 
-            addParticipantToMediaFile(mediaFile, person);
+            return person;
         });
+
+        setParticipantsOnMediaFile(mediaFile, people);
     }
 }
 
@@ -116,9 +118,9 @@ function mapStateToProps(state: State) {
     const {people, peopleMap} = state.mediaFilesReducer;
 
     return {
-      people,
-      peopleMap,
+        people,
+        peopleMap,
     };
-  }
+}
 
-export default connect(mapStateToProps, {addParticipantToMediaFile}) (PartipantsComponent);
+export default connect(mapStateToProps, {setParticipantsOnMediaFile}) (PartipantsComponent);

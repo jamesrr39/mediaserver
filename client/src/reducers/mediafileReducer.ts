@@ -85,7 +85,7 @@ export function mediaFilesReducer(
         peopleMap,
       };
     }
-    case FilesActionTypes.PARTICIPANT_ADDED_TO_MEDIAFILE:
+    case FilesActionTypes.PARTICIPANTS_SET_ON_MEDIAFILE:
       const {mediaFile} = action;
       const indexOfExistingFile = state.mediaFiles.findIndex(
         fileInList => fileInList.hashValue === mediaFile.hashValue
