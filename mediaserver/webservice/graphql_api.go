@@ -9,7 +9,6 @@ import (
 	"mediaserver/mediaserver/dal/diskstorage/mediaserverdb"
 	"mediaserver/mediaserver/domain"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 
@@ -243,7 +242,6 @@ func (ws *GraphQLAPIService) setupMutationType() *graphql.Object {
 							return nil, errorsx.Wrap(commitErr)
 						}
 
-						json.NewEncoder(os.Stderr).Encode(mediaFilesMap)
 						return mediaFilesMap, nil
 					},
 				},

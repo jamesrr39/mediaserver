@@ -22,6 +22,7 @@ import { gallerySortingFunc } from './gallery/Gallery';
 import { filterFromJson } from '../domain/Filter';
 import { LoadingStatus } from '../domain/LoadingStatus';
 import MediafilesMap from './MediafilesMap';
+import { connectToWebsocket } from '../actions/eventsActions';
 
 type CollectionViewRouteParams = {
   identifier: string;
@@ -103,6 +104,7 @@ class MediaServer extends React.Component<MediaServerProps> {
     fetchPicturesMetadata()(dispatch);
     fetchCollections()(dispatch);
     fetchAllPeople()(dispatch);
+    connectToWebsocket()(dispatch);
   }
 
   renderCollectionView = (routeInfo: RouteComponentProps<CollectionViewRouteParams>) => {
