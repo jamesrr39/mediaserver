@@ -156,6 +156,10 @@ func (ws *GraphQLAPIService) setupMutationType() *graphql.Object {
 						people := []*domain.Person{}
 
 						for _, name := range names {
+							if name == "" {
+								return nil, errorsx.Errorf("every person must have a name")
+							}
+
 							person := &domain.Person{Name: name}
 							err = ws.peopleDAL.CreatePerson(tx, person)
 							if err != nil {
@@ -195,7 +199,7 @@ func (ws *GraphQLAPIService) setupMutationType() *graphql.Object {
 							return nil, errorsx.Errorf("couldn't convert 'participantIds' arg to []interface (was %T)", params.Args["hashes"])
 						}
 
-						var participantIds []int64
+						participantIds := []int64{}
 						for _, p := range participantIdsInterface {
 							participantIds = append(participantIds, int64(p.(int)))
 						}

@@ -5,7 +5,7 @@ import { ValueType } from 'react-select/src/types';
 import { connect } from 'react-redux';
 import { State } from '../../reducers/rootReducer';
 import { Person } from '../../domain/People';
-import { PeopleMap, setParticipantsOnMediaFile } from '../../actions/mediaFileActions';
+import { PeopleMap, setParticipantsOnMediaFile, createPerson } from '../../actions/mediaFileActions';
 
 const styles = {
     selectStyles: {
@@ -20,6 +20,7 @@ type Props = {
     people: Person[];
     peopleMap: PeopleMap;
     setParticipantsOnMediaFile: (mediaFile: MediaFile, participants: Person[]) => void;
+    createPerson: (name: string) => Promise<Person>
 };
 
 type ComponentState = {
@@ -32,28 +33,29 @@ class PartipantsComponent extends React.Component<Props, ComponentState> {
     };
 
     render() {
-        const {mediaFile, peopleMap} = this.props;
         const {editing} = this.state;
-
-        const participantNames = mediaFile.participantIds.map(id => {
-            const person = peopleMap.get(id);
-
-            if (!person) {
-                throw new Error(`unknown person. ID: ${id}`);
-            }
-
-            return person.name;
-        });
     
         return (
             <>
                 <h3>Who was here</h3>
-                {editing ? this.renderEditView(participantNames) : this.renderReadView(participantNames)}
+                {editing ? this.renderEditView() : this.renderReadView()}
             </>
         );
     }
 
-    private renderReadView(names: string[]) {
+    private renderReadView() {
+        const {mediaFile, peopleMap} = this.props;
+
+        const names = mediaFile.participantIds.map(id => {
+            const person = peopleMap.get(id);
+
+            if (!person) {
+                return `unknown person (ID: ${id})`;
+            }
+
+            return person.name;
+        });
+
         return (
             <>
                 <ul>
@@ -66,10 +68,15 @@ class PartipantsComponent extends React.Component<Props, ComponentState> {
         );
     }
 
-    private renderEditView(names: string[]) {
-        const {people} = this.props;
+    private renderEditView() {
+        const {people, mediaFile} = this.props;
 
-        const peopleOptions = people.map(person => ({
+        const peopleInFile = people.filter(person => mediaFile.participantIds.includes(person.id)).map(person => ({
+            value: person.id + '',
+            label: person.name,
+        }));
+
+        const allPeople = people.map(person => ({
             value: person.id + '',
             label: person.name,
         }));
@@ -81,7 +88,9 @@ class PartipantsComponent extends React.Component<Props, ComponentState> {
                         isMulti={true}
                         onChange={(selected: ValueType<SelectedOption[]>) => 
                             this.onChoosePerson(selected as SelectedOption[])}
-                        defaultValue={peopleOptions}
+                        defaultValue={peopleInFile}
+                        // options={(allPeople as unknown) as undefined}
+                        options={allPeople as unknown as undefined}
                     />
                 </span>
 
@@ -92,23 +101,21 @@ class PartipantsComponent extends React.Component<Props, ComponentState> {
         );
     }
 
-    private onChoosePerson(selectedItems: SelectedOption[]) {
+    private async onChoosePerson(selectedItems: SelectedOption[]) {
         
-        const {setParticipantsOnMediaFile, mediaFile, peopleMap} = this.props;
+        const {setParticipantsOnMediaFile, mediaFile, peopleMap, createPerson} = this.props;
 
-        const people = selectedItems.map(selected => {
+        const people: Person[] = [];
+        for (let selected of selectedItems) {
             const id = parseInt(selected.value, 10);
-            
+
             let person = peopleMap.get(id);
             if (!person) {
-                person = {
-                    id: 0,
-                    name: selected.value,
-                };
+                person = await createPerson(selected.label);
             }
 
-            return person;
-        });
+            people.push(person);
+        }
 
         setParticipantsOnMediaFile(mediaFile, people);
     }
@@ -123,4 +130,4 @@ function mapStateToProps(state: State) {
     };
 }
 
-export default connect(mapStateToProps, {setParticipantsOnMediaFile}) (PartipantsComponent);
+export default connect(mapStateToProps, {setParticipantsOnMediaFile, createPerson}) (PartipantsComponent);

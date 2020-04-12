@@ -70,7 +70,6 @@ class PictureModal extends React.Component<Props> {
     if (!el) {
       return;
     }
-    console.log('size', el.clientWidth, el.clientHeight, el);
     this.divContainerEl = el;
 
     if (this.pictureEl && this.divContainerEl) {

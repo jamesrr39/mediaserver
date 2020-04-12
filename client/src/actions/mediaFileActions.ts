@@ -8,6 +8,8 @@ import { FitTrack, Record } from '../domain/FitTrack';
 import { State } from '../reducers/rootReducer';
 import { Person } from '../domain/People';
 import { nameForMediaFileType } from '../domain/MediaFileType';
+import { DataResponse } from './util';
+import { createMediaFileWithParticipants } from '../domain/util';
 
 export type PeopleMap = Map<number, Person>;
 
@@ -277,17 +279,15 @@ export function fetchAllPeople() {
     };
 }
 
-export function createPerson(people: Person[]) {
+export function createPerson(name: string) {
   return async(dispatch: (action: MediaserverAction) => void) => {
-    const names = people.map(person => person.name);
-
     const response = await fetch(`${SERVER_BASE_URL}/api/graphql?query={people{id,name}}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/graphql',
       },
       body: `mutation {
-        createPeople(names: ${JSON.stringify(names)}) {id}
+        createPeople(names: ${JSON.stringify(name)}) {id,name}
       }`,
     });
 
@@ -295,26 +295,25 @@ export function createPerson(people: Person[]) {
       throw new Error('failed to save person');
     }
 
-    const json = await response.json();
-
-    people.forEach((person, index) => {
-      person.id = json.data.createPeople[index].id;
-    });
+    const json: DataResponse<Person> = await response.json();
+    const person = json.data;
 
     dispatch({
       type: FilesActionTypes.PEOPLE_CREATED,
-      people,
+      people: [person],
     });
+
+    return person;
   };
 }
 
 export function setParticipantsOnMediaFile(mediaFile: MediaFile, participants: Person[]) {
   return async(dispatch: (action: MediaserverAction) => void) => {
-    participants.forEach(async participant => {
+    for (let participant of participants) {
       if (participant.id === 0) {
-        await createPerson([participant])(dispatch);
+        throw new Error(`couldn't save, got participant id 0`);
       }
-    });
+    }
 
     const participantIds = participants.map(participant => participant.id);
 
@@ -333,9 +332,11 @@ export function setParticipantsOnMediaFile(mediaFile: MediaFile, participants: P
       throw new Error('failed to save person');
     }
 
+    const newMediaFile = createMediaFileWithParticipants(mediaFile, participantIds);
+
     dispatch({
       type: FilesActionTypes.PARTICIPANTS_SET_ON_MEDIAFILE,
-      mediaFile,
+      mediaFile: newMediaFile,
       participants,
     });
   };

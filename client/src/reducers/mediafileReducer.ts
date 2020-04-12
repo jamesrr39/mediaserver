@@ -87,11 +87,15 @@ export function mediaFilesReducer(
     }
     case FilesActionTypes.PARTICIPANTS_SET_ON_MEDIAFILE:
       const {mediaFile} = action;
-      const indexOfExistingFile = state.mediaFiles.findIndex(
-        fileInList => fileInList.hashValue === mediaFile.hashValue
-      );
-      const mediaFiles = state.mediaFiles.concat([]); // copy
-      mediaFiles[indexOfExistingFile] = mediaFile;
+
+      // create the new list. Replace the old mediafile with the new one, using the hashValue
+      const mediaFiles = state.mediaFiles.map(mediaFileInList => {
+        if (mediaFile.hashValue === mediaFileInList.hashValue) {
+          return mediaFile;
+        }
+
+        return mediaFileInList;
+      });
 
       state.mediaFilesMap.set(mediaFile.hashValue, mediaFile);
 
