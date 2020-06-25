@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Collection } from '../../domain/Collection';
-import GalleryWithFilter from '../gallery/Gallery';
+import GalleryWithFilter from '../gallery/GalleryWithFilter';
 import { connect } from 'react-redux';
 import { themeStyles } from '../../theme/theme';
 import { Link } from 'react-router-dom';

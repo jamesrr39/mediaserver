@@ -12,16 +12,26 @@ import { Provider } from 'react-redux';
 import configureStore from './configureStore';
 import MediaServer from './ui/MediaServer';
 
-const store = configureStore();
+const win = {
+  innerHeight: window.innerHeight,
+  innerWidth: window.innerWidth,
+  scrollY: window.screenY,
+};
+
+const store = configureStore(win);
 
 const app = (
   <Provider store={store} >
-    <MediaServer />
+    <MediaServer window={window} />
   </Provider>
 );
 
-ReactDOM.render(app, document.getElementById('root') as HTMLElement
-);
+const rootEl = document.getElementById('root');
+if (!rootEl) {
+  throw new Error(`couldn't find root element`);
+}
+
+ReactDOM.render(app, rootEl);
 registerServiceWorker();
 
 // https://medium.com/@pshrmn/a-simple-react-router-v4-tutorial-7f23ff27adf

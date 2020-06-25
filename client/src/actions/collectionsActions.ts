@@ -1,12 +1,12 @@
-import { SERVER_BASE_URL } from './configs';
+import { SERVER_BASE_URL } from '../configs';
 import { Action } from 'redux';
-import { Collection, CustomCollection } from './domain/Collection';
+import { Collection, CustomCollection } from '../domain/Collection';
 import { Dispatch } from 'react';
+import { createErrorMessage } from './util';
 
 export enum CollectionActions {
   FETCH_COLLECTIONS = 'FETCH_COLLECTIONS',
   COLLECTION_FETCH_STARTED = 'COLLECTION_FETCH_STARTED',
-  COLLECTION_FETCH_FAILED = 'COLLECTION_FETCH_FAILED',
   COLLECTIONS_FETCHED = 'COLLECTIONS_FETCHED',
   COLLECTION_SAVED = 'COLLECTION_SAVED',
   SAVE_COLLECTION = 'SAVE_COLLECTION',
@@ -14,10 +14,6 @@ export enum CollectionActions {
 
 export interface FetchCollectionsStartedAction extends Action {
   type: CollectionActions.COLLECTION_FETCH_STARTED;
-}
-
-export interface FetchCollectionsFailedAction extends Action {
-  type: CollectionActions.COLLECTION_FETCH_FAILED;
 }
 
 export interface FetchCollectionsAction extends Action {
@@ -41,34 +37,42 @@ export type SaveCollectionAction = {
 
 export type CollectionsAction = CollectionsFetchedAction | 
   FetchCollectionsAction | CollectionSavedAction | SaveCollectionAction | 
-  FetchCollectionsFailedAction | FetchCollectionsStartedAction;
+  FetchCollectionsStartedAction;
 
 type CustomCollectionJSON = {
   id: number;
 } & Collection;
 
+export type FetchCollectionsResponse = {
+  customCollections: CustomCollection[]
+};
+
 export function fetchCollections() {
-  return (dispatch: Dispatch<CollectionsAction>) => {
+  return async (dispatch: Dispatch<CollectionsAction>): Promise<FetchCollectionsResponse> => {
     dispatch({
       type: CollectionActions.FETCH_COLLECTIONS,
     });
-    return fetch(`${SERVER_BASE_URL}/api/collections/`)
-      .then(response => response.json())
-      .then((collectionsJSON: CustomCollectionJSON[]) => {
-        const customCollections = collectionsJSON.map(collectionJSON => new CustomCollection(
-          collectionJSON.id,
-          collectionJSON.name,
-          collectionJSON.fileHashes,
-        ));
-        dispatch({
-          type: CollectionActions.COLLECTIONS_FETCHED,
-          customCollections,
-        });
-      }).catch(() => {
-        dispatch({
-          type: CollectionActions.COLLECTION_FETCH_FAILED,
-        });
-      });
+    const response = await fetch(`${SERVER_BASE_URL}/api/collections/`);
+    if (!response.ok) {
+      throw new Error(createErrorMessage(response));
+    }
+
+    const collectionsJSON: CustomCollectionJSON[] = await response.json();
+
+    const customCollections = collectionsJSON.map(collectionJSON => new CustomCollection(
+      collectionJSON.id,
+      collectionJSON.name,
+      collectionJSON.fileHashes,
+    ));
+
+    dispatch({
+      type: CollectionActions.COLLECTIONS_FETCHED,
+      customCollections,
+    });
+
+    return {
+      customCollections,
+    };
   };
 }
 

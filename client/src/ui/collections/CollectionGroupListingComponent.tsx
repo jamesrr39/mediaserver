@@ -3,7 +3,7 @@ import { Collection, CustomCollection } from '../../domain/Collection';
 import CollectionThumbnail from './CollectionThumbnail';
 import { themeStyles } from '../../theme/theme';
 import AddCollectionModal from './AddCollectionModal';
-import { saveCollection, CollectionsAction } from '../../collectionsActions';
+import { saveCollection, CollectionsAction } from '../../actions/collectionsActions';
 // import { connect } from 'react-redux';
 import { Dispatch } from 'redux';
 // import { withRouter } from 'react-router';

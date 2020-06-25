@@ -4,9 +4,9 @@ import { SERVER_BASE_URL } from '../../configs';
 import { THUMBNAIL_HEIGHTS } from '../../generated/thumbnail_sizes';
 import { INFO_CONTAINER_WIDTH } from './FileInfoComponent';
 import { joinUrlFragments } from '../../util/url';
-import { Observable } from '../../util/Observable';
 import { connect } from 'react-redux';
 import { State } from '../../reducers/rootReducer';
+import { WindowState } from '../../reducers/windowReducer';
 
 const styles = {
   container: {
@@ -23,20 +23,12 @@ const styles = {
 type Props = {
   pictureMetadata: PictureMetadata,
   showInfo: boolean,
-  resizeObservable: Observable<void>,
+  windowSize: WindowState,
 };
 
 class PictureModal extends React.Component<Props> {
   private pictureEl: HTMLImageElement|null = null;
   private divContainerEl: HTMLDivElement|null = null;
-
-  componentDidMount() {
-    this.props.resizeObservable.addListener(this.onResize);
-  }
-
-  componentWillUnmount() {
-    this.props.resizeObservable.removeListener(this.onResize);
-  }
 
   render() {
     return (
@@ -48,10 +40,6 @@ class PictureModal extends React.Component<Props> {
         <img style={styles.image} ref={(el) => this.createPictureEl(el)} />
       </div>
     );
-  }
-
-  private onResize = () => {
-    this.setState(state => ({...state}));
   }
 
   private createPictureEl = (el: HTMLImageElement|null) => {
@@ -102,9 +90,7 @@ class PictureModal extends React.Component<Props> {
 }
 
 export default connect((state: State) => {
-  const { resizeObservable } = state.dependencyInjectionReducer;
-  
   return {
-    resizeObservable
+    windowSize: state.windowReducer,
   };
 })(PictureModal);

@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { State } from '../reducers/rootReducer';
 import { connect } from 'react-redux';
-import GalleryWithFilter from './gallery/Gallery';
+import GalleryWithFilter from './gallery/GalleryWithFilter';
 import { MediaFile } from '../domain/MediaFile';
 import { getScreenWidth } from '../util/screen_size';
 import { PeopleMap } from '../actions/mediaFileActions';
@@ -14,15 +14,15 @@ type GalleryProps = {
 
 class AllPicturesGallery extends React.Component<GalleryProps> {
   render() {
-    const props = {
-      mediaFiles: this.props.mediaFiles,
-      mediaFileUrlBase: '/gallery/detail',
-      showMap: false,
-      getRowWidth: () => getScreenWidth(),
-      peopleMap: this.props.peopleMap,
-    };
+    const {mediaFiles, peopleMap} = this.props;
 
-    return <GalleryWithFilter {...props} />;
+    return <GalleryWithFilter
+      mediaFiles={mediaFiles}
+      peopleMap={peopleMap}
+      showMap={false}
+      getRowWidth={() => getScreenWidth()}
+      mediaFileUrlBase="/gallery/detail"
+    />;
   }
 }
 

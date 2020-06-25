@@ -1,14 +1,12 @@
 import { Action } from 'redux';
 import { SERVER_BASE_URL } from '../configs';
-import { NotificationLevel, GalleryNotification } from '../ui/NotificationBarComponent';
-import { newNotificationAction, NotifyAction } from './notificationActions';
 import { MediaFile } from '../domain/MediaFile';
 import { MediaFileJSON, fromJSON } from '../domain/deserialise';
 import { FitTrack, Record } from '../domain/FitTrack';
 import { State } from '../reducers/rootReducer';
 import { Person } from '../domain/People';
 import { nameForMediaFileType } from '../domain/MediaFileType';
-import { DataResponse } from './util';
+import { DataResponse, createErrorMessage } from './util';
 import { createMediaFileWithParticipants } from '../domain/util';
 
 export type PeopleMap = Map<number, Person>;
@@ -94,34 +92,32 @@ type RecordJSON = {
   altitude: number
 };
 
+export type FetchPicturesMetadataResponse = {
+  mediaFiles: MediaFile[],
+};
+
 export function fetchPicturesMetadata() {
-  return (dispatch: (
-    action: FetchPicturesMetadataAction | PicturesMetadataFetchedAction | 
-      PicturesMetadataFetchFailedAction | NotifyAction
-    ) => void) => {
+  return async (dispatch: (action: MediaserverAction) => FetchPicturesMetadataResponse) => {    
     dispatch({
       type: FilesActionTypes.FETCH_MEDIA_FILES,
-    } as FetchPicturesMetadataAction);
-    return fetch(`${SERVER_BASE_URL}/api/files/`)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(response.statusText);
-        }
-        return response;
-      })
-      .then(response => response.json())
-      .then((mediaFilesJSON: MediaFileJSON[]) => {
-        const mediaFiles = mediaFilesJSON.map(json => fromJSON(json));
-        dispatch({
-          type: FilesActionTypes.MEDIA_FILES_FETCHED,
-          mediaFiles,
-        });
-      }).catch((errMessage) => {
-        dispatch({
-          type: FilesActionTypes.MEDIA_FILES_FETCH_FAILED,
-        });
-        dispatch(newNotificationAction(new GalleryNotification(NotificationLevel.ERROR, errMessage)));
-      });
+    });
+
+    const response = await fetch(`${SERVER_BASE_URL}/api/files/`);
+    if (!response.ok) {
+      throw new Error(createErrorMessage(response));
+    }
+      
+    const mediaFilesJSON: MediaFileJSON[] = await response.json();
+
+    const mediaFiles = mediaFilesJSON.map(json => fromJSON(json));
+    dispatch({
+      type: FilesActionTypes.MEDIA_FILES_FETCHED,
+      mediaFiles,
+    });
+
+    return {
+      mediaFiles,
+    };
   };
 }
 
@@ -258,24 +254,29 @@ export function uploadFile(file: File) {
   };
 }
 
-type PeopleJSON = {
-  data: {people: Person[]}
+export type FetchAllPeopleResponse = {
+  people: Person[],
 };
 
 export function fetchAllPeople() {
   return async(
-    dispatch: (action: MediaserverAction) => void) => {
+    dispatch: (action: MediaserverAction) => void): Promise<FetchAllPeopleResponse> => {
       const response = await fetch(`${SERVER_BASE_URL}/api/graphql?query={people{id,name}}`);
       if (!response.ok) {
-        throw new Error('failed to fetch people');
+        throw new Error(createErrorMessage(response));
       }
 
-      const peopleJSON: PeopleJSON = await response.json();
+      const peopleJSON: DataResponse<{people: Person[]}> = await response.json();
+      const {people} = peopleJSON.data;
 
       dispatch({
         type: FilesActionTypes.PEOPLE_FETCHED_ACTION,
-        people: peopleJSON.data.people,
+        people,
       });
+
+      return {
+        people, 
+      };
     };
 }
 
@@ -292,7 +293,7 @@ export function createPerson(name: string) {
     });
 
     if (!response.ok) {
-      throw new Error('failed to save person');
+      throw new Error(createErrorMessage(response));
     }
 
     const json: DataResponse<Person> = await response.json();

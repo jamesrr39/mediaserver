@@ -1,5 +1,5 @@
 import { combineReducers } from 'redux';
-import { DIState, dependencyInjectionReducer } from './dependcyInjectionReducer';
+import { WindowState, createWindowReducer } from './windowReducer';
 import { MediaFilesState, mediaFilesReducer } from './mediafileReducer';
 import { NotificationsState, notificationsReducer } from './notificationReducer';
 import { CollectionReducerState, collectionsReducer } from './collectionsReducer';
@@ -9,14 +9,16 @@ export type State = {
   mediaFilesReducer: MediaFilesState,
   collectionsReducer: CollectionReducerState,
   notificationsReducer: NotificationsState,
-  dependencyInjectionReducer: DIState,
+  windowReducer: WindowState,
   eventReducer: EventState,
 };
 
-export default combineReducers({
-  mediaFilesReducer,
-  collectionsReducer,
-  notificationsReducer,
-  dependencyInjectionReducer,
-  eventReducer,
-});
+export default function createRootReducer(win: WindowState) {
+  return combineReducers({
+    mediaFilesReducer,
+    collectionsReducer,
+    notificationsReducer,
+    windowReducer: createWindowReducer(win),
+    eventReducer,
+  });
+}

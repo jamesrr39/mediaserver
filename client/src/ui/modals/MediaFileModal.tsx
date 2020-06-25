@@ -3,7 +3,6 @@ import { State } from '../../reducers/rootReducer';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { Action, Dispatch } from 'redux';
-import { Observable } from '../../util/Observable';
 import { compose } from 'redux';
 import FileInfoComponent from './FileInfoComponent';
 import { isNarrowScreen } from '../../util/screen_size';
@@ -29,22 +28,16 @@ type Props = {
   hash: string,
   mediaFiles: MediaFile[],
   dispatch: Dispatch<Action>,
-  scrollObservable: Observable<void>,
-  resizeObservable: Observable<void>,
+  // windowSize: WindowState,
   baseUrl: string, // for example, /gallery
   subview?: Subview,
 };
 
 const styles = {
-  // modalBody: {
-  // //   display: 'flex' as 'flex',
-  //   height: '100%',
-  // },
   narrowScreenPictureInfoContainer: {
     backgroundColor: '#333',
     height: '100%',
     padding: '40px 10px 0',
-    // flex: `0 0 ${INFO_CONTAINER_WIDTH}px`,
     flex: `0 1 auto`,
     width: '100%',
   },
@@ -63,12 +56,6 @@ const styles = {
     backgroundColor: 'transparent',
     borderStyle: 'none',
   },
-  // topBar: {
-  //   // position: 'fixed' as 'fixed',
-  //   display: 'flex',
-  //   justifyContent: 'space-between',
-  //   width: '100%',
-  // },
   wideScreen: {
     contentContainer: {
       height: '100%',
@@ -109,15 +96,14 @@ class MediaFileModal extends React.Component<Props, ComponentState> {
 
   componentDidMount() {
     document.addEventListener('keyup', this.listenToKeyUp);
-    this.props.resizeObservable.addListener(this.listenToResize);
   }
 
   componentWillUnmount() {
     document.removeEventListener('keyup', this.listenToKeyUp);
-    this.props.resizeObservable.removeListener(this.listenToResize);
   }
 
   render() {
+    console.log('rendering', this.props)
     this.setPreviousNextData();
     const {mediaFile} = this;
     const {baseUrl} = this.props;
@@ -211,12 +197,7 @@ class MediaFileModal extends React.Component<Props, ComponentState> {
 
     switch (mediaFile.fileType) {
       case MediaFileType.Picture: {
-        const props = {
-          pictureMetadata: mediaFile,
-          scrollObservable: this.props.scrollObservable,
-          showInfo,
-        };
-        return <PictureModal {...props} />;
+        return <PictureModal pictureMetadata={mediaFile} showInfo={showInfo} />;
       }
       case MediaFileType.Video:
         return <VideoModal {...{mediaFile}} />;
@@ -324,18 +305,11 @@ class MediaFileModal extends React.Component<Props, ComponentState> {
       }
     }
   }
-
-  private listenToResize = () => {
-    this.setState(state => ({...state}));
-  }
 }
 
 function mapStateToProps(state: State) {
-  const { scrollObservable, resizeObservable } = state.dependencyInjectionReducer;
-
   return {
-    scrollObservable,
-    resizeObservable
+    windowSize: state.windowReducer
   };
 }
 

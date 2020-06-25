@@ -9,9 +9,9 @@ import { joinUrlFragments } from '../util/url';
 import markerIcon from '../../node_modules/leaflet/dist/images/marker-icon.png';
 import markerShadow from '../../node_modules/leaflet/dist/images/marker-shadow.png';
 import { deepEqual } from '../util/equal';
-import { Observable } from '../util/Observable';
 import { connect } from 'react-redux';
 import { State } from '../reducers/rootReducer';
+import { WindowState } from '../reducers/windowReducer';
 
 const StartIcon = Leaflet.Icon.extend({
   createIcon: () => {
@@ -138,7 +138,7 @@ type Props = {
   tracks?: TrackMapData[],
   extraLatLongMapPadding?: number,
   zoomControl: boolean,
-  resizeObservable: Observable<void>,
+  windowSize: WindowState,
 };
 
 class MapComponent extends React.Component<Props> {
@@ -149,14 +149,6 @@ class MapComponent extends React.Component<Props> {
     const hasChanged = !deepEqual(this.props, nextProps);
 
     return hasChanged;
-  }
-
-  componentDidMount() {
-    this.props.resizeObservable.addListener(this.onResize);
-  }
-
-  componentWillUnmount() {
-    this.props.resizeObservable.removeListener(this.onResize);
   }
 
   render() {
@@ -299,10 +291,6 @@ class MapComponent extends React.Component<Props> {
       </div>
     `;
   }
-
-  private onResize = () => {
-    this.setState(state => ({...state}));
-  }
 }
 
 export function newDivIcon() {
@@ -333,6 +321,6 @@ export function newDivIcon() {
 
 export default connect((state: State) => {
   return {
-    resizeObservable: state.dependencyInjectionReducer.resizeObservable,
+    windowSize: state.windowReducer,
   };
 })(MapComponent);

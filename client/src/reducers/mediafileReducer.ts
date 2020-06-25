@@ -7,10 +7,8 @@ import { FileQueue } from '../fileQueue';
 import { MediaFile } from '../domain/MediaFile';
 import { Record, FitTrack } from '../domain/FitTrack';
 import { Person } from '../domain/People';
-import { LoadingStatus } from '../domain/LoadingStatus';
 
 export type MediaFilesState = {
-  loadingStatus: LoadingStatus,
   mediaFiles: MediaFile[],
   mediaFilesMap: Map<string, MediaFile>,
   uploadQueue: FileQueue,
@@ -23,7 +21,6 @@ export type MediaFilesState = {
 const maxConcurrentUploads = 2;
 
 const mediaFilesInitialState = {
-  loadingStatus: LoadingStatus.NOT_STARTED,
   mediaFiles: [],
   mediaFilesMap: new Map<string, MediaFile>(),
   uploadQueue: new FileQueue(maxConcurrentUploads),
@@ -40,7 +37,6 @@ export function mediaFilesReducer(
     case FilesActionTypes.FETCH_MEDIA_FILES:
       return {
         ...state,
-        loadingStatus: LoadingStatus.IN_PROGRESS,
       };
     case FilesActionTypes.MEDIA_FILES_FETCHED:
       const mediaFilesMap = new Map<string, MediaFile>();
@@ -49,14 +45,12 @@ export function mediaFilesReducer(
       });
       return {
         ...state,
-        loadingStatus: LoadingStatus.SUCCESSFUL,
         mediaFiles: action.mediaFiles,
         mediaFilesMap: mediaFilesMap,
       };
       case FilesActionTypes.MEDIA_FILES_FETCH_FAILED:
           return {
             ...state,
-            loadingStatus: LoadingStatus.FAILED,
           };
     case FilesActionTypes.FILE_SUCCESSFULLY_UPLOADED:
       return {
