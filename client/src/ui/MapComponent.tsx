@@ -180,6 +180,8 @@ class MapComponent extends React.Component<Props> {
     const osm = new Leaflet.TileLayer(osmUrl, {
       attribution,
     });
+    const seaUrl = 'https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png';
+    const sea = new Leaflet.TileLayer(seaUrl);
 
     const bounds = getBounds(markers, tracks);
     if (extraLatLongMapPadding) {
@@ -196,6 +198,7 @@ class MapComponent extends React.Component<Props> {
       )
     );
     map.addLayer(osm);
+    map.addLayer(sea);
 
     if (tracks) {
       tracks.forEach((track, index) => {

@@ -14,11 +14,39 @@ const colors = {
 
 const intervalDistanceSeconds = 20;
 
-export default class SpeedChart extends React.Component<Props> {
+type ComponentState = {
+    highestPace: number,
+    lowestPace: number,
+};
+
+export default class SpeedChart extends React.Component<Props, ComponentState> {
+    state = {
+        highestPace: Number.MAX_VALUE,
+        lowestPace: 0,
+    };
+
     private chart?: Chart;
 
     render() {
-        return <canvas ref={el => this.renderChart(el)} />;
+        return (
+            <>
+                <label>Cap highest pace at<input type="number" onChange={event => {
+                    const highestPace = parseFloat(event.target.value);
+                    this.setState(state => ({
+                        ...state,
+                        highestPace
+                    }));
+                }}/></label>
+                <label>Cap lowest pace at<input type="number" onChange={event => {
+                    const lowestPace = parseFloat(event.target.value);
+                    this.setState(state => ({
+                        ...state,
+                        lowestPace
+                    }));
+                }}/></label>
+                <canvas ref={el => this.renderChart(el)} />
+            </>
+        );
     }
 
     private renderChart(el: HTMLCanvasElement|null) {
@@ -93,11 +121,21 @@ export default class SpeedChart extends React.Component<Props> {
                     borderColor: colors.blue,
                     data: points.map(point => {
                         const {speedMetresPerSecond, middleTimeThroughSeconds} = point;
-                        const pace = ((1 / speedMetresPerSecond) * 1000 / 60).toFixed(2);
+                        const {highestPace, lowestPace} = this.state;
+
+                        let pace = (1 / speedMetresPerSecond) * 1000 / 60;
+
+                        if (highestPace && pace > highestPace) {
+                            pace = highestPace;
+                        }
+
+                        if (lowestPace && pace < lowestPace) {
+                            pace = lowestPace;
+                        }
 
                         return {
                             x: middleTimeThroughSeconds,
-                            y: pace,
+                            y: pace.toFixed(2),
                         };
                     }),
                 }],

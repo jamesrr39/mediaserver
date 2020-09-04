@@ -39,7 +39,9 @@ func GetTrackRecordsFromReader(mediaFileInfo MediaFileInfo, reader io.Reader) ([
 			activityRecord.PositionLat.Degrees(),
 			activityRecord.PositionLong.Degrees(),
 			round(distanceScaled),
-			round(activityRecord.GetAltitudeScaled()))
+			round(activityRecord.GetAltitudeScaled()),
+			&activityRecord.HeartRate,
+		)
 		records = append(records, record)
 	}
 

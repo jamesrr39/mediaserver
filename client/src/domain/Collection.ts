@@ -10,8 +10,6 @@ export interface Collection {
   type: CollectionType;
   fileHashes: string[];
   identifier(): string;
-  // getIdFromIdentifier(identifier: string): number;
-  // getNameFromIdentifier(identifier: string): string;
 }
 
 export class FolderCollection implements Collection {

@@ -20,8 +20,8 @@ class AllPicturesGallery extends React.Component<GalleryProps> {
       mediaFiles={mediaFiles}
       peopleMap={peopleMap}
       showMap={false}
-      getRowWidth={() => getScreenWidth()}
       mediaFileUrlBase="/gallery/detail"
+      getRowWidth={getScreenWidth}
     />;
   }
 }

@@ -28,7 +28,6 @@ type Props = {
   hash: string,
   mediaFiles: MediaFile[],
   dispatch: Dispatch<Action>,
-  // windowSize: WindowState,
   baseUrl: string, // for example, /gallery
   subview?: Subview,
 };
@@ -103,7 +102,6 @@ class MediaFileModal extends React.Component<Props, ComponentState> {
   }
 
   render() {
-    console.log('rendering', this.props)
     this.setPreviousNextData();
     const {mediaFile} = this;
     const {baseUrl} = this.props;

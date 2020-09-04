@@ -52,8 +52,6 @@ func NewFitFileSummaryFromReader(mediaFileInfo MediaFileInfo, reader io.Reader) 
 }
 
 func newSummaryFromDecodedFitFile(mediaFileInfo MediaFileInfo, file *fit.File) (*FitFileSummary, error) {
-	// sport, err := file.Sport() // TODO include sport?
-
 	activity, err := file.Activity()
 	if nil != err {
 		return nil, errorsx.Wrap(err)

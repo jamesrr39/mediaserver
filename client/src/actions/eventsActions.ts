@@ -1,11 +1,11 @@
 import { SERVER_BASE_URL } from './../configs';
 
 export enum EventActionType {
-    EventReceived,
+    EVENT_RECEIVED = 'EVENT_RECEIVED',
 }
 
 export type EventAction = {
-    type: EventActionType.EventReceived,
+    type: EventActionType.EVENT_RECEIVED,
     data: string,
 };
 
@@ -21,7 +21,7 @@ export function connectToWebsocket() {
 
         eventsWebsocket.onmessage = function (event: Message) {
             dispatch({
-                type: EventActionType.EventReceived,
+                type: EventActionType.EVENT_RECEIVED,
                 data: event.data,
             });
         };

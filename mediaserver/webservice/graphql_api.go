@@ -386,6 +386,9 @@ var (
 						"altitude": &graphql.Field{
 							Type: graphql.Float,
 						},
+						"heartRate": &graphql.Field{
+							Type: graphql.Int,
+						},
 					},
 				})),
 			},

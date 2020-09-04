@@ -71,10 +71,10 @@ function findCollectionFromTypeAndName(
 }
 
 const withNavBar = (component: JSX.Element, navBarChild?: React.ReactNode) => (
-  <React.Fragment>
+  <>
     <MediaserverTopBar {...{child: navBarChild}} />
     {component}
-  </React.Fragment>
+  </>
 );
 
 const styles = {
@@ -232,49 +232,47 @@ class MediaServer extends React.Component<MediaServerProps, MediaServerState> {
     }
 
     return (
-      <div>
-        <HashRouter>
-          <div>
-            <Switch>
+      <HashRouter>
+        <div>
+          <Switch>
+            <Route
+              path="/collections/:type/:identifier/edit"
+              render={(route) => withNavBar(this.renderEditCollectionView(route))}
+            />
+            <>
               <Route
-                path="/collections/:type/:identifier/edit"
-                render={(route) => withNavBar(this.renderEditCollectionView(route))}
+                path="/collections/:type/:identifier"
+                render={(route) => this.renderCollectionView(route)}
               />
-              <React.Fragment>
-                <Route
-                  path="/collections/:type/:identifier"
-                  render={(route) => this.renderCollectionView(route)}
-                />
-                <Route
-                  path="/collections/:type/:identifier/detail/:hash"
-                  render={(route) => withNavBar(this.renderCollectionPicture(route))}
-                />
-              </React.Fragment>
-            </Switch>
-            <Route
-              path="/collections"
-              exact={true}
-              render={() => withNavBar(this.renderCollectionsComponent(), <UploadComponent />)}
-            />
-            <Route path="/map" render={() => withNavBar(this.renderMap(), <UploadComponent />)} />
-            <Route
-              path="/gallery"
-              render={() => withNavBar(this.renderAllPicturesGallery(), <UploadComponent />)}
-            />
-            <Route
-              path="/gallery/detail/:hash"
-              render={(route) => withNavBar(this.renderAllPicturesPictureModal(route), <UploadComponent />)}
-            />
-            <Route path="/" exact={true} render={() => (<Redirect to="/gallery" />)} />
-            <div style={styles.notificationsComponent}>
-              <NotificationBarComponent />
-            </div>
-            <div style={styles.uploadProgressComponent}>
-              <UploadProgressComponent />
-            </div>
+              <Route
+                path="/collections/:type/:identifier/detail/:hash"
+                render={(route) => withNavBar(this.renderCollectionPicture(route))}
+              />
+            </>
+          </Switch>
+          <Route
+            path="/collections"
+            exact={true}
+            render={() => withNavBar(this.renderCollectionsComponent(), <UploadComponent />)}
+          />
+          <Route path="/map" render={() => withNavBar(this.renderMap(), <UploadComponent />)} />
+          <Route
+            path="/gallery"
+            render={() => withNavBar(this.renderAllPicturesGallery(), <UploadComponent />)}
+          />
+          <Route
+            path="/gallery/detail/:hash"
+            render={(route) => withNavBar(this.renderAllPicturesPictureModal(route), <UploadComponent />)}
+          />
+          <Route path="/" exact={true} render={() => (<Redirect to="/gallery" />)} />
+          <div style={styles.notificationsComponent}>
+            <NotificationBarComponent />
           </div>
-        </HashRouter>
-      </div>
+          <div style={styles.uploadProgressComponent}>
+            <UploadProgressComponent />
+          </div>
+        </div>
+      </HashRouter>
     );
   }
 

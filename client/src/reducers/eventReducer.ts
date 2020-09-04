@@ -5,7 +5,7 @@ export type EventState = {
 
 export function eventReducer(state: EventState = {}, action: EventAction) {
     switch (action.type) {
-        case EventActionType.EventReceived:
+        case EventActionType.EVENT_RECEIVED:
             console.log('event received:', action);
             return state;
         default:

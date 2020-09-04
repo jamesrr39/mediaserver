@@ -1,8 +1,8 @@
 import { DebouncedObservable } from '../util/Observable';
 
 export enum WindowActionType {
-    RESIZE,
-    SCROLL
+    RESIZE = 'RESIZE',
+    SCROLL = 'SCROLL',
 }
 
 export type WindowResizeAction = {
