@@ -22,6 +22,11 @@ build_prod_arm7: clean bundle_static_assets
 	mkdir -p build/bin/arm7
 	env GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -tags "purego prod" -o build/bin/arm7/mediaserver cmd/media-server-main.go
 
+.PHONY: build_windows_x86_64
+build_windows_x86_64:
+	mkdir -p build/bin/windows_x86_64
+	env GOOS=windows CGO_ENABLED=0 go build -tags "purego prod" -o build/bin/windows_x86_64/mediaserver.exe cmd/media-server-main.go
+
 .PHONY: run_dev_client
 run_dev_client:
 	cd client && yarn start
