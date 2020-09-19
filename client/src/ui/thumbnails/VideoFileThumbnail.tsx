@@ -18,7 +18,7 @@ export class VideoThumbnail extends React.Component<Props> {
     render() {
         const { videoMetadata, size } = this.props;
 
-        const videoUrl = `${SERVER_BASE_URL}/video/${videoMetadata.hashValue}`;
+        const videoUrl = `${SERVER_BASE_URL}/file/video/${videoMetadata.hashValue}`;
 
         return (
         <div>

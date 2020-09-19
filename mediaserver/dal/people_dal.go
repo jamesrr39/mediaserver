@@ -30,7 +30,7 @@ func (r *PeopleDAL) CreatePerson(tx *sql.Tx, person *domain.Person) errorsx.Erro
 }
 
 func (r *PeopleDAL) GetPeopleByIDs(tx *sql.Tx, ids []int64) ([]*domain.Person, errorsx.Error) {
-	rows, err := tx.Query("SELECT id(), name FROM people WHERE id() IN ($1)", ids)
+	rows, err := tx.Query("SELECT id(), name, is_user FROM people WHERE id() IN ($1)", ids)
 	if err != nil {
 		return nil, errorsx.Wrap(err)
 	}
@@ -39,7 +39,7 @@ func (r *PeopleDAL) GetPeopleByIDs(tx *sql.Tx, ids []int64) ([]*domain.Person, e
 	var people []*domain.Person
 	for rows.Next() {
 		person := new(domain.Person)
-		err := rows.Scan(&person.ID, &person.Name)
+		err := rows.Scan(&person.ID, &person.Name, &person.IsUser)
 		if err != nil {
 			return nil, errorsx.Wrap(err)
 		}
@@ -55,7 +55,7 @@ func (r *PeopleDAL) GetPeopleByIDs(tx *sql.Tx, ids []int64) ([]*domain.Person, e
 }
 
 func (r *PeopleDAL) GetAllPeople(tx *sql.Tx) ([]*domain.Person, errorsx.Error) {
-	rows, err := tx.Query("SELECT id(), name FROM people")
+	rows, err := tx.Query("SELECT id(), name, is_user FROM people")
 	if err != nil {
 		return nil, errorsx.Wrap(err)
 	}
@@ -64,7 +64,7 @@ func (r *PeopleDAL) GetAllPeople(tx *sql.Tx) ([]*domain.Person, errorsx.Error) {
 	people := []*domain.Person{}
 	for rows.Next() {
 		person := new(domain.Person)
-		err := rows.Scan(&person.ID, &person.Name)
+		err := rows.Scan(&person.ID, &person.Name, &person.IsUser)
 		if err != nil {
 			return nil, errorsx.Wrap(err)
 		}
@@ -102,4 +102,19 @@ func (r *PeopleDAL) GetPeopleIDsInMediaFile(tx *sql.Tx, mediaFileHash domain.Has
 	}
 
 	return personIDs, nil
+}
+
+func (r *PeopleDAL) GetPersonByName(tx *sql.Tx, name string) (*domain.Person, errorsx.Error) {
+	row := tx.QueryRow("SELECT id(), name, is_user FROM people WHERE name = $1", name)
+	if row == nil {
+		return nil, errorsx.Wrap(errorsx.ErrItemNotFound)
+	}
+
+	person := new(domain.Person)
+	err := row.Scan(&person.ID, &person.Name, &person.IsUser)
+	if err != nil {
+		return nil, errorsx.Wrap(err)
+	}
+
+	return person, nil
 }

@@ -126,13 +126,11 @@ func (dal *MediaFilesDAL) GetFullPath(relativePath string) string {
 	return filepath.Join(dal.picturesBasePath, relativePath)
 }
 
-func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, mediaFileInfo domain.MediaFileInfo, profileRun *profile.Run) (*domain.PictureMetadata, error) {
+func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, mediaFileInfo domain.MediaFileInfo) (*domain.PictureMetadata, error) {
 	file, err := dal.fs.Open(dal.GetFullPath(mediaFileInfo.RelativePath))
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}
-
-	dal.profiler.Mark(profileRun, "get metadata from db")
 
 	pictureMetadata, err := dal.picturesDAL.GetPictureMetadata(tx, mediaFileInfo)
 	if nil != err {
@@ -142,13 +140,11 @@ func (dal *MediaFilesDAL) processPictureFile(tx *sql.Tx, mediaFileInfo domain.Me
 
 		// dal.log.Info("picture not found for %q (hash: %q). Error type: %T", pictureMetadata.RelativePath, pictureMetadata.HashValue, err)
 
-		dal.profiler.Mark(profileRun, "read picture metadata and picture: ")
 		pictureMetadata, _, err = domain.NewPictureMetadataAndPictureFromBytes(file, mediaFileInfo)
 		if nil != err {
 			return nil, errorsx.Wrap(err)
 		}
 
-		dal.profiler.Mark(profileRun, "write picture metadata")
 		err = dal.picturesDAL.CreatePictureMetadata(tx, pictureMetadata)
 		if nil != err {
 			return nil, fmt.Errorf("unexpected error setting picture metadata to database for relative file path '%s': '%s'", mediaFileInfo.RelativePath, err)
@@ -164,7 +160,7 @@ const (
 	MaxConcurrentPictureFileProcessings = 50
 )
 
-func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx, profileRun *profile.Run) errorsx.Error {
+func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx) errorsx.Error {
 	sema := semaphore.NewSemaphore(MaxConcurrentPictureFileProcessings)
 
 	var mediaFiles []domain.MediaFile
@@ -190,7 +186,7 @@ func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx, profileRun *profile.Ru
 		sema.Add()
 		go func() {
 			defer sema.Done()
-			mediaFile, err := dal.processFile(dal.fs, profileRun, tx, path, fileInfo)
+			mediaFile, err := dal.processFile(dal.fs, tx, path, fileInfo)
 			if err != nil {
 				if err == ErrFileNotSupported {
 					dal.log.Info("skipping " + path + ", file extension not recognised")
@@ -265,7 +261,7 @@ func (dal *MediaFilesDAL) Update(tx *sql.Tx, mediaFile domain.MediaFile, propert
 	return nil
 }
 
-func (dal *MediaFilesDAL) processFile(fs gofs.Fs, profileRun *profile.Run, tx *sql.Tx, path string, fileInfo os.FileInfo) (domain.MediaFile, error) {
+func (dal *MediaFilesDAL) processFile(fs gofs.Fs, tx *sql.Tx, path string, fileInfo os.FileInfo) (domain.MediaFile, error) {
 	var mediaFile domain.MediaFile
 	var err error
 
@@ -311,19 +307,16 @@ func (dal *MediaFilesDAL) processFile(fs gofs.Fs, profileRun *profile.Run, tx *s
 	mediaFileInfo := domain.NewMediaFileInfo(relativePath, hash, fileType, osFileInfo.Size(), participantIDs, osFileInfo.ModTime(), osFileInfo.Mode())
 	switch fileType {
 	case domain.MediaFileTypePicture:
-		dal.profiler.Mark(profileRun, "process picture file")
-		mediaFile, err = dal.processPictureFile(tx, mediaFileInfo, profileRun)
+		mediaFile, err = dal.processPictureFile(tx, mediaFileInfo)
 		if err != nil {
 			return nil, errorsx.Wrap(err)
 		}
 	case domain.MediaFileTypeVideo:
-		dal.profiler.Mark(profileRun, "process video file")
 		mediaFile, err = dal.processVideoFile(tx, mediaFileInfo)
 		if err != nil {
 			return nil, errorsx.Wrap(err)
 		}
 	case domain.MediaFileTypeFitTrack:
-		dal.profiler.Mark(profileRun, "process fit file")
 		mediaFile, err = dal.processFitFile(tx, mediaFileInfo, file)
 		if err != nil {
 			return nil, errorsx.Wrap(err)

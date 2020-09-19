@@ -1,7 +1,7 @@
 {
   "version": 1,
   "requiredVariables": ["SERVER_BASE_URL"],
-  "listingUrl": "${SERVER_BASE_URL}/api/graphql?query={mediaFiles{videos{relativePath,participantIds,fileSizeBytes,hashValue,fileModTime,fileMode},pictures{relativePath,participantIds,fileSizeBytes,hashValue,fileModTime,fileMode},tracks{relativePath,participantIds,fileSizeBytes,hashValue,fileModTime,fileMode}},people{name,id}}",
+  "listingUrl": "${SERVER_BASE_URL}/api/graphql?query={mediaFiles{videos{relativePath,participantIds,fileSizeBytes,hashValue,fileModTime,fileMode},pictures{relativePath,participantIds,fileSizeBytes,hashValue,fileModTime,fileMode},tracks{relativePath,participantIds,fileSizeBytes,hashValue,fileModTime,fileMode}},people{name,id,isUser}}",
   "files": [{
     "modTimeKey": "fileModTime",
     "sizeKey": "fileSizeBytes",

@@ -261,7 +261,7 @@ export type FetchAllPeopleResponse = {
 export function fetchAllPeople() {
   return async(
     dispatch: (action: MediaserverAction) => void): Promise<FetchAllPeopleResponse> => {
-      const response = await fetch(`${SERVER_BASE_URL}/api/graphql?query={people{id,name}}`);
+      const response = await fetch(`${SERVER_BASE_URL}/api/graphql?query={people{id,name,isUser}}`);
       if (!response.ok) {
         throw new Error(createErrorMessage(response));
       }

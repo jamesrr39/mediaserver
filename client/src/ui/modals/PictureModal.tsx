@@ -82,7 +82,7 @@ class PictureModal extends React.Component<Props> {
       chosenHeight = pictureMetadata.rawSize.height;
     }
 
-    const url = joinUrlFragments(SERVER_BASE_URL, 'picture', `${pictureMetadata.hashValue}?h=${chosenHeight}`);
+    const url = joinUrlFragments(SERVER_BASE_URL, 'file', 'picture', `${pictureMetadata.hashValue}?h=${chosenHeight}`);
     pictureEl.style.maxHeight = `${idealHeight}px`;
     pictureEl.style.maxWidth = `${idealWidth}px`;
     pictureEl.src = url;

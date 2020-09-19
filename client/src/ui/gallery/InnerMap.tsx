@@ -71,7 +71,7 @@ export class InnerMap extends React.Component<InnerMapProps> {
 
             markerData.popupData = {
               name: metadata.getName(),
-              imagePreviewUrl: joinUrlFragments(SERVER_BASE_URL, 'picture', metadata.hashValue),
+              imagePreviewUrl: joinUrlFragments(SERVER_BASE_URL, 'file', 'picture', metadata.hashValue),
               linkUrl,
               pictureRawSize: metadata.rawSize,
             };

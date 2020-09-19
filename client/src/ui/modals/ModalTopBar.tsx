@@ -36,7 +36,7 @@ export default class extends React.Component<Props> {
             mediaFile: pictureMetadata, baseUrl, onInfoButtonClicked
         } = this.props;
 
-        const pictureURL = joinUrlFragments(SERVER_BASE_URL, 'picture', pictureMetadata.hashValue);
+        const pictureURL = joinUrlFragments(SERVER_BASE_URL, 'file', 'picture', pictureMetadata.hashValue);
 
         return (
         <div style={styles.topBar}>

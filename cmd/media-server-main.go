@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"crypto/rand"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -10,6 +12,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/jamesrr39/goutil/base64x"
 	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/jamesrr39/goutil/gofs"
 	"github.com/jamesrr39/goutil/logpkg"
@@ -32,7 +35,8 @@ var (
 	maxConcurrentTrackRecordsParsing = app.Flag("max-concurrent-track-records-parsing", "Maximum amount of concurrent track parsing. Turn this down on devices with less memory.").Default("4").Uint()
 	maxConcurrentResizes             = app.Flag("max-concurrent-resizes", "Maximum amount of concurrent picture resizes. Turn this down on devices with less memory.").Default("4").Uint()
 	profileDir                       = app.Flag("profile-dir", "folder to create a profile file inside").String()
-	thumbnailCachePolicyFlag         = app.Flag("--thumbnail-cache-policy", "policy for how aggresively to cache thumbnails").Default(thumbnailCachePolicyNameOnDemand).Enum(thumbnailCachePolicyNameOnDemand, thumbnailCachePolicyNameAheadOfTime, thumbnailCachePolicyNameNoSave)
+	thumbnailCachePolicyFlag         = app.Flag("thumbnail-cache-policy", "policy for how aggresively to cache thumbnails").Default(thumbnailCachePolicyNameOnDemand).Enum(thumbnailCachePolicyNameOnDemand, thumbnailCachePolicyNameAheadOfTime, thumbnailCachePolicyNameNoSave)
+	base64HmacSigningSecret          = app.Flag("base64-hmac-signing-secret", "Base64 encoded HMAC signing secret for JWT tokens. Specify if you want user tokens to be preserved across app restarts. Otherwise it will be auto-generated").Default("").String()
 )
 
 const (
@@ -97,11 +101,25 @@ func main() {
 
 	thumbnailCachePolicy, err := getThumbnailCachePolicy(*thumbnailCachePolicyFlag)
 	if err != nil {
-		log.Fatalf("couldn't figure out the thumbnail cache policy. Error: %q", err)
+		log.Fatalf("couldn't figure out the thumbnail cache policy. Error: %q\n", err)
 	}
 	logger.Info("thumbnail cache policy: %q", thumbnailCachePolicy)
 
-	mediaServer, err := mediaserver.NewMediaServerAndScan(
+	var hmacSigningSecret []byte
+	if *base64HmacSigningSecret != "" {
+		hmacSigningSecret, err = base64x.DecodeBase64(bytes.NewBufferString(*base64HmacSigningSecret))
+		if err != nil {
+			log.Fatalf("couldn't decode HMAC signing secret: %q\n", err)
+		}
+	} else {
+		hmacSigningSecret = make([]byte, 256)
+		_, err = rand.Read(hmacSigningSecret)
+		if err != nil {
+			log.Fatalf("couldn't generate HMAC signing secret: %q\n", err)
+		}
+	}
+
+	mediaServer, err := mediaserver.NewMediaServer(
 		logger,
 		gofs.NewOsFs(),
 		fullpath,
@@ -113,6 +131,7 @@ func main() {
 		thumbnailCachePolicy,
 		*maxConcurrentTrackRecordsParsing,
 		*maxConcurrentResizes,
+		hmacSigningSecret,
 	)
 	if nil != err {
 		log.Fatalf("couldn't create a new media server and scan the pictures directory. Error: %s", err)

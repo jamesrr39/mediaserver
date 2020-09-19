@@ -2,12 +2,11 @@ package mediaserver
 
 import (
 	"database/sql"
-	"fmt"
 	"mediaserver/mediaserver/dal"
 	"mediaserver/mediaserver/dal/diskstorage/mediaserverdb"
 	"mediaserver/mediaserver/events"
 	"mediaserver/mediaserver/mediaserverjobs"
-	"mediaserver/mediaserver/static_assets_handler"
+	statichandlers "mediaserver/mediaserver/static_assets_handler"
 	pictureswebservice "mediaserver/mediaserver/webservice"
 	"mediaserver/mediaserver/webservice/mediaservermiddleware"
 	"net/http"
@@ -32,29 +31,23 @@ type MediaServer struct {
 	tracksService      *pictureswebservice.TracksWebService
 	graphQLService     *pictureswebservice.GraphQLAPIService
 	eventsService      *pictureswebservice.EventsWebService
+	loginService       *pictureswebservice.LoginService
 	dbConn             *mediaserverdb.DBConn
 	jobRunner          *mediaserverjobs.JobRunner
 	logger             *logpkg.Logger
+	closeChan          chan struct{}
+	hmacSigningSecret  []byte
 }
 
-// NewMediaServerAndScan creates a new MediaServer and builds a cache of pictures by scanning the rootpath
-func NewMediaServerAndScan(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDir, dataDir string, maxConcurrentCPUJobs, maxConcurrentVideoConversions uint, profiler *profile.Profiler, thumbnailCachePolicy dal.ThumbnailCachePolicy, maxConcurrentTrackRecordsParsing, maxConcurrentResizes uint) (*MediaServer, error) {
-	var err error
-	profileRun := profiler.NewRun("NewMediaServerAndScan")
-	defer func() {
-		message := "Successful"
-		if err != nil {
-			message = fmt.Sprintf("failed. Error: %q", err)
-		}
-		profiler.StopAndRecord(profileRun, message)
-	}()
+// NewMediaServer creates a new MediaServer
+func NewMediaServer(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDir, dataDir string, maxConcurrentCPUJobs, maxConcurrentVideoConversions uint, profiler *profile.Profiler, thumbnailCachePolicy dal.ThumbnailCachePolicy, maxConcurrentTrackRecordsParsing, maxConcurrentResizes uint, hmacSigningSecret []byte) (*MediaServer, error) {
 
 	eventBus := events.NewEventBus()
 
 	jobRunner := mediaserverjobs.NewJobRunner(logger, maxConcurrentCPUJobs, eventBus)
 
 	var mediaServerDAL *dal.MediaServerDAL
-	mediaServerDAL, err = dal.NewMediaServerDAL(
+	mediaServerDAL, err := dal.NewMediaServerDAL(
 		logger,
 		fs,
 		profiler,
@@ -71,9 +64,7 @@ func NewMediaServerAndScan(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDi
 		return nil, errorsx.Wrap(err)
 	}
 
-	var dbConn *mediaserverdb.DBConn
-	profiler.Mark(profileRun, "new DB Conn")
-	dbConn, err = mediaserverdb.NewDBConn(filepath.Join(dataDir, "mediaserver.db"), logger)
+	dbConn, err := mediaserverdb.NewDBConn(filepath.Join(dataDir, "mediaserver.db"), logger)
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}
@@ -98,43 +89,13 @@ func NewMediaServerAndScan(logger *logpkg.Logger, fs gofs.Fs, rootpath, cachesDi
 		collectionsService: pictureswebservice.NewCollectionsWebService(logger, dbConn, mediaServerDAL.CollectionsDAL, profiler),
 		tracksService:      pictureswebservice.NewTracksWebService(logger, mediaServerDAL.TracksDAL, mediaServerDAL.MediaFilesDAL),
 		eventsService:      pictureswebservice.NewEventsWebService(logger, eventsServiceSubscriber.Chan),
+		loginService:       pictureswebservice.NewLoginService(logger, dbConn, mediaServerDAL.PeopleDAL, hmacSigningSecret),
 		graphQLService:     graphQLAPIService,
 		logger:             logger,
-	}
-
-	profiler.Mark(profileRun, "startup")
-
-	var tx *sql.Tx
-	profiler.Mark(profileRun, "begin tx")
-	tx, err = dbConn.Begin()
-	if nil != err {
-		return nil, errorsx.Wrap(err)
-	}
-	defer mediaserverdb.CommitOrRollback(tx)
-
-	profiler.Mark(profileRun, "update pictures cache")
-	err = mediaServer.mediaServerDAL.MediaFilesDAL.UpdatePicturesCache(tx, profileRun)
-	if nil != err {
-		return nil, errorsx.Wrap(err)
-	}
-
-	allPictureMetadatas := mediaServerDAL.MediaFilesDAL.GetAllPictureMetadatas()
-
-	jobRunner.QueueJob(mediaserverjobs.NewApproximateLocationsJob(
-		mediaServerDAL.MediaFilesDAL,
-		mediaServerDAL.TracksDAL,
-		allPictureMetadatas,
-	), nil)
-
-	profiler.Mark(profileRun, "ensure thumbnails for all mediafiles")
-	for _, pictureMetadata := range allPictureMetadatas {
-		jobRunner.QueueJob(
-			mediaserverjobs.NewThumbnailResizerJob(
-				pictureMetadata,
-				mediaServerDAL.PicturesDAL,
-				logger,
-				mediaServerDAL.ThumbnailsDAL,
-			), nil)
+		dbConn:             dbConn,
+		closeChan:          make(chan struct{}),
+		jobRunner:          jobRunner,
+		hmacSigningSecret:  hmacSigningSecret,
 	}
 
 	return mediaServer, nil
@@ -147,12 +108,17 @@ func (ms *MediaServer) Close() error {
 // scans for pictures and serves http server
 func (ms *MediaServer) ListenAndServe(addr string) error {
 
-	mainRouter := chi.NewRouter()
+	readyChan := make(chan bool)
 
-	mediaservermiddleware.ApplyCorsMiddleware(mainRouter)
+	mainRouter := chi.NewRouter()
+	mainRouter.Use(mediaservermiddleware.LoadingMiddleware(readyChan))
+	mainRouter.Use(mediaservermiddleware.CorsMiddleware())
 	mainRouter.Use(mediaservermiddleware.CreateRequestLoggerMiddleware(ms.logger))
+	authMW := mediaservermiddleware.AuthMiddleware(ms.hmacSigningSecret, ms.logger)
 
 	mainRouter.Route("/api/", func(r chi.Router) {
+		r.Mount("/login/", ms.loginService)
+		r.Use(authMW)
 		r.Mount("/files/", ms.filesService)
 		r.Mount("/collections/", ms.collectionsService)
 		r.Mount("/tracks/", ms.tracksService)
@@ -160,8 +126,11 @@ func (ms *MediaServer) ListenAndServe(addr string) error {
 		r.Mount("/events/", ms.eventsService)
 	})
 
-	mainRouter.Mount("/video/", http.StripPrefix("/video/", ms.videosWebService))
-	mainRouter.Mount("/picture/", ms.picturesService)
+	mainRouter.Route("/file/", func(r chi.Router) {
+		r.Use(authMW)
+		r.Mount("/video/", http.StripPrefix("/video/", ms.videosWebService))
+		r.Mount("/picture/", ms.picturesService)
+	})
 	mainRouter.Mount("/", statichandlers.NewClientHandler())
 
 	server := http.Server{
@@ -172,5 +141,63 @@ func (ms *MediaServer) ListenAndServe(addr string) error {
 		Addr:              addr,
 		Handler:           mainRouter,
 	}
-	return server.ListenAndServe()
+
+	errChan := make(chan errorsx.Error)
+	go func() {
+		err := server.ListenAndServe()
+		if err != nil {
+			errChan <- errorsx.Wrap(err)
+			return
+		}
+	}()
+
+	err := ms.scan()
+	if err != nil {
+		return err
+	}
+	readyChan <- true
+
+	select {
+	case err = <-errChan:
+		// assign error and do nothing else
+	case <-ms.closeChan:
+		// do nothing
+	}
+
+	return err
+}
+
+func (ms *MediaServer) scan() errorsx.Error {
+
+	var tx *sql.Tx
+	tx, err := ms.dbConn.Begin()
+	if nil != err {
+		return errorsx.Wrap(err)
+	}
+	defer mediaserverdb.CommitOrRollback(tx)
+
+	err = ms.mediaServerDAL.MediaFilesDAL.UpdatePicturesCache(tx)
+	if nil != err {
+		return errorsx.Wrap(err)
+	}
+
+	allPictureMetadatas := ms.mediaServerDAL.MediaFilesDAL.GetAllPictureMetadatas()
+
+	ms.jobRunner.QueueJob(mediaserverjobs.NewApproximateLocationsJob(
+		ms.mediaServerDAL.MediaFilesDAL,
+		ms.mediaServerDAL.TracksDAL,
+		allPictureMetadatas,
+	), nil)
+
+	for _, pictureMetadata := range allPictureMetadatas {
+		ms.jobRunner.QueueJob(
+			mediaserverjobs.NewThumbnailResizerJob(
+				pictureMetadata,
+				ms.mediaServerDAL.PicturesDAL,
+				ms.logger,
+				ms.mediaServerDAL.ThumbnailsDAL,
+			), nil)
+	}
+
+	return nil
 }

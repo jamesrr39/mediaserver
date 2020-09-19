@@ -71,7 +71,7 @@ func (ms *MediaFilesService) refresh(profileRun *profile.Run) errorsx.Error {
 	}
 	defer mediaserverdb.CommitOrRollback(tx)
 
-	err = ms.mediaServerDAL.MediaFilesDAL.UpdatePicturesCache(tx, profileRun)
+	err = ms.mediaServerDAL.MediaFilesDAL.UpdatePicturesCache(tx)
 	if nil != err {
 		return errorsx.Errorf("couldn't update pictures cache (refresh pictures library). Error: %s", err)
 	}

@@ -398,12 +398,13 @@ var (
 		Name: "person",
 		Fields: graphql.Fields{
 			"id": &graphql.Field{
-				// Name: "id",
 				Type: graphql.Int,
 			},
 			"name": &graphql.Field{
-				// Name: "name",
 				Type: graphql.String,
+			},
+			"isUser": &graphql.Field{
+				Type: graphql.Boolean,
 			},
 		},
 	}))

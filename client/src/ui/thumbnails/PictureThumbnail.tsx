@@ -40,6 +40,7 @@ export class PictureThumbnail extends React.Component<Props, ComponentState> {
 
         const imgSrc = joinUrlFragments(
             SERVER_BASE_URL,
+            'file',
             'picture',
             `${pictureMetadata.hashValue}?h=${thumbnailHeight}`
         );
@@ -57,7 +58,7 @@ export class PictureThumbnail extends React.Component<Props, ComponentState> {
     componentDidMount() {
         const { size, pictureMetadata } = this.props;
 
-        const imgSrc = joinUrlFragments(SERVER_BASE_URL, 'picture', `${pictureMetadata.hashValue}?h=${size.height}`);
+        const imgSrc = joinUrlFragments(SERVER_BASE_URL, 'file', 'picture', `${pictureMetadata.hashValue}?h=${size.height}`);
 
         const image = new Image();
         image.onload = () => {

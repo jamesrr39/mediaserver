@@ -1,9 +1,13 @@
 package errorsx
 
 import (
+	"errors"
 	"fmt"
 	"runtime/debug"
 )
+
+// ErrItemNotFound defines a generic "item/object not found" error
+var ErrItemNotFound = errors.New("item not found")
 
 type kvPairsMapType map[interface{}]interface{}
 
