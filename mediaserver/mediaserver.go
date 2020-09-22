@@ -118,12 +118,14 @@ func (ms *MediaServer) ListenAndServe(addr string) error {
 
 	mainRouter.Route("/api/", func(r chi.Router) {
 		r.Mount("/login/", ms.loginService)
-		r.Use(authMW)
-		r.Mount("/files/", ms.filesService)
-		r.Mount("/collections/", ms.collectionsService)
-		r.Mount("/tracks/", ms.tracksService)
-		r.Mount("/graphql", ms.graphQLService)
-		r.Mount("/events/", ms.eventsService)
+		r.Route("/", func(r chi.Router) {
+			r.Use(authMW)
+			r.Mount("/files/", ms.filesService)
+			r.Mount("/collections/", ms.collectionsService)
+			r.Mount("/tracks/", ms.tracksService)
+			r.Mount("/graphql", ms.graphQLService)
+			r.Mount("/events/", ms.eventsService)
+		})
 	})
 
 	mainRouter.Route("/file/", func(r chi.Router) {

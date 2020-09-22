@@ -1,5 +1,10 @@
 import { DebouncedObservable } from '../util/Observable';
 
+export type WindowSize = {
+  innerHeight: number;
+  innerWidth: number;
+};
+
 export enum WindowActionType {
     RESIZE = 'RESIZE',
     SCROLL = 'SCROLL',
@@ -21,10 +26,8 @@ export type WindowAction = WindowResizeAction | WindowScrollAction;
 // a type that can be satisfied by the "window" object
 export type Win = {
     scrollY: number,
-    innerHeight: number,
-    innerWidth: number,
     addEventListener(eventName: ('scroll' | 'resize'), callback: () => void): void,
-};
+} & WindowSize;
 
 export function listenToWindowActions(win: Win) {
     return async(dispatch: (action: WindowAction) => void) => {

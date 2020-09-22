@@ -2,10 +2,10 @@
 
 package mediaservermiddleware
 
-import (
-	"github.com/go-chi/chi"
-)
+import "net/http"
 
-func ApplyCorsMiddleware(router chi.Router) {
-	// no-op
+func CorsMiddleware() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(next.ServeHTTP)
+	}
 }

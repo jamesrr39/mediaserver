@@ -3,10 +3,7 @@ import { Collection, CustomCollection } from '../../domain/Collection';
 import CollectionThumbnail from './CollectionThumbnail';
 import { themeStyles } from '../../theme/theme';
 import AddCollectionModal from './AddCollectionModal';
-import { saveCollection, CollectionsAction } from '../../actions/collectionsActions';
-// import { connect } from 'react-redux';
-import { Dispatch } from 'redux';
-// import { withRouter } from 'react-router';
+import { saveCollection } from '../../actions/collectionsActions';
 import { connect } from 'react-redux';
 
 const styles = {
@@ -17,7 +14,7 @@ const styles = {
 };
 
 type Props = {
-  dispatch: Dispatch<CollectionsAction>;
+  saveCollection: (collection: CustomCollection) => Promise<CustomCollection>,
   title: string,
   collections: Collection[],
   canAddCollection?: boolean,
@@ -95,9 +92,9 @@ class CollectionGroupListingComponent extends React.Component<Props, ComponentSt
   }
 
   private async saveCollection(newCollection: CustomCollection) {
-    const { dispatch } = this.props;
+    const { saveCollection } = this.props;
 
-    const returnedCollection = await saveCollection(newCollection)(dispatch);
+    const returnedCollection = await saveCollection(newCollection);
 
     const encodedType = encodeURIComponent(returnedCollection.type);
     const encodedIdentifier = encodeURIComponent(returnedCollection.identifier());
@@ -107,4 +104,5 @@ class CollectionGroupListingComponent extends React.Component<Props, ComponentSt
 
 export default connect(
   undefined,
+  { saveCollection }
 )(CollectionGroupListingComponent);

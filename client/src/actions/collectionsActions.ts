@@ -2,12 +2,14 @@ import { SERVER_BASE_URL } from '../configs';
 import { Action } from 'redux';
 import { Collection, CustomCollection } from '../domain/Collection';
 import { Dispatch } from 'react';
-import { createErrorMessage } from './util';
+import { createErrorMessage, fetchWithAuth } from './util';
+import { State } from '../reducers/rootReducer';
 
 export enum CollectionActions {
   FETCH_COLLECTIONS = 'FETCH_COLLECTIONS',
   COLLECTION_FETCH_STARTED = 'COLLECTION_FETCH_STARTED',
   COLLECTIONS_FETCHED = 'COLLECTIONS_FETCHED',
+  COLLECTION_FETCH_FAILED = 'COLLECTION_FETCH_FAILED',
   COLLECTION_SAVED = 'COLLECTION_SAVED',
   SAVE_COLLECTION = 'SAVE_COLLECTION',
 }
@@ -35,8 +37,12 @@ export type SaveCollectionAction = {
   collection: CustomCollection,
 };
 
+export type CollectionsFetchFailedAction = {
+  type: CollectionActions.COLLECTION_FETCH_FAILED,
+};
+
 export type CollectionsAction = CollectionsFetchedAction | 
-  FetchCollectionsAction | CollectionSavedAction | SaveCollectionAction | 
+  FetchCollectionsAction | CollectionsFetchFailedAction | CollectionSavedAction | SaveCollectionAction | 
   FetchCollectionsStartedAction;
 
 type CustomCollectionJSON = {
@@ -48,12 +54,17 @@ export type FetchCollectionsResponse = {
 };
 
 export function fetchCollections() {
-  return async (dispatch: Dispatch<CollectionsAction>): Promise<FetchCollectionsResponse> => {
+  return async (dispatch: Dispatch<CollectionsAction>, getState: () => State): Promise<FetchCollectionsResponse> => {
+    const state = getState();
+
     dispatch({
       type: CollectionActions.FETCH_COLLECTIONS,
     });
-    const response = await fetch(`${SERVER_BASE_URL}/api/collections/`);
+    const response = await fetchWithAuth(state, `${SERVER_BASE_URL}/api/collections/`);
     if (!response.ok) {
+      dispatch({
+        type: CollectionActions.COLLECTION_FETCH_FAILED,
+      });
       throw new Error(createErrorMessage(response));
     }
 
@@ -77,13 +88,15 @@ export function fetchCollections() {
 }
 
 export function saveCollection(collection: CustomCollection) {
-  return async (dispatch: (action: CollectionsAction) => void) => {
+  return async (dispatch: (action: CollectionsAction) => void, getState: () => State) => {
+    const state = getState();
+
     const url = (collection.id === 0)
       ? `${SERVER_BASE_URL}/api/collections/`
       : `${SERVER_BASE_URL}/api/collections/${collection.id}`;
     const method = (collection.id === 0) ? 'POST' : 'PUT';
     
-    const response = await fetch(url, {
+    const response = await fetchWithAuth(state, url, {
       method,
       body: JSON.stringify(collection),
     });

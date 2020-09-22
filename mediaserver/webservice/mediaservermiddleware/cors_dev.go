@@ -4,14 +4,21 @@ package mediaservermiddleware
 
 import (
 	"net/http"
-
-	"github.com/go-chi/cors"
 )
 
 func CorsMiddleware() func(http.Handler) http.Handler {
-	return cors.New(cors.Options{
-		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		MaxAge:         300, // Maximum value not ignored by any of major browsers
-	}).Handler
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Add("Access-Control-Allow-Origin", "*")
+			w.Header().Add("Access-Control-Allow-Headers", "*")
+
+			if r.Method == http.MethodOptions {
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		}
+
+		return http.HandlerFunc(fn)
+	}
 }

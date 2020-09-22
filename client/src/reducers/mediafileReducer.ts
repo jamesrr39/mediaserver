@@ -1,21 +1,19 @@
 import {
   MediaserverAction,
   FilesActionTypes,
-  PeopleMap,
  } from '../actions/mediaFileActions';
 import { FileQueue } from '../fileQueue';
 import { MediaFile } from '../domain/MediaFile';
 import { Record, FitTrack } from '../domain/FitTrack';
-import { Person } from '../domain/People';
+import { LoadingState } from '../actions/util';
 
 export type MediaFilesState = {
   mediaFiles: MediaFile[],
   mediaFilesMap: Map<string, MediaFile>,
   uploadQueue: FileQueue,
   trackRecordsMap: Map<string, Promise<Record[]>>,
-  people: Person[],
-  peopleMap: PeopleMap,
   fetchTrackRecordsQueue: FitTrack[],
+  loadingState: LoadingState,
 };
 
 const maxConcurrentUploads = 2;
@@ -25,9 +23,8 @@ const mediaFilesInitialState = {
   mediaFilesMap: new Map<string, MediaFile>(),
   uploadQueue: new FileQueue(maxConcurrentUploads),
   trackRecordsMap: new Map<string, Promise<Record[]>>(),
-  people: [],
-  peopleMap: new Map<number, Person>(),
   fetchTrackRecordsQueue: [],
+  loadingState: LoadingState.NOT_STARTED,
 };
 
 export function mediaFilesReducer(
@@ -37,6 +34,7 @@ export function mediaFilesReducer(
     case FilesActionTypes.FETCH_MEDIA_FILES:
       return {
         ...state,
+        loadingState: LoadingState.IN_PROGRESS,
       };
     case FilesActionTypes.MEDIA_FILES_FETCHED:
       const mediaFilesMap = new Map<string, MediaFile>();
@@ -47,10 +45,12 @@ export function mediaFilesReducer(
         ...state,
         mediaFiles: action.mediaFiles,
         mediaFilesMap: mediaFilesMap,
+        loadingState: LoadingState.SUCCESS,
       };
       case FilesActionTypes.MEDIA_FILES_FETCH_FAILED:
           return {
             ...state,
+            loadingState: LoadingState.FAILED,
           };
     case FilesActionTypes.FILE_SUCCESSFULLY_UPLOADED:
       return {
@@ -66,19 +66,6 @@ export function mediaFilesReducer(
         ...state,
         trackRecordsMap: newMap,
       };
-    case FilesActionTypes.PEOPLE_FETCHED_ACTION: {
-      const {people} = action;
-      const peopleMap = new Map<number, Person>();
-      people.forEach(person => {
-        peopleMap.set(person.id, person);
-      });
-
-      return {
-        ...state,
-        people,
-        peopleMap,
-      };
-    }
     case FilesActionTypes.PARTICIPANTS_SET_ON_MEDIAFILE:
       const {mediaFile} = action;
 
@@ -97,15 +84,6 @@ export function mediaFilesReducer(
         ...state,
         mediaFiles,
       };
-    case FilesActionTypes.PEOPLE_CREATED: {
-      const {people} = action;
-
-      people.forEach(person => state.peopleMap.set(person.id, person));
-      return {
-        ...state,
-        people: state.people.concat(people),
-      };
-    }
     default:
       return state;
   }

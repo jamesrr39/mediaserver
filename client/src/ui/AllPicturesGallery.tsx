@@ -27,7 +27,8 @@ class AllPicturesGallery extends React.Component<GalleryProps> {
 }
 
 function mapStateToProps(state: State) {
-  const { mediaFiles, peopleMap } = state.mediaFilesReducer;
+  const { mediaFiles } = state.mediaFilesReducer;
+  const { peopleMap } = state.peopleReducer;
 
   return {
     mediaFiles,

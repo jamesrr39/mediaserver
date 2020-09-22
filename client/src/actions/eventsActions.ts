@@ -1,4 +1,5 @@
 import { SERVER_BASE_URL } from './../configs';
+import { State } from '../reducers/rootReducer';
 
 export enum EventActionType {
     EVENT_RECEIVED = 'EVENT_RECEIVED',
@@ -14,8 +15,13 @@ type Message = {
 };
 
 export function connectToWebsocket() {
-    return async(dispatch: (action: EventAction) => void) => {
-        const websocketUrl = `${SERVER_BASE_URL}/api/events/`.replace('http', 'ws');
+    return async(dispatch: (action: EventAction) => void, getState: () => State) => {
+        const state = getState();
+        const { token } = state.activeUserReducer.activeUser || {};
+        if (!token) {
+            throw new Error('no token');
+        }
+        const websocketUrl = `${SERVER_BASE_URL}/api/events/?token=${token}`.replace('http', 'ws');
 
         const eventsWebsocket = new WebSocket(websocketUrl);
 

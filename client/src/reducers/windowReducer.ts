@@ -4,6 +4,7 @@ export type WindowState = {
   innerHeight: number,
   innerWidth: number,
   scrollY: number,
+  addEventListener(eventName: ('scroll' | 'resize'), callback: () => void): void,
 };
 
 export function createWindowReducer(initialState: WindowState) {

@@ -2,7 +2,10 @@ import { Person } from '../domain/People';
 import { UserAction, UserActionType } from '../actions/userActions';
 
 export type ActiveUserReducerState = {
-    activeUser?: Person,
+    activeUser?: {
+        user: Person,
+        token: string,
+    },
 };
 
 const initialActiveUserReducerState = {
@@ -12,13 +15,18 @@ const initialActiveUserReducerState = {
 export function activeUserReducer(
     state: ActiveUserReducerState = initialActiveUserReducerState,
     action: UserAction) {
-        switch (action.type) {
-            case UserActionType.USER_LOGIN:
-                return {
-                    ...state,
-                    activeUser: action.user
-                };
-            default:
-                return state;
-            }
-    }
+    switch (action.type) {
+        case UserActionType.USER_LOGIN:
+            const {user, token} = action;
+
+            return {
+                ...state,
+                activeUser: {
+                    user,
+                    token,
+                },
+            };
+        default:
+            return state;
+        }
+}

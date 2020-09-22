@@ -5,7 +5,8 @@ import { ValueType } from 'react-select/src/types';
 import { connect } from 'react-redux';
 import { State } from '../../reducers/rootReducer';
 import { Person } from '../../domain/People';
-import { PeopleMap, setParticipantsOnMediaFile, createPerson } from '../../actions/mediaFileActions';
+import { PeopleMap, setParticipantsOnMediaFile } from '../../actions/mediaFileActions';
+import { createPerson } from '../../actions/peopleActions';
 
 const styles = {
     selectStyles: {
@@ -122,7 +123,7 @@ class PartipantsComponent extends React.Component<Props, ComponentState> {
 }
 
 function mapStateToProps(state: State) {
-    const {people, peopleMap} = state.mediaFilesReducer;
+    const {people, peopleMap} = state.peopleReducer;
 
     return {
         people,

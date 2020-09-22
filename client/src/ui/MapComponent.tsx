@@ -11,7 +11,7 @@ import markerShadow from '../../node_modules/leaflet/dist/images/marker-shadow.p
 import { deepEqual } from '../util/equal';
 import { connect } from 'react-redux';
 import { State } from '../reducers/rootReducer';
-import { WindowState } from '../reducers/windowReducer';
+import { WindowSize } from '../actions/windowActions';
 
 const StartIcon = Leaflet.Icon.extend({
   createIcon: () => {
@@ -138,7 +138,7 @@ type Props = {
   tracks?: TrackMapData[],
   extraLatLongMapPadding?: number,
   zoomControl: boolean,
-  windowSize: WindowState,
+  windowSize: WindowSize,
 };
 
 class MapComponent extends React.Component<Props> {
@@ -147,6 +147,10 @@ class MapComponent extends React.Component<Props> {
   shouldComponentUpdate(nextProps: Props) {
     // TODO: better equality comparison
     const hasChanged = !deepEqual(this.props, nextProps);
+
+    if (hasChanged) {
+      console.log('MapComponent should update');
+    }
 
     return hasChanged;
   }
@@ -323,7 +327,9 @@ export function newDivIcon() {
 }
 
 export default connect((state: State) => {
+  const { innerHeight, innerWidth } = state.windowReducer;
+
   return {
-    windowSize: state.windowReducer,
+    windowSize: { innerHeight, innerWidth },
   };
 })(MapComponent);

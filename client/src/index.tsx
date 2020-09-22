@@ -10,19 +10,13 @@ import '../node_modules/font-awesome/css/font-awesome.css';
 
 import { Provider } from 'react-redux';
 import configureStore from './configureStore';
-import MediaServer from './ui/MediaServer';
+import App from './ui/App';
 
-const win = {
-  innerHeight: window.innerHeight,
-  innerWidth: window.innerWidth,
-  scrollY: window.screenY,
-};
-
-const store = configureStore(win);
+const store = configureStore(window);
 
 const app = (
   <Provider store={store} >
-    <MediaServer window={window} />
+    <App />
   </Provider>
 );
 

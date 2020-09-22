@@ -12,8 +12,6 @@ const colors = {
     lightBlue: 'rgb(118, 166, 204)',
 };
 
-const intervalDistanceSeconds = 20;
-
 type ComponentState = {
     highestPace: number,
     lowestPace: number,
@@ -66,7 +64,10 @@ export default class SpeedChart extends React.Component<Props, ComponentState> {
             return;
         }
 
-        const speeds = getSpeedsFromRecords(trackRecords, intervalDistanceSeconds);
+        const minimumIntervalSeconds = 20;
+        // const maximumNumberOfPoints = 1000;
+
+        const speeds = getSpeedsFromRecords(trackRecords, minimumIntervalSeconds);
         if (speeds.length === 0) {
             return;
         }
@@ -91,9 +92,30 @@ export default class SpeedChart extends React.Component<Props, ComponentState> {
                 middleDistanceMetres,
                 speedMetresPerSecond,
             };
+        }).filter(point => point.speedMetresPerSecond !== 0); // filter out points where no distance 
+        
+        const {highestPace, lowestPace} = this.state;
+
+        const data = points.map(point => {
+            const {speedMetresPerSecond, middleTimeThroughSeconds} = point;
+
+            let pace = (1 / speedMetresPerSecond) * 1000 / 60;
+
+            if (highestPace && pace > highestPace) {
+                pace = highestPace;
+            }
+
+            if (lowestPace && pace < lowestPace) {
+                pace = lowestPace;
+            }
+
+            return {
+                x: middleTimeThroughSeconds,
+                y: parseFloat(pace.toFixed(2)),
+            };
         });
 
-        this.chart = new Chart(ctx, {
+        const chartOptions = {
             type: 'line',
             data: {
                 labels: points.map(point => {
@@ -104,51 +126,16 @@ export default class SpeedChart extends React.Component<Props, ComponentState> {
                     }km`;
                 }),
                 datasets: [{
-                    label: 'Speed (Metres per second)',
-                    backgroundColor: colors.lightBlue,
-                    borderColor: colors.blue,
-                    data: points.map(point => {
-                        const {speedMetresPerSecond, middleTimeThroughSeconds} = point;
-
-                        return {
-                            x: middleTimeThroughSeconds,
-                            y: speedMetresPerSecond,
-                        };
-                    }),
-                }, {
                     label: 'Pace (Minutes per kilometer)',
                     backgroundColor: colors.lightBlue,
                     borderColor: colors.blue,
-                    data: points.map(point => {
-                        const {speedMetresPerSecond, middleTimeThroughSeconds} = point;
-                        const {highestPace, lowestPace} = this.state;
-
-                        let pace = (1 / speedMetresPerSecond) * 1000 / 60;
-
-                        if (highestPace && pace > highestPace) {
-                            pace = highestPace;
-                        }
-
-                        if (lowestPace && pace < lowestPace) {
-                            pace = lowestPace;
-                        }
-
-                        return {
-                            x: middleTimeThroughSeconds,
-                            y: pace.toFixed(2),
-                        };
-                    }),
+                    data,
                 }],
             },
             options: {
-                scales: {
-                    yAxes: [{
-                        ticks: {
-                            beginAtZero: true
-                        },
-                    }],
-                },
             },
-        });
+        };
+
+        this.chart = new Chart(ctx, chartOptions);
     }
 }

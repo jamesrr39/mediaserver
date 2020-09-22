@@ -4,10 +4,9 @@ import { Route, Redirect, RouteComponentProps, Switch } from 'react-router';
 import MediaFileModal from './modals/MediaFileModal';
 import { connect } from 'react-redux';
 import { State } from '../reducers/rootReducer';
-import { fetchPicturesMetadata, fetchAllPeople, PeopleMap, FetchPicturesMetadataResponse, FetchAllPeopleResponse } from '../actions/mediaFileActions';
+import { PeopleMap } from '../actions/mediaFileActions';
 import { HashRouter } from 'react-router-dom';
 import MediaserverTopBar from './MediaserverTopBar';
-import { fetchCollections, FetchCollectionsResponse } from '../actions/collectionsActions';
 import CollectionsComponent from './collections/CollectionsListingComponent';
 import CollectionViewComponent, { CollectionViewNavBarComponent } from './collections/CollectionViewComponent';
 import { extractFolderCollectionsFrommediaFiles, CollectionType, CustomCollection } from '../domain/Collection';
@@ -20,8 +19,8 @@ import UploadProgressComponent from './upload/UploadProgressComponent';
 import { gallerySortingFunc } from './gallery/GalleryWithFilter';
 import { filterFromJson } from '../domain/Filter';
 import MediafilesMap from './MediafilesMap';
-import { connectToWebsocket } from '../actions/eventsActions';
-import { listenToWindowActions, Win } from '../actions/windowActions';
+import { Win } from '../actions/windowActions';
+import { LoadingState } from '../actions/util';
 
 type CollectionViewRouteParams = {
   identifier: string;
@@ -45,12 +44,7 @@ type MediaServerProps = {
   peopleMap: PeopleMap;
   customCollections: CustomCollection[];
   window: Win,
-
-  fetchPicturesMetadata: () => Promise<FetchPicturesMetadataResponse>, 
-  fetchCollections: () => Promise<FetchCollectionsResponse>, 
-  fetchAllPeople: () => Promise<FetchAllPeopleResponse>,
-  connectToWebsocket: () => Promise<void>, 
-  listenToWindowActions: (win: Win) => Promise<void>,
+  loadingState: LoadingState,
 };
 
 function findCollectionFromTypeAndName(
@@ -102,20 +96,7 @@ function collectionIdentifierAndTypeFromRoute(routeInfo: RouteComponentProps<Col
   };
 }
 
-type MediaServerState = {
-  loading: boolean,
-  error: boolean,
-};
-
-class MediaServer extends React.Component<MediaServerProps, MediaServerState> {
-  state = {
-    loading: false,
-    error: false,
-  };
-
-  componentDidMount() {
-    this.fetchData();
-  }
+class MediaServer extends React.Component<MediaServerProps> {
 
   renderCollectionView = (routeInfo: RouteComponentProps<CollectionViewRouteParams>) => {
     const { type, identifier } = collectionIdentifierAndTypeFromRoute(routeInfo);
@@ -223,12 +204,14 @@ class MediaServer extends React.Component<MediaServerProps, MediaServerState> {
   }
 
   render() {
-    if (this.state.loading) {
+    const { loadingState } = this.props;
+
+    if (loadingState === LoadingState.IN_PROGRESS) {
       return <p>Loading...</p>;
     }
 
-    if (this.state.error) {
-      return <p>Error: failed to load</p>;
+    if (loadingState === LoadingState.FAILED) {
+      return <p>Error: failed to load...</p>;
     }
 
     return (
@@ -275,58 +258,39 @@ class MediaServer extends React.Component<MediaServerProps, MediaServerState> {
       </HashRouter>
     );
   }
+}
 
-  private async fetchData() {
-    const { 
-      fetchPicturesMetadata, 
-      fetchCollections, 
-      fetchAllPeople, 
-      connectToWebsocket, 
-      listenToWindowActions,
-    } = this.props;
-
-    try {
-      await Promise.all([
-        fetchPicturesMetadata(), 
-        fetchCollections(),
-        fetchAllPeople(),
-        connectToWebsocket(),
-        listenToWindowActions(this.props.window),
-      ]);
-    
-      this.setState(state => ({
-        ...state,
-        loading: false,
-      }));
-    } catch (e) {
-      this.setState(state => ({
-        ...state,
-        loading: false,
-        error: true,
-      }));
-    }
+function getCombinedLoadingState(...loadingStates: LoadingState[]): LoadingState {
+  if (loadingStates.findIndex(loadingState => loadingState === LoadingState.FAILED) !== -1) {
+    return LoadingState.FAILED;
   }
+
+  if (loadingStates.findIndex(loadingState => loadingState === LoadingState.NOT_STARTED) !== -1) {
+    return LoadingState.NOT_STARTED;
+  }
+
+  if (loadingStates.findIndex(loadingState => loadingState === LoadingState.IN_PROGRESS) !== -1) {
+    return LoadingState.IN_PROGRESS;
+  }
+
+  return LoadingState.SUCCESS;
 }
 
 function mapStateToProps(state: State) {
-  const { mediaFiles, mediaFilesMap: mediaFilesMap, peopleMap } = state.mediaFilesReducer;
-  const { customCollections } = state.collectionsReducer;
+  const { mediaFiles, mediaFilesMap, loadingState: mediaFilesLoadingState } = state.mediaFilesReducer;
+  const { customCollections, loadingState: collectionsLoadingState } = state.collectionsReducer;
+  const { peopleMap, loadingState: peopleLoadingState } = state.peopleReducer;
 
   return {
     mediaFiles,
     mediaFilesMap,
     peopleMap,
     customCollections,
+    window: state.windowReducer,
+    loadingState: getCombinedLoadingState(mediaFilesLoadingState, collectionsLoadingState, peopleLoadingState),
   };
 }
 
 export default connect(
   mapStateToProps,
-  {
-    fetchPicturesMetadata,
-    fetchCollections,
-    fetchAllPeople,
-    connectToWebsocket,
-    listenToWindowActions,
-  }
 )(MediaServer);

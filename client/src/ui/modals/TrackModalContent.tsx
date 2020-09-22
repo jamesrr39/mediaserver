@@ -25,18 +25,19 @@ type State = {
 };
 
 class TrackModalContent extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {};
-  }
+  state = {
+    trackRecords: undefined as undefined|Record[],
+  };
 
   componentDidMount() {
     this.fetchRecords();
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
+    console.log('TrackModalContent: update')
     if (prevProps.trackSummary.hashValue !== this.props.trackSummary.hashValue) {
       this.setState(state => ({
+        ...state,
         trackRecords: undefined,
       }));
       this.fetchRecords();
@@ -45,6 +46,7 @@ class TrackModalContent extends React.Component<Props, State> {
 
   fetchRecords = async () => {
     const {trackSummary} = this.props;
+    console.log('fetching records for', trackSummary.hashValue)
     const trackRecordsMap = await this.props.fetchRecordsForTracks([trackSummary]);
     const trackRecords = trackRecordsMap.get(trackSummary.hashValue);
     if (!trackRecords) {
@@ -58,6 +60,8 @@ class TrackModalContent extends React.Component<Props, State> {
   }
 
   render() {
+
+    console.log('TrackModalContent: render')
     const { trackSummary } = this.props;
 
     const map = this.renderRecordInformation();

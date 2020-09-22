@@ -15,7 +15,18 @@ func AuthMiddleware(signingSecret []byte, logger *logpkg.Logger) func(http.Handl
 	return func(next http.Handler) http.Handler {
 
 		fn := func(w http.ResponseWriter, r *http.Request) {
-			tokenString := strings.TrimPrefix(r.URL.Query().Get("Authorization"), "Bearer ")
+			tokenString := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+			if tokenString == "" {
+				// FIXME: disallow, due to token being saved in logs.
+				// For websockets, generate one-time-tokens instead
+				tokenString = r.URL.Query().Get("token")
+			}
+
+			if tokenString == "" {
+				errorsx.HTTPError(w, logger, errorsx.Errorf("no token supplied"), http.StatusUnauthorized)
+				return
+			}
+
 			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 				// Don't forget to validate the alg is what you expect:
 				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -36,11 +47,12 @@ func AuthMiddleware(signingSecret []byte, logger *logpkg.Logger) func(http.Handl
 				return
 			}
 
-			userID, ok := claims[domain.ClaimsKeyUserID].(int64)
+			userIDFloat64, ok := claims[domain.ClaimsKeyUserID].(float64)
 			if !ok {
 				errorsx.HTTPError(w, logger, errorsx.Errorf("userID claim: expected int64 but got %T", claims[domain.ClaimsKeyUserID]), http.StatusInternalServerError)
 				return
 			}
+			userID := int64(userIDFloat64)
 			r = r.WithContext(domain.SetUserIDOnCtx(r.Context(), userID))
 
 			next.ServeHTTP(w, r)
