@@ -11,7 +11,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/jamesrr39/goutil/gofs"
@@ -170,6 +169,7 @@ func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx) errorsx.Error {
 		for {
 			mediaFile := <-mediaFileChan
 			mediaFiles = append(mediaFiles, mediaFile)
+			sema.Done()
 		}
 	}()
 
@@ -196,6 +196,8 @@ func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx) errorsx.Error {
 				return
 			}
 
+			// add one to sema to synchronise receiving chan adding to slice
+			sema.Add()
 			mediaFileChan <- mediaFile
 		}()
 		return nil
@@ -208,12 +210,8 @@ func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx) errorsx.Error {
 
 	sema.Wait()
 
-	newCache := picturesmetadatacache.NewMediaFilesCache()
-	newCache.AddBatch(mediaFiles...)
-	var mu sync.Mutex
-	mu.Lock()
-	dal.cache = newCache
-	mu.Unlock()
+	dal.cache.UpdateMediaFiles(mediaFiles)
+
 	return nil
 }
 

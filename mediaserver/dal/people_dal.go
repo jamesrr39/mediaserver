@@ -15,7 +15,7 @@ func NewPeopleDAL() *PeopleDAL {
 }
 
 func (r *PeopleDAL) CreatePerson(tx *sql.Tx, person *domain.Person) errorsx.Error {
-	result, err := tx.Exec(`INSERT INTO people (name) VALUES ($1);`, person.Name)
+	result, err := tx.Exec(`INSERT INTO people (name, is_user) VALUES ($1, $2);`, person.Name, person.IsUser)
 	if err != nil {
 		return errorsx.Wrap(err)
 	}

@@ -4,10 +4,10 @@ import (
 	"database/sql"
 	"log"
 
-	ql "github.com/cznic/ql" // register driver
 	"github.com/jamesrr39/goutil/dbstatetracker"
 	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/jamesrr39/goutil/logpkg"
+	ql "modernc.org/ql" // register driver
 )
 
 type DBConn struct {

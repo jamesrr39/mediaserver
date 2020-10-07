@@ -15,14 +15,14 @@ import (
 type mapByHash map[domain.HashValue]domain.MediaFile
 
 type MediaFilesCache struct {
-	mu         *sync.Mutex
+	mu         *sync.RWMutex
 	mediaFiles []domain.MediaFile
 	mapByHash  mapByHash
 	hashValue  domain.HashValue
 }
 
 func NewMediaFilesCache() *MediaFilesCache {
-	return &MediaFilesCache{mu: &sync.Mutex{}, mapByHash: make(mapByHash)}
+	return &MediaFilesCache{mu: &sync.RWMutex{}, mapByHash: make(mapByHash)}
 }
 
 func (cache *MediaFilesCache) Add(mediaFile domain.MediaFile) error {
@@ -79,10 +79,20 @@ func (cache *MediaFilesCache) GetHashValue() domain.HashValue {
 }
 
 func (cache *MediaFilesCache) GetAll() []domain.MediaFile {
+	cache.mu.RLock()
+	cache.mu.RUnlock()
 	return cache.mediaFiles
 }
 
 // can be nil if picture metadata not in cache
 func (cache *MediaFilesCache) Get(hashValue domain.HashValue) domain.MediaFile {
+	cache.mu.RLock()
+	cache.mu.RUnlock()
 	return cache.mapByHash[hashValue]
+}
+
+func (cache *MediaFilesCache) UpdateMediaFiles(mediaFiles []domain.MediaFile) {
+	cache.mu.Lock()
+	defer cache.mu.Unlock()
+	cache.mediaFiles = mediaFiles
 }
