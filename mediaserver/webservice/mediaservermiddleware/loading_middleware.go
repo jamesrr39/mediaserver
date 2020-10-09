@@ -18,7 +18,7 @@ func LoadingMiddleware(readyChan chan bool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			if !ready {
-				w.Write([]byte("scanning..."))
+				http.Error(w, "scanning...", http.StatusInternalServerError)
 				return
 			}
 			next.ServeHTTP(w, r)

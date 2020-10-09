@@ -185,9 +185,11 @@ func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx) errorsx.Error {
 
 		sema.Add()
 		go func() {
-			defer sema.Done()
 			mediaFile, err := dal.processFile(dal.fs, tx, path, fileInfo)
 			if err != nil {
+				// mark as done
+				defer sema.Done()
+
 				if err == ErrFileNotSupported {
 					dal.log.Info("skipping " + path + ", file extension not recognised")
 					return
@@ -196,8 +198,7 @@ func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx) errorsx.Error {
 				return
 			}
 
-			// add one to sema to synchronise receiving chan adding to slice
-			sema.Add()
+			// leave sema open, and mark as done after the receiving chan has added to the array
 			mediaFileChan <- mediaFile
 		}()
 		return nil
