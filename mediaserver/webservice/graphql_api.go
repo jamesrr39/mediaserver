@@ -283,6 +283,9 @@ func (ws *GraphQLAPIService) setupQueryType() *graphql.Object {
 						for _, hashAsInterfaceType := range hashes {
 							hash := domain.HashValue(hashAsInterfaceType.(string))
 							mediaFile := ws.mediaFilesDAL.Get(hash)
+							if mediaFile == nil {
+								return nil, errorsx.Errorf("expected a mediafile from the hash but a mediafile with the hash %q was not found", hash)
+							}
 
 							records, err := ws.tracksDAL.GetRecords(mediaFile.(*domain.FitFileSummary))
 							if err != nil {
