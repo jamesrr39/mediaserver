@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { SERVER_BASE_URL } from '../../configs';
 import { VideoMetadata } from '../../domain/VideoMetadata';
 import { Size } from '../../domain/Size';
 
@@ -18,7 +17,7 @@ export class VideoThumbnail extends React.Component<Props> {
     render() {
         const { videoMetadata, size } = this.props;
 
-        const videoUrl = `${SERVER_BASE_URL}/file/video/${videoMetadata.hashValue}`;
+        const videoUrl = `/file/video/${encodeURIComponent(videoMetadata.hashValue)}`;
 
         return (
         <div>

@@ -1,7 +1,6 @@
-import { SERVER_BASE_URL } from '../configs';
 import { Person } from '../domain/People';
 import { State } from '../reducers/rootReducer';
-import { createErrorMessage, DataResponse, fetchWithAuth } from './util';
+import { createErrorMessage, DataResponse } from './util';
 
 export enum PeopleActionTypes {
     PEOPLE_FETCHED = 'PEOPLE_FETCHED',
@@ -41,13 +40,12 @@ export type FetchAllPeopleResponse = {
 export function fetchAllPeople() {
     return async(
         dispatch: (action: PeopleAction) => void, getState: () => State): Promise<FetchAllPeopleResponse> => {
-        const state = getState();
 
         dispatch({
             type: PeopleActionTypes.PEOPLE_FETCH_STARTED,
         });
 
-        const response = await fetchWithAuth(state, `${SERVER_BASE_URL}/api/graphql?query={people{id,name,isUser}}`);
+        const response = await fetch(`/api/graphql?query={people{id,name,isUser}}`);
         if (!response.ok) {
             dispatch({
                 type: PeopleActionTypes.PEOPLE_FETCH_FAILED,
@@ -71,9 +69,7 @@ export function fetchAllPeople() {
 
 export function createPerson(name: string) {
     return async(dispatch: (action: PeopleAction) => void, getState: () => State) => {
-        const state = getState();
-
-        const response = await fetchWithAuth(state, `${SERVER_BASE_URL}/api/graphql?query={people{id,name}}`, {
+        const response = await fetch(`/api/graphql?query={people{id,name}}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/graphql',

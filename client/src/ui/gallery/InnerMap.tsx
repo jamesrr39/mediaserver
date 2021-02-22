@@ -2,10 +2,8 @@ import * as React from 'react';
 import { createCompareTimeTakenFunc } from '../../domain/PictureMetadata';
 
 import MapComponent, { MapMarker, TrackMapData } from '../MapComponent';
-import { SERVER_BASE_URL } from '../../configs';
 import { MediaFile } from '../../domain/MediaFile';
 import { MediaFileType } from '../../domain/MediaFileType';
-import { joinUrlFragments } from '../../util/url';
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
@@ -71,7 +69,7 @@ export class InnerMap extends React.Component<InnerMapProps> {
 
             markerData.popupData = {
               name: metadata.getName(),
-              imagePreviewUrl: joinUrlFragments(SERVER_BASE_URL, 'file', 'picture', metadata.hashValue),
+              imagePreviewUrl: `file/picture/${encodeURIComponent(metadata.hashValue)}`,
               linkUrl,
               pictureRawSize: metadata.rawSize,
             };

@@ -1,7 +1,5 @@
 import * as React from 'react';
 import { MediaFile } from '../../domain/MediaFile';
-import { joinUrlFragments } from '../../util/url';
-import { SERVER_BASE_URL } from '../../configs';
 import { Link } from 'react-router-dom';
 
 export const styles = {
@@ -36,7 +34,7 @@ export default class extends React.Component<Props> {
             mediaFile: pictureMetadata, baseUrl, onInfoButtonClicked
         } = this.props;
 
-        const pictureURL = joinUrlFragments(SERVER_BASE_URL, 'file', 'picture', pictureMetadata.hashValue);
+        const pictureURL = `file/picture/${encodeURIComponent(pictureMetadata.hashValue)}`;
 
         return (
         <div style={styles.topBar}>

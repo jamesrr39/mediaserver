@@ -1,8 +1,6 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Collection } from '../../domain/Collection';
-import { SERVER_BASE_URL } from '../../configs';
-import { joinUrlFragments } from '../../util/url';
 
 export const styles = {
   collectionBox: {
@@ -39,7 +37,7 @@ class CollectionThumbnail extends React.Component<Props> {
 
     let thumbnailHtml = <span>?</span>;
     if (fileHashes.length !== 0) {
-      const imageUrl = joinUrlFragments(SERVER_BASE_URL, 'file', 'picture', `${fileHashes[0]}?h=200`);
+      const imageUrl = `file/picture/${fileHashes[0]}?h=200`;
       thumbnailStyle.backgroundImage = `url(${imageUrl})`;
       thumbnailHtml = <span />;
     }

@@ -2,9 +2,8 @@ import * as React from 'react';
 import * as Leaflet from 'leaflet';
 import { RawSize } from '../domain/PictureMetadata';
 import { MapLocation } from '../domain/Location';
-import { escapeHtml } from '../util/html';
+import { escapeHtml } from 'ts-util/dist/Html';
 import { ActivityBounds, FitTrack } from '../domain/FitTrack';
-import { joinUrlFragments } from '../util/url';
 
 import markerIcon from '../../node_modules/leaflet/dist/images/marker-icon.png';
 import markerShadow from '../../node_modules/leaflet/dist/images/marker-shadow.png';
@@ -231,7 +230,7 @@ class MapComponent extends React.Component<Props> {
         finishMarker.addTo(map);
         
         if (track.openTrackUrl) {
-          const link = joinUrlFragments('#', track.openTrackUrl, track.trackSummary.hashValue);
+          const link = `#/${track.openTrackUrl}/${encodeURIComponent(track.trackSummary.hashValue)}`;
 
           startMarker.bindPopup(`<a href='${link}'>Track</a>`);
           startMarker.addEventListener('click', (event) => {

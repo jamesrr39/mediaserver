@@ -6,7 +6,6 @@ import './index.css';
 import '../node_modules/font-awesome/css/font-awesome.css';
 
 import '../node_modules/leaflet/dist/leaflet.css';
-import '../node_modules/font-awesome/css/font-awesome.css';
 
 import { Provider } from 'react-redux';
 import configureStore from './configureStore';

@@ -4,7 +4,6 @@ import { UserAction, UserActionType } from '../actions/userActions';
 export type ActiveUserReducerState = {
     activeUser?: {
         user: Person,
-        token: string,
     },
 };
 
@@ -17,13 +16,12 @@ export function activeUserReducer(
     action: UserAction) {
     switch (action.type) {
         case UserActionType.USER_LOGIN:
-            const {user, token} = action;
+            const {user} = action;
 
             return {
                 ...state,
                 activeUser: {
                     user,
-                    token,
                 },
             };
         default:

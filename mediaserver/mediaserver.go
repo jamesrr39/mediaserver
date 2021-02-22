@@ -16,6 +16,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/jamesrr39/goutil/gofs"
+	"github.com/jamesrr39/goutil/httpextra"
 	"github.com/jamesrr39/goutil/logpkg"
 	"github.com/jamesrr39/goutil/profile"
 )
@@ -112,7 +113,7 @@ func (ms *MediaServer) ListenAndServe(addr string) error {
 
 	mainRouter := chi.NewRouter()
 	mainRouter.Use(mediaservermiddleware.LoadingMiddleware(readyChan))
-	mainRouter.Use(mediaservermiddleware.CorsMiddleware())
+	mainRouter.Use(httpextra.CorsMiddleware())
 	mainRouter.Use(mediaservermiddleware.CreateRequestLoggerMiddleware(ms.logger))
 	authMW := mediaservermiddleware.AuthMiddleware(ms.hmacSigningSecret, ms.logger)
 

@@ -4,7 +4,6 @@ import GalleryWithFilter from '../gallery/GalleryWithFilter';
 import { connect } from 'react-redux';
 import { themeStyles } from '../../theme/theme';
 import { Link } from 'react-router-dom';
-import { joinUrlFragments } from '../../util/url';
 import { MediaFile } from '../../domain/MediaFile';
 import { State } from '../../reducers/rootReducer';
 import { getScreenWidth } from '../../util/screen_size';
@@ -38,7 +37,7 @@ class CollectionViewComponent extends React.Component<Props> {
     const galleryProps = {
       mediaFiles,
       peopleMap,
-      mediaFileUrlBase: '/' + joinUrlFragments(routeUrl, 'detail'),
+      mediaFileUrlBase: `/${routeUrl}/detail`,
       showMap: true,
       getRowWidth: () => getScreenWidth(),
     };
@@ -63,12 +62,7 @@ type CollectionViewNavBarProps = {
 export const CollectionViewNavBarComponent = (props: CollectionViewNavBarProps) => {
   const { collection } = props;
   
-  const editUrl = '/' + joinUrlFragments(
-    'collections',
-    encodeURIComponent(collection.type),
-    encodeURIComponent(collection.identifier()),
-    'edit'
-  );
+  const editUrl = `collections/${encodeURIComponent(collection.type)}/${encodeURIComponent(collection.identifier())}/edit`;
 
   return (
     <Link style={themeStyles.button} to={editUrl}>

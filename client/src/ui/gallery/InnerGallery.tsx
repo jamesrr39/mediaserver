@@ -6,7 +6,7 @@ import { MediaFile } from '../../domain/MediaFile';
 import GalleryRow, { filesToRows, BuildLinkFunc, Row, SelectThumbnailEventInfo } from './GalleryRow';
 import { mediaFilesToDateGroups, groupsMapToGroups } from '../../domain/MediaFileGroup';
 import { InnerMap } from './InnerMap';
-import { Observable } from '../../util/Observable';
+import { Observable } from 'ts-util/dist/Observable';
 import { PeopleMap } from '../../actions/mediaFileActions';
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);

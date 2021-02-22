@@ -1,14 +1,14 @@
 import * as React from 'react';
 import { createCompareTimeTakenFunc } from '../../domain/PictureMetadata';
 
-import { Observable } from '../../util/Observable';
+import { Observable } from 'ts-util/dist/Observable';
 import { TrackMapData } from '../MapComponent';
 import { MediaFile } from '../../domain/MediaFile';
 import { MediaFileType } from '../../domain/MediaFileType';
 import { FitTrack, Record } from '../../domain/FitTrack';
 import { GalleryFilter } from '../../domain/Filter';
 import InnerGallery from './InnerGallery';
-import { CancellablePromise } from '../../util/promises';
+import { CancellablePromise } from 'ts-util/dist/Promises';
 import { connect } from 'react-redux';
 import { fetchRecordsForTracks, PeopleMap } from '../../actions/mediaFileActions';
 

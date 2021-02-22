@@ -1,7 +1,5 @@
 import * as React from 'react';
 import { PictureMetadata } from '../../domain/PictureMetadata';
-import { SERVER_BASE_URL } from '../../configs';
-import { joinUrlFragments } from '../../util/url';
 import { Size } from '../../domain/Size';
 import { THUMBNAIL_HEIGHTS } from '../../generated/thumbnail_sizes';
 
@@ -38,12 +36,7 @@ export class PictureThumbnail extends React.Component<Props, ComponentState> {
             thumbnailHeight = pictureMetadata.rawSize.height;
         }
 
-        const imgSrc = joinUrlFragments(
-            SERVER_BASE_URL,
-            'file',
-            'picture',
-            `${pictureMetadata.hashValue}?h=${thumbnailHeight}`
-        );
+        const imgSrc = `file/picture/${encodeURIComponent(pictureMetadata.hashValue)}?h=${encodeURIComponent(thumbnailHeight)}`;
 
         const style = {
             width: size.width + 'px',
@@ -58,7 +51,7 @@ export class PictureThumbnail extends React.Component<Props, ComponentState> {
     componentDidMount() {
         const { size, pictureMetadata } = this.props;
 
-        const imgSrc = joinUrlFragments(SERVER_BASE_URL, 'file', 'picture', `${pictureMetadata.hashValue}?h=${size.height}`);
+        const imgSrc = `file/picture/${encodeURIComponent(pictureMetadata.hashValue)}?h=${encodeURIComponent(size.height)}`;
 
         const image = new Image();
         image.onload = () => {

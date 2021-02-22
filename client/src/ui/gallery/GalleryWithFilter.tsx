@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { createCompareTimeTakenFunc } from '../../domain/PictureMetadata';
 
-import { DebouncedObservable } from '../../util/Observable';
+import { DebouncedObservable } from 'ts-util/dist/Observable';
 import { MediaFile } from '../../domain/MediaFile';
 import { FilterComponent } from './FilterComponent';
 import { GalleryFilter } from '../../domain/Filter';

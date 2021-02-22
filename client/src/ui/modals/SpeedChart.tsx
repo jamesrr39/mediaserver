@@ -1,16 +1,16 @@
 import * as React from 'react';
-import { Chart } from 'chart.js';
+import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { Record, getSpeedsFromRecords } from '../../domain/FitTrack';
-import { Time } from '../../util/time';
+// import { Time } from '../../util/time';
 
 type Props = {
     trackRecords: Record[];
 };
 
-const colors = {
-    blue: 'rgb(54, 162, 235)',
-    lightBlue: 'rgb(118, 166, 204)',
-};
+// const colors = {
+//     blue: 'rgb(54, 162, 235)',
+//     lightBlue: 'rgb(118, 166, 204)',
+// };
 
 type ComponentState = {
     highestPace: number,
@@ -23,9 +23,12 @@ export default class SpeedChart extends React.Component<Props, ComponentState> {
         lowestPace: 0,
     };
 
-    private chart?: Chart;
-
     render() {
+        // https://recharts.org/en-US/examples/HighlightAndZoomLineChart
+        const data = this.getChartData();
+
+        console.log('data', data)
+
         return (
             <>
                 <label>Cap highest pace at<input type="number" onChange={event => {
@@ -42,27 +45,21 @@ export default class SpeedChart extends React.Component<Props, ComponentState> {
                         lowestPace
                     }));
                 }}/></label>
-                <canvas ref={el => this.renderChart(el)} />
+                
+                <LineChart width={600} height={300} data={data}>
+                <Line type="monotone" dataKey="pace" stroke="#8884d8" />
+                <CartesianGrid stroke="#ccc" />
+                <XAxis type="number" dataKey="time" />
+                <YAxis type="number" dataKey="pace" />
+                <Tooltip />
+                <Legend />
+            </LineChart>
             </>
         );
     }
 
-    private renderChart(el: HTMLCanvasElement|null) {
-        if (!el) {
-            return;
-        }
-
-        if (this.chart) {
-            this.chart.destroy();
-            this.chart = undefined;
-        }
-
+    private getChartData() {
         const {trackRecords} = this.props;
-
-        const ctx = el.getContext('2d');
-        if (!ctx) {
-            return;
-        }
 
         const minimumIntervalSeconds = 20;
         // const maximumNumberOfPoints = 1000;
@@ -110,32 +107,12 @@ export default class SpeedChart extends React.Component<Props, ComponentState> {
             }
 
             return {
-                x: middleTimeThroughSeconds,
-                y: parseFloat(pace.toFixed(2)),
+                name: middleTimeThroughSeconds + 'mypace',
+                time: middleTimeThroughSeconds,
+                pace: parseFloat(pace.toFixed(2)),
             };
         });
 
-        const chartOptions = {
-            type: 'line',
-            data: {
-                labels: points.map(point => {
-                    return `${
-                        new Time(point.middleTimeThroughSeconds).toString()
-                    }, ${
-                        (point.middleDistanceMetres / 1000).toFixed(2)
-                    }km`;
-                }),
-                datasets: [{
-                    label: 'Pace (Minutes per kilometer)',
-                    backgroundColor: colors.lightBlue,
-                    borderColor: colors.blue,
-                    data,
-                }],
-            },
-            options: {
-            },
-        };
-
-        this.chart = new Chart(ctx, chartOptions);
+        return data;
     }
 }

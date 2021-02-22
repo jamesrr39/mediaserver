@@ -10,9 +10,9 @@ import { MediaFileType } from '../domain/MediaFileType';
 import { fetchRecordsForTracks } from '../actions/mediaFileActions';
 import { FilterComponent } from './gallery/FilterComponent';
 import { GalleryFilter } from '../domain/Filter';
-import { DebouncedObservable } from '../util/Observable';
+import { DebouncedObservable } from 'ts-util/dist/Observable';
 import { trackSummariesToTrackDatas } from '../actions/selectors';
-import { CancellablePromise, makeCancelable } from '../util/promises';
+import { CancellablePromise, makeCancelable } from 'ts-util/dist/Promises';
 
 type Props = {
   mediaFiles: MediaFile[];

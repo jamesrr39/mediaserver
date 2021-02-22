@@ -4,7 +4,7 @@ import Thumbnail, { getSizeForThumbnail } from '../Thumbnail';
 import { Size } from '../../domain/Size';
 import { MediaFileGroup } from '../../domain/MediaFileGroup';
 import { Link } from 'react-router-dom';
-import { Observable } from '../../util/Observable';
+import { Observable } from 'ts-util/dist/Observable';
 import { PeopleMap } from '../../actions/mediaFileActions';
 
 export type Row = {

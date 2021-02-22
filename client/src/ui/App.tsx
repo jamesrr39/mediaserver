@@ -14,7 +14,7 @@ class App extends React.Component<Props> {
         const { loggedIn } = this.props;
 
         if (!loggedIn) {
-            return <LoginScreen onSuccessfulLogin={() => console.log('logged in...')} />;
+            return <LoginScreen />;
         }
         return <MediaServer />;
     }

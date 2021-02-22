@@ -1,4 +1,4 @@
-import { DebouncedObservable } from '../util/Observable';
+import { DebouncedObservable } from 'ts-util/dist/Observable';
 
 export type WindowSize = {
   innerHeight: number;

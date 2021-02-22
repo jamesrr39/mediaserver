@@ -1,12 +1,11 @@
 import { Action } from 'redux';
-import { SERVER_BASE_URL } from '../configs';
 import { MediaFile } from '../domain/MediaFile';
 import { MediaFileJSON, fromJSON } from '../domain/deserialise';
 import { FitTrack, Record } from '../domain/FitTrack';
 import { State } from '../reducers/rootReducer';
 import { Person } from '../domain/People';
 import { nameForMediaFileType } from '../domain/MediaFileType';
-import { createErrorMessage, fetchWithAuth } from './util';
+import { createErrorMessage } from './util';
 import { createMediaFileWithParticipants } from '../domain/util';
 
 export type PeopleMap = Map<number, Person>;
@@ -84,13 +83,11 @@ export type FetchPicturesMetadataResponse = {
 
 export function fetchPicturesMetadata() {
   return async (dispatch: (action: MediaserverAction) => FetchPicturesMetadataResponse, getState: () => State) => {
-    const state = getState();
-
     dispatch({
       type: FilesActionTypes.FETCH_MEDIA_FILES,
     });
 
-    const response = await fetchWithAuth(state, `${SERVER_BASE_URL}/api/files/`);
+    const response = await fetch(`/api/files/`);
     if (!response.ok) {
       throw new Error(createErrorMessage(response));
     }
@@ -110,7 +107,7 @@ export function fetchPicturesMetadata() {
 }
 
 async function fetchTrackRecords(state: State, hashes: string[]) {
-  const response = await fetchWithAuth(state, `${SERVER_BASE_URL}/api/graphql`, {
+  const response = await fetch(`/api/graphql`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/graphql',
@@ -244,8 +241,6 @@ export function uploadFile(file: File) {
 
 export function setParticipantsOnMediaFile(mediaFile: MediaFile, participants: Person[]) {
   return async(dispatch: (action: MediaserverAction) => void, getState: () => State) => {
-    const state = getState();
-
     for (let participant of participants) {
       if (participant.id === 0) {
         throw new Error(`couldn't save, got participant id 0`);
@@ -254,7 +249,7 @@ export function setParticipantsOnMediaFile(mediaFile: MediaFile, participants: P
 
     const participantIds = participants.map(participant => participant.id);
 
-    const response = await fetchWithAuth(state, `${SERVER_BASE_URL}/api/graphql?query={people{id,name}}`, {
+    const response = await fetch(`/api/graphql?query={people{id,name}}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/graphql',

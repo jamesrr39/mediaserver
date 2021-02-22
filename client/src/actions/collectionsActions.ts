@@ -1,8 +1,7 @@
-import { SERVER_BASE_URL } from '../configs';
 import { Action } from 'redux';
 import { Collection, CustomCollection } from '../domain/Collection';
 import { Dispatch } from 'react';
-import { createErrorMessage, fetchWithAuth } from './util';
+import { createErrorMessage } from './util';
 import { State } from '../reducers/rootReducer';
 
 export enum CollectionActions {
@@ -55,12 +54,10 @@ export type FetchCollectionsResponse = {
 
 export function fetchCollections() {
   return async (dispatch: Dispatch<CollectionsAction>, getState: () => State): Promise<FetchCollectionsResponse> => {
-    const state = getState();
-
     dispatch({
       type: CollectionActions.FETCH_COLLECTIONS,
     });
-    const response = await fetchWithAuth(state, `${SERVER_BASE_URL}/api/collections/`);
+    const response = await fetch(`/api/collections/`);
     if (!response.ok) {
       dispatch({
         type: CollectionActions.COLLECTION_FETCH_FAILED,
@@ -89,14 +86,12 @@ export function fetchCollections() {
 
 export function saveCollection(collection: CustomCollection) {
   return async (dispatch: (action: CollectionsAction) => void, getState: () => State) => {
-    const state = getState();
-
     const url = (collection.id === 0)
-      ? `${SERVER_BASE_URL}/api/collections/`
-      : `${SERVER_BASE_URL}/api/collections/${collection.id}`;
+      ? `/api/collections/`
+      : `/api/collections/${encodeURIComponent(collection.id)}`;
     const method = (collection.id === 0) ? 'POST' : 'PUT';
     
-    const response = await fetchWithAuth(state, url, {
+    const response = await fetch(url, {
       method,
       body: JSON.stringify(collection),
     });

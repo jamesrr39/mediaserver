@@ -1,7 +1,5 @@
-import { SERVER_BASE_URL } from './configs';
 import { MediaFile } from './domain/MediaFile';
 import { MediaFileJSON, fromJSON } from './domain/deserialise';
-import { fetchWithAuth } from './actions/util';
 import { State } from './reducers/rootReducer';
 
 type QueuedFile = {
@@ -54,7 +52,7 @@ export class FileQueue {
     this.currentlyUploading.push(queuedFile);
     const formData = new FormData();
     formData.append('file', queuedFile.file);
-    const response = await fetchWithAuth(state, `${SERVER_BASE_URL}/api/files/`, {
+    const response = await fetch(`/api/files/`, {
       method: 'POST',
       body: formData,
     });

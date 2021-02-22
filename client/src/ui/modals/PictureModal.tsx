@@ -1,9 +1,7 @@
 import * as React from 'react';
 import { PictureMetadata } from '../../domain/PictureMetadata';
-import { SERVER_BASE_URL } from '../../configs';
 import { THUMBNAIL_HEIGHTS } from '../../generated/thumbnail_sizes';
 import { INFO_CONTAINER_WIDTH } from './FileInfoComponent';
-import { joinUrlFragments } from '../../util/url';
 import { connect } from 'react-redux';
 import { State } from '../../reducers/rootReducer';
 import { WindowState } from '../../reducers/windowReducer';
@@ -82,7 +80,7 @@ class PictureModal extends React.Component<Props> {
       chosenHeight = pictureMetadata.rawSize.height;
     }
 
-    const url = joinUrlFragments(SERVER_BASE_URL, 'file', 'picture', `${pictureMetadata.hashValue}?h=${chosenHeight}`);
+    const url = `file/picture/${encodeURIComponent(pictureMetadata.hashValue)}?h=${encodeURIComponent(chosenHeight)}`;
     pictureEl.style.maxHeight = `${idealHeight}px`;
     pictureEl.style.maxWidth = `${idealWidth}px`;
     pictureEl.src = url;

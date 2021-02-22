@@ -7,7 +7,6 @@ type Props = {
     fetchUsers: () => Promise<Person[]>,
     login: (userId: number) => Promise<void>,
     createUserAndLogin: (username: string) => Promise<void>,
-    onSuccessfulLogin: () => void,
 };
 
 type ComponentState = {
@@ -79,16 +78,20 @@ class LoginScreen extends React.Component<Props, ComponentState> {
         );
     }
 
-    private loginWithExistingUser(user: Person) {
-        this.props.login(user.id)
-        .then(() => this.props.onSuccessfulLogin())
-        .catch(err => this.setState(state => ({...state, errorMessage: err, loaded: true})));
+    private async loginWithExistingUser(user: Person) {
+        try {
+            await this.props.login(user.id);
+        } catch (err) {
+            this.setState(state => ({...state, errorMessage: err, loaded: true}));
+        }
     }
 
-    private createUserAndLogin(username: string) {
-        this.props.createUserAndLogin(username)
-        .then(() => this.props.onSuccessfulLogin())
-        .catch(err => this.setState(state => ({...state, errorMessage: err, loaded: true})));
+    private async createUserAndLogin(username: string) {
+        try {
+            await this.props.createUserAndLogin(username);
+        } catch (err) {
+            this.setState(state => ({...state, errorMessage: err, loaded: true}));
+        }
     }
 }
 

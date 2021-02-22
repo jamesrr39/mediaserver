@@ -1,6 +1,5 @@
 import { Person } from '../domain/People';
 import { createErrorMessage, DataResponse } from './util';
-import { SERVER_BASE_URL } from '../configs';
 
 export enum UserActionType {
   USER_LOGIN = 'USER_LOGIN',
@@ -10,14 +9,13 @@ export enum UserActionType {
 export type UserActionLogin = {
   type: UserActionType.USER_LOGIN,
   user: Person,
-  token: string,
 };
 
 export type UserAction = UserActionLogin;
 
 export function fetchUsers() {
     return async(): Promise<Person[]> => {
-        const response = await fetch(`${SERVER_BASE_URL}/api/login/users/`);
+        const response = await fetch(`/api/login/users/`);
         if (!response.ok) {
           throw new Error(createErrorMessage(response));
         }
@@ -30,7 +28,7 @@ export function fetchUsers() {
 
 export function login(userId: number) {
   return async(dispatch: (action: UserAction) => void): Promise<void> => {
-    const response = await fetch(`${SERVER_BASE_URL}/api/login/`, {
+    const response = await fetch(`/api/login/`, {
       method: 'POST',
       body: JSON.stringify({userId}),
     });
@@ -40,19 +38,18 @@ export function login(userId: number) {
 
     const respBody: DataResponse<{user: Person, token: string}> = await response.json();
 
-    const {user, token} = respBody.data;
+    const {user} = respBody.data;
 
     dispatch({
       type: UserActionType.USER_LOGIN,
       user,
-      token,
     });
   };
 }
 
 export function createUserAndLogin(username: string) {
   return async(dispatch: (action: UserAction) => void): Promise<void> => {
-    const response = await fetch(`${SERVER_BASE_URL}/api/login/users/`, {
+    const response = await fetch(`/api/login/users/`, {
       method: 'POST',
       body: JSON.stringify({username}),
     });
@@ -62,12 +59,11 @@ export function createUserAndLogin(username: string) {
 
     const respBody: DataResponse<{user: Person, token: string}> = await response.json();
 
-    const {user, token} = respBody.data;
+    const {user} = respBody.data;
 
     dispatch({
       type: UserActionType.USER_LOGIN,
       user,
-      token,
     });
   };
 }
