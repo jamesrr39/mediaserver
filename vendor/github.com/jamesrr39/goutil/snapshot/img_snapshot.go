@@ -8,41 +8,92 @@ import (
 	"image/color"
 	"image/draw"
 	"image/jpeg"
+	"image/png"
 	"io"
 	"io/ioutil"
 	"math"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/jamesrr39/goutil/open"
 )
 
-type Cell struct {
+type cellType struct {
 	Color color.Color
 }
 
-type Row struct {
-	Cells []*Cell
+type rowType struct {
+	Cells []*cellType
 }
 
-type ImageSnapshot struct {
-	Rows []*Row
+type imageSnapshotType struct {
+	Rows []*rowType
 }
 
-func MakeSnapshot(img image.Image) *ImageSnapshot {
-	snapshot := new(ImageSnapshot)
-	bounds := img.Bounds()
-	for y := 0; y < bounds.Max.Y; y++ {
-		row := new(Row)
-		for x := 0; x < bounds.Max.X; x++ {
-			cell := &Cell{
-				Color: img.At(x, y),
+const (
+	CI_MODE_ENV_VAR = "CI_MODE"
+)
+
+func NewImageSnapshot(img image.Image) *SnapshotType {
+	value := marshalImageSnapshot(img)
+
+	return &SnapshotType{
+		DataType: SnapshotDataTypeImage,
+		Value:    value,
+		OnBadMatch: func(t *testing.T, expected string) error {
+			openComparision, ok := os.LookupEnv(CI_MODE_ENV_VAR)
+			if ok && openComparision == "1" {
+				t.Logf("preview not automatically opened as you are in CI mode. To leave CI mode, unset %s, or set it to 0.", CI_MODE_ENV_VAR)
+				return nil
 			}
-			row.Cells = append(row.Cells, cell)
-		}
-		snapshot.Rows = append(snapshot.Rows, row)
+
+			// location, err := drawImageComparison(expected, img)
+			tempdir, err := ioutil.TempDir("", "go-snapshot")
+			if err != nil {
+				return err
+			}
+
+			actualLocation := filepath.Join(tempdir, "actual.png")
+			expectedLocation := filepath.Join(tempdir, "expected.png")
+
+			actualF, err := os.Create(actualLocation)
+			if err != nil {
+				return err
+			}
+			defer actualF.Close()
+
+			err = png.Encode(actualF, img)
+			if err != nil {
+				return err
+			}
+
+			expectedF, err := os.Create(expectedLocation)
+			if err != nil {
+				return err
+			}
+			defer expectedF.Close()
+
+			expectedImg, err := unmarshalImgSnapshot(bytes.NewBufferString(expected))
+			if err != nil {
+				return err
+			}
+
+			err = png.Encode(expectedF, expectedImg)
+			if err != nil {
+				return err
+			}
+
+			t.Logf("bad match found. Comparision can be viewed here: %s\n", tempdir)
+
+			open.OpenURL(expectedLocation)
+			open.OpenURL(actualLocation)
+
+			return nil
+		},
 	}
-	return snapshot
 }
 
 type rowCell struct {
@@ -58,7 +109,22 @@ func rowCellsToString(rowCells []*rowCell) string {
 	return strings.Join(s, "|")
 }
 
-func (snapshot *ImageSnapshot) String() string {
+func marshalImageSnapshot(img image.Image) string {
+	// convert to series of rows and cells
+	snapshot := new(imageSnapshotType)
+	bounds := img.Bounds()
+	for y := 0; y < bounds.Max.Y; y++ {
+		row := new(rowType)
+		for x := 0; x < bounds.Max.X; x++ {
+			cell := &cellType{
+				Color: img.At(x, y),
+			}
+			row.Cells = append(row.Cells, cell)
+		}
+		snapshot.Rows = append(snapshot.Rows, row)
+	}
+
+	// marshal the rows and cells
 	var rowStrings []string
 	for _, row := range snapshot.Rows {
 		rowCells := []*rowCell{}
@@ -95,7 +161,7 @@ func (snapshot *ImageSnapshot) String() string {
 	return strings.Join(rowStrings, "\n")
 }
 
-func (snapshot *ImageSnapshot) Image() image.Image {
+func (snapshot *imageSnapshotType) toImage() image.Image {
 	xSize := 0
 	for _, row := range snapshot.Rows {
 		if len(row.Cells) > xSize {
@@ -107,14 +173,7 @@ func (snapshot *ImageSnapshot) Image() image.Image {
 
 	for rowIndex, row := range snapshot.Rows {
 		for cellIndex, cell := range row.Cells {
-			r, g, b, a := cell.Color.RGBA()
-
-			img.SetRGBA(cellIndex, rowIndex, color.RGBA{
-				uint32ColourToByte(r),
-				uint32ColourToByte(g),
-				uint32ColourToByte(b),
-				uint32ColourToByte(a),
-			})
+			img.Set(cellIndex, rowIndex, cell.Color)
 		}
 	}
 
@@ -126,12 +185,12 @@ func colorToString(color color.Color) string {
 	return fmt.Sprintf("%d,%d,%d,%d", r, g, b, a)
 }
 
-func Parse(reader io.Reader) (*ImageSnapshot, error) {
-	imgSnapshot := new(ImageSnapshot)
+func unmarshalImgSnapshot(reader io.Reader) (image.Image, error) {
+	imgSnapshot := new(imageSnapshotType)
 
 	buf := bufio.NewScanner(reader)
 	for buf.Scan() {
-		row := new(Row)
+		row := new(rowType)
 		line := buf.Text()
 		if line == "" {
 			continue
@@ -151,7 +210,7 @@ func Parse(reader io.Reader) (*ImageSnapshot, error) {
 			}
 
 			for i := uint64(0); i < count; i++ {
-				row.Cells = append(row.Cells, &Cell{
+				row.Cells = append(row.Cells, &cellType{
 					color.RGBA{
 						R: r,
 						G: g,
@@ -168,13 +227,13 @@ func Parse(reader io.Reader) (*ImageSnapshot, error) {
 		return nil, buf.Err()
 	}
 
-	return imgSnapshot, nil
+	return imgSnapshot.toImage(), nil
 }
 
 func colorFragmentsToColors(fragments []string) (r, g, b, a uint8, err error) {
 	uints := make([]uint8, 4)
 	for index, fragment := range fragments {
-		val, err := strconv.ParseUint(fragment, 10, 8)
+		val, err := strconv.ParseUint(fragment, 10, 64)
 		if err != nil {
 			return 0, 0, 0, 0, err
 		}
@@ -183,38 +242,25 @@ func colorFragmentsToColors(fragments []string) (r, g, b, a uint8, err error) {
 	return uints[0], uints[1], uints[2], uints[3], nil
 }
 
-func AssertEqual(t *testing.T, expected string, actual image.Image) {
-	actualSnapshot := MakeSnapshot(actual)
-
-	if expected == actualSnapshot.String() {
-		return
-	}
-
-	t.Fail()
-	t.Logf("expected: %q\nactual: %q\n", expected, actualSnapshot.String())
-
-	expectedSnapshot, err := Parse(bytes.NewBuffer([]byte(expected)))
+// drawImageComparision draws a comparision and returns the filepath of the comparision image
+func drawImageComparison(expected string, actual image.Image) (string, error) {
+	expectedImg, err := unmarshalImgSnapshot(bytes.NewBufferString(expected))
 	if err != nil {
-		t.Errorf("couldn't build a snapshot image from the string provided. Error: %q.\nSnapshot string: %s\n", err, expected)
-		return
+		return "", fmt.Errorf("couldn't build a snapshot image from the string provided. Error: %q.\nSnapshot string: %s", err, expected)
 	}
 
 	tmpSnapshotComparisionDir := "/tmp/go-snapshot"
 
 	err = os.MkdirAll(tmpSnapshotComparisionDir, 0755)
 	if err != nil {
-		t.Logf("failed to make snapshot comparision dir at %s. Error: %q\n", tmpSnapshotComparisionDir, err)
-		return
+		return "", fmt.Errorf("failed to make snapshot comparision dir at %q. Error: %q", tmpSnapshotComparisionDir, err)
 	}
 
 	tempFile, err := ioutil.TempFile(tmpSnapshotComparisionDir, "go-snapshot*.jpg")
 	if err != nil {
-		t.Logf("failed to make snapshot comparision image. Error: %q\n", err)
-		return
+		return "", fmt.Errorf("failed to make snapshot comparision image. Error: %q", err)
 	}
 	defer tempFile.Close()
-
-	expectedImg := expectedSnapshot.Image()
 
 	xMiddleMarginPx := 10
 
@@ -250,31 +296,8 @@ func AssertEqual(t *testing.T, expected string, actual image.Image) {
 
 	err = jpeg.Encode(tempFile, joinedImg, nil)
 	if err != nil {
-		t.Logf("failed to write the comparision image. Error: %q\n", err)
-		return
+		return "", fmt.Errorf("failed to write the comparision image. Error: %q", err)
 	}
 
-	t.Logf("snapshot image comparision written to %q\n", tempFile.Name())
-	return
-}
-
-// func AssertSnapshotEqual(t *testing.T, actual image.Image) {
-// 	_, callerFile, callerLine, ok := runtime.Caller(1)
-// 	if !ok {
-// 		t.Error("couldn't fetch the caller file")
-// 		return
-// 	}
-
-// 	println(callerFile)
-
-// 	AssertEqual(t)
-// }
-
-func uint32ColourToByte(value uint32) byte {
-	const ratio = float64(256) / float64(65536)
-	byteValue := ratio * float64(value)
-	if byteValue > 255 {
-		return byte(255)
-	}
-	return byte(byteValue)
+	return tempFile.Name(), nil
 }

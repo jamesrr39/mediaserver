@@ -4,10 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"runtime/debug"
+	"sort"
+	"strings"
 )
 
-// ErrItemNotFound defines a generic "item/object not found" error
-var ErrItemNotFound = errors.New("item not found")
+// some common error objects to wrap
+var (
+	ObjectNotFound = errors.New("ObjectNotFound")
+)
 
 type kvPairsMapType map[interface{}]interface{}
 
@@ -17,13 +21,35 @@ type Error interface {
 }
 
 type Err struct {
-	error
+	err     error
 	kvPairs kvPairsMapType
 	stack   []byte
 }
 
 func (err *Err) Stack() []byte {
 	return err.stack
+}
+
+func (err *Err) Error() string {
+	var s = err.err.Error()
+	var kvStrings []string
+	for key, val := range err.kvPairs {
+		kvStrings = append(kvStrings, fmt.Sprintf("%s=%#v", key, val))
+	}
+	if len(kvStrings) > 0 {
+		sort.Slice(kvStrings, func(i, j int) bool {
+			return kvStrings[i] < kvStrings[j]
+		})
+		s += fmt.Sprintf(" [%s]", strings.Join(kvStrings, ", "))
+	}
+	return s
+}
+
+// GoString implements the GoStringer interface,
+// and so is printed with the %#v fmt directive.
+// See https://golang.org/pkg/fmt/ for more details.
+func (err *Err) GoString() string {
+	return fmt.Sprintf("Error: %q\nStack:\n%s\n", err.Error(), err.Stack())
 }
 
 func Errorf(message string, args ...interface{}) Error {
@@ -46,11 +72,21 @@ func Wrap(err error, kvPairs ...interface{}) Error {
 		kvPairsMap[k] = v
 	}
 
-	return &Err{
-		err,
-		kvPairsMap,
-		debug.Stack(),
+	errType, ok := err.(*Err)
+	if !ok {
+		return &Err{
+			err,
+			kvPairsMap,
+			debug.Stack(),
+		}
 	}
+
+	// merge in kv map
+	for k, v := range kvPairsMap {
+		errType.kvPairs[k] = v
+	}
+
+	return errType
 }
 
 // Cause fetches the underlying cause of the error
@@ -58,7 +94,7 @@ func Wrap(err error, kvPairs ...interface{}) Error {
 func Cause(err error) error {
 	errErr, ok := err.(*Err)
 	if ok {
-		return Cause(errErr.error)
+		return Cause(errErr.err)
 	}
 
 	return err

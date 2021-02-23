@@ -8,3 +8,6 @@ yarn-debug.log
 
 /.atom/
 /tmp/
+
+# build bundle
+mediaserver/static_assets_handler/statik.go

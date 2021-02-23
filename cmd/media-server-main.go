@@ -94,7 +94,10 @@ func main() {
 		}
 		defer profileFile.Close()
 
-		profileWriter = streamtostorage.NewWriter(profileFile)
+		profileWriter, err = streamtostorage.NewWriter(profileFile, streamtostorage.MessageSizeBufferLenDefault)
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
 
 	profiler := profile.NewProfiler(profileWriter)

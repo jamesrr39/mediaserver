@@ -11,11 +11,20 @@ import (
 	"testing"
 )
 
-type snapshotType struct {
-	Value string
+type SnapshotDataType string
+
+const (
+	SnapshotDataTypeText  SnapshotDataType = "TEXT"
+	SnapshotDataTypeImage SnapshotDataType = "IMAGE"
+)
+
+type SnapshotType struct {
+	DataType   SnapshotDataType
+	Value      string
+	OnBadMatch func(t *testing.T, expected string) error `json:"-"`
 }
 
-func AssertMatchesSnapshot(t *testing.T, snapshotName, actual string) {
+func AssertMatchesSnapshot(t *testing.T, snapshotName string, actualSnapshot *SnapshotType) {
 	if snapshotName == "" {
 		t.Error("no snapshot name provided")
 	}
@@ -35,19 +44,19 @@ func AssertMatchesSnapshot(t *testing.T, snapshotName, actual string) {
 
 	file, err := actioner.OpenFile(t, snapshotFilePath)
 	if err != nil {
-		actioner.OnSnapshotFileOpenError(t, file, snapshotDirPath, snapshotFilePath, actual)
+		actioner.OnSnapshotFileOpenError(t, file, snapshotDirPath, snapshotFilePath, actualSnapshot)
 		return
 	}
 	defer file.Close()
 
-	snapshot := new(snapshotType)
+	snapshot := new(SnapshotType)
 	err = json.NewDecoder(file).Decode(&snapshot)
 	if err != nil {
-		panic(err)
+		actioner.OnExpectedSnapshotJsonDecodeFail(t, snapshotFilePath)
 	}
 
-	if snapshot.Value != actual {
-		actioner.OnSnapshotNotMatched(t, file, snapshot.Value, actual)
+	if snapshot.Value != actualSnapshot.Value {
+		actioner.OnSnapshotNotMatched(t, file, snapshot, actualSnapshot)
 	}
 }
 
@@ -62,26 +71,43 @@ func shouldUpdateViaEnv() snapshotActioner {
 
 type snapshotActioner interface {
 	OpenFile(t *testing.T, filePath string) (*os.File, error)
-	OnSnapshotFileOpenError(t *testing.T, file *os.File, snapshotDirPath, snapshotFilePath, actual string)
-	OnSnapshotNotMatched(t *testing.T, file *os.File, snapshotValue, actual string)
+	OnSnapshotFileOpenError(t *testing.T, file *os.File, snapshotDirPath, snapshotFilePath string, actual *SnapshotType)
+	OnSnapshotNotMatched(t *testing.T, file *os.File, expectedSnapshot, actualSnapshot *SnapshotType)
+	OnExpectedSnapshotJsonDecodeFail(t *testing.T, snapshotFilePath string)
 }
 
 type noUpdateSnapshotActioner struct {
+}
+
+func (a noUpdateSnapshotActioner) OnExpectedSnapshotJsonDecodeFail(t *testing.T, snapshotFilePath string) {
+	t.Errorf("couldn't open file at %q", snapshotFilePath)
 }
 
 func (a noUpdateSnapshotActioner) OpenFile(t *testing.T, filePath string) (*os.File, error) {
 	return os.Open(filePath)
 }
 
-func (a noUpdateSnapshotActioner) OnSnapshotFileOpenError(t *testing.T, file *os.File, snapshotDirPath, snapshotFilePath, actual string) {
+func (a noUpdateSnapshotActioner) OnSnapshotFileOpenError(t *testing.T, file *os.File, snapshotDirPath, snapshotFilePath string, actual *SnapshotType) {
 	t.Errorf("couldn't open snapshot file at %q", snapshotFilePath)
 }
 
-func (a noUpdateSnapshotActioner) OnSnapshotNotMatched(t *testing.T, file *os.File, snapshotValue, actual string) {
-	t.Errorf("expected %q but got %q", snapshotValue, actual)
+func (a noUpdateSnapshotActioner) OnSnapshotNotMatched(t *testing.T, file *os.File, expected, actual *SnapshotType) {
+	t.Errorf("expected %q but got %q", expected.Value, actual.Value)
+
+	if actual.OnBadMatch != nil {
+		err := actual.OnBadMatch(t, expected.Value)
+		if err != nil {
+			t.Errorf("failed to execute OnBadMatch callback. Error: %q", err)
+			return
+		}
+	}
 }
 
 type updateSnapshotActioner struct {
+}
+
+func (a updateSnapshotActioner) OnExpectedSnapshotJsonDecodeFail(t *testing.T, snapshotFilePath string) {
+	// no-op
 }
 
 func (a updateSnapshotActioner) OpenFile(t *testing.T, filePath string) (*os.File, error) {
@@ -92,7 +118,7 @@ func (a updateSnapshotActioner) OpenFile(t *testing.T, filePath string) (*os.Fil
 	return file, nil
 }
 
-func (a updateSnapshotActioner) OnSnapshotFileOpenError(t *testing.T, file *os.File, snapshotDirPath, snapshotFilePath, actual string) {
+func (a updateSnapshotActioner) OnSnapshotFileOpenError(t *testing.T, file *os.File, snapshotDirPath, snapshotFilePath string, actual *SnapshotType) {
 	err := os.MkdirAll(snapshotDirPath, 0755)
 	if err != nil {
 		panic(err)
@@ -101,8 +127,9 @@ func (a updateSnapshotActioner) OnSnapshotFileOpenError(t *testing.T, file *os.F
 	if err != nil {
 		panic(err)
 	}
+	defer file.Close()
 
-	newSnapshot := &snapshotType{actual}
+	newSnapshot := actual
 	b, err := json.MarshalIndent(newSnapshot, "", "\t")
 	if err != nil {
 		panic(err)
@@ -114,8 +141,8 @@ func (a updateSnapshotActioner) OnSnapshotFileOpenError(t *testing.T, file *os.F
 	}
 }
 
-func (a updateSnapshotActioner) OnSnapshotNotMatched(t *testing.T, file *os.File, snapshotValue, actual string) {
-	newSnapshot := &snapshotType{actual}
+func (a updateSnapshotActioner) OnSnapshotNotMatched(t *testing.T, file *os.File, snapshotValue, actual *SnapshotType) {
+	newSnapshot := actual
 	b, err := json.MarshalIndent(newSnapshot, "", "\t")
 	if err != nil {
 		panic(err)

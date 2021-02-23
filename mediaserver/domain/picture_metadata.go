@@ -12,7 +12,7 @@ import (
 	"log"
 
 	"github.com/jamesrr39/goutil/errorsx"
-	"github.com/jamesrr39/goutil/image-processing/imageprocessingutil"
+	"github.com/jamesrr39/goutil/imageprocessing"
 )
 
 type HashValue string
@@ -65,7 +65,7 @@ func NewPictureMetadataAndPictureFromBytes(file io.ReadSeeker, mediaFileInfo Med
 		if err != nil {
 			log.Printf("couldn't get exif orientation information for picture with hash '%s' and relative path '%s'. Error: '%s'\n", mediaFileInfo.HashValue, mediaFileInfo.RelativePath, err)
 		} else {
-			picture = imageprocessingutil.FlipAndRotatePictureByExif(picture, orientation)
+			picture = imageprocessing.FlipAndRotatePictureByExif(picture, orientation)
 		}
 	}
 	return NewPictureMetadata(mediaFileInfo, exifData, RawSizeFromImage(picture), format), picture, nil

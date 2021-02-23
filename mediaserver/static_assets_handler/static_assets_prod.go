@@ -3,19 +3,17 @@
 package statichandlers
 
 import (
-	"log"
 	"net/http"
 
-	_ "mediaserver/build/client/statik"
-
+	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/rakyll/statik/fs"
 )
 
-func NewClientHandler() http.Handler {
+func NewClientHandler() (http.Handler, errorsx.Error) {
 	statikFS, err := fs.New()
 	if err != nil {
-		log.Fatal(err)
+		return errorsx.Wrap(err)
 	}
 
-	return http.FileServer(statikFS)
+	return http.FileServer(statikFS), nil
 }

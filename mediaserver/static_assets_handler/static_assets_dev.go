@@ -2,8 +2,13 @@
 
 package statichandlers
 
-import "net/http"
+import (
+	"net/http"
 
-func NewClientHandler() http.Handler {
-	return http.FileServer(http.Dir("client"))
+	"github.com/jamesrr39/goutil/errorsx"
+	"github.com/jamesrr39/goutil/httpextra"
+)
+
+func NewClientHandler() (http.Handler, errorsx.Error) {
+	return httpextra.NewLocalDevServerProxy()
 }

@@ -12,6 +12,7 @@ type MockFs struct {
 	RemoveFunc    func(path string) error
 	RemoveAllFunc func(path string) error
 	StatFunc      func(path string) (os.FileInfo, error)
+	LstatFunc     func(path string) (os.FileInfo, error)
 	ReadFileFunc  func(path string) ([]byte, error)
 	ReadDirFunc   func(dirname string) ([]os.FileInfo, error)
 	MkdirFunc     func(path string, perm os.FileMode) error
@@ -24,6 +25,10 @@ type MockFs struct {
 	SymlinkFunc   func(oldname, newname string) error
 	ReadlinkFunc  func(path string) (string, error)
 }
+
+var (
+	_ gofs.Fs = MockFs{}
+)
 
 func NewMockFs() MockFs {
 	mockFs := MockFs{}
@@ -69,6 +74,9 @@ func (fs MockFs) RemoveAll(path string) error {
 }
 func (fs MockFs) Stat(path string) (os.FileInfo, error) {
 	return fs.StatFunc(path)
+}
+func (fs MockFs) Lstat(path string) (os.FileInfo, error) {
+	return fs.LstatFunc(path)
 }
 func (fs MockFs) ReadFile(path string) ([]byte, error) {
 	return fs.ReadFileFunc(path)

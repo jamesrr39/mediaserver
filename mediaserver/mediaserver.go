@@ -16,7 +16,6 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/jamesrr39/goutil/gofs"
-	"github.com/jamesrr39/goutil/httpextra"
 	"github.com/jamesrr39/goutil/logpkg"
 	"github.com/jamesrr39/goutil/profile"
 )
@@ -108,12 +107,12 @@ func (ms *MediaServer) Close() error {
 
 // scans for pictures and serves http server
 func (ms *MediaServer) ListenAndServe(addr string) error {
+	var err error
 
 	readyChan := make(chan bool)
 
 	mainRouter := chi.NewRouter()
 	mainRouter.Use(mediaservermiddleware.LoadingMiddleware(readyChan))
-	mainRouter.Use(httpextra.CorsMiddleware())
 	mainRouter.Use(mediaservermiddleware.CreateRequestLoggerMiddleware(ms.logger))
 	authMW := mediaservermiddleware.AuthMiddleware(ms.hmacSigningSecret, ms.logger)
 
@@ -134,7 +133,11 @@ func (ms *MediaServer) ListenAndServe(addr string) error {
 		r.Mount("/video/", http.StripPrefix("/video/", ms.videosWebService))
 		r.Mount("/picture/", ms.picturesService)
 	})
-	mainRouter.Mount("/", statichandlers.NewClientHandler())
+	staticFilesHandler, err := statichandlers.NewClientHandler()
+	if err != nil {
+		return errorsx.Wrap(err)
+	}
+	mainRouter.Mount("/", staticFilesHandler)
 
 	server := http.Server{
 		ReadHeaderTimeout: time.Minute,
@@ -154,7 +157,7 @@ func (ms *MediaServer) ListenAndServe(addr string) error {
 		}
 	}()
 
-	err := ms.scan()
+	err = ms.scan()
 	if err != nil {
 		return err
 	}

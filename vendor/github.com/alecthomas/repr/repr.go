@@ -11,36 +11,42 @@ import (
 	"io"
 	"os"
 	"reflect"
+	"sort"
+	"time"
 	"unsafe"
 )
 
-// "Real" names of basic kinds, used to differentiate type aliases.
-var realKindName = map[reflect.Kind]string{
-	reflect.Bool:       "bool",
-	reflect.Int:        "int",
-	reflect.Int8:       "int8",
-	reflect.Int16:      "int16",
-	reflect.Int32:      "int32",
-	reflect.Int64:      "int64",
-	reflect.Uint:       "uint",
-	reflect.Uint8:      "uint8",
-	reflect.Uint16:     "uint16",
-	reflect.Uint32:     "uint32",
-	reflect.Uint64:     "uint64",
-	reflect.Uintptr:    "uintptr",
-	reflect.Float32:    "float32",
-	reflect.Float64:    "float64",
-	reflect.Complex64:  "complex64",
-	reflect.Complex128: "complex128",
-	reflect.Array:      "array",
-	reflect.Chan:       "chan",
-	reflect.Func:       "func",
-	reflect.Map:        "map",
-	reflect.Slice:      "slice",
-	reflect.String:     "string",
-}
+var (
+	// "Real" names of basic kinds, used to differentiate type aliases.
+	realKindName = map[reflect.Kind]string{
+		reflect.Bool:       "bool",
+		reflect.Int:        "int",
+		reflect.Int8:       "int8",
+		reflect.Int16:      "int16",
+		reflect.Int32:      "int32",
+		reflect.Int64:      "int64",
+		reflect.Uint:       "uint",
+		reflect.Uint8:      "uint8",
+		reflect.Uint16:     "uint16",
+		reflect.Uint32:     "uint32",
+		reflect.Uint64:     "uint64",
+		reflect.Uintptr:    "uintptr",
+		reflect.Float32:    "float32",
+		reflect.Float64:    "float64",
+		reflect.Complex64:  "complex64",
+		reflect.Complex128: "complex128",
+		reflect.Array:      "array",
+		reflect.Chan:       "chan",
+		reflect.Func:       "func",
+		reflect.Map:        "map",
+		reflect.Slice:      "slice",
+		reflect.String:     "string",
+	}
 
-var goStringerType = reflect.TypeOf((*fmt.GoStringer)(nil)).Elem()
+	goStringerType = reflect.TypeOf((*fmt.GoStringer)(nil)).Elem()
+
+	byteSliceType = reflect.TypeOf([]byte{})
+)
 
 // Default prints to os.Stdout with two space indentation.
 var Default = New(os.Stdout, Indent("  "))
@@ -57,14 +63,34 @@ func NoIndent() Option { return Indent("") }
 // OmitEmpty sets whether empty field members should be omitted from output.
 func OmitEmpty(omitEmpty bool) Option { return func(o *Printer) { o.omitEmpty = omitEmpty } }
 
+// ExplicitTypes adds explicit typing to slice and map struct values that would normally be inferred by Go.
+func ExplicitTypes(ok bool) Option { return func(o *Printer) { o.explicitTypes = true } }
+
+// IgnoreGoStringer disables use of the .GoString() method.
 func IgnoreGoStringer() Option { return func(o *Printer) { o.ignoreGoStringer = true } }
+
+// Hide excludes the given types from representation, instead just printing the name of the type.
+func Hide(ts ...interface{}) Option {
+	return func(o *Printer) {
+		for _, t := range ts {
+			rt := reflect.Indirect(reflect.ValueOf(t)).Type()
+			o.exclude[rt] = true
+		}
+	}
+}
+
+// AlwaysIncludeType always includes explicit type information for each item.
+func AlwaysIncludeType() Option { return func(o *Printer) { o.alwaysIncludeType = true } }
 
 // Printer represents structs in a printable manner.
 type Printer struct {
-	indent           string
-	omitEmpty        bool
-	ignoreGoStringer bool
-	w                io.Writer
+	indent            string
+	omitEmpty         bool
+	ignoreGoStringer  bool
+	alwaysIncludeType bool
+	explicitTypes     bool
+	exclude           map[reflect.Type]bool
+	w                 io.Writer
 }
 
 // New creates a new Printer on w with the given Options.
@@ -73,6 +99,7 @@ func New(w io.Writer, options ...Option) *Printer {
 		w:         w,
 		indent:    "  ",
 		omitEmpty: true,
+		exclude:   map[reflect.Type]bool{},
 	}
 	for _, option := range options {
 		option(p)
@@ -100,7 +127,7 @@ func (p *Printer) Print(vs ...interface{}) {
 		if i > 0 {
 			fmt.Fprint(p.w, " ")
 		}
-		p.reprValue(reflect.ValueOf(v), "")
+		p.reprValue(map[reflect.Value]bool{}, reflect.ValueOf(v), "", true)
 	}
 }
 
@@ -110,13 +137,34 @@ func (p *Printer) Println(vs ...interface{}) {
 		if i > 0 {
 			fmt.Fprint(p.w, " ")
 		}
-		p.reprValue(reflect.ValueOf(v), "")
+		p.reprValue(map[reflect.Value]bool{}, reflect.ValueOf(v), "", true)
 	}
 	fmt.Fprintln(p.w)
 }
 
-func (p *Printer) reprValue(v reflect.Value, indent string) { // nolint: gocyclo
+func (p *Printer) reprValue(seen map[reflect.Value]bool, v reflect.Value, indent string, showType bool) { // nolint: gocyclo
+	if seen[v] {
+		fmt.Fprint(p.w, "...")
+		return
+	}
+	seen[v] = true
+	defer delete(seen, v)
+
+	if v.Kind() == reflect.Invalid || (v.Kind() == reflect.Ptr || v.Kind() == reflect.Map || v.Kind() == reflect.Chan || v.Kind() == reflect.Slice || v.Kind() == reflect.Func || v.Kind() == reflect.Interface) && v.IsNil() {
+		fmt.Fprint(p.w, "nil")
+		return
+	}
+	if p.exclude[v.Type()] {
+		fmt.Fprintf(p.w, "%s...", v.Type().Name())
+		return
+	}
 	t := v.Type()
+
+	if t == byteSliceType {
+		fmt.Fprintf(p.w, "[]byte(%q)", v.Bytes())
+		return
+	}
+
 	// If we can't access a private field directly with reflection, try and do so via unsafe.
 	if !v.CanInterface() && v.CanAddr() {
 		uv := reflect.NewAt(t, unsafe.Pointer(v.UnsafeAddr())).Elem()
@@ -125,7 +173,7 @@ func (p *Printer) reprValue(v reflect.Value, indent string) { // nolint: gocyclo
 		}
 	}
 	// Attempt to use fmt.GoStringer interface.
-	if t.Implements(goStringerType) {
+	if !p.ignoreGoStringer && t.Implements(goStringerType) {
 		fmt.Fprint(p.w, v.Interface().(fmt.GoStringer).GoString())
 		return
 	}
@@ -146,7 +194,7 @@ func (p *Printer) reprValue(v reflect.Value, indent string) { // nolint: gocyclo
 			for i := 0; i < v.Len(); i++ {
 				e := v.Index(i)
 				fmt.Fprintf(p.w, "%s", ni)
-				p.reprValue(e, ni)
+				p.reprValue(seen, e, ni, p.alwaysIncludeType || p.explicitTypes)
 				if p.indent != "" {
 					fmt.Fprintf(p.w, ",\n")
 				} else if i < v.Len()-1 {
@@ -155,21 +203,27 @@ func (p *Printer) reprValue(v reflect.Value, indent string) { // nolint: gocyclo
 			}
 			fmt.Fprintf(p.w, "%s}", in)
 		}
+
 	case reflect.Chan:
 		fmt.Fprintf(p.w, "make(")
 		fmt.Fprintf(p.w, "%s", v.Type())
 		fmt.Fprintf(p.w, ", %d)", v.Cap())
+
 	case reflect.Map:
 		fmt.Fprintf(p.w, "%s{", v.Type())
 		if p.indent != "" && v.Len() != 0 {
 			fmt.Fprintf(p.w, "\n")
 		}
-		for i, k := range v.MapKeys() {
+		keys := v.MapKeys()
+		sort.Slice(keys, func(i, j int) bool {
+			return fmt.Sprint(keys[i]) < fmt.Sprint(keys[j])
+		})
+		for i, k := range keys {
 			kv := v.MapIndex(k)
 			fmt.Fprintf(p.w, "%s", ni)
-			p.reprValue(k, ni)
+			p.reprValue(seen, k, ni, p.alwaysIncludeType || p.explicitTypes)
 			fmt.Fprintf(p.w, ": ")
-			p.reprValue(kv, ni)
+			p.reprValue(seen, kv, ni, true)
 			if p.indent != "" {
 				fmt.Fprintf(p.w, ",\n")
 			} else if i < v.Len()-1 {
@@ -177,47 +231,61 @@ func (p *Printer) reprValue(v reflect.Value, indent string) { // nolint: gocyclo
 			}
 		}
 		fmt.Fprintf(p.w, "%s}", in)
+
 	case reflect.Struct:
-		fmt.Fprintf(p.w, "%s{", v.Type())
-		if p.indent != "" && v.NumField() != 0 {
-			fmt.Fprintf(p.w, "\n")
-		}
-		for i := 0; i < v.NumField(); i++ {
-			t := v.Type().Field(i)
-			f := v.Field(i)
-			if p.omitEmpty && isZero(f) {
-				continue
+		if td, ok := v.Interface().(time.Time); ok {
+			timeToGo(p.w, td)
+		} else {
+			if showType {
+				fmt.Fprintf(p.w, "%s{", v.Type())
+			} else {
+				fmt.Fprint(p.w, "{")
 			}
-			fmt.Fprintf(p.w, "%s%s: ", ni, t.Name)
-			p.reprValue(f, ni)
-			if p.indent != "" {
-				fmt.Fprintf(p.w, ",\n")
-			} else if i < v.NumField()-1 {
-				fmt.Fprintf(p.w, ", ")
+			if p.indent != "" && v.NumField() != 0 {
+				fmt.Fprintf(p.w, "\n")
 			}
+			for i := 0; i < v.NumField(); i++ {
+				t := v.Type().Field(i)
+				f := v.Field(i)
+				if p.omitEmpty && isZero(f) {
+					continue
+				}
+				fmt.Fprintf(p.w, "%s%s: ", ni, t.Name)
+				p.reprValue(seen, f, ni, true)
+				if p.indent != "" {
+					fmt.Fprintf(p.w, ",\n")
+				} else if i < v.NumField()-1 {
+					fmt.Fprintf(p.w, ", ")
+				}
+			}
+			fmt.Fprintf(p.w, "%s}", indent)
 		}
-		fmt.Fprintf(p.w, "%s}", indent)
 	case reflect.Ptr:
 		if v.IsNil() {
 			fmt.Fprintf(p.w, "nil")
 			return
 		}
-		fmt.Fprintf(p.w, "&")
-		p.reprValue(v.Elem(), indent)
+		if showType {
+			fmt.Fprintf(p.w, "&")
+		}
+		p.reprValue(seen, v.Elem(), indent, showType)
+
 	case reflect.String:
-		if t.Name() != "string" {
+		if t.Name() != "string" || p.alwaysIncludeType {
 			fmt.Fprintf(p.w, "%s(%q)", t, v.String())
 		} else {
 			fmt.Fprintf(p.w, "%q", v.String())
 		}
+
 	case reflect.Interface:
 		if v.IsNil() {
 			fmt.Fprintf(p.w, "interface {}(nil)")
 		} else {
-			p.reprValue(v.Elem(), indent)
+			p.reprValue(seen, v.Elem(), indent, true)
 		}
+
 	default:
-		if t.Name() != realKindName[t.Kind()] {
+		if t.Name() != realKindName[t.Kind()] || p.alwaysIncludeType {
 			fmt.Fprintf(p.w, "%s(%v)", t, v)
 		} else {
 			fmt.Fprintf(p.w, "%v", v)
@@ -234,14 +302,27 @@ func String(v interface{}, options ...Option) string {
 	return w.String()
 }
 
-// Print v to os.Stdout, one per line.
-func Println(v ...interface{}) {
-	New(os.Stdout).Println(v...)
+func extractOptions(vs ...interface{}) (args []interface{}, options []Option) {
+	for _, v := range vs {
+		if o, ok := v.(Option); ok {
+			options = append(options, o)
+		} else {
+			args = append(args, v)
+		}
+	}
+	return
+}
+
+// Println prints v to os.Stdout, one per line.
+func Println(vs ...interface{}) {
+	args, options := extractOptions(vs...)
+	New(os.Stdout, options...).Println(args...)
 }
 
 // Print writes a representation of v to os.Stdout, separated by spaces.
-func Print(v ...interface{}) {
-	New(os.Stdout).Print(v...)
+func Print(vs ...interface{}) {
+	args, options := extractOptions(vs...)
+	New(os.Stdout, options...).Print(args...)
 }
 
 func isZero(v reflect.Value) bool {
@@ -260,4 +341,26 @@ func isZero(v reflect.Value) bool {
 		return v.IsNil()
 	}
 	return false
+}
+
+func timeToGo(w io.Writer, t time.Time) {
+	if t.IsZero() {
+		fmt.Fprint(w, "time.Time{}")
+		return
+	}
+
+	var zone string
+	switch loc := t.Location(); loc {
+	case nil:
+		zone = "nil"
+	case time.UTC:
+		zone = "time.UTC"
+	case time.Local:
+		zone = "time.Local"
+	default:
+		n, off := t.Zone()
+		zone = fmt.Sprintf("time.FixedZone(%q, %d)", n, off)
+	}
+	y, m, d := t.Date()
+	fmt.Fprintf(w, `time.Date(%d, %d, %d, %d, %d, %d, %d, %s)`, y, m, d, t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), zone)
 }

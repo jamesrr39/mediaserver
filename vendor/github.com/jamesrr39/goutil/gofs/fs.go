@@ -29,6 +29,7 @@ type Fs interface {
 	Remove(path string) error
 	RemoveAll(path string) error
 	Stat(path string) (os.FileInfo, error)
+	Lstat(path string) (os.FileInfo, error)
 	ReadDir(dirname string) ([]os.FileInfo, error)
 	ReadFile(path string) ([]byte, error)
 	Mkdir(path string, perm os.FileMode) error
@@ -41,6 +42,11 @@ type Fs interface {
 	Chmod(name string, mode os.FileMode) error
 	Readlink(path string) (string, error)
 }
+
+var (
+	// compile-time check to check interface statisfaction
+	_ Fs = &OsFs{}
+)
 
 type OsFs struct{}
 
@@ -59,6 +65,9 @@ func (fs *OsFs) RemoveAll(path string) error {
 }
 func (fs *OsFs) Stat(path string) (os.FileInfo, error) {
 	return os.Stat(path)
+}
+func (fs *OsFs) Lstat(path string) (os.FileInfo, error) {
+	return os.Lstat(path)
 }
 func (fs *OsFs) ReadFile(path string) ([]byte, error) {
 	return ioutil.ReadFile(path)

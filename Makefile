@@ -34,7 +34,7 @@ run_dev_client:
 .PHONY: run_dev_server
 run_dev_server:
 	mkdir -p ~/tmp/mediaserver/data ~/tmp/mediaserver/metadata ~/tmp/mediaserver/cache
-	go run cmd/media-server-main.go ~/tmp/mediaserver/data --metadata-dir=~/tmp/mediaserver/metadata --cache-dir=~/tmp/mediaserver/cache --profile-dir=~/tmp/mediaserver
+	LOCAL_DEV_SERVER_URL="http://localhost:3000/" go run cmd/media-server-main.go ~/tmp/mediaserver/data --metadata-dir=~/tmp/mediaserver/metadata --cache-dir=~/tmp/mediaserver/cache --profile-dir=~/tmp/mediaserver
 
 .PHONY: clean_dev_metadata
 clean_dev_metadata:
@@ -53,7 +53,12 @@ update_go_snapshots:
 .PHONY: bundle_static_assets
 bundle_static_assets:
 	cd client && yarn build
-	go run vendor/github.com/rakyll/statik/statik.go -src=client/build -dest=build/client
+	go run vendor/github.com/rakyll/statik/statik.go \
+		-src=client/build \
+		-dest=mediaserver/static_assets_handler \
+		-f \
+		-tags=prod \
+		-p=statichandlers
 
 .PHONY: build_docker_linux_x86_64
 build_docker_linux_x86_64: build_prod_x86_64
