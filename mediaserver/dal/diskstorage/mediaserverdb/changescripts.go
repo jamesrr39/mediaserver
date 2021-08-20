@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS people_mediafiles (
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_people_mediafiles_unique_id ON people_mediafiles (person_id, mediafile_hash);
 `, `
-ALTER TABLE people ADD is_user bool NOT NULL DEFAULT false;
+ALTER TABLE people ADD is_user bool;
 `}
 
 // TODO: foreign keys

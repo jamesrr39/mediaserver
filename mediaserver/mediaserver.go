@@ -6,7 +6,7 @@ import (
 	"mediaserver/mediaserver/dal/diskstorage/mediaserverdb"
 	"mediaserver/mediaserver/events"
 	"mediaserver/mediaserver/mediaserverjobs"
-	statichandlers "mediaserver/mediaserver/static_assets_handler"
+	"mediaserver/mediaserver/statichandlers"
 	pictureswebservice "mediaserver/mediaserver/webservice"
 	"mediaserver/mediaserver/webservice/mediaservermiddleware"
 	"net/http"
@@ -106,7 +106,7 @@ func (ms *MediaServer) Close() error {
 }
 
 // scans for pictures and serves http server
-func (ms *MediaServer) ListenAndServe(addr string) error {
+func (ms *MediaServer) ListenAndServe(addr string) errorsx.Error {
 	var err error
 
 	readyChan := make(chan bool)
@@ -114,7 +114,8 @@ func (ms *MediaServer) ListenAndServe(addr string) error {
 	mainRouter := chi.NewRouter()
 	mainRouter.Use(mediaservermiddleware.LoadingMiddleware(readyChan))
 	mainRouter.Use(mediaservermiddleware.CreateRequestLoggerMiddleware(ms.logger))
-	authMW := mediaservermiddleware.AuthMiddleware(ms.hmacSigningSecret, ms.logger)
+
+	authMW := mediaservermiddleware.NewAuthMiddleware(ms.logger, ms.hmacSigningSecret)
 
 	mainRouter.Route("/api/", func(r chi.Router) {
 		r.Mount("/login/", ms.loginService)
@@ -159,7 +160,7 @@ func (ms *MediaServer) ListenAndServe(addr string) error {
 
 	err = ms.scan()
 	if err != nil {
-		return err
+		return errorsx.Wrap(err)
 	}
 	readyChan <- true
 
@@ -170,7 +171,7 @@ func (ms *MediaServer) ListenAndServe(addr string) error {
 		// do nothing
 	}
 
-	return err
+	return errorsx.Wrap(err)
 }
 
 func (ms *MediaServer) scan() errorsx.Error {

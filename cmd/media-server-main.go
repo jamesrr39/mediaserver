@@ -140,14 +140,14 @@ func main() {
 		log.Fatalf("couldn't create a new media server and scan the pictures directory. Error: %s", err)
 	}
 	defer mediaServer.Close()
-
-	log.Printf("attempting to start serving on address: '%s'\n", *addr)
-	err = mediaServer.ListenAndServe(*addr)
-	if nil != err {
-		log.Fatalf("Couldn't start HTTP server. Error: %s\n", err)
+	{
+		log.Printf("attempting to start serving on address: '%s'\n", *addr)
+		err := mediaServer.ListenAndServe(*addr)
+		if nil != err {
+			log.Fatalf("Couldn't start HTTP server. Error: %s\nStack:\n%s\n", err, err.Stack())
+		}
 	}
 }
-
 func getFullDataPath(path string) (string, error) {
 	expandedPath, err := userextra.ExpandUser(path)
 	if nil != err {

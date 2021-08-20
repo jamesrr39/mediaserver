@@ -1,3 +1,9 @@
+LOCALENV_BASE_DIR="$(shell pwd)/data/localenv"
+
+.PHONY: help
+help:
+	echo "see Makefile"
+
 .PHONY: clean
 clean:
 	rm -rf build
@@ -33,12 +39,13 @@ run_dev_client:
 
 .PHONY: run_dev_server
 run_dev_server:
-	mkdir -p ~/tmp/mediaserver/data ~/tmp/mediaserver/metadata ~/tmp/mediaserver/cache
-	LOCAL_DEV_SERVER_URL="http://localhost:3000/" go run cmd/media-server-main.go ~/tmp/mediaserver/data --metadata-dir=~/tmp/mediaserver/metadata --cache-dir=~/tmp/mediaserver/cache --profile-dir=~/tmp/mediaserver
+	echo "localenv base dir: ${LOCALENV_BASE_DIR}"
+	mkdir -p ${LOCALENV_BASE_DIR}/data ${LOCALENV_BASE_DIR}/metadata ${LOCALENV_BASE_DIR}/cache
+	LOCAL_DEV_SERVER_URL="http://localhost:3000/" go run cmd/media-server-main.go ${LOCALENV_BASE_DIR}/data --metadata-dir=${LOCALENV_BASE_DIR}/metadata --cache-dir=${LOCALENV_BASE_DIR}/cache --profile-dir=${LOCALENV_BASE_DIR}
 
 .PHONY: clean_dev_metadata
 clean_dev_metadata:
-	rm -rf ~/tmp/mediaserver/metadata/*
+	rm -rf ${LOCALENV_BASE_DIR}/metadata/*
 
 .PHONY: test
 test:
@@ -53,26 +60,13 @@ update_go_snapshots:
 .PHONY: bundle_static_assets
 bundle_static_assets:
 	cd client && yarn build
-	go run vendor/github.com/rakyll/statik/statik.go \
+	# TODO go:embed
+	statik \
 		-src=client/build \
-		-dest=mediaserver/static_assets_handler \
+		-dest=mediaserver \
 		-f \
 		-tags=prod \
 		-p=statichandlers
-
-.PHONY: build_docker_linux_x86_64
-build_docker_linux_x86_64: build_prod_x86_64
-	mkdir -p build/docker/x86_64/bin
-	cp docker/linux_x86_64/Dockerfile build/docker/x86_64/Dockerfile
-	cp build/bin/x86_64/mediaserver build/docker/x86_64/bin/mediaserver
-	docker build -t jamesrr39/mediaserver_x86_64:latest build/docker/x86_64
-
-.PHONY: build_docker_linux_arm7
-build_docker_linux_arm7: build_prod_arm7
-	mkdir -p build/docker/arm7/bin
-	cp docker/arm7/Dockerfile build/docker/arm7/Dockerfile
-	cp build/bin/arm7/mediaserver build/docker/arm7/bin/mediaserver
-	docker build -t jamesrr39/mediaserver_arm7:latest build/docker/arm7
 
 .PHONY: deploy_to_raspberry_pi
 deploy_to_raspberry_pi: test build_docker_linux_arm7
@@ -81,3 +75,11 @@ deploy_to_raspberry_pi: test build_docker_linux_arm7
 .PHONY: install
 install: build_prod
 	mv build/bin/default/mediaserver ${shell go env GOBIN}/
+
+.PHONY: build4pi
+# build4pi:
+build4pi: build_prod_arm7
+	mkdir -p docker/build
+	rm -rf docker/build/*
+	cp build/bin/arm7/mediaserver docker/build/mediaserver
+	build4pi

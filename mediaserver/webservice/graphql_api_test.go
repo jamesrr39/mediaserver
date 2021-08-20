@@ -48,7 +48,7 @@ func Test_GraphQLAPIService_tracks(t *testing.T) {
 		ws.ServeHTTP(w, r)
 
 		require.Equal(t, http.StatusOK, w.Code)
-		snapshot.AssertMatchesSnapshot(t, "query_tracks", w.Body.String())
+		snapshot.AssertMatchesSnapshot(t, "query_tracks", snapshot.NewTextSnapshot(w.Body.String()))
 	})
 	t.Run("POST application/json", func(t *testing.T) {
 		postBody := bytes.NewBufferString(`{
@@ -61,7 +61,7 @@ func Test_GraphQLAPIService_tracks(t *testing.T) {
 		ws.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		snapshot.AssertMatchesSnapshot(t, "query_tracks", w.Body.String())
+		snapshot.AssertMatchesSnapshot(t, "query_tracks", snapshot.NewTextSnapshot(w.Body.String()))
 	})
 	t.Run("POST application/graphql", func(t *testing.T) {
 		postBody := bytes.NewBufferString(`{
@@ -83,7 +83,7 @@ func Test_GraphQLAPIService_tracks(t *testing.T) {
 		ws.ServeHTTP(w, r)
 
 		require.Equal(t, http.StatusOK, w.Code)
-		snapshot.AssertMatchesSnapshot(t, "query_tracks", w.Body.String())
+		snapshot.AssertMatchesSnapshot(t, "query_tracks", snapshot.NewTextSnapshot(w.Body.String()))
 	})
 }
 
@@ -160,7 +160,7 @@ func Test_GraphQLAPIService_people(t *testing.T) {
 		ws.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		snapshot.AssertMatchesSnapshot(t, "GET_people", w.Body.String())
+		snapshot.AssertMatchesSnapshot(t, "GET_people", snapshot.NewTextSnapshot(w.Body.String()))
 	})
 }
 
@@ -201,7 +201,7 @@ func Test_GraphQLAPIService_mediafiles(t *testing.T) {
 		ws.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		snapshot.AssertMatchesSnapshot(t, "GET_mediafiles", w.Body.String())
+		snapshot.AssertMatchesSnapshot(t, "GET_mediafiles", snapshot.NewTextSnapshot(w.Body.String()))
 	})
 }
 
@@ -240,7 +240,7 @@ func Test_mutation_update_mediafiles(t *testing.T) {
 		ws.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		snapshot.AssertMatchesSnapshot(t, "update_mediafiles_mutation", w.Body.String())
+		snapshot.AssertMatchesSnapshot(t, "update_mediafiles_mutation", snapshot.NewTextSnapshot(w.Body.String()))
 	})
 }
 
@@ -273,6 +273,6 @@ func Test_mutation_create_people(t *testing.T) {
 		ws.ServeHTTP(w, r)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		snapshot.AssertMatchesSnapshot(t, "create_people_mutation", w.Body.String())
+		snapshot.AssertMatchesSnapshot(t, "create_people_mutation", snapshot.NewTextSnapshot(w.Body.String()))
 	})
 }

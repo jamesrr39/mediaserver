@@ -6,9 +6,11 @@ import (
 	"mediaserver/mediaserver/dal/diskstorage/mediaserverdb"
 	"mediaserver/mediaserver/domain"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
+	gotoken "github.com/jamesrr39/go-token"
 	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/jamesrr39/goutil/logpkg"
 )
@@ -122,17 +124,41 @@ func (ws *LoginService) handlePost(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func (ws *LoginService) loginUser(w http.ResponseWriter, r *http.Request, user *domain.Person) errorsx.Error {
-	jwtToken, err := domain.CreateJWTToken(ws.hmacSigningSecret, user.ID)
+	tkn := gotoken.Token{
+		AccountID: user.ID,
+		CreatedAt: time.Now(),
+	}
+	jwtToken, err := tkn.ToJWTToken(ws.hmacSigningSecret)
+	if err != nil {
+		return errorsx.Wrap(err)
+	}
+
+	err = ws.setLoginToken(w, jwtToken)
 	if err != nil {
 		return errorsx.Wrap(err)
 	}
 
 	type responseBodyData struct {
-		User  *domain.Person `json:"user"`
-		Token string         `json:"token"`
+		User *domain.Person `json:"user"`
 	}
 
-	render.JSON(w, r, responseBody{responseBodyData{user, jwtToken}})
+	render.JSON(w, r, responseBody{responseBodyData{user}})
 
+	return nil
+}
+
+const authTokenCookieName = "authtoken"
+
+func (ws *LoginService) setLoginToken(w http.ResponseWriter, token string) errorsx.Error {
+	cookie := &http.Cookie{
+		Name:     authTokenCookieName,
+		Value:    token,
+		Path:     "/",
+		HttpOnly: true,
+		Expires:  time.Now().Add(time.Hour * 24),
+		SameSite: http.SameSiteStrictMode,
+	}
+
+	http.SetCookie(w, cookie)
 	return nil
 }

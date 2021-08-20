@@ -78,6 +78,9 @@ github.com/graphql-go/graphql/language/printer
 github.com/graphql-go/graphql/language/source
 github.com/graphql-go/graphql/language/typeInfo
 github.com/graphql-go/graphql/language/visitor
+# github.com/jamesrr39/go-token v0.0.0-20201029211349-4ca8801e5513
+## explicit
+github.com/jamesrr39/go-token
 # github.com/jamesrr39/goutil v0.0.0-20210223062818-e260f8de9291
 ## explicit
 github.com/jamesrr39/goutil/base64x
@@ -106,7 +109,7 @@ github.com/jamesrr39/semaphore
 github.com/mattn/go-isatty
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
-# github.com/rakyll/statik v0.1.2-0.20180330204314-fcdcb7b85139
+# github.com/rakyll/statik v0.1.7
 ## explicit
 github.com/rakyll/statik/fs
 # github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0
@@ -119,7 +122,7 @@ github.com/rwcarlsen/goexif/tiff
 # github.com/sergi/go-diff v1.1.0
 ## explicit
 github.com/sergi/go-diff/diffmatchpatch
-# github.com/spf13/afero v1.0.0
+# github.com/spf13/afero v1.5.1
 ## explicit
 github.com/spf13/afero
 github.com/spf13/afero/mem
@@ -142,7 +145,7 @@ golang.org/x/image/tiff/lzw
 ## explicit
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
-# golang.org/x/text v0.3.0
+# golang.org/x/text v0.3.5
 ## explicit
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm

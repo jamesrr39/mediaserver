@@ -1,0 +1,6 @@
+{
+    "name": "adventures",
+    "copyDirs": ["docker"],
+    "buildCmd": "sudo docker build --tag=jamesrr39/mediaserver docker"
+  }
+  

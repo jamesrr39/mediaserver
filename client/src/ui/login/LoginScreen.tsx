@@ -46,7 +46,7 @@ class LoginScreen extends React.Component<Props, ComponentState> {
                             Username:
                             <input type="text" name="username" />
                         </label>
-                        <input type="submit" onClick={event => {
+                        <button type="submit" onClick={event => {
                             event.preventDefault();
                             const form = event.currentTarget.form;
                             if (!form) {
@@ -55,7 +55,7 @@ class LoginScreen extends React.Component<Props, ComponentState> {
                             const username = (form.elements.namedItem('username') as HTMLInputElement).value;
 
                             this.createUserAndLogin(username);
-                        }} />
+                        }}>Create user!</button>
                     </form>
                 </div>
             );

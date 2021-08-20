@@ -24,20 +24,21 @@ require (
 	github.com/gorilla/mux v1.6.1-0.20171208160815-5ab525f4fb16 // indirect
 	github.com/gorilla/websocket v1.4.1-0.20180924232612-3130e8d3f198
 	github.com/graphql-go/graphql v0.7.9-0.20190403165646-199d20bbfed7
+	github.com/jamesrr39/go-token v0.0.0-20201029211349-4ca8801e5513
 	github.com/jamesrr39/goutil v0.0.0-20210223062818-e260f8de9291
 	github.com/jamesrr39/semaphore v0.0.0-20180521202200-0d5ddc396086
 	github.com/kortschak/utter v1.0.1 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
-	github.com/rakyll/statik v0.1.2-0.20180330204314-fcdcb7b85139
+	github.com/rakyll/statik v0.1.7
 	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd
 	github.com/sergi/go-diff v1.1.0 // indirect
-	github.com/spf13/afero v1.0.0 // indirect
+	github.com/spf13/afero v1.5.1 // indirect
 	github.com/stretchr/testify v1.4.0
 	github.com/tormoder/fit v0.2.1-0.20171211141131-a0651569cd51
 	golang.org/x/image v0.0.0-20210220032944-ac19c3e999fb // indirect
 	golang.org/x/sys v0.0.0-20201007082116-8445cc04cbdf // indirect
-	golang.org/x/text v0.3.0 // indirect
+	golang.org/x/text v0.3.5 // indirect
 	gopkg.in/alecthomas/kingpin.v2 v2.2.5
 	modernc.org/b v1.0.1-0.20190401165401-be3cc8a0f789 // indirect
 	modernc.org/db v1.0.1-0.20181109151724-332b7b29553f // indirect

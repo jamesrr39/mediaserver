@@ -1,62 +1,86 @@
 package mediaservermiddleware
 
 import (
-	"fmt"
-	"mediaserver/mediaserver/domain"
+	"context"
 	"net/http"
-	"strings"
+	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	gotoken "github.com/jamesrr39/go-token"
 	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/jamesrr39/goutil/logpkg"
 )
 
-func AuthMiddleware(signingSecret []byte, logger *logpkg.Logger) func(http.Handler) http.Handler {
+type errType struct {
+	Error        error
+	ResponseCode int
+}
+
+const authTokenCookieName = "authtoken"
+
+func NewAuthMiddleware(logger *logpkg.Logger, hmacSecret []byte) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-
 		fn := func(w http.ResponseWriter, r *http.Request) {
-			tokenString := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
-			if tokenString == "" {
-				// FIXME: disallow, due to token being saved in logs.
-				// For websockets, generate one-time-tokens instead
-				tokenString = r.URL.Query().Get("token")
-			}
+			ctx := r.Context()
 
-			if tokenString == "" {
-				errorsx.HTTPError(w, logger, errorsx.Errorf("no token supplied"), http.StatusUnauthorized)
-				return
-			}
-
-			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-				// Don't forget to validate the alg is what you expect:
-				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-					return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-				}
-
-				// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
-				return signingSecret, nil
-			})
+			userID, err := getUserIDFromRequest(r, hmacSecret)
 			if err != nil {
-				errorsx.HTTPError(w, logger, errorsx.Wrap(err), http.StatusInternalServerError)
-				return
+				switch e := err.Error.(type) {
+				case errorsx.Error:
+					errorsx.HTTPError(w, logger, errorsx.Wrap(e), err.ResponseCode)
+					return
+				default:
+					http.Error(w, e.Error(), err.ResponseCode)
+					return
+				}
 			}
 
-			claims, ok := token.Claims.(jwt.MapClaims)
-			if !ok || !token.Valid {
-				errorsx.HTTPError(w, logger, errorsx.Errorf("token invalid"), http.StatusUnauthorized)
-				return
-			}
+			ctx = context.WithValue(ctx, gotoken.TokenAccountIDCtxKey, userID)
 
-			userIDFloat64, ok := claims[domain.ClaimsKeyUserID].(float64)
-			if !ok {
-				errorsx.HTTPError(w, logger, errorsx.Errorf("userID claim: expected int64 but got %T", claims[domain.ClaimsKeyUserID]), http.StatusInternalServerError)
-				return
-			}
-			userID := int64(userIDFloat64)
-			r = r.WithContext(domain.SetUserIDOnCtx(r.Context(), userID))
+			r = r.WithContext(ctx)
 
 			next.ServeHTTP(w, r)
 		}
+
 		return http.HandlerFunc(fn)
 	}
+}
+
+func getUserIDFromRequest(r *http.Request, hmacSecret []byte) (int64, *errType) {
+	cookie, err := r.Cookie(authTokenCookieName)
+	if err != nil {
+		if errorsx.Cause(err) == http.ErrNoCookie {
+			return 0, &errType{http.ErrNoCookie, http.StatusUnauthorized}
+		}
+		return 0, &errType{errorsx.Wrap(err), http.StatusInternalServerError}
+	}
+
+	if cookie.Expires.After(time.Now()) {
+		return 0, &errType{errorsx.Wrap(err), http.StatusUnauthorized}
+	}
+
+	token, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errorsx.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+
+		return hmacSecret, nil
+	})
+	if err != nil {
+		return 0, &errType{errorsx.Wrap(err), http.StatusUnauthorized}
+	}
+
+	if !token.Valid {
+		return 0, &errType{errorsx.Wrap(err), http.StatusUnauthorized}
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return 0, &errType{errorsx.Wrap(err), http.StatusBadRequest}
+	}
+
+	// float64 -> int64
+	userID := int64(claims[gotoken.JwtAccountIDKey].(float64))
+	return userID, nil
 }
