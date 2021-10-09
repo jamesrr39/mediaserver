@@ -1,6 +1,6 @@
 module mediaserver
 
-go 1.15
+go 1.16
 
 require (
 	github.com/alecthomas/assert v0.0.0-20170929043011-405dbfeb8e38
@@ -9,19 +9,15 @@ require (
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
 	github.com/alecthomas/units v0.0.0-20210208195552-ff826a37aa15 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
-	github.com/cznic/ql v1.2.0 // indirect
 	github.com/dgrijalva/jwt-go v3.2.1-0.20200107013213-dc14462fd587+incompatible
 	github.com/disintegration/imaging v1.6.2
-	github.com/edsrzf/mmap-go v0.0.0-20170320065105-0bce6a688712 // indirect
 	github.com/go-chi/chi v3.3.2-0.20171213202212-f2aed534ddaa+incompatible
-	github.com/go-chi/cors v1.0.0 // indirect
 	github.com/go-chi/render v1.0.1-0.20171231234154-8c8c7a43d054
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gogo/protobuf v1.2.2-0.20190324160722-382325bbbb4d // indirect
 	github.com/golang/protobuf v1.3.2-0.20190409050943-e91709a02e0e // indirect
 	github.com/golang/snappy v0.0.2 // indirect
 	github.com/google/uuid v1.2.0 // indirect
-	github.com/gorilla/mux v1.6.1-0.20171208160815-5ab525f4fb16 // indirect
 	github.com/gorilla/websocket v1.4.1-0.20180924232612-3130e8d3f198
 	github.com/graphql-go/graphql v0.7.9-0.20190403165646-199d20bbfed7
 	github.com/jamesrr39/go-token v0.0.0-20201029211349-4ca8801e5513
@@ -29,8 +25,6 @@ require (
 	github.com/jamesrr39/semaphore v0.0.0-20180521202200-0d5ddc396086
 	github.com/kortschak/utter v1.0.1 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
-	github.com/rakyll/statik v0.1.7
-	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/spf13/afero v1.5.1 // indirect

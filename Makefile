@@ -1,4 +1,5 @@
 LOCALENV_BASE_DIR="$(shell pwd)/data/localenv"
+DEFAULT_BUILD_OUTPUT=build/bin/default/mediaserver
 
 .PHONY: help
 help:
@@ -20,7 +21,13 @@ build_prod_x86_64: clean bundle_static_assets
 .PHONY: build_prod
 build_prod: clean bundle_static_assets
 	mkdir -p build/bin/default
-	env CGO_ENABLED=0 go build -tags "purego prod" -o build/bin/default/mediaserver cmd/media-server-main.go
+	$(MAKE) compile_prod_go
+
+# compiles the production Go application only. Does not recompile the JS client application.
+.PHONY: compile_prod_go
+compile_prod_go:
+	env CGO_ENABLED=0 go build -tags "purego prod" -o ${DEFAULT_BUILD_OUTPUT} cmd/media-server-main.go
+	echo "program built and placed at ${DEFAULT_BUILD_OUTPUT}"
 
 # raspberry pi 3
 .PHONY: build_prod_arm7
@@ -60,13 +67,7 @@ update_go_snapshots:
 .PHONY: bundle_static_assets
 bundle_static_assets:
 	cd client && yarn build
-	# TODO go:embed
-	statik \
-		-src=client/build \
-		-dest=mediaserver \
-		-f \
-		-tags=prod \
-		-p=statichandlers
+	rsync -arh --delete client/build/ mediaserver/statichandlers/client_static_files
 
 .PHONY: deploy_to_raspberry_pi
 deploy_to_raspberry_pi: test build_docker_linux_arm7

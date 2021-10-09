@@ -3,17 +3,21 @@
 package statichandlers
 
 import (
+	"embed"
+	"io/fs"
 	"net/http"
 
 	"github.com/jamesrr39/goutil/errorsx"
-	"github.com/rakyll/statik/fs"
 )
 
+//go:embed client_static_files
+var clientFs embed.FS
+
 func NewClientHandler() (http.Handler, errorsx.Error) {
-	statikFS, err := fs.New()
+	clientHandler, err := fs.Sub(clientFs, "client_static_files")
 	if err != nil {
 		return nil, errorsx.Wrap(err)
 	}
 
-	return http.FileServer(statikFS), nil
+	return http.FileServer(http.FS(clientHandler)), nil
 }

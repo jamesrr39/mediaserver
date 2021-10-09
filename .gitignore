@@ -12,4 +12,4 @@ yarn-debug.log
 /data/
 
 # build bundle
-mediaserver/statichandlers/statik.go
+mediaserver/statichandlers/client_static_files

@@ -16,8 +16,6 @@ github.com/alecthomas/template/parse
 github.com/alecthomas/units
 # github.com/cespare/xxhash v1.1.0
 ## explicit
-# github.com/cznic/ql v1.2.0
-## explicit
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/dgrijalva/jwt-go v3.2.1-0.20200107013213-dc14462fd587+incompatible
@@ -27,14 +25,11 @@ github.com/dgrijalva/jwt-go
 ## explicit
 github.com/disintegration/imaging
 # github.com/edsrzf/mmap-go v0.0.0-20170320065105-0bce6a688712
-## explicit
 github.com/edsrzf/mmap-go
 # github.com/go-chi/chi v3.3.2-0.20171213202212-f2aed534ddaa+incompatible
 ## explicit
 github.com/go-chi/chi
 github.com/go-chi/chi/middleware
-# github.com/go-chi/cors v1.0.0
-## explicit
 # github.com/go-chi/render v1.0.1-0.20171231234154-8c8c7a43d054
 ## explicit
 github.com/go-chi/render
@@ -60,8 +55,6 @@ github.com/gogo/protobuf/protoc-gen-gogo/descriptor
 # github.com/google/uuid v1.2.0
 ## explicit
 github.com/google/uuid
-# github.com/gorilla/mux v1.6.1-0.20171208160815-5ab525f4fb16
-## explicit
 # github.com/gorilla/websocket v1.4.1-0.20180924232612-3130e8d3f198
 ## explicit
 github.com/gorilla/websocket
@@ -109,11 +102,7 @@ github.com/jamesrr39/semaphore
 github.com/mattn/go-isatty
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
-# github.com/rakyll/statik v0.1.7
-## explicit
-github.com/rakyll/statik/fs
 # github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0
-## explicit
 github.com/remyoudompheng/bigfft
 # github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd
 ## explicit
