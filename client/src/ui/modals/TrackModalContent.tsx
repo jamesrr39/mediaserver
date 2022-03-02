@@ -6,6 +6,18 @@ import { connect } from 'react-redux';
 import SpeedChart from './SpeedChart';
 import { Duration } from '../../domain/duration';
 
+function displayDistance(distanceMetres: number): string {
+  const flooredDistanceMetres = Math.floor(distanceMetres)
+  if (flooredDistanceMetres < 1000) {
+    return `${flooredDistanceMetres}m`;
+  }
+
+  const wholeKm = Math.floor(flooredDistanceMetres / 1000);
+  const remainderMetres = flooredDistanceMetres - (wholeKm * 1000);
+
+  return `${wholeKm}.${remainderMetres}km`;
+}
+
 const styles = {
   container: {
     width: '100%',
@@ -67,10 +79,10 @@ class TrackModalContent extends React.Component<Props, State> {
     const map = this.renderRecordInformation();
 
     const opts = {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
+      weekday: 'long' as 'long',
+      day: 'numeric' as 'numeric',
+      month: 'long' as 'long',
+      year: 'numeric' as 'numeric',
     };
 
     return (
@@ -79,7 +91,7 @@ class TrackModalContent extends React.Component<Props, State> {
           {trackSummary.startTime.toLocaleDateString(undefined, opts)} at {trackSummary.startTime.toLocaleTimeString()}
         </h3>
         <small>{trackSummary.relativePath}</small>
-        <p>{trackSummary.totalDistance}m in {trackSummary.getDuration().getDisplayString()}</p>
+        <p>{displayDistance(trackSummary.totalDistance)} in {trackSummary.getDuration().getDisplayString()}</p>
         {map}
       </div>
     );

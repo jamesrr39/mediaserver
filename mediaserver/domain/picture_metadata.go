@@ -55,6 +55,11 @@ func NewPictureMetadataAndPictureFromBytes(file io.ReadSeeker, mediaFileInfo Med
 		return nil, nil, fmt.Errorf("couldn't decode image. Error: %s", err)
 	}
 
+	_, err = file.Seek(0, io.SeekStart)
+	if nil != err {
+		return nil, nil, errorsx.Wrap(err)
+	}
+
 	exifData, err := DecodeExifFromFile(file)
 	if nil != err {
 		log.Printf("not able to read metadata (maybe there is none). Error: %s\n", err)

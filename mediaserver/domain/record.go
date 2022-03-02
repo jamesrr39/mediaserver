@@ -29,7 +29,9 @@ func (r Records) GetRecordClosestToTime(dateTime time.Time) (*Record, int, error
 	upperIndex := len(r) - 1
 	lowerIndex := 0
 
-	for i := 0; i < (len(r) + 5); i++ {
+	maxSearchIterations := len(r)
+
+	for i := 0; i < maxSearchIterations; i++ {
 		if upperIndex-lowerIndex == 1 {
 			if r[upperIndex].Timestamp.Sub(dateTime) < dateTime.Sub(r[lowerIndex].Timestamp) {
 				return r[upperIndex], upperIndex, nil
