@@ -28,11 +28,10 @@ require (
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/spf13/afero v1.5.1 // indirect
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.7.0
+	github.com/tkrajina/gpxgo v1.2.1
 	github.com/tormoder/fit v0.2.1-0.20171211141131-a0651569cd51
 	golang.org/x/image v0.0.0-20210220032944-ac19c3e999fb // indirect
-	golang.org/x/sys v0.0.0-20201007082116-8445cc04cbdf // indirect
-	golang.org/x/text v0.3.5 // indirect
 	gopkg.in/alecthomas/kingpin.v2 v2.2.5
 	modernc.org/b v1.0.1-0.20190401165401-be3cc8a0f789 // indirect
 	modernc.org/db v1.0.1-0.20181109151724-332b7b29553f // indirect

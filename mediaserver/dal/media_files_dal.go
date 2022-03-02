@@ -110,6 +110,10 @@ func (dal *MediaFilesDAL) processFitFile(tx *sql.Tx, mediaFileInfo domain.MediaF
 	return domain.NewFitFileSummaryFromReader(mediaFileInfo, file)
 }
 
+func (dal *MediaFilesDAL) processGPXFile(tx *sql.Tx, mediaFileInfo domain.MediaFileInfo, file io.Reader) (*domain.FitFileSummary, error) {
+	return domain.NewGPXFileSummaryFromReader(mediaFileInfo, file)
+}
+
 func (dal *MediaFilesDAL) processVideoFile(tx *sql.Tx, mediaFileInfo domain.MediaFileInfo) (*domain.VideoFileMetadata, error) {
 	videoFileMetadata := domain.NewVideoFileMetadata(mediaFileInfo)
 
@@ -316,9 +320,19 @@ func (dal *MediaFilesDAL) processFile(fs gofs.Fs, tx *sql.Tx, path string, fileI
 			return nil, errorsx.Wrap(err)
 		}
 	case domain.MediaFileTypeFitTrack:
-		mediaFile, err = dal.processFitFile(tx, mediaFileInfo, file)
-		if err != nil {
-			return nil, errorsx.Wrap(err)
+		switch filepath.Ext(relativePath) {
+		case ".fit":
+			mediaFile, err = dal.processFitFile(tx, mediaFileInfo, file)
+			if err != nil {
+				return nil, errorsx.Wrap(err)
+			}
+		case ".gpx":
+			mediaFile, err = dal.processGPXFile(tx, mediaFileInfo, file)
+			if err != nil {
+				return nil, errorsx.Wrap(err)
+			}
+		default:
+			return nil, errorsx.Errorf("didn't know how to process %q", relativePath)
 		}
 	default:
 		return nil, ErrFileNotSupported

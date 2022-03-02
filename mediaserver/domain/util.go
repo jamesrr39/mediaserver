@@ -27,7 +27,7 @@ func GetFileTypeFromPath(path string) MediaFileType {
 		return MediaFileTypePicture
 	case ".mp4":
 		return MediaFileTypeVideo
-	case ".fit":
+	case ".fit", ".gpx":
 		return MediaFileTypeFitTrack
 	default:
 		return MediaFileTypeUnknown

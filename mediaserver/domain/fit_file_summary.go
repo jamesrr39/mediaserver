@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jamesrr39/goutil/errorsx"
+	"github.com/tkrajina/gpxgo/gpx"
 	"github.com/tormoder/fit"
 )
 
@@ -46,6 +47,40 @@ func NewFitFileSummaryFromReader(mediaFileInfo MediaFileInfo, reader io.Reader) 
 	summary, err := newSummaryFromDecodedFitFile(mediaFileInfo, file)
 	if nil != err {
 		return nil, fmt.Errorf("failed to create a summary for %s. Error: %s", mediaFileInfo.RelativePath, err)
+	}
+
+	return summary, nil
+}
+
+func NewGPXFileSummaryFromReader(mediaFileInfo MediaFileInfo, reader io.Reader) (*FitFileSummary, error) {
+	g, err := gpx.Parse(reader)
+	if nil != err {
+		return nil, errorsx.Wrap(err)
+	}
+
+	if len(g.Tracks) != 1 {
+		return nil, errorsx.Errorf("expected 1 track in file but there were %d", len(g.Tracks))
+	}
+
+	track := g.Tracks[0]
+	timeBounds := track.TimeBounds()
+	movingData := track.MovingData()
+	gpxBounds := track.Bounds()
+
+	activityBounds := &ActivityBounds{
+		LatMax:  gpxBounds.MaxLatitude,
+		LatMin:  gpxBounds.MinLatitude,
+		LongMax: gpxBounds.MaxLongitude,
+		LongMin: gpxBounds.MinLongitude,
+	}
+
+	summary := &FitFileSummary{
+		MediaFileInfo:  mediaFileInfo,
+		StartTime:      timeBounds.StartTime,
+		EndTime:        timeBounds.EndTime,
+		TotalDistance:  movingData.MovingDistance,
+		DeviceProduct:  g.Creator,
+		ActivityBounds: activityBounds,
 	}
 
 	return summary, nil
