@@ -24,11 +24,11 @@ func Test_GraphQLAPIService_tracks(t *testing.T) {
 	tracksDAL := &mockTrackDAL{
 		GetRecordsFunc: func(mediaFile *domain.FitFileSummary) (domain.Records, errorsx.Error) {
 			return domain.Records{{
-				Timestamp:    time.Date(1970, 01, 01, 00, 00, 01, 0, time.UTC),
-				Distance:     1,
-				PositionLat:  1.5,
-				PositionLong: 2.5,
-				Altitude:     3,
+				Timestamp:          time.Date(1970, 01, 01, 00, 00, 01, 0, time.UTC),
+				CumulativeDistance: 1,
+				PositionLat:        1.5,
+				PositionLong:       2.5,
+				Altitude:           3,
 			}}, nil
 		},
 	}

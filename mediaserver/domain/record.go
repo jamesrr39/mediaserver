@@ -7,16 +7,16 @@ import (
 )
 
 type Record struct {
-	Timestamp    time.Time `json:"timestamp"`
-	PositionLat  float64   `json:"posLat"`
-	PositionLong float64   `json:"posLong"`
-	Distance     int       `json:"distance"`
-	Altitude     int       `json:"altitude"`
-	HeartRate    *uint8    `json:"heartRate,omitempty"`
+	Timestamp          time.Time `json:"timestamp"`
+	PositionLat        float64   `json:"posLat"`
+	PositionLong       float64   `json:"posLong"`
+	CumulativeDistance float64   `json:"distance"`
+	Altitude           float64   `json:"altitude"`
+	HeartRate          *uint8    `json:"heartRate,omitempty"`
 }
 
-func NewRecord(timestamp time.Time, posLat, posLong float64, distance, altitude int, heartRate *uint8) *Record {
-	return &Record{Timestamp: timestamp, PositionLat: posLat, PositionLong: posLong, Distance: distance, Altitude: altitude, HeartRate: heartRate}
+func NewRecord(timestamp time.Time, posLat, posLong, distance, altitude float64, heartRate *uint8) *Record {
+	return &Record{Timestamp: timestamp, PositionLat: posLat, PositionLong: posLong, CumulativeDistance: distance, Altitude: altitude, HeartRate: heartRate}
 }
 
 type Records []*Record

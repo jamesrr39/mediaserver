@@ -143,7 +143,7 @@ class TrackModalContent extends React.Component<Props, State> {
     const lapsRows = laps.map((lap, index) => (
       <tr key={index}>
         <td>{index + 1}</td>
-        <td>{lap.distance}m</td>
+        <td>{lap.distance.toFixed(2)}m</td>
         <td>{lap.time.getDisplayString()}</td>
       </tr>
     ));
