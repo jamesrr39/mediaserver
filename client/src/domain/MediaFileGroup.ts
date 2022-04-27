@@ -12,7 +12,7 @@ export function mediaFilesToDateGroups(mediaFiles: MediaFile[]) {
         const timeTaken = mediaFile.getTimeTaken();
         let dateAsString = 'unknown';
         if (timeTaken) {
-            dateAsString = `${timeTaken.getFullYear()}-${timeTaken.getMonth() + 1}-${timeTaken.getDate()}`;
+            dateAsString = timeTaken.toLocaleDateString();
         }
 
         let group = groupsMap.get(dateAsString);

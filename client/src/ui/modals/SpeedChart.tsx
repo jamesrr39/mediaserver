@@ -1,16 +1,10 @@
 import * as React from 'react';
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { Record, getSpeedsFromRecords } from '../../domain/FitTrack';
-// import { Time } from '../../util/time';
 
 type Props = {
     trackRecords: Record[];
 };
-
-// const colors = {
-//     blue: 'rgb(54, 162, 235)',
-//     lightBlue: 'rgb(118, 166, 204)',
-// };
 
 type ComponentState = {
     highestPace: number,

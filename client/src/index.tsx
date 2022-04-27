@@ -2,6 +2,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
 import registerServiceWorker from './registerServiceWorker';
+import '../node_modules/bootstrap/dist/css/bootstrap.css';
 import './index.css';
 import '../node_modules/font-awesome/css/font-awesome.css';
 

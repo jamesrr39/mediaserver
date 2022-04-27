@@ -69,7 +69,7 @@ class LoginScreen extends React.Component<Props, ComponentState> {
                 {people.map((person, idx) => {
                     return (
                         <li key={idx}>
-                            <button onClick={() => this.loginWithExistingUser(person)}>{person.name}</button>
+                            <button className="btn btn-primary" onClick={() => this.loginWithExistingUser(person)}>{person.name}</button>
                         </li>
                     );
                 })}

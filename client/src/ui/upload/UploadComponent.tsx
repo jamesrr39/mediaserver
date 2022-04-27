@@ -25,33 +25,32 @@ class UploadComponent extends React.Component<Props, ComponentState> {
     isUploadingEnabled: true
   };
 
-  onFileUploadSelected = (event: ChangeEvent<HTMLInputElement>) => {
+  onFileUploadSelected = async (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files === null) {
       return;
     }
-    this.setState(state => {
-      return {
-        isUploadingEnabled: false,
+    this.setState(state => ({
         ...state,
-      };
-    });
+        isUploadingEnabled: false,
+    }));
     for (let i = 0; i < event.target.files.length; i++) {
         const file = event.target.files[i];
-        this.uploadFile(file);
+        await this.props.uploadFile(file);
     }
   }
 
   render() {
     return (
-      <label style={themeStyles.button}>
+      <label className="btn btn-secondary" style={themeStyles.button}>
         Upload
-        <input style={styles.uploadInput} type="file" multiple={true} onChange={this.onFileUploadSelected} />
+        <input
+          style={styles.uploadInput}
+          type="file"
+          multiple={true}
+          onChange={this.onFileUploadSelected}
+        />
       </label>
     );
-  }
-
-  private async uploadFile(file: File) {
-    await this.props.uploadFile(file);
   }
 }
 

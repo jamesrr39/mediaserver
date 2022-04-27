@@ -8,7 +8,6 @@ type Props = {
 const styles = {
   container: {
     padding: '15px 10px 10px',
-    height: '30px',
     backgroundColor: '#eee',
   },
   linkContainer: {
@@ -30,7 +29,3 @@ export default class MediaserverTopBar extends React.Component<Props> {
     );
   }
 }
-
-// export default compose(
-//   // (state: State) => (state),
-// )(MediaserverTopBar);
