@@ -60,3 +60,20 @@ export function extractFolderCollectionsFrommediaFiles(mediaFiles: MediaFile[]) 
   });
   return collectionsList;
 }
+
+export function findCollectionFromTypeAndName(
+    mediaFiles: MediaFile[],
+    collectionType: CollectionType,
+    collectionIdentifier: string,
+    customCollections: CustomCollection[]) {
+    switch (collectionType) {
+      case CollectionType.Folder:
+        const collection = extractFolderCollectionsFrommediaFiles(mediaFiles)
+          .find(currentCollection => (currentCollection.name === collectionIdentifier));
+        return collection;
+      case CollectionType.Custom:
+        return customCollections.find(customCollection => customCollection.identifier() === collectionIdentifier);
+      default:
+        throw new Error(`unrecognised type ${collectionType}`);
+      }
+  }

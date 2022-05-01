@@ -2,8 +2,6 @@ import * as React from 'react';
 import { Collection } from '../../domain/Collection';
 import GalleryWithFilter from '../gallery/GalleryWithFilter';
 import { connect } from 'react-redux';
-import { themeStyles } from '../../theme/theme';
-import { Link } from 'react-router-dom';
 import { MediaFile } from '../../domain/MediaFile';
 import { State } from '../../reducers/rootReducer';
 import { getScreenWidth } from '../../util/screen_size';
@@ -54,19 +52,3 @@ class CollectionViewComponent extends React.Component<Props> {
 export default connect((state: State) => ({
   mediaFilesMap: state.mediaFilesReducer.mediaFilesMap,
 }))(CollectionViewComponent);
-
-type CollectionViewNavBarProps = {
-  collection: Collection;
-};
-
-export const CollectionViewNavBarComponent = (props: CollectionViewNavBarProps) => {
-  const { collection } = props;
-  
-  const editUrl = `collections/${encodeURIComponent(collection.type)}/${encodeURIComponent(collection.identifier())}/edit`;
-
-  return (
-    <Link style={themeStyles.button} to={editUrl}>
-      &#9998; Edit
-    </Link>
-  );
-};

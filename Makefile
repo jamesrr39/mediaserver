@@ -48,7 +48,7 @@ run_dev_client:
 run_dev_server:
 	echo "localenv base dir: ${LOCALENV_BASE_DIR}"
 	mkdir -p ${LOCALENV_BASE_DIR}/data ${LOCALENV_BASE_DIR}/metadata ${LOCALENV_BASE_DIR}/cache
-	LOCAL_DEV_SERVER_URL="http://localhost:3000/" go run cmd/media-server-main.go ${LOCALENV_BASE_DIR}/data --metadata-dir=${LOCALENV_BASE_DIR}/metadata --cache-dir=${LOCALENV_BASE_DIR}/cache --profile-dir=${LOCALENV_BASE_DIR}
+	go run cmd/media-server-main.go ${LOCALENV_BASE_DIR}/data --metadata-dir=${LOCALENV_BASE_DIR}/metadata --cache-dir=${LOCALENV_BASE_DIR}/cache --profile-dir=${LOCALENV_BASE_DIR}
 
 .PHONY: clean_dev_metadata
 clean_dev_metadata:
@@ -67,7 +67,7 @@ update_go_snapshots:
 .PHONY: bundle_static_assets
 bundle_static_assets:
 	cd client && yarn build
-	rsync -arh --delete client/build/ mediaserver/statichandlers/client_static_files
+	rsync -arh --delete client/dist/* mediaserver/statichandlers/client_static_files
 
 .PHONY: deploy_to_raspberry_pi
 deploy_to_raspberry_pi: test build_docker_linux_arm7

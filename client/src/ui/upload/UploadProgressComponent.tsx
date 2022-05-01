@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 import { connect } from 'react-redux';
-import { compose } from 'redux';
 import { FileQueue } from '../../fileQueue';
 import { State } from '../../reducers/rootReducer';
 
@@ -46,6 +45,6 @@ function mapStateToProps(state: State) {
   };
 }
 
-export default compose(
-  connect(mapStateToProps),
+export default connect(
+  mapStateToProps,
 )(UploadProgressComponent);

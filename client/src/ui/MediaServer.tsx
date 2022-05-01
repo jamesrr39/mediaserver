@@ -1,42 +1,27 @@
 import * as React from 'react';
 import AllPicturesGallery from './AllPicturesGallery';
-import { Route, Redirect, RouteComponentProps, Switch } from 'react-router';
-import MediaFileModal from './modals/MediaFileModal';
+import { Route,Navigate, Routes } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { State } from '../reducers/rootReducer';
 import { PeopleMap } from '../actions/mediaFileActions';
 import { HashRouter } from 'react-router-dom';
 import MediaserverTopBar from './MediaserverTopBar';
 import CollectionsComponent from './collections/CollectionsListingComponent';
-import CollectionViewComponent, { CollectionViewNavBarComponent } from './collections/CollectionViewComponent';
-import { extractFolderCollectionsFrommediaFiles, CollectionType, CustomCollection } from '../domain/Collection';
-import NotFoundComponent from './NotFoundComponent';
+import { CustomCollection } from '../domain/Collection';
 import NotificationBarComponent from './NotificationBarComponent';
-import EditCustomCollectionComponent from './collections/EditCustomCollectionComponent';
 import UploadComponent from './upload/UploadComponent';
 import { MediaFile } from '../domain/MediaFile';
 import UploadProgressComponent from './upload/UploadProgressComponent';
-import { gallerySortingFunc } from './gallery/GalleryWithFilter';
-import { filterFromJson } from '../domain/Filter';
 import MediafilesMap from './MediafilesMap';
 import { Win } from '../actions/windowActions';
 import { LoadingState } from '../actions/util';
+import { EditCustomCollectionScreen } from './collections/EditCustomCollectionScreen';
+import AllPicturesModalScreen from './modals/AllPicturesModalScreen';
+import PictureInCollectionModalScreen from './modals/PictureInCollectionModalScreen';
+import CollectionViewScreen, { CollectionViewNavBarComponent } from './collections/CollectionViewScreen';
 
-type CollectionViewRouteParams = {
-  identifier: string;
-  type: string;
-};
 
-type CollectionPictureModalRouteParams = {
-  identifier: string;
-  type: string;
-  hash: string;
-};
 
-type AllPicturesPictureModalRouteParams = {
-  hash: string;
-  filterJson?: string;
-};
 
 type MediaServerProps = {
   mediaFiles: MediaFile[];
@@ -46,23 +31,6 @@ type MediaServerProps = {
   window: Win,
   loadingState: LoadingState,
 };
-
-function findCollectionFromTypeAndName(
-  mediaFiles: MediaFile[],
-  collectionType: CollectionType,
-  collectionIdentifier: string,
-  customCollections: CustomCollection[]) {
-  switch (collectionType) {
-    case CollectionType.Folder:
-      const collection = extractFolderCollectionsFrommediaFiles(mediaFiles)
-        .find(currentCollection => (currentCollection.name === collectionIdentifier));
-      return collection;
-    case CollectionType.Custom:
-      return customCollections.find(customCollection => customCollection.identifier() === collectionIdentifier);
-    default:
-      throw new Error(`unrecognised type ${collectionType}`);
-    }
-}
 
 const withNavBar = (component: JSX.Element, navBarChild?: React.ReactNode) => (
   <>
@@ -86,125 +54,13 @@ const styles = {
   }
 };
 
-function collectionIdentifierAndTypeFromRoute(routeInfo: RouteComponentProps<CollectionViewRouteParams>) {
-  const identifier = decodeURIComponent(routeInfo.match.params.identifier);
-  const type = decodeURIComponent(routeInfo.match.params.type);
-
-  return {
-    identifier,
-    type,
-  };
-}
 
 class MediaServer extends React.Component<MediaServerProps> {
 
-  renderCollectionView = (routeInfo: RouteComponentProps<CollectionViewRouteParams>) => {
-    const { type, identifier } = collectionIdentifierAndTypeFromRoute(routeInfo);
 
-    const { mediaFiles, customCollections, peopleMap } = this.props;
-
-    const collection = findCollectionFromTypeAndName(
-      mediaFiles,
-      type as CollectionType,
-      identifier,
-      customCollections
-    );
-
-    if (!collection) {
-      return withNavBar(<NotFoundComponent message={'no collection found'} />);
-    }
-
-    const encodedType = encodeURIComponent(routeInfo.match.params.type);
-    const encodedIdentifier = encodeURIComponent(routeInfo.match.params.identifier);
-    const props = {
-      collection,
-      mediaFilesMap: this.props.mediaFilesMap,
-      peopleMap,
-      routeUrl: `/collections/${encodedType}/${encodedIdentifier}`,
-    };
-
-    return withNavBar(<CollectionViewComponent {...props} />, <CollectionViewNavBarComponent {...{collection}} />);
-  }
-
-  renderEditCollectionView = (routeInfo: RouteComponentProps<CollectionViewRouteParams>) => {
-    const { type, identifier } = collectionIdentifierAndTypeFromRoute(routeInfo);
-
-    if (type !== CollectionType.Custom) {
-      return <NotFoundComponent message={`can't edit type '${type}'`} />;
-    }
-
-    const { customCollections, peopleMap } = this.props;
-
-    const collection = customCollections.find(customCollection => customCollection.identifier() === identifier);
-    if (!collection) {
-      return <NotFoundComponent message={'no collection found'} />;
-    }
-
-    const props = {
-      collection,
-      peopleMap,
-    };
-
-    return <EditCustomCollectionComponent {...props} />;
-  }
-
-  renderAllPicturesPictureModal = (routeInfo: RouteComponentProps<AllPicturesPictureModalRouteParams>) => {
-    const filter = filterFromJson(routeInfo.match.params.filterJson || '{}');
-    const mediaFiles = this.props.mediaFiles.filter(mediaFile => filter.filter(mediaFile));
-    mediaFiles.sort(gallerySortingFunc);
-    
-    const props = {
-      mediaFiles,
-      hash: decodeURIComponent(routeInfo.match.params.hash),
-      baseUrl: '/gallery',
-    };
-
-    return <MediaFileModal {...props} />;
-  }
-
-  renderCollectionPicture = (routeInfo: RouteComponentProps<CollectionPictureModalRouteParams>) => {
-    const name = decodeURIComponent(routeInfo.match.params.identifier);
-    const type = decodeURIComponent(routeInfo.match.params.type);
-    const hash = decodeURIComponent(routeInfo.match.params.hash);
-
-    const collection = findCollectionFromTypeAndName(
-      this.props.mediaFiles, type as CollectionType, name, this.props.customCollections);
-    if (!collection) {
-      return <NotFoundComponent message={'no picture found'} />;
-    }
-
-    const mediaFiles = collection.fileHashes.map(hashInCollection => {
-      const mediaFile = this.props.mediaFilesMap.get(hashInCollection);
-      if (!mediaFile) {
-        throw new Error(`unexpected error: could not find picture metadata for hash ${hashInCollection}`);
-      }
-
-      return mediaFile;
-    });
-
-    const props = {
-      mediaFiles,
-      hash,
-      baseUrl: `/collections/${routeInfo.match.params.type}/${routeInfo.match.params.identifier}`,
-    };
-
-    return <MediaFileModal {...props}/>;
-  }
-
-  renderCollectionsComponent = () =>  <CollectionsComponent />;
-
-  renderAllPicturesGallery = () =>  <AllPicturesGallery />;
-
-  renderMap = () => {
-    const props = {
-      mediaFileUrlBase: '/gallery/detail',
-    };
-
-    return <MediafilesMap {...props} />;
-  }
 
   render() {
-    const { loadingState } = this.props;
+    const { loadingState, peopleMap, customCollections, mediaFiles, mediaFilesMap } = this.props;
 
     if (loadingState === LoadingState.IN_PROGRESS) {
       return <p>Loading...</p>;
@@ -217,37 +73,36 @@ class MediaServer extends React.Component<MediaServerProps> {
     return (
       <HashRouter>
         <div>
-          <Switch>
+          <Routes>
             <Route
               path="/collections/:type/:identifier/edit"
-              render={(route) => withNavBar(this.renderEditCollectionView(route))}
+              element={withNavBar(<EditCustomCollectionScreen peopleMap={peopleMap} customCollections={customCollections} />)}
             />
-            <>
               <Route
                 path="/collections/:type/:identifier"
-                render={(route) => this.renderCollectionView(route)}
+                element={withNavBar(
+                  <CollectionViewScreen mediaFiles={mediaFiles} peopleMap={peopleMap} customCollections={customCollections} />, 
+                  <CollectionViewNavBarComponent mediaFiles={mediaFiles} customCollections={customCollections} />)}
               />
               <Route
                 path="/collections/:type/:identifier/detail/:hash"
-                render={(route) => withNavBar(this.renderCollectionPicture(route))}
+                element={withNavBar(<PictureInCollectionModalScreen mediaFiles={mediaFiles} mediaFilesMap={mediaFilesMap} customCollections={customCollections} />)}
               />
-            </>
-          </Switch>
-          <Route
-            path="/collections"
-            exact={true}
-            render={() => withNavBar(this.renderCollectionsComponent(), <UploadComponent />)}
-          />
-          <Route path="/map" render={() => withNavBar(this.renderMap(), <UploadComponent />)} />
-          <Route
-            path="/gallery"
-            render={() => withNavBar(this.renderAllPicturesGallery(), <UploadComponent />)}
-          />
-          <Route
-            path="/gallery/detail/:hash"
-            render={(route) => withNavBar(this.renderAllPicturesPictureModal(route), <UploadComponent />)}
-          />
-          <Route path="/" exact={true} render={() => (<Redirect to="/gallery" />)} />
+            <Route
+              path="/collections"
+              element={withNavBar(<CollectionsComponent />, <UploadComponent />)}
+            />
+            <Route path="/map" element={() => withNavBar(<MediafilesMap mediaFileUrlBase='/gallery/detail' />, <UploadComponent />)} />
+            <Route
+              path="/gallery"
+              element={withNavBar(<AllPicturesGallery />, <UploadComponent />)}
+            />
+            <Route
+              path="/gallery/detail/:hash"
+              element={withNavBar(<AllPicturesModalScreen mediaFiles={mediaFiles} />, <UploadComponent />)}
+            />
+            <Route path="/" element={<Navigate to="/gallery" />} />
+          </Routes>
           <div style={styles.notificationsComponent}>
             <NotificationBarComponent />
           </div>
