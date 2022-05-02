@@ -6,6 +6,7 @@ import { MediaFileGroup } from '../../domain/MediaFileGroup';
 import { Link } from 'react-router-dom';
 import { Observable } from 'ts-util/dist/Observable';
 import { PeopleMap } from '../../actions/mediaFileActions';
+import GalleryThumbnail, { BuildLinkFunc, SelectThumbnailEventInfo } from './GalleryThumbnail';
 
 export type Row = {
     groups: GroupWithSizes[],
@@ -22,17 +23,8 @@ const styles = {
         padding: '10px',
         margin: '10px',
     },
-    participantListWrapper: {
-        padding: 0,
-        listStyle: 'none',
-    }
 };
 
-export type SelectThumbnailEventInfo = {
-    selected: boolean;
-};
-
-export type BuildLinkFunc = (mediaFile: MediaFile) => string;
 
 type MediaFileWithSize = {
     mediaFile: MediaFile,
@@ -93,14 +85,14 @@ class GalleryRow extends React.Component<Props> {
 
         if (row.fitsInOneLine) {
             return group.mediaFiles.map((mediaFileWithSize, index) => {
+                const {mediaFile, size} = mediaFileWithSize;
+
                 const leftPx = (index === 0) ? 0 : GALLERY_FILE_LEFT_MARGIN_PX;
                 const style = {
                     marginLeft: `${leftPx}px`,
                 };
 
-                const thumbnail = this.mediaFileWithSizeToThumbnail(mediaFileWithSize);
-
-                return <div key={index} style={style}>{thumbnail}</div>;
+                return <div key={index} style={style}><GalleryThumbnail mediaFile={mediaFile} size={size} {...this.props} /></div>;
             });
         }
 
@@ -128,7 +120,7 @@ class GalleryRow extends React.Component<Props> {
 
         return rows.map((row, index) => {
             const rowThumbnails = row.map((mediaFileWithSize, index) => {
-                const thumbnail = this.mediaFileWithSizeToThumbnail(mediaFileWithSize);
+                const {mediaFile, size} = mediaFileWithSize
                 
                 const leftPx = (index === 0) ? 0 : GALLERY_FILE_LEFT_MARGIN_PX;
 
@@ -136,7 +128,7 @@ class GalleryRow extends React.Component<Props> {
                     marginLeft: `${leftPx}px`,
                 };
 
-                return <div key={index} style={style}>{thumbnail}</div>;
+                return <div key={index} style={style}><GalleryThumbnail mediaFile={mediaFile} size={size} {...this.props} /></div>;
             });
 
             const style = {
@@ -148,72 +140,78 @@ class GalleryRow extends React.Component<Props> {
         });
     }
 
-    private mediaFileWithSizeToThumbnail = (mediaFileWithSize: MediaFileWithSize) => {
-        const {mediaFile, size} = mediaFileWithSize;
-        const {
-            buildLink, 
-            onClickThumbnail, 
-            onSelectThumbnail, 
-            isThumbnailVisible, 
-            scrollObservable, 
-            resizeObservable,
-            peopleMap,
-        } = this.props;
+    // private mediaFileWithSizeToThumbnail = (mediaFileWithSize: MediaFileWithSize) => {
+    //     const {mediaFile, size} = mediaFileWithSize;
+    //     const {
+    //         buildLink, 
+    //         onClickThumbnail, 
+    //         onSelectThumbnail, 
+    //         isThumbnailVisible, 
+    //         scrollObservable, 
+    //         resizeObservable,
+    //         peopleMap,
+    //     } = this.props;
 
-        const thumbnailProps = {
-            size,
-            mediaFile,
-            isThumbnailVisible,
-            scrollObservable,
-            resizeObservable,
-        };
+    //     const thumbnailProps = {
+    //         size,
+    //         mediaFile,
+    //         isThumbnailVisible,
+    //         scrollObservable,
+    //         resizeObservable,
+    //     };
 
-        let thumbnail = <Thumbnail {...thumbnailProps} />;
+    //     let thumbnail = <Thumbnail {...thumbnailProps} />;
 
-        if (buildLink) {
-            thumbnail = (
-                <Link to={buildLink(mediaFile)}>
-                    {thumbnail}
-                </Link>
-            );
-        }
+    //     if (buildLink) {
+    //         thumbnail = (
+    //             <Link to={buildLink(mediaFile)}>
+    //                 {thumbnail}
+    //             </Link>
+    //         );
+    //     }
 
-        if (onClickThumbnail) {
-            const onClickThumbnailCb = (event: React.MouseEvent<HTMLAnchorElement>) => {
-                event.preventDefault();
-                onClickThumbnail(mediaFile);
-            };
+    //     if (onClickThumbnail) {
+    //         const onClickThumbnailCb = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    //             event.preventDefault();
+    //             onClickThumbnail(mediaFile);
+    //         };
 
-            thumbnail = <a href="#" onClick={onClickThumbnailCb}>{thumbnail}</a>;
-        }
+    //         thumbnail = <a href="#" onClick={onClickThumbnailCb}>{thumbnail}</a>;
+    //     }
 
-        const checkbox = onSelectThumbnail ? 
-                <input
-                    type="checkbox" 
-                    onChange={(event) => onSelectThumbnail(mediaFile, {selected: event.target.checked})} 
-                />  : null;
-            
-        return (
-            <>
-                {checkbox}
-                {thumbnail}
-                {mediaFile.participantIds.length !== 0 && 
-                    <ul style={styles.participantListWrapper}>
-                        {mediaFile.participantIds.map((partipantId, idx) => {
-                            const person = peopleMap.get(partipantId);
+    //     const checkbox = onSelectThumbnail ? 
+    //             <input
+    //                 type="checkbox" 
+    //                 onChange={(event) => {
+    //                     const {checked} = event.target
+    //                     setChecked(!checked);
+    //                     onSelectThumbnail(mediaFile, {selected: checked})}
+    //                 }
+    //             />  : null;
 
-                            return (
-                                <li key={idx}>
-                                    <i className="fa fa-user" aria-hidden="true"></i>
-                                    &nbsp;{person ? person.name : '(unknown)'}
-                                </li>
-                            );
-                        })}
-                    </ul>
-                }
-            </>
-        );
-    }
+    //     return (
+    //         <>
+    //             <div className={"gallery-thumbnail"}>
+    //             <div className="gallery-checkbox" style={checked && {display: 'block'}}>{checkbox}</div>
+    //                 {thumbnail}
+    //             </div>
+    //             {mediaFile.participantIds.length !== 0 && 
+    //                 <ul style={styles.participantListWrapper}>
+    //                     {mediaFile.participantIds.map((partipantId, idx) => {
+    //                         const person = peopleMap.get(partipantId);
+
+    //                         return (
+    //                             <li key={idx}>
+    //                                 <i className="fa fa-user" aria-hidden="true"></i>
+    //                                 &nbsp;{person ? person.name : '(unknown)'}
+    //                             </li>
+    //                         );
+    //                     })}
+    //                 </ul>
+    //             }
+    //         </>
+    //     );
+    // }
 }
 
 export default GalleryRow;
