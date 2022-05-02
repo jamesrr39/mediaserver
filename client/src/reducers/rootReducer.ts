@@ -28,3 +28,4 @@ export default function createRootReducer(win: WindowState) {
     peopleReducer,
   });
 }
+

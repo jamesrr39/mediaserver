@@ -1,3 +1,4 @@
+// import * as React from 'react';
 import { useParams } from "react-router-dom";
 import { filterFromJson } from "../../domain/Filter";
 import { MediaFile } from "../../domain/MediaFile";
@@ -11,6 +12,7 @@ type AllPicturesPictureModalRouteParams = {
   };
 
 type Props = {mediaFiles: MediaFile[]}
+
 function AllPicturesModalScreen(props: Props) {
   const params = useParams<AllPicturesPictureModalRouteParams>();
   const filter = filterFromJson(params.filterJson || '{}');

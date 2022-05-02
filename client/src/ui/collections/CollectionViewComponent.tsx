@@ -35,7 +35,7 @@ class CollectionViewComponent extends React.Component<Props> {
     const galleryProps = {
       mediaFiles,
       peopleMap,
-      mediaFileUrlBase: `/${routeUrl}/detail`,
+      mediaFileUrlBase: `${routeUrl}/detail`,
       showMap: true,
       getRowWidth: () => getScreenWidth(),
     };
