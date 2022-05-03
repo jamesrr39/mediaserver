@@ -1,23 +1,23 @@
-import { MediaFile } from './domain/MediaFile';
-import { MediaFileJSON, fromJSON } from './domain/deserialise';
-import { State } from './reducers/rootReducer';
+import { MediaFile } from "./domain/MediaFile";
+import { MediaFileJSON, fromJSON } from "./domain/deserialise";
+import { State } from "./reducers/rootReducer";
 
 type QueuedFile = {
-  file: File,
-  onSuccess: (mediaFile: MediaFile) => void,
+  file: File;
+  onSuccess: (mediaFile: MediaFile) => void;
   onFailure: (error: Error) => void;
 };
 
-export type MediaFileUploadResponse = {mediaFile: MediaFile} | {error: Error};
+export type MediaFileUploadResponse =
+  | { mediaFile: MediaFile }
+  | { error: Error };
 
 export class FileQueue {
   private queue: QueuedFile[] = [];
   private finishedFiles: MediaFileUploadResponse[] = [];
   private currentlyUploading: QueuedFile[] = [];
-  
-  constructor(
-    private readonly maxConcurrentUploads: number,
-  ) {}
+
+  constructor(private readonly maxConcurrentUploads: number) {}
 
   public async uploadOrQueue(state: State, file: File): Promise<MediaFile> {
     const queuedFile = {
@@ -28,7 +28,7 @@ export class FileQueue {
       queuedFile.onSuccess = resolve;
       queuedFile.onFailure = (error) => reject(error);
     });
-    
+
     if (this.currentlyUploading.length === this.maxConcurrentUploads) {
       // no spare slots, so queue it
       this.queue.push(queuedFile);
@@ -51,27 +51,31 @@ export class FileQueue {
   private async upload(state: State, queuedFile: QueuedFile) {
     this.currentlyUploading.push(queuedFile);
     const formData = new FormData();
-    formData.append('file', queuedFile.file);
+    formData.append("file", queuedFile.file);
     const response = await fetch(`/api/files/`, {
-      method: 'POST',
+      method: "POST",
       body: formData,
     });
-    
+
     if (!response.ok) {
       const error = new Error(response.statusText);
-      this.onUploadFinished(state, queuedFile, {error});
+      this.onUploadFinished(state, queuedFile, { error });
       queuedFile.onFailure(error);
       return;
     }
 
     response.json().then((mediaFileJSON: MediaFileJSON) => {
       const mediaFile = fromJSON(mediaFileJSON);
-      this.onUploadFinished(state, queuedFile, {mediaFile});
+      this.onUploadFinished(state, queuedFile, { mediaFile });
       queuedFile.onSuccess(mediaFile);
     });
   }
 
-  private onUploadFinished(state: State, file: QueuedFile, response: MediaFileUploadResponse) {
+  private onUploadFinished(
+    state: State,
+    file: QueuedFile,
+    response: MediaFileUploadResponse
+  ) {
     this.currentlyUploading.splice(this.currentlyUploading.indexOf(file), 1);
     this.finishedFiles.push(response);
 

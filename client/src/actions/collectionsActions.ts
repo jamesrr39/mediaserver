@@ -1,16 +1,16 @@
-import { Action } from 'redux';
-import { Collection, CustomCollection } from '../domain/Collection';
-import { Dispatch } from 'react';
-import { createErrorMessage } from './util';
-import { State } from '../reducers/rootReducer';
+import { Action } from "redux";
+import { Collection, CustomCollection } from "../domain/Collection";
+import { Dispatch } from "react";
+import { createErrorMessage } from "./util";
+import { State } from "../reducers/rootReducer";
 
 export enum CollectionActions {
-  FETCH_COLLECTIONS = 'FETCH_COLLECTIONS',
-  COLLECTION_FETCH_STARTED = 'COLLECTION_FETCH_STARTED',
-  COLLECTIONS_FETCHED = 'COLLECTIONS_FETCHED',
-  COLLECTION_FETCH_FAILED = 'COLLECTION_FETCH_FAILED',
-  COLLECTION_SAVED = 'COLLECTION_SAVED',
-  SAVE_COLLECTION = 'SAVE_COLLECTION',
+  FETCH_COLLECTIONS = "FETCH_COLLECTIONS",
+  COLLECTION_FETCH_STARTED = "COLLECTION_FETCH_STARTED",
+  COLLECTIONS_FETCHED = "COLLECTIONS_FETCHED",
+  COLLECTION_FETCH_FAILED = "COLLECTION_FETCH_FAILED",
+  COLLECTION_SAVED = "COLLECTION_SAVED",
+  SAVE_COLLECTION = "SAVE_COLLECTION",
 }
 
 export interface FetchCollectionsStartedAction extends Action {
@@ -32,28 +32,35 @@ export type CollectionSavedAction = {
 };
 
 export type SaveCollectionAction = {
-  type: CollectionActions.SAVE_COLLECTION,
-  collection: CustomCollection,
+  type: CollectionActions.SAVE_COLLECTION;
+  collection: CustomCollection;
 };
 
 export type CollectionsFetchFailedAction = {
-  type: CollectionActions.COLLECTION_FETCH_FAILED,
+  type: CollectionActions.COLLECTION_FETCH_FAILED;
 };
 
-export type CollectionsAction = CollectionsFetchedAction | 
-  FetchCollectionsAction | CollectionsFetchFailedAction | CollectionSavedAction | SaveCollectionAction | 
-  FetchCollectionsStartedAction;
+export type CollectionsAction =
+  | CollectionsFetchedAction
+  | FetchCollectionsAction
+  | CollectionsFetchFailedAction
+  | CollectionSavedAction
+  | SaveCollectionAction
+  | FetchCollectionsStartedAction;
 
 type CustomCollectionJSON = {
   id: number;
 } & Collection;
 
 export type FetchCollectionsResponse = {
-  customCollections: CustomCollection[]
+  customCollections: CustomCollection[];
 };
 
 export function fetchCollections() {
-  return async (dispatch: Dispatch<CollectionsAction>, getState: () => State): Promise<FetchCollectionsResponse> => {
+  return async (
+    dispatch: Dispatch<CollectionsAction>,
+    getState: () => State
+  ): Promise<FetchCollectionsResponse> => {
     dispatch({
       type: CollectionActions.FETCH_COLLECTIONS,
     });
@@ -67,11 +74,14 @@ export function fetchCollections() {
 
     const collectionsJSON: CustomCollectionJSON[] = await response.json();
 
-    const customCollections = collectionsJSON.map(collectionJSON => new CustomCollection(
-      collectionJSON.id,
-      collectionJSON.name,
-      collectionJSON.fileHashes,
-    ));
+    const customCollections = collectionsJSON.map(
+      (collectionJSON) =>
+        new CustomCollection(
+          collectionJSON.id,
+          collectionJSON.name,
+          collectionJSON.fileHashes
+        )
+    );
 
     dispatch({
       type: CollectionActions.COLLECTIONS_FETCHED,
@@ -85,12 +95,16 @@ export function fetchCollections() {
 }
 
 export function saveCollection(collection: CustomCollection) {
-  return async (dispatch: (action: CollectionsAction) => void, getState: () => State) => {
-    const url = (collection.id === 0)
-      ? `/api/collections/`
-      : `/api/collections/${encodeURIComponent(collection.id)}`;
-    const method = (collection.id === 0) ? 'POST' : 'PUT';
-    
+  return async (
+    dispatch: (action: CollectionsAction) => void,
+    getState: () => State
+  ) => {
+    const url =
+      collection.id === 0
+        ? `/api/collections/`
+        : `/api/collections/${encodeURIComponent(collection.id)}`;
+    const method = collection.id === 0 ? "POST" : "PUT";
+
     const response = await fetch(url, {
       method,
       body: JSON.stringify(collection),

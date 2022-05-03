@@ -1,7 +1,6 @@
-
-@import '../node_modules/bootstrap/dist/css/bootstrap.min.css';
-@import '../node_modules/font-awesome/css/font-awesome.css';
-@import '../node_modules/leaflet/dist/leaflet.css';
+@import "../node_modules/bootstrap/dist/css/bootstrap.min.css";
+@import "../node_modules/font-awesome/css/font-awesome.css";
+@import "../node_modules/leaflet/dist/leaflet.css";
 
 body {
   margin: 0;
@@ -14,7 +13,7 @@ body {
 }
 
 .gallery-thumbnail:hover {
- opacity: 0.7;
+  opacity: 0.7;
 }
 
 .gallery-checkbox {

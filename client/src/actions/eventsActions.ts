@@ -1,15 +1,14 @@
-
 export enum EventActionType {
-    EVENT_RECEIVED = 'EVENT_RECEIVED',
+  EVENT_RECEIVED = "EVENT_RECEIVED",
 }
 
 export type EventAction = {
-    type: EventActionType.EVENT_RECEIVED,
-    data: string,
+  type: EventActionType.EVENT_RECEIVED;
+  data: string;
 };
 
 export type Message = {
-    data: string,
+  data: string;
 };
 
 // export function connectToWebsocket() {

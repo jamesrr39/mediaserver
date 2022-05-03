@@ -1,32 +1,32 @@
-import * as React from 'react';
-import { ChangeEvent } from 'react';
-import Modal from '../Modal';
-import { themeStyles } from '../../theme/theme';
+import * as React from "react";
+import { ChangeEvent } from "react";
+import Modal from "../Modal";
+import { themeStyles } from "../../theme/theme";
 
 const styles = {
   nameInput: {
-    padding: '10px',
-    borderRadius: '10px',
-    width: '300px',
-    margin: '0 10px',
-    border: '1px dashed black',
+    padding: "10px",
+    borderRadius: "10px",
+    width: "300px",
+    margin: "0 10px",
+    border: "1px dashed black",
   },
   container: {
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '100%',
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    height: "100%",
   } as React.CSSProperties,
   buttonContainer: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    margin: '20px',
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    margin: "20px",
   } as React.CSSProperties,
   uploadInput: {
-    display: 'none',
+    display: "none",
   },
 };
 
@@ -39,13 +39,16 @@ type ComponentState = {
   name: string;
 };
 
-export default class AddCollectionModal extends React.Component<Props, ComponentState> {
+export default class AddCollectionModal extends React.Component<
+  Props,
+  ComponentState
+> {
   state = {
-    name: '',
+    name: "",
   };
 
   render() {
-    const refCb = (element: HTMLElement|null) => {
+    const refCb = (element: HTMLElement | null) => {
       if (!element) {
         return;
       }
@@ -61,7 +64,7 @@ export default class AddCollectionModal extends React.Component<Props, Component
               placeholder="name"
               style={styles.nameInput}
               value={this.state.name}
-              onChange={event => this.onNameChange(event)}
+              onChange={(event) => this.onNameChange(event)}
               ref={refCb}
             />
             <div style={styles.buttonContainer}>
@@ -72,7 +75,11 @@ export default class AddCollectionModal extends React.Component<Props, Component
               >
                 Save
               </button>
-              <button type="button" onClick={this.props.onCancel} style={themeStyles.button}>
+              <button
+                type="button"
+                onClick={this.props.onCancel}
+                style={themeStyles.button}
+              >
                 Cancel
               </button>
             </div>
@@ -84,9 +91,9 @@ export default class AddCollectionModal extends React.Component<Props, Component
 
   private onNameChange = (event: ChangeEvent<HTMLInputElement>) => {
     const name = event.target.value;
-    this.setState(state => ({
-        ...state,
-        name,
+    this.setState((state) => ({
+      ...state,
+      name,
     }));
-  }
+  };
 }

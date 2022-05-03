@@ -1,5 +1,5 @@
-import { MediaFileType } from './MediaFileType';
-import { MapLocation } from './Location';
+import { MediaFileType } from "./MediaFileType";
+import { MapLocation } from "./Location";
 
 export abstract class AbstractMediaFile {
   public abstract readonly fileType: MediaFileType;
@@ -7,9 +7,10 @@ export abstract class AbstractMediaFile {
   constructor(
     public readonly hashValue: string,
     public readonly relativePath: string,
-    public readonly  fileSizeBytes: number) {}
+    public readonly fileSizeBytes: number
+  ) {}
   getName() {
-    const lastSlash = this.relativePath.lastIndexOf('/');
+    const lastSlash = this.relativePath.lastIndexOf("/");
     if (lastSlash === -1) {
       return this.relativePath;
     }

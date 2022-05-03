@@ -1,21 +1,24 @@
-import * as React from 'react';
-import { PictureMetadata } from '../domain/PictureMetadata';
+import * as React from "react";
+import { PictureMetadata } from "../domain/PictureMetadata";
 
-import { Observable } from 'ts-util/dist/Observable';
+import { Observable } from "ts-util/dist/Observable";
 // import { isNarrowScreen } from '../util/screen_size';
-import { THUMBNAIL_HEIGHTS } from '../generated/thumbnail_sizes';
-import { MediaFile } from '../domain/MediaFile';
-import { MediaFileType } from '../domain/MediaFileType';
-import { PictureThumbnail } from './thumbnails/PictureThumbnail';
-import { VideoThumbnail } from './thumbnails/VideoFileThumbnail';
-import TrackThumbnail from './thumbnails/TrackThumbnail';
-import { Size } from '../domain/Size';
+import { THUMBNAIL_HEIGHTS } from "../generated/thumbnail_sizes";
+import { MediaFile } from "../domain/MediaFile";
+import { MediaFileType } from "../domain/MediaFileType";
+import { PictureThumbnail } from "./thumbnails/PictureThumbnail";
+import { VideoThumbnail } from "./thumbnails/VideoFileThumbnail";
+import TrackThumbnail from "./thumbnails/TrackThumbnail";
+import { Size } from "../domain/Size";
 
 const WIDE_SCREEN_THUMBNAIL_HEIGHT = 200;
 const NARROW_SCREEN_THUMBNAIL_HEIGHT = 100;
 const NARROW_SCREEN_THUMBNAIL_WIDTH = 100;
 
-function getImageHeightToRequest(narrowScreen: boolean, pictureMetadata: PictureMetadata) {
+function getImageHeightToRequest(
+  narrowScreen: boolean,
+  pictureMetadata: PictureMetadata
+) {
   const { height, width } = pictureMetadata.rawSize;
 
   if (!narrowScreen) {
@@ -28,7 +31,7 @@ function getImageHeightToRequest(narrowScreen: boolean, pictureMetadata: Picture
   if (height > width) {
     const ratio = width / height;
     const thumbnailHeight = THUMBNAIL_HEIGHTS.find((thumbnailHeightSetting) => {
-      return (ratio * thumbnailHeightSetting) > NARROW_SCREEN_THUMBNAIL_WIDTH;
+      return ratio * thumbnailHeightSetting > NARROW_SCREEN_THUMBNAIL_WIDTH;
     });
     if (thumbnailHeight) {
       return thumbnailHeight;
@@ -39,21 +42,28 @@ function getImageHeightToRequest(narrowScreen: boolean, pictureMetadata: Picture
 }
 
 export function getSizeForThumbnail(mediaFile: MediaFile) {
-
   const narrowScreen = false;
 
   switch (mediaFile.fileType) {
     case MediaFileType.Picture: {
       const heightToRequest = getImageHeightToRequest(narrowScreen, mediaFile);
       const ratio = heightToRequest / mediaFile.rawSize.height;
-      const width = narrowScreen ? NARROW_SCREEN_THUMBNAIL_WIDTH : (mediaFile.rawSize.width * ratio);
-      const height = narrowScreen ? NARROW_SCREEN_THUMBNAIL_HEIGHT : WIDE_SCREEN_THUMBNAIL_HEIGHT;
-      return {height, width};
+      const width = narrowScreen
+        ? NARROW_SCREEN_THUMBNAIL_WIDTH
+        : mediaFile.rawSize.width * ratio;
+      const height = narrowScreen
+        ? NARROW_SCREEN_THUMBNAIL_HEIGHT
+        : WIDE_SCREEN_THUMBNAIL_HEIGHT;
+      return { height, width };
     }
     case MediaFileType.Video:
-      const height = narrowScreen ? NARROW_SCREEN_THUMBNAIL_HEIGHT : WIDE_SCREEN_THUMBNAIL_HEIGHT;
-      const width = narrowScreen ? NARROW_SCREEN_THUMBNAIL_WIDTH : (height * 16 / 9);
-      return {height, width};
+      const height = narrowScreen
+        ? NARROW_SCREEN_THUMBNAIL_HEIGHT
+        : WIDE_SCREEN_THUMBNAIL_HEIGHT;
+      const width = narrowScreen
+        ? NARROW_SCREEN_THUMBNAIL_WIDTH
+        : (height * 16) / 9;
+      return { height, width };
     default:
       return {
         width: WIDE_SCREEN_THUMBNAIL_HEIGHT,
@@ -69,15 +79,15 @@ const generateThumbnailStyle = (mediaFile: MediaFile, isLoaded: boolean) => {
     return {
       width: `${width}px`,
       height: `${height}px`,
-      backgroundImage: '',
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'center',
+      backgroundImage: "",
+      backgroundRepeat: "no-repeat",
+      backgroundPosition: "center",
     };
   }
 
   return {
     height: `${height}px`,
-    backgroundColor: '#bbb',
+    backgroundColor: "#bbb",
     width: `${width}px`,
   };
 };
@@ -99,7 +109,7 @@ class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
     isQueued: false,
   };
 
-  private element: null|HTMLElement = null;
+  private element: null | HTMLElement = null;
 
   componentDidMount() {
     this.props.scrollObservable.addListener(this.onScroll);
@@ -114,13 +124,13 @@ class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
   render() {
     const { mediaFile, size } = this.props;
 
-    if (!(this.state.isQueued)) {
+    if (!this.state.isQueued) {
       const thumbnailStyle = generateThumbnailStyle(
-        mediaFile, this.state.isQueued);
-
-      return (
-        <div style={thumbnailStyle} ref={el => this.element = el} />
+        mediaFile,
+        this.state.isQueued
       );
+
+      return <div style={thumbnailStyle} ref={(el) => (this.element = el)} />;
     }
 
     switch (mediaFile.fileType) {
@@ -158,7 +168,7 @@ class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
     this.setState({
       isQueued: true,
     });
-  }
+  };
 
   private isInViewport() {
     if (!this.element) {

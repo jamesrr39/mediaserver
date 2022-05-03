@@ -1,13 +1,13 @@
-import * as React from 'react';
-import { createCompareTimeTakenFunc } from '../../domain/PictureMetadata';
+import * as React from "react";
+import { createCompareTimeTakenFunc } from "../../domain/PictureMetadata";
 
-import { DebouncedObservable } from 'ts-util/dist/Observable';
-import { MediaFile } from '../../domain/MediaFile';
-import { FilterComponent } from './FilterComponent';
-import { GalleryFilter } from '../../domain/Filter';
-import { getScreenHeight } from '../../util/screen_size';
-import InnerGalleryWrapper from './InnerGalleryWrapper';
-import { PeopleMap } from '../../actions/mediaFileActions';
+import { DebouncedObservable } from "ts-util/dist/Observable";
+import { MediaFile } from "../../domain/MediaFile";
+import { FilterComponent } from "./FilterComponent";
+import { GalleryFilter } from "../../domain/Filter";
+import { getScreenHeight } from "../../util/screen_size";
+import InnerGalleryWrapper from "./InnerGalleryWrapper";
+import { PeopleMap } from "../../actions/mediaFileActions";
 
 export type GalleryProps = {
   mediaFiles: MediaFile[];
@@ -21,15 +21,15 @@ export type GalleryProps = {
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
 type DateRange = {
-  start?: Date,
-  end?: Date,
+  start?: Date;
+  end?: Date;
 };
 
 function getDateRange(mediaFiles: MediaFile[]): DateRange {
-  let start: Date|undefined = undefined;
-  let end: Date|undefined = undefined;
+  let start: Date | undefined = undefined;
+  let end: Date | undefined = undefined;
 
-  mediaFiles.forEach(mediaFile => {
+  mediaFiles.forEach((mediaFile) => {
     const timeTaken = mediaFile.getTimeTaken();
     if (timeTaken === null) {
       return;
@@ -61,10 +61,10 @@ class GalleryWithFilter extends React.Component<GalleryProps, GalleryState> {
   private scrollObservable = new DebouncedObservable<void>(150);
   private resizeObservable = new DebouncedObservable<void>(150);
 
-  private galleryContainerEl: HTMLElement|null = null;
+  private galleryContainerEl: HTMLElement | null = null;
 
   render() {
-    const {scrollObservable, resizeObservable} = this;
+    const { scrollObservable, resizeObservable } = this;
 
     const dateRange = getDateRange(this.props.mediaFiles);
 
@@ -89,36 +89,45 @@ class GalleryWithFilter extends React.Component<GalleryProps, GalleryState> {
 
         const thumbnailRect = thumbnailEl.getBoundingClientRect();
 
-        if (thumbnailRect.top < window.innerHeight && thumbnailRect.bottom > 0) {
+        if (
+          thumbnailRect.top < window.innerHeight &&
+          thumbnailRect.bottom > 0
+        ) {
           return true;
         }
 
         return false;
-      }
+      },
     };
 
     const wrapperStyles = {
       height: getScreenHeight() - this.state.elementPosTopOffset,
-      overflowY: 'scroll' as 'scroll',
+      overflowY: "scroll" as "scroll",
     };
 
     return (
       <>
         <FilterComponent {...filterComponentProps} />
-        <div style={wrapperStyles} ref={el => {this.setGalleryHeight(el); this.galleryContainerEl = el; }}>
+        <div
+          style={wrapperStyles}
+          ref={(el) => {
+            this.setGalleryHeight(el);
+            this.galleryContainerEl = el;
+          }}
+        >
           <InnerGalleryWrapper {...innerGalleryProps} />
         </div>
       </>
     );
   }
 
-  private setGalleryHeight(el: HTMLElement|null) {
+  private setGalleryHeight(el: HTMLElement | null) {
     if (!el) {
       return;
     }
 
-    el.addEventListener('scroll', () => this.scrollObservable.triggerEvent());
-    el.addEventListener('resize', () => this.resizeObservable.triggerEvent());
+    el.addEventListener("scroll", () => this.scrollObservable.triggerEvent());
+    el.addEventListener("resize", () => this.resizeObservable.triggerEvent());
 
     const elementPosTopOffset = el.getBoundingClientRect().top;
 
@@ -126,7 +135,7 @@ class GalleryWithFilter extends React.Component<GalleryProps, GalleryState> {
       return;
     }
 
-    this.setState(state => ({...state, elementPosTopOffset }));
+    this.setState((state) => ({ ...state, elementPosTopOffset }));
   }
 }
 

@@ -5,30 +5,31 @@ import NotFoundComponent from "../NotFoundComponent";
 import EditCustomCollectionComponent from "./EditCustomCollectionComponent";
 
 type Props = {
-    customCollections: CustomCollection[],
-    peopleMap: PeopleMap
-}
+  customCollections: CustomCollection[];
+  peopleMap: PeopleMap;
+};
 
-export function EditCustomCollectionScreen(props:Props){
-    const {identifier, type} = useParams<{
-        identifier: string;
-        type: string;
-    }>();
+export function EditCustomCollectionScreen(props: Props) {
+  const { identifier, type } = useParams<{
+    identifier: string;
+    type: string;
+  }>();
 
+  if (type !== CollectionType.Custom) {
+    return <NotFoundComponent message={`can't edit type '${type}'`} />;
+  }
 
-    if (type !== CollectionType.Custom) {
-        return <NotFoundComponent message={`can't edit type '${type}'`} />;
-      }
-  
-      const collection = props.customCollections.find(customCollection => customCollection.identifier() === identifier);
-      if (!collection) {
-        return <NotFoundComponent message={'no collection found'} />;
-      }
-  
+  const collection = props.customCollections.find(
+    (customCollection) => customCollection.identifier() === identifier
+  );
+  if (!collection) {
+    return <NotFoundComponent message={"no collection found"} />;
+  }
 
-    return <EditCustomCollectionComponent 
-        collection={collection}
-        peopleMap={props.peopleMap}
+  return (
+    <EditCustomCollectionComponent
+      collection={collection}
+      peopleMap={props.peopleMap}
     />
-
+  );
 }

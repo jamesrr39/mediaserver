@@ -1,21 +1,21 @@
-import * as React from 'react';
-import * as ReactDOM from 'react-dom/client';
+import * as React from "react";
+import * as ReactDOM from "react-dom/client";
 
-import registerServiceWorker from './registerServiceWorker';
+import registerServiceWorker from "./registerServiceWorker";
 
-import { Provider } from 'react-redux';
-import configureStore from './configureStore';
-import App from './ui/App';
+import { Provider } from "react-redux";
+import configureStore from "./configureStore";
+import App from "./ui/App";
 
 const store = configureStore(window);
 
 const app = (
-  <Provider store={store} >
+  <Provider store={store}>
     <App />
   </Provider>
 );
 
-const rootEl = document.getElementById('root');
+const rootEl = document.getElementById("root");
 if (!rootEl) {
   throw new Error(`couldn't find root element`);
 }

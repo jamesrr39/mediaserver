@@ -1,37 +1,37 @@
-import * as React from 'react';
-import { CustomCollection } from '../../domain/Collection';
-import { MediaFile } from '../../domain/MediaFile';
-import { ChangeEvent } from 'react';
-import GalleryWithFilter from '../gallery/GalleryWithFilter';
-import { State } from '../../reducers/rootReducer';
-import { connect } from 'react-redux';
-import { saveCollection } from '../../actions/collectionsActions';
-import { themeStyles } from '../../theme/theme';
-import { uploadFile, PeopleMap } from '../../actions/mediaFileActions';
-import { getScreenWidth } from '../../util/screen_size';
+import * as React from "react";
+import { CustomCollection } from "../../domain/Collection";
+import { MediaFile } from "../../domain/MediaFile";
+import { ChangeEvent } from "react";
+import GalleryWithFilter from "../gallery/GalleryWithFilter";
+import { State } from "../../reducers/rootReducer";
+import { connect } from "react-redux";
+import { saveCollection } from "../../actions/collectionsActions";
+import { themeStyles } from "../../theme/theme";
+import { uploadFile, PeopleMap } from "../../actions/mediaFileActions";
+import { getScreenWidth } from "../../util/screen_size";
 
 const styles = {
   nameInput: {
-    padding: '10px',
-    borderRadius: '10px',
-    width: '300px',
-    margin: '0 10px',
-    border: '1px dashed black',
+    padding: "10px",
+    borderRadius: "10px",
+    width: "300px",
+    margin: "0 10px",
+    border: "1px dashed black",
   },
   container: {
-    margin: '0 20px',
+    margin: "0 20px",
   },
   uploadInput: {
-    display: 'none',
+    display: "none",
   },
 };
 
 type Props = {
-  mediaFiles: MediaFile[],
-  peopleMap: PeopleMap,
-  collection: CustomCollection,
-  saveCollection: (collection: CustomCollection) => Promise<CustomCollection>,
-  uploadFile: (file: File) => Promise<MediaFile>,
+  mediaFiles: MediaFile[];
+  peopleMap: PeopleMap;
+  collection: CustomCollection;
+  saveCollection: (collection: CustomCollection) => Promise<CustomCollection>;
+  uploadFile: (file: File) => Promise<MediaFile>;
 };
 
 type ComponentState = {
@@ -39,7 +39,10 @@ type ComponentState = {
   hashesInCollectionSet: Set<string>;
 };
 
-class EditCustomCollectionComponent extends React.Component<Props, ComponentState> {
+class EditCustomCollectionComponent extends React.Component<
+  Props,
+  ComponentState
+> {
   state = {
     name: this.props.collection.name,
     hashesInCollectionSet: new Set<string>(this.props.collection.fileHashes),
@@ -47,13 +50,13 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
 
   onNameChange = (event: ChangeEvent<HTMLInputElement>) => {
     const name = event.target.value;
-    this.setState(state => ({
-        ...state,
-        name,
+    this.setState((state) => ({
+      ...state,
+      name,
     }));
-  }
+  };
   addToFilesInCollection = (hash: string) => {
-    this.setState(state => {
+    this.setState((state) => {
       const hashesInCollectionSet = new Set(state.hashesInCollectionSet);
       hashesInCollectionSet.add(hash);
 
@@ -62,9 +65,9 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
         hashesInCollectionSet,
       };
     });
-  }
+  };
   removeFromFilesInCollection = (hash: string) => {
-    this.setState(state => {
+    this.setState((state) => {
       const hashesInCollectionSet = new Set(state.hashesInCollectionSet);
       hashesInCollectionSet.delete(hash);
 
@@ -73,7 +76,7 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
         hashesInCollectionSet,
       };
     });
-  }
+  };
   onSubmit = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
 
@@ -82,15 +85,17 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
     const newCollection = new CustomCollection(
       collection.id,
       this.state.name,
-      Array.from(this.state.hashesInCollectionSet),
+      Array.from(this.state.hashesInCollectionSet)
     );
 
     const returnedCollection = await saveCollection(newCollection);
 
     const encodedType = encodeURIComponent(returnedCollection.type);
-    const encodedIdentifier = encodeURIComponent(returnedCollection.identifier());
+    const encodedIdentifier = encodeURIComponent(
+      returnedCollection.identifier()
+    );
     window.location.hash = `#/collections/${encodedType}/${encodedIdentifier}`;
-  }
+  };
 
   render() {
     const { peopleMap } = this.props;
@@ -138,12 +143,23 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
             placeholder="name"
             style={styles.nameInput}
             value={this.state.name}
-            onChange={event => this.onNameChange(event)}
+            onChange={(event) => this.onNameChange(event)}
           />
-          <button type="submit" onClick={this.onSubmit} style={themeStyles.button}>Save</button>
+          <button
+            type="submit"
+            onClick={this.onSubmit}
+            style={themeStyles.button}
+          >
+            Save
+          </button>
           <label style={themeStyles.button}>
             Upload
-            <input style={styles.uploadInput} type="file" multiple={true} onChange={this.onFileUploadSelected} />
+            <input
+              style={styles.uploadInput}
+              type="file"
+              multiple={true}
+              onChange={this.onFileUploadSelected}
+            />
           </label>
           <h3>Items in collection</h3>
           <GalleryWithFilter {...itemsInCollectionGalleryProps} />
@@ -158,26 +174,26 @@ class EditCustomCollectionComponent extends React.Component<Props, ComponentStat
     if (event.target.files === null) {
       return;
     }
-    this.setState(state => {
+    this.setState((state) => {
       return {
         isUploadingEnabled: false,
         ...state,
       };
     });
     for (let i = 0; i < event.target.files.length; i++) {
-        const file = event.target.files[i];
+      const file = event.target.files[i];
 
-        this.uploadFile(file);
+      this.uploadFile(file);
     }
-  }
+  };
 
   private async uploadFile(file: File) {
     const { uploadFile } = this.props;
     const { hashesInCollectionSet } = this.state;
-    
+
     const mediaFile = await uploadFile(file);
     hashesInCollectionSet.add(mediaFile.hashValue);
-    this.setState(state => ({
+    this.setState((state) => ({
       ...state,
       hashesInCollectionSet,
     }));
@@ -192,10 +208,9 @@ function mapStateToProps(state: State) {
   };
 }
 
-export default connect(
-  mapStateToProps, 
-  { uploadFile, saveCollection })
-(EditCustomCollectionComponent); // as React.ComponentType<{collection: Collection}>;
+export default connect(mapStateToProps, { uploadFile, saveCollection })(
+  EditCustomCollectionComponent
+); // as React.ComponentType<{collection: Collection}>;
 
 // tslint:disable-next-line
 // https://stackoverflow.com/questions/48701121/jsx-element-type-does-not-have-any-construct-or-call-signatures-typescript

@@ -1,23 +1,25 @@
-import * as React from 'react';
+import * as React from "react";
 
-import { State } from '../reducers/rootReducer';
-import { connect } from 'react-redux';
-import { MediaFile } from '../domain/MediaFile';
-import { InnerMap } from './gallery/InnerMap';
-import { FitTrack, Record } from '../domain/FitTrack';
-import { TrackMapData } from './MapComponent';
-import { MediaFileType } from '../domain/MediaFileType';
-import { fetchRecordsForTracks } from '../actions/mediaFileActions';
-import { FilterComponent } from './gallery/FilterComponent';
-import { GalleryFilter } from '../domain/Filter';
-import { DebouncedObservable } from 'ts-util/dist/Observable';
-import { trackSummariesToTrackDatas } from '../actions/selectors';
-import { CancellablePromise, makeCancelable } from 'ts-util/dist/Promises';
+import { State } from "../reducers/rootReducer";
+import { connect } from "react-redux";
+import { MediaFile } from "../domain/MediaFile";
+import { InnerMap } from "./gallery/InnerMap";
+import { FitTrack, Record } from "../domain/FitTrack";
+import { TrackMapData } from "./MapComponent";
+import { MediaFileType } from "../domain/MediaFileType";
+import { fetchRecordsForTracks } from "../actions/mediaFileActions";
+import { FilterComponent } from "./gallery/FilterComponent";
+import { GalleryFilter } from "../domain/Filter";
+import { DebouncedObservable } from "ts-util/dist/Observable";
+import { trackSummariesToTrackDatas } from "../actions/selectors";
+import { CancellablePromise, makeCancelable } from "ts-util/dist/Promises";
 
 type Props = {
   mediaFiles: MediaFile[];
   mediaFileUrlBase: string;
-  fetchRecordsForTracks: (trackSummary: FitTrack[]) => Promise<Map<string, Record[]>>;
+  fetchRecordsForTracks: (
+    trackSummary: FitTrack[]
+  ) => Promise<Map<string, Record[]>>;
 };
 
 type ComponentState = {
@@ -33,12 +35,12 @@ class MediafilesMap extends React.Component<Props, ComponentState> {
   };
 
   private onFilterChangeObservable = new DebouncedObservable<GalleryFilter>(50);
-  
+
   private fetchRecordsPromise?: CancellablePromise<Map<string, Record[]>>;
 
   componentDidMount() {
-    this.onFilterChangeObservable.addListener(filter => {
-      this.setState(state => ({
+    this.onFilterChangeObservable.addListener((filter) => {
+      this.setState((state) => ({
         ...state,
         filter,
       }));
@@ -53,13 +55,13 @@ class MediafilesMap extends React.Component<Props, ComponentState> {
   }
 
   render() {
-    const {filter, tracks, loaded} = this.state;
+    const { filter, tracks, loaded } = this.state;
 
     if (!loaded) {
       return <p>loading...</p>;
     }
-    
-    const filteredTracks = tracks.filter(track => {
+
+    const filteredTracks = tracks.filter((track) => {
       return filter.filter(track.trackSummary);
     });
 
@@ -67,7 +69,7 @@ class MediafilesMap extends React.Component<Props, ComponentState> {
   }
 
   renderMap(tracks: TrackMapData[]) {
-    const {mediaFiles, mediaFileUrlBase} = this.props;
+    const { mediaFiles, mediaFileUrlBase } = this.props;
 
     const filterProps = {
       initialFilter: this.state.filter,
@@ -92,19 +94,25 @@ class MediafilesMap extends React.Component<Props, ComponentState> {
 
   private async fetchRecords() {
     const trackSummaries: FitTrack[] = [];
-    this.props.mediaFiles.forEach((file => {
+    this.props.mediaFiles.forEach((file) => {
       if (file.fileType === MediaFileType.FitTrack) {
         trackSummaries.push(file);
       }
-    }));
+    });
 
-    this.fetchRecordsPromise = makeCancelable(this.props.fetchRecordsForTracks(trackSummaries));
+    this.fetchRecordsPromise = makeCancelable(
+      this.props.fetchRecordsForTracks(trackSummaries)
+    );
 
     const tracksDetails = await this.fetchRecordsPromise.promise;
 
-    const trackDatas = trackSummariesToTrackDatas(trackSummaries, tracksDetails, this.props.mediaFileUrlBase);
+    const trackDatas = trackSummariesToTrackDatas(
+      trackSummaries,
+      tracksDetails,
+      this.props.mediaFileUrlBase
+    );
 
-    this.setState(state => ({
+    this.setState((state) => ({
       ...state,
       tracks: state.tracks.concat(trackDatas),
       loaded: true,
@@ -121,5 +129,5 @@ function mapStateToProps(state: State) {
 }
 
 export default connect(mapStateToProps, {
-  fetchRecordsForTracks
+  fetchRecordsForTracks,
 })(MediafilesMap);

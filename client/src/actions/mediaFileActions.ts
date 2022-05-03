@@ -1,23 +1,23 @@
-import { Action } from 'redux';
-import { MediaFile } from '../domain/MediaFile';
-import { MediaFileJSON, fromJSON } from '../domain/deserialise';
-import { FitTrack, Record } from '../domain/FitTrack';
-import { State } from '../reducers/rootReducer';
-import { Person } from '../domain/People';
-import { nameForMediaFileType } from '../domain/MediaFileType';
-import { createErrorMessage } from './util';
-import { createMediaFileWithParticipants } from '../domain/util';
+import { Action } from "redux";
+import { MediaFile } from "../domain/MediaFile";
+import { MediaFileJSON, fromJSON } from "../domain/deserialise";
+import { FitTrack, Record } from "../domain/FitTrack";
+import { State } from "../reducers/rootReducer";
+import { Person } from "../domain/People";
+import { nameForMediaFileType } from "../domain/MediaFileType";
+import { createErrorMessage } from "./util";
+import { createMediaFileWithParticipants } from "../domain/util";
 
 export type PeopleMap = Map<number, Person>;
 
 export enum FilesActionTypes {
-  FETCH_MEDIA_FILES = 'FETCH_MEDIA_FILES',
-  MEDIA_FILES_FETCHED = 'MEDIA_FILES_FETCHED',
-  MEDIA_FILES_FETCH_FAILED = 'MEDIA_FILES_FETCH_FAILED',
-  QUEUE_FOR_UPLOAD = 'QUEUE_FOR_UPLOAD',
-  FILE_SUCCESSFULLY_UPLOADED = 'FILE_SUCCESSFULLY_UPLOADED',
-  TRACK_RECORDS_FETCHED_ACTION = 'TRACK_RECORDS_FETCHED_ACTION',
-  PARTICIPANTS_SET_ON_MEDIAFILE = 'PARTICIPANTS_SET_ON_MEDIAFILE',
+  FETCH_MEDIA_FILES = "FETCH_MEDIA_FILES",
+  MEDIA_FILES_FETCHED = "MEDIA_FILES_FETCHED",
+  MEDIA_FILES_FETCH_FAILED = "MEDIA_FILES_FETCH_FAILED",
+  QUEUE_FOR_UPLOAD = "QUEUE_FOR_UPLOAD",
+  FILE_SUCCESSFULLY_UPLOADED = "FILE_SUCCESSFULLY_UPLOADED",
+  TRACK_RECORDS_FETCHED_ACTION = "TRACK_RECORDS_FETCHED_ACTION",
+  PARTICIPANTS_SET_ON_MEDIAFILE = "PARTICIPANTS_SET_ON_MEDIAFILE",
 }
 
 export interface PicturesMetadataFetchFailedAction extends Action {
@@ -40,49 +40,51 @@ export interface PictureSuccessfullyUploadedAction extends Action {
 
 export type TrackRecordsFetchedAction = {
   type: FilesActionTypes.TRACK_RECORDS_FETCHED_ACTION;
-  trackSummaryIdsMap: Map<string, Promise<Record[]>>,
+  trackSummaryIdsMap: Map<string, Promise<Record[]>>;
 };
 
 export type QueueForUploadAction = {
-  type: FilesActionTypes.QUEUE_FOR_UPLOAD,
-  file: File,
+  type: FilesActionTypes.QUEUE_FOR_UPLOAD;
+  file: File;
 };
 
 export type ParticipantAddedToMediaFile = {
-  type: FilesActionTypes.PARTICIPANTS_SET_ON_MEDIAFILE,
-  mediaFile: MediaFile,
-  participants: Person[],
+  type: FilesActionTypes.PARTICIPANTS_SET_ON_MEDIAFILE;
+  mediaFile: MediaFile;
+  participants: Person[];
 };
 
-export type MediaserverAction = (
-  PicturesMetadataFetchedAction |
-  PictureSuccessfullyUploadedAction |
-  FetchPicturesMetadataAction | 
-  TrackRecordsFetchedAction |
-  QueueForUploadAction |
-  ParticipantAddedToMediaFile |
-  PicturesMetadataFetchFailedAction
-);
+export type MediaserverAction =
+  | PicturesMetadataFetchedAction
+  | PictureSuccessfullyUploadedAction
+  | FetchPicturesMetadataAction
+  | TrackRecordsFetchedAction
+  | QueueForUploadAction
+  | ParticipantAddedToMediaFile
+  | PicturesMetadataFetchFailedAction;
 
 type TrackJSON = {
-  hash: string,
-  records: RecordJSON[],
+  hash: string;
+  records: RecordJSON[];
 };
 
 type RecordJSON = {
-  timestamp: string,
-  posLat: number,
-  posLong: number,
-  distance: number,
-  altitude: number
+  timestamp: string;
+  posLat: number;
+  posLong: number;
+  distance: number;
+  altitude: number;
 };
 
 export type FetchPicturesMetadataResponse = {
-  mediaFiles: MediaFile[],
+  mediaFiles: MediaFile[];
 };
 
 export function fetchPicturesMetadata() {
-  return async (dispatch: (action: MediaserverAction) => FetchPicturesMetadataResponse, getState: () => State) => {
+  return async (
+    dispatch: (action: MediaserverAction) => FetchPicturesMetadataResponse,
+    getState: () => State
+  ) => {
     dispatch({
       type: FilesActionTypes.FETCH_MEDIA_FILES,
     });
@@ -91,10 +93,10 @@ export function fetchPicturesMetadata() {
     if (!response.ok) {
       throw new Error(createErrorMessage(response));
     }
-      
+
     const mediaFilesJSON: MediaFileJSON[] = await response.json();
 
-    const mediaFiles = mediaFilesJSON.map(json => fromJSON(json));
+    const mediaFiles = mediaFilesJSON.map((json) => fromJSON(json));
     dispatch({
       type: FilesActionTypes.MEDIA_FILES_FETCHED,
       mediaFiles,
@@ -108,9 +110,9 @@ export function fetchPicturesMetadata() {
 
 async function fetchTrackRecords(state: State, hashes: string[]) {
   const response = await fetch(`/api/graphql`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/graphql',
+      "Content-Type": "application/graphql",
     },
     body: `
     {
@@ -133,8 +135,8 @@ async function fetchTrackRecords(state: State, hashes: string[]) {
 
   type Response = {
     data: {
-      tracks: TrackJSON[],
-    },
+      tracks: TrackJSON[];
+    };
   };
   const responseBody = (await response.json()) as Response;
   return responseBody.data;
@@ -144,16 +146,17 @@ type Resolver = (records: Record[]) => void;
 
 export function fetchRecordsForTracks(trackSummaries: FitTrack[]) {
   return async (
-    dispatch: (action: TrackRecordsFetchedAction) => void, 
-    getState: () => State,
+    dispatch: (action: TrackRecordsFetchedAction) => void,
+    getState: () => State
   ) => {
     const state = getState();
 
     const trackSummaryIdsMap = new Map<string, Promise<Record[]>>();
     const trackSummariesToFetch: string[] = [];
     // figure out which already have promises, and which need to be fetched
-    trackSummaries.forEach(trackSummary => {
-      const recordsFromStatePromise = state.mediaFilesReducer.trackRecordsMap.get(trackSummary.hashValue);
+    trackSummaries.forEach((trackSummary) => {
+      const recordsFromStatePromise =
+        state.mediaFilesReducer.trackRecordsMap.get(trackSummary.hashValue);
       if (recordsFromStatePromise) {
         trackSummaryIdsMap.set(trackSummary.hashValue, recordsFromStatePromise);
         return;
@@ -164,7 +167,7 @@ export function fetchRecordsForTracks(trackSummaries: FitTrack[]) {
 
     if (trackSummariesToFetch.length !== 0) {
       const resolverMap = new Map<string, Resolver>();
-      trackSummariesToFetch.forEach(hash => {
+      trackSummariesToFetch.forEach((hash) => {
         const promise = new Promise<Record[]>((resolve, reject) => {
           const resolver = (records: Record[]) => {
             resolve(records);
@@ -179,9 +182,9 @@ export function fetchRecordsForTracks(trackSummaries: FitTrack[]) {
       //   type: FilesActionTypes.TRACK_RECORDS_FETCH_QUEUED_ACTION,
       //   trackSummaryIds: trackSummariesToFetch,
       // });
-      fetchTrackRecords(state, trackSummariesToFetch).then(response => {
-        response.tracks.forEach(track => {
-          const records = track.records.map(record => ({
+      fetchTrackRecords(state, trackSummariesToFetch).then((response) => {
+        response.tracks.forEach((track) => {
+          const records = track.records.map((record) => ({
             ...record,
             timestamp: new Date(record.timestamp),
           }));
@@ -193,7 +196,7 @@ export function fetchRecordsForTracks(trackSummaries: FitTrack[]) {
         });
 
         const dispatchMap = new Map<string, Promise<Record[]>>();
-        trackSummariesToFetch.forEach(hash => {
+        trackSummariesToFetch.forEach((hash) => {
           const promise = trackSummaryIdsMap.get(hash);
           if (!promise) {
             throw new Error(`couldn't find promise for ${hash}`);
@@ -211,7 +214,7 @@ export function fetchRecordsForTracks(trackSummaries: FitTrack[]) {
     return new Promise<Map<string, Record[]>>((resolve, reject) => {
       const map = new Map<string, Record[]>();
       trackSummaryIdsMap.forEach((recordsPromise, hash) => {
-        recordsPromise.then(records => {
+        recordsPromise.then((records) => {
           map.set(hash, records);
           if (map.size === trackSummaries.length) {
             resolve(map);
@@ -224,12 +227,15 @@ export function fetchRecordsForTracks(trackSummaries: FitTrack[]) {
 
 export function uploadFile(file: File) {
   return async (
-    dispatch: (action: MediaserverAction) => void, 
-    getState: () => State,
+    dispatch: (action: MediaserverAction) => void,
+    getState: () => State
   ) => {
     const state = getState();
 
-    const mediaFile = await state.mediaFilesReducer.uploadQueue.uploadOrQueue(state, file);
+    const mediaFile = await state.mediaFilesReducer.uploadQueue.uploadOrQueue(
+      state,
+      file
+    );
     dispatch({
       type: FilesActionTypes.FILE_SUCCESSFULLY_UPLOADED,
       mediaFile,
@@ -239,32 +245,43 @@ export function uploadFile(file: File) {
   };
 }
 
-export function setParticipantsOnMediaFile(mediaFile: MediaFile, participants: Person[]) {
-  return async(dispatch: (action: MediaserverAction) => void, getState: () => State) => {
+export function setParticipantsOnMediaFile(
+  mediaFile: MediaFile,
+  participants: Person[]
+) {
+  return async (
+    dispatch: (action: MediaserverAction) => void,
+    getState: () => State
+  ) => {
     for (let participant of participants) {
       if (participant.id === 0) {
         throw new Error(`couldn't save, got participant id 0`);
       }
     }
 
-    const participantIds = participants.map(participant => participant.id);
+    const participantIds = participants.map((participant) => participant.id);
 
     const response = await fetch(`/api/graphql?query={people{id,name}}`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/graphql',
+        "Content-Type": "application/graphql",
       },
       body: `mutation {
-        updateMediaFiles(hashes: ["${mediaFile.hashValue}"], participantIds: ${JSON.stringify(participantIds)})
+        updateMediaFiles(hashes: ["${
+          mediaFile.hashValue
+        }"], participantIds: ${JSON.stringify(participantIds)})
         {${nameForMediaFileType(mediaFile.fileType)}{participantIds}}
       }`,
     });
 
     if (!response.ok) {
-      throw new Error('failed to save person');
+      throw new Error("failed to save person");
     }
 
-    const newMediaFile = createMediaFileWithParticipants(mediaFile, participantIds);
+    const newMediaFile = createMediaFileWithParticipants(
+      mediaFile,
+      participantIds
+    );
 
     dispatch({
       type: FilesActionTypes.PARTICIPANTS_SET_ON_MEDIAFILE,

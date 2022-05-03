@@ -8,105 +8,112 @@ import Thumbnail from "../Thumbnail";
 
 export type BuildLinkFunc = (mediaFile: MediaFile) => string;
 
-
 export type SelectThumbnailEventInfo = {
-    selected: boolean;
+  selected: boolean;
 };
 
 const styles = {
-
-    participantListWrapper: {
-        padding: 0,
-        listStyle: 'none',
-    }
-}
+  participantListWrapper: {
+    padding: 0,
+    listStyle: "none",
+  },
+};
 
 type Props = {
-    mediaFile: MediaFile
-    size: Size
+  mediaFile: MediaFile;
+  size: Size;
 
-    peopleMap: PeopleMap,
-    scrollObservable: Observable<void>;
-    resizeObservable: Observable<void>;
-    onClickThumbnail?: (mediaFile: MediaFile) => void;
-    buildLink?: BuildLinkFunc;
-    onSelectThumbnail?: (mediaFile: MediaFile, eventInfo: SelectThumbnailEventInfo) => void;
-    isThumbnailVisible(el: HTMLElement): void;
-}
+  peopleMap: PeopleMap;
+  scrollObservable: Observable<void>;
+  resizeObservable: Observable<void>;
+  onClickThumbnail?: (mediaFile: MediaFile) => void;
+  buildLink?: BuildLinkFunc;
+  onSelectThumbnail?: (
+    mediaFile: MediaFile,
+    eventInfo: SelectThumbnailEventInfo
+  ) => void;
+  isThumbnailVisible(el: HTMLElement): void;
+};
 
 function GalleryThumbnail(props: Props) {
-    const [checked, setChecked] = useState(false);
+  const [checked, setChecked] = useState(false);
 
-        const {mediaFile, size} = props;
-        const {
-            buildLink, 
-            onClickThumbnail, 
-            onSelectThumbnail, 
-            isThumbnailVisible, 
-            scrollObservable, 
-            resizeObservable,
-            peopleMap,
-        } = props;
+  const { mediaFile, size } = props;
+  const {
+    buildLink,
+    onClickThumbnail,
+    onSelectThumbnail,
+    isThumbnailVisible,
+    scrollObservable,
+    resizeObservable,
+    peopleMap,
+  } = props;
 
-        const thumbnailProps = {
-            size,
-            mediaFile,
-            isThumbnailVisible,
-            scrollObservable,
-            resizeObservable,
-        };
+  const thumbnailProps = {
+    size,
+    mediaFile,
+    isThumbnailVisible,
+    scrollObservable,
+    resizeObservable,
+  };
 
-        let thumbnail = <Thumbnail {...thumbnailProps} />;
+  let thumbnail = <Thumbnail {...thumbnailProps} />;
 
-        if (buildLink) {
-            thumbnail = (
-                <Link to={buildLink(mediaFile)}>
-                    {thumbnail}
-                </Link>
+  if (buildLink) {
+    thumbnail = <Link to={buildLink(mediaFile)}>{thumbnail}</Link>;
+  }
+
+  if (onClickThumbnail) {
+    const onClickThumbnailCb = (event: React.MouseEvent<HTMLAnchorElement>) => {
+      event.preventDefault();
+      onClickThumbnail(mediaFile);
+    };
+
+    thumbnail = (
+      <a href="#" onClick={onClickThumbnailCb}>
+        {thumbnail}
+      </a>
+    );
+  }
+
+  const checkbox = onSelectThumbnail ? (
+    <input
+      type="checkbox"
+      onChange={(event) => {
+        const { checked } = event.target;
+        setChecked(checked);
+        onSelectThumbnail(mediaFile, { selected: checked });
+      }}
+    />
+  ) : null;
+
+  return (
+    <>
+      <div className="gallery-thumbnail">
+        <div
+          className={`gallery-checkbox ${checked ? " checked" : ""}`}
+          style={checked ? { display: "block" } : null}
+        >
+          {checkbox}
+        </div>
+        {thumbnail}
+      </div>
+      {mediaFile.participantIds.length !== 0 && (
+        <ul style={styles.participantListWrapper}>
+          {mediaFile.participantIds.map((partipantId, idx) => {
+            const person = peopleMap.get(partipantId);
+
+            return (
+              <li key={idx}>
+                <i className="fa fa-user" aria-hidden="true"></i>
+                &nbsp;{person ? person.name : "(unknown)"}
+              </li>
             );
-        }
-
-        if (onClickThumbnail) {
-            const onClickThumbnailCb = (event: React.MouseEvent<HTMLAnchorElement>) => {
-                event.preventDefault();
-                onClickThumbnail(mediaFile);
-            };
-
-            thumbnail = <a href="#" onClick={onClickThumbnailCb}>{thumbnail}</a>;
-        }
-
-        const checkbox = onSelectThumbnail ? 
-                <input
-                    type="checkbox" 
-                    onChange={(event) => {
-                        const {checked} = event.target
-                        setChecked(checked);
-                        onSelectThumbnail(mediaFile, {selected: checked})}
-                    }
-                />  : null;
-
-        return (
-            <>
-                <div className="gallery-thumbnail">
-                <div className={`gallery-checkbox ${checked? ' checked':''}`} style={checked ? {display: 'block'}: null}>{checkbox}</div>
-                    {thumbnail}
-                </div>
-                {mediaFile.participantIds.length !== 0 && 
-                    <ul style={styles.participantListWrapper}>
-                        {mediaFile.participantIds.map((partipantId, idx) => {
-                            const person = peopleMap.get(partipantId);
-
-                            return (
-                                <li key={idx}>
-                                    <i className="fa fa-user" aria-hidden="true"></i>
-                                    &nbsp;{person ? person.name : '(unknown)'}
-                                </li>
-                            );
-                        })}
-                    </ul>
-                }
-            </>
-        );
+          })}
+        </ul>
+      )}
+    </>
+  );
 }
 
-export default GalleryThumbnail
+export default GalleryThumbnail;

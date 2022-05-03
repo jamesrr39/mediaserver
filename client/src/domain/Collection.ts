@@ -1,8 +1,8 @@
-import { MediaFile } from './MediaFile';
+import { MediaFile } from "./MediaFile";
 
 export enum CollectionType {
-  Folder = 'folder',
-  Custom = 'custom',
+  Folder = "folder",
+  Custom = "custom",
 }
 
 export interface Collection {
@@ -16,7 +16,7 @@ export class FolderCollection implements Collection {
   public readonly type = CollectionType.Folder;
   constructor(
     public readonly name: string,
-    public readonly fileHashes: string[],
+    public readonly fileHashes: string[]
   ) {}
   identifier() {
     return this.name;
@@ -28,22 +28,24 @@ export class CustomCollection implements Collection {
   constructor(
     public readonly id: number,
     public readonly name: string,
-    public readonly fileHashes: string[],
+    public readonly fileHashes: string[]
   ) {}
   identifier() {
     return `${this.id}-${this.name}`;
   }
 }
 
-export function extractFolderCollectionsFrommediaFiles(mediaFiles: MediaFile[]) {
+export function extractFolderCollectionsFrommediaFiles(
+  mediaFiles: MediaFile[]
+) {
   const collectionsMap = new Map<string, string[]>();
   mediaFiles.forEach((mediaFile) => {
-    const filepathFragments = mediaFile.relativePath.split('/');
+    const filepathFragments = mediaFile.relativePath.split("/");
     filepathFragments.splice(filepathFragments.length - 1, 1);
     filepathFragments.splice(0, 1);
     for (let i = 0; i < filepathFragments.length; i++) {
-      const folder = filepathFragments.slice(0, i + 1).join('/');
-      if (folder === '') {
+      const folder = filepathFragments.slice(0, i + 1).join("/");
+      if (folder === "") {
         continue;
       }
       const picturesMetadataList = collectionsMap.get(folder) || [];
@@ -53,27 +55,31 @@ export function extractFolderCollectionsFrommediaFiles(mediaFiles: MediaFile[]) 
   });
   const collectionsList: Collection[] = [];
   collectionsMap.forEach((fileHashes, name) => {
-    collectionsList.push(new FolderCollection(
-      name,
-      fileHashes,
-    ));
+    collectionsList.push(new FolderCollection(name, fileHashes));
   });
   return collectionsList;
 }
 
 export function findCollectionFromTypeAndName(
-    mediaFiles: MediaFile[],
-    collectionType: CollectionType,
-    collectionIdentifier: string,
-    customCollections: CustomCollection[]) {
-    switch (collectionType) {
-      case CollectionType.Folder:
-        const collection = extractFolderCollectionsFrommediaFiles(mediaFiles)
-          .find(currentCollection => (currentCollection.name === collectionIdentifier));
-        return collection;
-      case CollectionType.Custom:
-        return customCollections.find(customCollection => customCollection.identifier() === collectionIdentifier);
-      default:
-        throw new Error(`unrecognised type ${collectionType}`);
-      }
+  mediaFiles: MediaFile[],
+  collectionType: CollectionType,
+  collectionIdentifier: string,
+  customCollections: CustomCollection[]
+) {
+  switch (collectionType) {
+    case CollectionType.Folder:
+      const collection = extractFolderCollectionsFrommediaFiles(
+        mediaFiles
+      ).find(
+        (currentCollection) => currentCollection.name === collectionIdentifier
+      );
+      return collection;
+    case CollectionType.Custom:
+      return customCollections.find(
+        (customCollection) =>
+          customCollection.identifier() === collectionIdentifier
+      );
+    default:
+      throw new Error(`unrecognised type ${collectionType}`);
   }
+}

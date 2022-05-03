@@ -1,6 +1,6 @@
-import { AbstractMediaFile } from './AbstractMediaFile';
-import { MediaFileType } from './MediaFileType';
-import { SuggestedLocation } from './Location';
+import { AbstractMediaFile } from "./AbstractMediaFile";
+import { MediaFileType } from "./MediaFileType";
+import { SuggestedLocation } from "./Location";
 
 export class VideoMetadata extends AbstractMediaFile {
   public readonly fileType = MediaFileType.Video;

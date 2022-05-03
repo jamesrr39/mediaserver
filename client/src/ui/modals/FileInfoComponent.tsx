@@ -1,17 +1,17 @@
-import * as React from 'react';
-import { SMALL_SCREEN_WIDTH } from '../../util/screen_size';
-import MapComponent, { newDivIcon } from '../MapComponent';
-import { MediaFile } from '../../domain/MediaFile';
-import { styles as TopBarStyles } from './ModalTopBar';
-import PartipantsComponent from './ParticipantsComponent';
+import * as React from "react";
+import { SMALL_SCREEN_WIDTH } from "../../util/screen_size";
+import MapComponent, { newDivIcon } from "../MapComponent";
+import { MediaFile } from "../../domain/MediaFile";
+import { styles as TopBarStyles } from "./ModalTopBar";
+import PartipantsComponent from "./ParticipantsComponent";
 
 export const INFO_CONTAINER_WIDTH = SMALL_SCREEN_WIDTH;
 
 const styles = {
   container: {
-    backgroundColor: '#333',
-    padding: '40px 10px 0',
-    height: '100%',
+    backgroundColor: "#333",
+    padding: "40px 10px 0",
+    height: "100%",
   },
 };
 
@@ -30,19 +30,29 @@ class FileInfoComponent extends React.Component<Props> {
     const { mediaFile, onCloseButtonClicked } = this.props;
 
     const dateTaken = mediaFile.getTimeTaken();
-    const timeTakenText = dateTaken ? dateTaken.toUTCString() : 'Unknown Date';
+    const timeTakenText = dateTaken ? dateTaken.toUTCString() : "Unknown Date";
     let location = mediaFile.getLocation();
     let icon = undefined;
     if (location === null && mediaFile.suggestedLocation) {
       location = mediaFile.suggestedLocation;
       icon = newDivIcon();
     }
-    const mapContainer = (location !== null)
-      ? <MapComponent {...{size: mapContainerSize, markers: [{location, icon}], zoomControl: true}} />
-      : <p>No Location Data available</p>;
+    const mapContainer =
+      location !== null ? (
+        <MapComponent
+          {...{
+            size: mapContainerSize,
+            markers: [{ location, icon }],
+            zoomControl: true,
+          }}
+        />
+      ) : (
+        <p>No Location Data available</p>
+      );
 
-    const reason = mediaFile.suggestedLocation && mediaFile.suggestedLocation.reason;
-    
+    const reason =
+      mediaFile.suggestedLocation && mediaFile.suggestedLocation.reason;
+
     return (
       <div style={styles.container}>
         {onCloseButtonClicked && (
@@ -53,7 +63,7 @@ class FileInfoComponent extends React.Component<Props> {
               className="fa fa-info-circle"
               aria-label="Info"
             />
-        </div>
+          </div>
         )}
         <p>{mediaFile.getName()}</p>
         <p>{timeTakenText}</p>

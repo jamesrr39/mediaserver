@@ -1,8 +1,8 @@
-import * as React from 'react';
+import * as React from "react";
 
-import { connect } from 'react-redux';
-import { FileQueue } from '../../fileQueue';
-import { State } from '../../reducers/rootReducer';
+import { connect } from "react-redux";
+import { FileQueue } from "../../fileQueue";
+import { State } from "../../reducers/rootReducer";
 
 type Props = {
   uploadQueue: FileQueue;
@@ -10,19 +10,23 @@ type Props = {
 
 const styles = {
   container: {
-    backgroundColor: '#eee',
-    padding: '20px',
-    border: '1px solid #222',
-    minWidth: '120px',
+    backgroundColor: "#eee",
+    padding: "20px",
+    border: "1px solid #222",
+    minWidth: "120px",
   },
 };
 
 class UploadProgressComponent extends React.Component<Props> {
   render() {
-    const {uploadQueue} = this.props;
+    const { uploadQueue } = this.props;
     const status = uploadQueue.getStatus();
 
-    if (status.queued.length === 0 && status.currentlyUploading.length === 0 && status.finished.length === 0) {
+    if (
+      status.queued.length === 0 &&
+      status.currentlyUploading.length === 0 &&
+      status.finished.length === 0
+    ) {
       return null;
     }
 
@@ -45,6 +49,4 @@ function mapStateToProps(state: State) {
   };
 }
 
-export default connect(
-  mapStateToProps,
-)(UploadProgressComponent);
+export default connect(mapStateToProps)(UploadProgressComponent);

@@ -1,7 +1,7 @@
 const strForValue = (value: number, unitName: string) => {
   switch (value) {
     case 0:
-      return '';
+      return "";
     case 1:
       return `1 ${unitName} `;
     default:
@@ -18,13 +18,13 @@ export class Duration {
   getDisplayString() {
     const durationSeconds = this.getSeconds();
     const hours = Math.floor(durationSeconds / 3600);
-    const minutes = Math.floor(durationSeconds / 60) - (hours * 60);
-    const seconds = Math.floor(durationSeconds) - ((hours * 3600) + (minutes * 60));
+    const minutes = Math.floor(durationSeconds / 60) - hours * 60;
+    const seconds = Math.floor(durationSeconds) - (hours * 3600 + minutes * 60);
 
-    let s = '';
-    s += strForValue(hours, 'hour');
-    s += strForValue(minutes, 'minute');
-    s += strForValue(seconds, 'second');
+    let s = "";
+    s += strForValue(hours, "hour");
+    s += strForValue(minutes, "minute");
+    s += strForValue(seconds, "second");
 
     return s;
   }

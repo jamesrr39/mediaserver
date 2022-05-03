@@ -1,5 +1,5 @@
 export type Person = {
-    id: number,
-    name: string,
-    isUser: boolean,
+  id: number;
+  name: string;
+  isUser: boolean;
 };

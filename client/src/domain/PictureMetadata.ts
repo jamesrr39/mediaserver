@@ -1,7 +1,7 @@
-import { AbstractMediaFile } from './AbstractMediaFile';
-import { MapLocation, SuggestedLocation } from './Location';
-import { MediaFileType } from './MediaFileType';
-import { MediaFile } from './MediaFile';
+import { AbstractMediaFile } from "./AbstractMediaFile";
+import { MapLocation, SuggestedLocation } from "./Location";
+import { MediaFileType } from "./MediaFileType";
+import { MediaFile } from "./MediaFile";
 
 export class PictureMetadata extends AbstractMediaFile {
   public readonly fileType = MediaFileType.Picture;
@@ -10,11 +10,12 @@ export class PictureMetadata extends AbstractMediaFile {
     public readonly relativePath: string,
     public readonly fileSizeBytes: number,
     public readonly participantIds: number[],
-    public readonly exif: null|ExifData,
+    public readonly exif: null | ExifData,
     public readonly rawSize: RawSize,
-    public readonly suggestedLocation?: SuggestedLocation) {
-      super(hashValue, relativePath, fileSizeBytes);
-    }
+    public readonly suggestedLocation?: SuggestedLocation
+  ) {
+    super(hashValue, relativePath, fileSizeBytes);
+  }
 
   getTimeTaken(): Date | null {
     if (this.exif === null) {
@@ -36,23 +37,35 @@ export class PictureMetadata extends AbstractMediaFile {
     return null;
   }
 
-  getLocation(): MapLocation|null {
-    const {exif} = this;
+  getLocation(): MapLocation | null {
+    const { exif } = this;
     if (exif === null) {
       return null;
     }
 
-    const {GPSLatitude, GPSLatitudeRef, GPSLongitude, GPSLongitudeRef, GPSMapDatum} = exif;
+    const {
+      GPSLatitude,
+      GPSLatitudeRef,
+      GPSLongitude,
+      GPSLongitudeRef,
+      GPSMapDatum,
+    } = exif;
     switch (GPSMapDatum) {
-      case 'WGS-84':
+      case "WGS-84":
         if (
           !GPSLatitude ||
-          (GPSLatitudeRef !== 'N' && GPSLatitudeRef !== 'S') ||
+          (GPSLatitudeRef !== "N" && GPSLatitudeRef !== "S") ||
           !GPSLongitude ||
-          (GPSLongitudeRef !== 'W' && GPSLongitudeRef !== 'E')) {
+          (GPSLongitudeRef !== "W" && GPSLongitudeRef !== "E")
+        ) {
           return null;
         }
-        return parseWGS84ToLocation(GPSLatitude, GPSLatitudeRef, GPSLongitude, GPSLongitudeRef);
+        return parseWGS84ToLocation(
+          GPSLatitude,
+          GPSLatitudeRef,
+          GPSLongitude,
+          GPSLongitudeRef
+        );
       default:
         // TODO: log this info
         return null;
@@ -64,16 +77,21 @@ function parseWGS84ToLocation(
   GPSLatitude: string[],
   GPSLatitudeRef: string,
   GPSLongitude: string[],
-  GPSLongitudeRef: string): MapLocation|null {
+  GPSLongitudeRef: string
+): MapLocation | null {
   const latDegs = asDecimal(GPSLatitude[0]);
   const latMins = asDecimal(GPSLatitude[1]);
   const latSecs = asDecimal(GPSLatitude[2]);
-  const lat = ((((latSecs / 60) + latMins) / 60) + latDegs) * (GPSLatitudeRef === 'N' ? 1 : -1);
+  const lat =
+    ((latSecs / 60 + latMins) / 60 + latDegs) *
+    (GPSLatitudeRef === "N" ? 1 : -1);
 
   const longDegs = asDecimal(GPSLongitude[0]);
   const longMins = asDecimal(GPSLongitude[1]);
   const longSecs = asDecimal(GPSLongitude[2]);
-  const lon = ((((longSecs / 60) + longMins) / 60) + longDegs) * (GPSLongitudeRef === 'E' ? 1 : -1);
+  const lon =
+    ((longSecs / 60 + longMins) / 60 + longDegs) *
+    (GPSLongitudeRef === "E" ? 1 : -1);
 
   return {
     lat,
@@ -82,7 +100,7 @@ function parseWGS84ToLocation(
 }
 
 function asDecimal(value: string): number {
-  const fragments = value.split('/');
+  const fragments = value.split("/");
   switch (fragments.length) {
     case 1:
       return parseInt(value, 10);
@@ -109,11 +127,11 @@ export function createCompareTimeTakenFunc(sortNullAfter: boolean) {
     }
 
     if (aTaken === null) {
-      return (sortNullAfter) ? 1 : -1;
+      return sortNullAfter ? 1 : -1;
     }
 
     if (bTaken === null) {
-      return (sortNullAfter) ? -1 : 1;
+      return sortNullAfter ? -1 : 1;
     }
 
     const aTime = aTaken.getTime();
@@ -122,15 +140,15 @@ export function createCompareTimeTakenFunc(sortNullAfter: boolean) {
       return a.relativePath > b.relativePath ? 1 : -1;
     }
 
-    return (bTime > aTime) ? 1 : -1;
+    return bTime > aTime ? 1 : -1;
   };
 }
 
 // convert ex. 2018:01:22 16:29:03 to a Date
 function parseExifDate(dateString: string) {
-  const fragments = dateString.split(' ');
-  const dateFragments = fragments[0].split(':');
-  const timeFragments = fragments[1].split(':');
+  const fragments = dateString.split(" ");
+  const dateFragments = fragments[0].split(":");
+  const timeFragments = fragments[1].split(":");
   const date = new Date(
     parseInt(dateFragments[0], 10),
     parseInt(dateFragments[1], 10) - 1,
@@ -156,8 +174,8 @@ function parseExifDate(dateString: string) {
 // }
 
 export type RawSize = {
-  width: number,
-  height: number,
+  width: number;
+  height: number;
 };
 
 export type ExifData = {
@@ -169,9 +187,9 @@ export type ExifData = {
   GPSDateStamp?: string;
   GPSInfoIFDPointer?: string;
   GPSLatitude?: string[];
-  GPSLatitudeRef?: 'N' | 'S';
+  GPSLatitudeRef?: "N" | "S";
   GPSLongitude?: string[];
-  GPSLongitudeRef?: 'W' | 'E';
+  GPSLongitudeRef?: "W" | "E";
   GPSMapDatum?: string;
 };
 /*

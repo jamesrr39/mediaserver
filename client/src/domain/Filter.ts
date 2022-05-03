@@ -1,18 +1,16 @@
-import { MediaFile } from './MediaFile';
-import { MediaFileType } from './MediaFileType';
+import { MediaFile } from "./MediaFile";
+import { MediaFileType } from "./MediaFileType";
 
 type FilterJson = {
   date?: {
-    start: number,
-    end: number,
-    includeWithOutDates: boolean,
-  },
+    start: number;
+    end: number;
+    includeWithOutDates: boolean;
+  };
 };
 
 export class GalleryFilter {
-  constructor(
-    public readonly dateFilter: DateFilter|null,
-  ) {}
+  constructor(public readonly dateFilter: DateFilter | null) {}
 
   public filter = (mediaFile: MediaFile): boolean => {
     if (this.dateFilter !== null) {
@@ -22,24 +20,26 @@ export class GalleryFilter {
     }
 
     return true;
-  }
+  };
 
   public getSummary() {
-    const {dateFilter} = this;
+    const { dateFilter } = this;
     if (!dateFilter) {
-      return 'Showing all files';
+      return "Showing all files";
     }
 
-    const includingWithoutDatesText = dateFilter.includeFilesWithoutDates ? 'including' : 'excluding';
+    const includingWithoutDatesText = dateFilter.includeFilesWithoutDates
+      ? "including"
+      : "excluding";
 
     return [
-      'Showing files with dates between', 
-      dateFilter.startDate.toLocaleDateString(), 
-      'and', 
+      "Showing files with dates between",
+      dateFilter.startDate.toLocaleDateString(),
+      "and",
       dateFilter.endDate.toLocaleDateString(),
       includingWithoutDatesText,
-      'files without dates'
-    ].join(' ');
+      "files without dates",
+    ].join(" ");
   }
 
   public toJsObject() {
@@ -49,7 +49,7 @@ export class GalleryFilter {
           start: this.dateFilter.startDate.getTime(),
           end: this.dateFilter.endDate.getTime(),
           includeFilesWithoutDates: this.dateFilter.includeFilesWithoutDates,
-        }
+        },
       };
     }
 
@@ -112,7 +112,7 @@ export class DateFilter {
     public readonly includeFilesWithoutDates: boolean
   ) {
     if (startDate && endDate && startDate > endDate) {
-      throw new Error('filter start date is after end date');
+      throw new Error("filter start date is after end date");
     }
   }
 
@@ -131,14 +131,17 @@ export class DateFilter {
         if (fileDate === null) {
           return this.includeFilesWithoutDates;
         }
-        if (isDate1After(this.startDate, fileDate) || isDate1Before(this.endDate, fileDate)) {
+        if (
+          isDate1After(this.startDate, fileDate) ||
+          isDate1Before(this.endDate, fileDate)
+        ) {
           return false;
         }
         break;
     }
 
     return true;
-  }
+  };
 }
 
 export function filterFromJson(json: string) {
@@ -148,7 +151,7 @@ export function filterFromJson(json: string) {
       new DateFilter(
         new Date(filterJson.date.start),
         new Date(filterJson.date.end),
-        filterJson.date.includeWithOutDates,
+        filterJson.date.includeWithOutDates
       )
     );
   }

@@ -1,11 +1,11 @@
-import * as React from 'react';
-import { Collection } from '../../domain/Collection';
-import GalleryWithFilter from '../gallery/GalleryWithFilter';
-import { connect } from 'react-redux';
-import { MediaFile } from '../../domain/MediaFile';
-import { State } from '../../reducers/rootReducer';
-import { getScreenWidth } from '../../util/screen_size';
-import { PeopleMap } from '../../actions/mediaFileActions';
+import * as React from "react";
+import { Collection } from "../../domain/Collection";
+import GalleryWithFilter from "../gallery/GalleryWithFilter";
+import { connect } from "react-redux";
+import { MediaFile } from "../../domain/MediaFile";
+import { State } from "../../reducers/rootReducer";
+import { getScreenWidth } from "../../util/screen_size";
+import { PeopleMap } from "../../actions/mediaFileActions";
 
 type Props = {
   mediaFilesMap: Map<string, MediaFile>;
@@ -16,7 +16,7 @@ type Props = {
 
 const styles = {
   container: {
-    margin: '0 20px',
+    margin: "0 20px",
   },
 };
 

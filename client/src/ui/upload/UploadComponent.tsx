@@ -1,19 +1,19 @@
-import * as React from 'react';
-import { ChangeEvent } from 'react';
+import * as React from "react";
+import { ChangeEvent } from "react";
 
-import { connect } from 'react-redux';
-import { themeStyles } from '../../theme/theme';
-import { uploadFile } from '../../actions/mediaFileActions';
-import { MediaFile } from '../../domain/MediaFile';
+import { connect } from "react-redux";
+import { themeStyles } from "../../theme/theme";
+import { uploadFile } from "../../actions/mediaFileActions";
+import { MediaFile } from "../../domain/MediaFile";
 
 const styles = {
   uploadInput: {
-    display: 'none',
+    display: "none",
   },
 };
 
 type Props = {
-  uploadFile: (file: File) => Promise<MediaFile>
+  uploadFile: (file: File) => Promise<MediaFile>;
 };
 
 type ComponentState = {
@@ -22,22 +22,22 @@ type ComponentState = {
 
 class UploadComponent extends React.Component<Props, ComponentState> {
   state = {
-    isUploadingEnabled: true
+    isUploadingEnabled: true,
   };
 
   onFileUploadSelected = async (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files === null) {
       return;
     }
-    this.setState(state => ({
-        ...state,
-        isUploadingEnabled: false,
+    this.setState((state) => ({
+      ...state,
+      isUploadingEnabled: false,
     }));
     for (let i = 0; i < event.target.files.length; i++) {
-        const file = event.target.files[i];
-        await this.props.uploadFile(file);
+      const file = event.target.files[i];
+      await this.props.uploadFile(file);
     }
-  }
+  };
 
   render() {
     return (
@@ -54,9 +54,6 @@ class UploadComponent extends React.Component<Props, ComponentState> {
   }
 }
 
-export default connect(
-  undefined,
-  {
-    uploadFile,
-  }
-)(UploadComponent);
+export default connect(undefined, {
+  uploadFile,
+})(UploadComponent);

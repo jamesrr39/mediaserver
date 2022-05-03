@@ -1,35 +1,37 @@
-import * as React from 'react';
-import { Link } from 'react-router-dom';
-import { Collection } from '../../domain/Collection';
+import * as React from "react";
+import { Link } from "react-router-dom";
+import { Collection } from "../../domain/Collection";
 
 export const styles = {
   collectionBox: {
-    border: '1px black dotted',
-    margin: '10px',
-    padding: '5px',
+    border: "1px black dotted",
+    margin: "10px",
+    padding: "5px",
   },
   thumbnailHtml: {
-    width: '200px',
-    height: '200px',
-    overflow: 'hidden',
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'center center',
+    width: "200px",
+    height: "200px",
+    overflow: "hidden",
+    backgroundRepeat: "no-repeat",
+    backgroundPosition: "center center",
   } as React.CSSProperties,
   nameStyle: {
-    textOverflow: 'ellipsis',
+    textOverflow: "ellipsis",
   },
 };
 
 type Props = {
-  collection: Collection
+  collection: Collection;
 };
 
 class CollectionThumbnail extends React.Component<Props> {
   render() {
-    const {name, fileHashes, type} = this.props.collection;
+    const { name, fileHashes, type } = this.props.collection;
     const identifier = this.props.collection.identifier();
 
-    const linkUrl = `/collections/${encodeURIComponent(type)}/${encodeURIComponent(identifier)}`;
+    const linkUrl = `/collections/${encodeURIComponent(
+      type
+    )}/${encodeURIComponent(identifier)}`;
 
     const thumbnailStyle = {
       ...styles.thumbnailHtml,

@@ -1,54 +1,54 @@
-import * as React from 'react';
-import * as Leaflet from 'leaflet';
-import { RawSize } from '../domain/PictureMetadata';
-import { MapLocation } from '../domain/Location';
-import { escapeHtml } from 'ts-util/dist/Html';
-import { ActivityBounds, FitTrack } from '../domain/FitTrack';
+import * as React from "react";
+import * as Leaflet from "leaflet";
+import { RawSize } from "../domain/PictureMetadata";
+import { MapLocation } from "../domain/Location";
+import { escapeHtml } from "ts-util/dist/Html";
+import { ActivityBounds, FitTrack } from "../domain/FitTrack";
 
-import markerIcon from '../../node_modules/leaflet/dist/images/marker-icon.png';
-import markerShadow from '../../node_modules/leaflet/dist/images/marker-shadow.png';
-import { deepEqual } from '../util/equal';
-import { connect } from 'react-redux';
-import { State } from '../reducers/rootReducer';
-import { WindowSize } from '../actions/windowActions';
+import markerIcon from "../../node_modules/leaflet/dist/images/marker-icon.png";
+import markerShadow from "../../node_modules/leaflet/dist/images/marker-shadow.png";
+import { deepEqual } from "../util/equal";
+import { connect } from "react-redux";
+import { State } from "../reducers/rootReducer";
+import { WindowSize } from "../actions/windowActions";
 
 const StartIcon = Leaflet.Icon.extend({
   createIcon: () => {
-    const el = document.createElement('div');
-    el.style.width = '21px';
-    el.style.height = '24px';
-    el.style.marginTop = '-24px';
-    el.style.marginLeft = '-10.5px';
-    el.style.color = '#33aa66';
+    const el = document.createElement("div");
+    el.style.width = "21px";
+    el.style.height = "24px";
+    el.style.marginTop = "-24px";
+    el.style.marginLeft = "-10.5px";
+    el.style.color = "#33aa66";
 
-    const i = document.createElement('i');
+    const i = document.createElement("i");
     i.className = `fa fa-2x fa-play-circle`;
     el.appendChild(i);
 
     return el;
-  }
+  },
 });
 
 const FinishIcon = Leaflet.Icon.extend({
   createIcon: () => {
-    const el = document.createElement('div');
-    el.style.width = '21px';
-    el.style.height = '24px';
-    el.style.marginTop = '-24px';
-    el.style.color = '#33aa66';
+    const el = document.createElement("div");
+    el.style.width = "21px";
+    el.style.height = "24px";
+    el.style.marginTop = "-24px";
+    el.style.color = "#33aa66";
 
-    const i = document.createElement('i');
+    const i = document.createElement("i");
     i.className = `fa fa-2x fa-flag-checkered`;
     el.appendChild(i);
 
     return el;
-  }
+  },
 });
 
 function generateColorFromIndex(index: number): string {
   let color = (index * 16).toString(16);
   const paddingFieldsCount = 6 - color.length;
-  const padding = '2'.repeat(paddingFieldsCount);
+  const padding = "2".repeat(paddingFieldsCount);
   const colorCode = `#${padding}${color}`;
 
   return colorCode;
@@ -61,7 +61,7 @@ function getBounds(markers?: MapMarker[], tracks?: TrackMapData[]) {
   let w = 180;
 
   if (markers) {
-    markers.forEach(marker => {
+    markers.forEach((marker) => {
       if (marker.location.lat > n) {
         n = marker.location.lat;
       }
@@ -81,7 +81,7 @@ function getBounds(markers?: MapMarker[], tracks?: TrackMapData[]) {
   }
 
   if (tracks) {
-    tracks.forEach(track => {
+    tracks.forEach((track) => {
       if (track.activityBounds.latMax > n) {
         n = track.activityBounds.latMax;
       }
@@ -109,35 +109,35 @@ function getBounds(markers?: MapMarker[], tracks?: TrackMapData[]) {
 }
 
 export type PopupData = {
-  name: string,
-  imagePreviewUrl: string,
-  linkUrl: string,
-  pictureRawSize: RawSize,
+  name: string;
+  imagePreviewUrl: string;
+  linkUrl: string;
+  pictureRawSize: RawSize;
 };
 
 export type MapMarker = {
-  icon?: Leaflet.DivIcon,
-  location: MapLocation,
-  popupData?: PopupData,
+  icon?: Leaflet.DivIcon;
+  location: MapLocation;
+  popupData?: PopupData;
 };
 
 export type TrackMapData = {
-  trackSummary: FitTrack,
-  points: MapLocation[],
-  activityBounds: ActivityBounds,
-  openTrackUrl?: string, // ex: #/gallery/detail
+  trackSummary: FitTrack;
+  points: MapLocation[];
+  activityBounds: ActivityBounds;
+  openTrackUrl?: string; // ex: #/gallery/detail
 };
 
 type Props = {
   size: {
-    width: string,
-    height: string,
-  },
-  markers?: MapMarker[],
-  tracks?: TrackMapData[],
-  extraLatLongMapPadding?: number,
-  zoomControl: boolean,
-  windowSize: WindowSize,
+    width: string;
+    height: string;
+  };
+  markers?: MapMarker[];
+  tracks?: TrackMapData[];
+  extraLatLongMapPadding?: number;
+  zoomControl: boolean;
+  windowSize: WindowSize;
 };
 
 class MapComponent extends React.Component<Props> {
@@ -148,7 +148,7 @@ class MapComponent extends React.Component<Props> {
     const hasChanged = !deepEqual(this.props, nextProps);
 
     if (hasChanged) {
-      console.log('MapComponent should update');
+      console.log("MapComponent should update");
     }
 
     return hasChanged;
@@ -157,10 +157,16 @@ class MapComponent extends React.Component<Props> {
   render() {
     const { size, markers, tracks } = this.props;
 
-    return (<div style={size} ref={(el) => this.renderMap(el, markers, tracks)} />);
+    return (
+      <div style={size} ref={(el) => this.renderMap(el, markers, tracks)} />
+    );
   }
 
-  private renderMap = (element: HTMLElement|null, markers?: MapMarker[], tracks?: TrackMapData[]) => {
+  private renderMap = (
+    element: HTMLElement | null,
+    markers?: MapMarker[],
+    tracks?: TrackMapData[]
+  ) => {
     if (!element) {
       return;
     }
@@ -178,12 +184,13 @@ class MapComponent extends React.Component<Props> {
       touchZoom: zoomControl,
       dragging: zoomControl,
     });
-    const osmUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-    const attribution = 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors';
+    const osmUrl = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+    const attribution =
+      'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors';
     const osm = new Leaflet.TileLayer(osmUrl, {
       attribution,
     });
-    const seaUrl = 'https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png';
+    const seaUrl = "https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png";
     const sea = new Leaflet.TileLayer(seaUrl);
 
     const bounds = getBounds(markers, tracks);
@@ -209,7 +216,7 @@ class MapComponent extends React.Component<Props> {
           return;
         }
 
-        const points = track.points.map(point => {
+        const points = track.points.map((point) => {
           return new Leaflet.LatLng(point.lat, point.lon);
         });
 
@@ -228,17 +235,19 @@ class MapComponent extends React.Component<Props> {
           icon: new FinishIcon(),
         });
         finishMarker.addTo(map);
-        
+
         if (track.openTrackUrl) {
-          const link = `#/${track.openTrackUrl}/${encodeURIComponent(track.trackSummary.hashValue)}`;
+          const link = `#/${track.openTrackUrl}/${encodeURIComponent(
+            track.trackSummary.hashValue
+          )}`;
 
           startMarker.bindPopup(`<a href='${link}'>Track</a>`);
-          startMarker.addEventListener('click', (event) => {
+          startMarker.addEventListener("click", (event) => {
             startMarker.openPopup();
           });
 
           finishMarker.bindPopup(`<a href='${link}'>Track</a>`);
-          finishMarker.addEventListener('click', (event) => {
+          finishMarker.addEventListener("click", (event) => {
             finishMarker.openPopup();
           });
         }
@@ -246,7 +255,7 @@ class MapComponent extends React.Component<Props> {
     }
 
     if (markers) {
-      markers.forEach(marker => {
+      markers.forEach((marker) => {
         const { lat, lon } = marker.location;
         let icon = marker.icon;
         if (!icon) {
@@ -260,13 +269,12 @@ class MapComponent extends React.Component<Props> {
 
         const leafletMarker = Leaflet.marker([lat, lon], {
           icon,
-        })
-        .addTo(map);
+        }).addTo(map);
 
         if (marker.popupData) {
           leafletMarker.bindPopup(this.createPopupHtml(marker.popupData));
 
-          leafletMarker.addEventListener('click', (event) => {
+          leafletMarker.addEventListener("click", (event) => {
             leafletMarker.openPopup();
           });
         }
@@ -274,7 +282,7 @@ class MapComponent extends React.Component<Props> {
     }
 
     this.map = map;
-  }
+  };
 
   private createPopupHtml = (popupData: PopupData) => {
     const { name, imagePreviewUrl, linkUrl } = popupData;
@@ -296,11 +304,11 @@ class MapComponent extends React.Component<Props> {
         </a>
       </div>
     `;
-  }
+  };
 }
 
 export function newDivIcon() {
-  const myCustomColour = '#583470';
+  const myCustomColour = "#583470";
 
   const markerHtmlStyles = `
     background-color: ${myCustomColour};
@@ -315,11 +323,11 @@ export function newDivIcon() {
     border: 1px solid #FFFFFF`;
 
   const icon = Leaflet.divIcon({
-    className: 'my-custom-pin', // TODO needed?
+    className: "my-custom-pin", // TODO needed?
     iconAnchor: [0, 24],
     // labelAnchor: [-6, 0],
     popupAnchor: [0, -36],
-    html: `<span style="${markerHtmlStyles}" />`
+    html: `<span style="${markerHtmlStyles}" />`,
   });
 
   return icon;

@@ -1,8 +1,8 @@
 export type MapLocation = {
-  lat: number,
-  lon: number,
+  lat: number;
+  lon: number;
 };
 
 export type SuggestedLocation = {
-  reason: string,
+  reason: string;
 } & MapLocation;

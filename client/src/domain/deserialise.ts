@@ -1,8 +1,8 @@
-import { MediaFileType } from './MediaFileType';
-import { ExifData, RawSize, PictureMetadata } from './PictureMetadata';
-import { VideoMetadata } from './VideoMetadata';
-import { ActivityBounds, FitTrack } from './FitTrack';
-import { SuggestedLocation } from './Location';
+import { MediaFileType } from "./MediaFileType";
+import { ExifData, RawSize, PictureMetadata } from "./PictureMetadata";
+import { VideoMetadata } from "./VideoMetadata";
+import { ActivityBounds, FitTrack } from "./FitTrack";
+import { SuggestedLocation } from "./Location";
 
 interface BaseMediaFileJSON {
   hashValue: string;
@@ -13,7 +13,7 @@ interface BaseMediaFileJSON {
 
 type PictureMetadataJSON = {
   fileType: MediaFileType.Picture;
-  exif: null|ExifData;
+  exif: null | ExifData;
   rawSize: RawSize;
 } & BaseMediaFileJSON;
 
@@ -39,39 +39,39 @@ export type MediaFileJSON = {
 
 export function fromJSON(json: MediaFileJSON) {
   switch (json.fileType) {
-  case MediaFileType.Picture:
-    return new PictureMetadata(
-      json.hashValue, 
-      json.relativePath, 
-      json.fileSizeBytes,
-      json.participantIds,
-      json.exif, 
-      json.rawSize, 
-      json.suggestedLocation,
-    );
-  case MediaFileType.Video:
-    return new VideoMetadata(
-      json.hashValue, 
-      json.relativePath, 
-      json.fileSizeBytes, 
-      json.participantIds, 
-      json.suggestedLocation
-    );
-  case MediaFileType.FitTrack:
-    return new FitTrack(
-      json.hashValue,
-      json.relativePath,
-      json.fileSizeBytes,
-      json.participantIds,
-      new Date(json.startTime),
-      new Date(json.endTime),
-      json.deviceManufacturer,
-      json.deviceProduct,
-      json.totalDistance,
-      json.activityBounds,
-      json.suggestedLocation,
-    );
-  default:
-    throw new Error(`type '${json}' not supported`);
+    case MediaFileType.Picture:
+      return new PictureMetadata(
+        json.hashValue,
+        json.relativePath,
+        json.fileSizeBytes,
+        json.participantIds,
+        json.exif,
+        json.rawSize,
+        json.suggestedLocation
+      );
+    case MediaFileType.Video:
+      return new VideoMetadata(
+        json.hashValue,
+        json.relativePath,
+        json.fileSizeBytes,
+        json.participantIds,
+        json.suggestedLocation
+      );
+    case MediaFileType.FitTrack:
+      return new FitTrack(
+        json.hashValue,
+        json.relativePath,
+        json.fileSizeBytes,
+        json.participantIds,
+        new Date(json.startTime),
+        new Date(json.endTime),
+        json.deviceManufacturer,
+        json.deviceProduct,
+        json.totalDistance,
+        json.activityBounds,
+        json.suggestedLocation
+      );
+    default:
+      throw new Error(`type '${json}' not supported`);
   }
 }

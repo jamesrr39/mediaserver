@@ -1,9 +1,9 @@
-import * as React from 'react';
-import { createCompareTimeTakenFunc } from '../../domain/PictureMetadata';
+import * as React from "react";
+import { createCompareTimeTakenFunc } from "../../domain/PictureMetadata";
 
-import MapComponent, { MapMarker, TrackMapData } from '../MapComponent';
-import { MediaFile } from '../../domain/MediaFile';
-import { MediaFileType } from '../../domain/MediaFileType';
+import MapComponent, { MapMarker, TrackMapData } from "../MapComponent";
+import { MediaFile } from "../../domain/MediaFile";
+import { MediaFileType } from "../../domain/MediaFileType";
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
@@ -15,10 +15,10 @@ export type InnerMapProps = {
 
 const styles = {
   thumbnail: {
-      margin: '0 10px 10px 0',
+    margin: "0 10px 10px 0",
   },
   mapContainer: {
-    margin: '30px 20px',
+    margin: "30px 20px",
   },
 };
 
@@ -34,8 +34,8 @@ export class InnerMap extends React.Component<InnerMapProps> {
 
     const mapProps = {
       size: {
-        width: '100%',
-        height: '600px',
+        width: "100%",
+        height: "600px",
       },
       markers,
       tracks,
@@ -69,18 +69,20 @@ export class InnerMap extends React.Component<InnerMapProps> {
 
             markerData.popupData = {
               name: metadata.getName(),
-              imagePreviewUrl: `file/picture/${encodeURIComponent(metadata.hashValue)}`,
+              imagePreviewUrl: `file/picture/${encodeURIComponent(
+                metadata.hashValue
+              )}`,
               linkUrl,
               pictureRawSize: metadata.rawSize,
             };
             break;
           default:
-            // do nothing
+          // do nothing
         }
       }
       markers.push(markerData);
     });
 
     return markers;
-  }
+  };
 }

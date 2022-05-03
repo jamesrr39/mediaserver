@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { Link } from 'react-router-dom';
+import * as React from "react";
+import { Link } from "react-router-dom";
 
 type Props = {
   child?: React.ReactNode;
@@ -7,23 +7,29 @@ type Props = {
 
 const styles = {
   container: {
-    padding: '15px 10px 10px',
-    backgroundColor: '#eee',
+    padding: "15px 10px 10px",
+    backgroundColor: "#eee",
   },
   linkContainer: {
-    padding: '10px',
-  }
+    padding: "10px",
+  },
 };
 
 export default class MediaserverTopBar extends React.Component<Props> {
   render() {
-    const child = this.props.child || '';
+    const child = this.props.child || "";
 
     return (
       <div style={styles.container}>
-        <Link to="/map" style={styles.linkContainer}>Map</Link>
-        <Link to="/gallery" style={styles.linkContainer}>Gallery</Link>
-        <Link to="/collections" style={styles.linkContainer}>Collections</Link>
+        <Link to="/map" style={styles.linkContainer}>
+          Map
+        </Link>
+        <Link to="/gallery" style={styles.linkContainer}>
+          Gallery
+        </Link>
+        <Link to="/collections" style={styles.linkContainer}>
+          Collections
+        </Link>
         {child}
       </div>
     );
