@@ -138,6 +138,7 @@ type Props = {
   extraLatLongMapPadding?: number;
   zoomControl: boolean;
   windowSize: WindowSize;
+  onClickPoint?: (latLng: Leaflet.LatLng) => void;
 };
 
 class MapComponent extends React.Component<Props> {
@@ -222,9 +223,45 @@ class MapComponent extends React.Component<Props> {
 
         const color = generateColorFromIndex(index);
 
-        Leaflet.polyline(points, {
+        const polyLine = Leaflet.polyline(points, {
           color,
-        }).addTo(map);
+        });
+        polyLine.on("mouseover", function (e) {
+          var layer = e.target;
+
+          layer.setStyle({
+            color: "blue",
+            opacity: 1,
+            weight: 5,
+          });
+        });
+        polyLine.on("mouseout", function (e) {
+          var layer = e.target;
+
+          layer.setStyle({
+            color: "black",
+            opacity: 1,
+            weight: 5,
+          });
+        });
+
+        polyLine.bindPopup("", {
+          closeButton: false, // https://github.com/Leaflet/Leaflet/issues/1200
+        });
+
+        polyLine.on("popupopen", (e: Leaflet.PopupEvent) => {
+          const popup = e.popup;
+          popup.setContent(
+            "Coordinates: " +
+              popup.getLatLng().lng +
+              " / " +
+              popup.getLatLng().lat
+          );
+
+          this.props.onClickPoint && this.props.onClickPoint(popup.getLatLng());
+        });
+
+        polyLine.addTo(map);
 
         const startMarker = Leaflet.marker(points[0], {
           icon: new StartIcon(),

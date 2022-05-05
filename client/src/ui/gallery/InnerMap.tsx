@@ -15,7 +15,7 @@ function getMarkers(mediaFiles: MediaFile[], mediaFileUrlBase?: string) {
       return;
     }
 
-    const markerData: MapMarker = {
+    const marker: MapMarker = {
       location,
     };
 
@@ -24,7 +24,7 @@ function getMarkers(mediaFiles: MediaFile[], mediaFileUrlBase?: string) {
         case MediaFileType.Picture:
           const linkUrl = `#${mediaFileUrlBase}/${metadata.hashValue}`;
 
-          markerData.popupData = {
+          marker.popupData = {
             name: metadata.getName(),
             imagePreviewUrl: `file/picture/${encodeURIComponent(
               metadata.hashValue
@@ -37,7 +37,7 @@ function getMarkers(mediaFiles: MediaFile[], mediaFileUrlBase?: string) {
         // do nothing
       }
     }
-    markers.push(markerData);
+    markers.push(marker);
   });
 
   return markers;

@@ -6,7 +6,7 @@ import { MediaFile } from "../../domain/MediaFile";
 import { FilterComponent } from "./FilterComponent";
 import { GalleryFilter } from "../../domain/Filter";
 import { getScreenHeight } from "../../util/screen_size";
-import InnerGalleryWrapper from "./InnerGalleryWrapper";
+import InnerGalleryWrapper from "./GalleryWrapper";
 import { PeopleMap } from "../../actions/mediaFileActions";
 
 export type GalleryProps = {

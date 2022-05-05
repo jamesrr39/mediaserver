@@ -183,6 +183,11 @@
   resolved "https://registry.yarnpkg.com/@types/d3-time/-/d3-time-2.1.1.tgz#743fdc821c81f86537cbfece07093ac39b4bc342"
   integrity sha512-9MVYlmIgmRR31C5b4FVSWtuMmBHh2mOWQYfl7XAYOa8dsnb7iEmUmRSWSFgXFtkjxO65d7hTUHQC+RhR/9IWFg==
 
+"@types/geojson@*":
+  version "7946.0.8"
+  resolved "https://registry.yarnpkg.com/@types/geojson/-/geojson-7946.0.8.tgz#30744afdb385e2945e22f3b033f897f76b1f12ca"
+  integrity sha512-1rkryxURpr6aWP7R786/UQOkJ3PcpQiWkAXBmdWc7ryFWqN6a4xfK7BtjXvFBKO9LjQ+MWQSWxYeZX1OApnArA==
+
 "@types/hoist-non-react-statics@^3.3.1":
   version "3.3.1"
   resolved "https://registry.yarnpkg.com/@types/hoist-non-react-statics/-/hoist-non-react-statics-3.3.1.tgz#1124aafe5118cb591977aeb1ceaaed1070eb039f"
@@ -190,6 +195,13 @@
   dependencies:
     "@types/react" "*"
     hoist-non-react-statics "^3.3.0"
+
+"@types/leaflet@^1.7.9":
+  version "1.7.9"
+  resolved "https://registry.yarnpkg.com/@types/leaflet/-/leaflet-1.7.9.tgz#7993d34f14cfa88c45b3d490daba39a3a1be9a2b"
+  integrity sha512-H8vPgD49HKzqM41ArHGZM70g/tfhp8W+JcPxfnF+5H/Xvp+xiP+KQOUNWU8U89fqS1Jj3cpRY/+nbnaHFzwnFA==
+  dependencies:
+    "@types/geojson" "*"
 
 "@types/parse-json@^4.0.0":
   version "4.0.0"

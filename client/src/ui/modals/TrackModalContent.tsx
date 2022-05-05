@@ -5,6 +5,7 @@ import { fetchRecordsForTracks } from "../../actions/mediaFileActions";
 import { connect } from "react-redux";
 import SpeedChart from "./SpeedChart";
 import { Duration } from "../../domain/duration";
+import * as Leaflet from "leaflet";
 
 function displayDistance(distanceMetres: number): string {
   const flooredDistanceMetres = Math.floor(distanceMetres);
@@ -36,11 +37,15 @@ type Props = {
 
 type State = {
   trackRecords?: Record[];
+  trackExtractionPoints?: TrackExtractionData;
 };
+
+type TrackExtractionData = { start?: Leaflet.LatLng; end?: Leaflet.LatLng };
 
 class TrackModalContent extends React.Component<Props, State> {
   state = {
     trackRecords: undefined as undefined | Record[],
+    trackExtractionPoints: undefined as undefined | TrackExtractionData,
   };
 
   componentDidMount() {
@@ -62,7 +67,6 @@ class TrackModalContent extends React.Component<Props, State> {
 
   fetchRecords = async () => {
     const { trackSummary } = this.props;
-    console.log("fetching records for", trackSummary.hashValue);
     const trackRecordsMap = await this.props.fetchRecordsForTracks([
       trackSummary,
     ]);
@@ -80,7 +84,6 @@ class TrackModalContent extends React.Component<Props, State> {
   };
 
   render() {
-    console.log("TrackModalContent: render");
     const { trackSummary } = this.props;
 
     const map = this.renderRecordInformation();
@@ -116,37 +119,103 @@ class TrackModalContent extends React.Component<Props, State> {
     }
 
     return (
-      <React.Fragment>
+      <>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={(e) => {
+            if (this.state.trackExtractionPoints) {
+              this.setState((state) => ({
+                ...state,
+                trackExtractionPoints: undefined,
+              }));
+              return;
+            }
+
+            this.setState((state) => ({
+              ...state,
+              trackExtractionPoints: {},
+            }));
+          }}
+        >
+          Extract section
+        </button>
+        {this.state.trackExtractionPoints && (
+          <>
+            <span>
+              {this.state.trackExtractionPoints.start
+                ? this.state.trackExtractionPoints.start.toString()
+                : "Please select the start point"}
+            </span>
+            {this.state.trackExtractionPoints.start && (
+              <span>
+                {this.state.trackExtractionPoints.end
+                  ? this.state.trackExtractionPoints.end.toString()
+                  : "Please select the end point"}
+              </span>
+            )}
+          </>
+        )}
         {this.renderMap(trackRecords)}
         {this.renderTable(trackRecords)}
         <SpeedChart {...{ trackRecords }} />
-      </React.Fragment>
+      </>
     );
   }
 
   private renderMap(trackRecords: Record[]) {
     const { trackSummary } = this.props;
 
-    const mapProps = {
-      size: {
-        width: "100%",
-        height: "400px",
-      },
-      tracks: [
-        {
-          trackSummary,
-          points: trackRecords.map((record) => ({
-            lat: record.posLat,
-            lon: record.posLong,
-          })),
-          activityBounds: trackSummary.activityBounds,
-        },
-      ],
-      zoomControl: true,
-      ts: this.props.ts,
+    const size = {
+      width: "100%",
+      height: "400px",
     };
+    const tracks = [
+      {
+        trackSummary,
+        points: trackRecords.map((record) => ({
+          lat: record.posLat,
+          lon: record.posLong,
+        })),
+        activityBounds: trackSummary.activityBounds,
+      },
+    ];
 
-    return <MapComponent {...mapProps} />;
+    let onClickPoint = undefined;
+    if (this.state.trackExtractionPoints) {
+      onClickPoint = (latLng: Leaflet.LatLng) => {
+        // if start is set already, set end
+        if (this.state.trackExtractionPoints.start) {
+          this.setState((state) => ({
+            ...state,
+            trackExtractionPoints: {
+              ...state.trackExtractionPoints,
+              end: latLng,
+            },
+          }));
+          return;
+        }
+
+        // start is not set, set it
+        this.setState((state) => ({
+          ...state,
+          trackExtractionPoints: {
+            ...state.trackExtractionPoints,
+            start: latLng,
+          },
+        }));
+        return;
+      };
+    }
+
+    return (
+      <MapComponent
+        size={size}
+        tracks={tracks}
+        zoomControl={true}
+        onClickPoint={onClickPoint}
+      />
+    );
   }
 
   private renderTable(trackRecords: Record[]) {
