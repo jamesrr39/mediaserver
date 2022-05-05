@@ -3,12 +3,7 @@ import { createCompareTimeTakenFunc } from "../../domain/PictureMetadata";
 
 import { TrackMapData } from "../MapComponent";
 import { MediaFile } from "../../domain/MediaFile";
-import GalleryRow, {
-  filesToRows,
-  BuildLinkFunc,
-  Row,
-  SelectThumbnailEventInfo,
-} from "./GalleryRow";
+import GalleryRow, { filesToRows, Row } from "./GalleryRow";
 import {
   mediaFilesToDateGroups,
   groupsMapToGroups,
@@ -16,10 +11,13 @@ import {
 import { InnerMap } from "./InnerMap";
 import { Observable } from "ts-util/dist/Observable";
 import { PeopleMap } from "../../actions/mediaFileActions";
+import { BuildLinkFunc, SelectThumbnailEventInfo } from "./GalleryThumbnail";
+import { useState } from "react";
+import InnerGalleryThumbnails, {
+  ROWS_IN_INCREMENT,
+} from "./InnerGalleryThumbnails";
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
-
-const ROWS_IN_INCREMENT = 10;
 
 export type InnerGalleryProps = {
   showMap: boolean;
@@ -38,7 +36,6 @@ export type InnerGalleryProps = {
 type InnerGalleryState = {
   lastIndexShown: number;
   rows: Row[];
-  selectedFiles: MediaFile[];
 };
 
 class InnerGallery extends React.Component<
@@ -48,7 +45,6 @@ class InnerGallery extends React.Component<
   state = {
     lastIndexShown: 0,
     rows: [],
-    selectedFiles: [],
   };
 
   componentDidMount() {
@@ -79,7 +75,13 @@ class InnerGallery extends React.Component<
     return (
       <>
         {this.props.showMap && this.renderMap()}
-        <div>{this.renderThumbnails()}</div>
+        <div>
+          <InnerGalleryThumbnails
+            rows={this.state.rows}
+            lastIndexShown={this.state.lastIndexShown}
+            {...this.props}
+          />
+        </div>
       </>
     );
   }
@@ -95,88 +97,6 @@ class InnerGallery extends React.Component<
 
     return <InnerMap {...props} />;
   };
-
-  private renderThumbnails = () => {
-    const {
-      onClickThumbnail,
-      mediaFileUrlBase,
-      filterJson,
-      getRowWidth,
-      isThumbnailVisible,
-      scrollObservable,
-      resizeObservable,
-      peopleMap,
-    } = this.props;
-    const { rows } = this.state;
-
-    let buildLink: undefined | BuildLinkFunc = undefined;
-    if (mediaFileUrlBase) {
-      buildLink = (mediaFile: MediaFile) => {
-        const query = `filterJson=${encodeURIComponent(filterJson)}`;
-        const linkUrl = `${mediaFileUrlBase}/${mediaFile.hashValue}?${query}`;
-        return linkUrl;
-      };
-    }
-
-    const rowsHtml = rows.map((row, index) => {
-      const { lastIndexShown } = this.state;
-      if (index > lastIndexShown + ROWS_IN_INCREMENT) {
-        // don't render anything below the cut
-        return null;
-      }
-
-      const rowProps = {
-        row,
-        onClickThumbnail,
-        buildLink,
-        getRowWidth,
-        isThumbnailVisible,
-        peopleMap,
-        scrollObservable,
-        resizeObservable,
-        onSelectThumbnail: (
-          mediaFile: MediaFile,
-          eventInfo: SelectThumbnailEventInfo
-        ) => {
-          if (eventInfo.selected) {
-            this.setState((state) => ({
-              ...state,
-              selectedFiles: state.selectedFiles.concat([mediaFile]),
-            }));
-            return;
-          }
-
-          this.setState((state) => {
-            const copyOfSelectedFiles = state.selectedFiles.concat([]);
-            const indexOfDeletedFile = state.selectedFiles.findIndex(
-              (mediaFileInList: MediaFile) => {
-                return mediaFile.hashValue === mediaFileInList.hashValue;
-              }
-            );
-            copyOfSelectedFiles.splice(indexOfDeletedFile, 1);
-
-            return {
-              ...state,
-              selectedFiles: copyOfSelectedFiles,
-            };
-          });
-        },
-      };
-
-      return <GalleryRow key={index} {...rowProps} />;
-    });
-
-    return (
-      <>
-        <div>{this.renderEditBox()}</div>
-        <div>{rowsHtml}</div>
-      </>
-    );
-  };
-
-  private renderEditBox() {
-    return <>{this.state.selectedFiles.length} files selected</>;
-  }
 
   private onScroll = () => {
     const { lastIndexShown } = this.state;

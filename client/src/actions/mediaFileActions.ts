@@ -97,6 +97,7 @@ export function fetchPicturesMetadata() {
     const mediaFilesJSON: MediaFileJSON[] = await response.json();
 
     const mediaFiles = mediaFilesJSON.map((json) => fromJSON(json));
+    
     dispatch({
       type: FilesActionTypes.MEDIA_FILES_FETCHED,
       mediaFiles,

@@ -77,14 +77,38 @@ function GalleryThumbnail(props: Props) {
   }
 
   const checkbox = onSelectThumbnail ? (
-    <input
-      type="checkbox"
-      onChange={(event) => {
-        const { checked } = event.target;
-        setChecked(checked);
-        onSelectThumbnail(mediaFile, { selected: checked });
-      }}
-    />
+    <div className="form-check">
+      <input
+        type="checkbox"
+        className="form-check-input"
+        onChange={(event) => {
+          const { checked } = event.target;
+          setChecked(checked);
+          onSelectThumbnail(mediaFile, { selected: checked });
+        }}
+        style={{
+          padding: "10px",
+          // position: "absolute",
+          // opacity: 0,
+          // cursor: "pointer",
+          // height: 0,
+          // width: 0,
+        }}
+      />
+      <label
+        className="form-check-label"
+        style={
+          {
+            // position: "absolute",
+            // top: 0,
+            // left: 0,
+            // height: "25px",
+            // width: "25px",
+            // backgroundColor: "#eee",
+          }
+        }
+      ></label>
+    </div>
   ) : null;
 
   return (
