@@ -7,7 +7,7 @@ import { MediaFile } from "../../domain/MediaFile";
 import { MediaFileType } from "../../domain/MediaFileType";
 import { FitTrack, Record } from "../../domain/FitTrack";
 import { GalleryFilter } from "../../domain/Filter";
-import InnerGallery from "./InnerGallery";
+import InnerGallery from "./Gallery";
 import { CancellablePromise } from "ts-util/dist/Promises";
 import { connect } from "react-redux";
 import {

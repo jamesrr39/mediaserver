@@ -7,7 +7,43 @@ import { MediaFileType } from "../../domain/MediaFileType";
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
-export type InnerMapProps = {
+function getMarkers(mediaFiles: MediaFile[], mediaFileUrlBase?: string) {
+  const markers: MapMarker[] = [];
+  mediaFiles.forEach((metadata) => {
+    const location = metadata.getLocation();
+    if (!location) {
+      return;
+    }
+
+    const markerData: MapMarker = {
+      location,
+    };
+
+    if (mediaFileUrlBase) {
+      switch (metadata.fileType) {
+        case MediaFileType.Picture:
+          const linkUrl = `#${mediaFileUrlBase}/${metadata.hashValue}`;
+
+          markerData.popupData = {
+            name: metadata.getName(),
+            imagePreviewUrl: `file/picture/${encodeURIComponent(
+              metadata.hashValue
+            )}`,
+            linkUrl,
+            pictureRawSize: metadata.rawSize,
+          };
+          break;
+        default:
+        // do nothing
+      }
+    }
+    markers.push(markerData);
+  });
+
+  return markers;
+}
+
+type Props = {
   tracks: TrackMapData[];
   mediaFileUrlBase?: string;
   mediaFiles: MediaFile[];
@@ -22,67 +58,29 @@ const styles = {
   },
 };
 
-export class InnerMap extends React.Component<InnerMapProps> {
-  render() {
-    const { mediaFiles, tracks } = this.props;
+export function InnerMap(props: Props) {
+  const { mediaFiles, tracks, mediaFileUrlBase } = props;
 
-    const markers = this.getMarkers(mediaFiles);
+  const markers = getMarkers(mediaFiles, mediaFileUrlBase);
 
-    if (markers.length === 0 && tracks.length === 0) {
-      return null;
-    }
-
-    const mapProps = {
-      size: {
-        width: "100%",
-        height: "600px",
-      },
-      markers,
-      tracks,
-      extraLatLongMapPadding: 0.001,
-      zoomControl: true,
-    };
-
-    return (
-      <div style={styles.mapContainer}>
-        <MapComponent {...mapProps} />
-      </div>
-    );
+  if (markers.length === 0 && tracks.length === 0) {
+    return null;
   }
 
-  private getMarkers = (mediaFiles: MediaFile[]) => {
-    const markers: MapMarker[] = [];
-    mediaFiles.forEach((metadata) => {
-      const location = metadata.getLocation();
-      if (!location) {
-        return;
-      }
-
-      const markerData: MapMarker = {
-        location,
-      };
-
-      if (this.props.mediaFileUrlBase) {
-        switch (metadata.fileType) {
-          case MediaFileType.Picture:
-            const linkUrl = `#${this.props.mediaFileUrlBase}/${metadata.hashValue}`;
-
-            markerData.popupData = {
-              name: metadata.getName(),
-              imagePreviewUrl: `file/picture/${encodeURIComponent(
-                metadata.hashValue
-              )}`,
-              linkUrl,
-              pictureRawSize: metadata.rawSize,
-            };
-            break;
-          default:
-          // do nothing
-        }
-      }
-      markers.push(markerData);
-    });
-
-    return markers;
+  const mapProps = {
+    size: {
+      width: "100%",
+      height: "600px",
+    },
+    markers,
+    tracks,
+    extraLatLongMapPadding: 0.001,
+    zoomControl: true,
   };
+
+  return (
+    <div style={styles.mapContainer}>
+      <MapComponent {...mapProps} />
+    </div>
+  );
 }

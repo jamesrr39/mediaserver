@@ -13,9 +13,7 @@ import { Observable } from "ts-util/dist/Observable";
 import { PeopleMap } from "../../actions/mediaFileActions";
 import { BuildLinkFunc, SelectThumbnailEventInfo } from "./GalleryThumbnail";
 import { useState } from "react";
-import InnerGalleryThumbnails, {
-  ROWS_IN_INCREMENT,
-} from "./InnerGalleryThumbnails";
+import InnerGalleryThumbnails, { ROWS_IN_INCREMENT } from "./GalleryThumbnails";
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
