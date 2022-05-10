@@ -11,6 +11,7 @@ import { deepEqual } from "../util/equal";
 import { connect } from "react-redux";
 import { State } from "../reducers/rootReducer";
 import { WindowSize } from "../actions/windowActions";
+import { joinUrlFragments } from "src/domain/util";
 
 const StartIcon = Leaflet.Icon.extend({
   createIcon: () => {
@@ -274,9 +275,11 @@ class MapComponent extends React.Component<Props> {
         finishMarker.addTo(map);
 
         if (track.openTrackUrl) {
-          const link = `#/${track.openTrackUrl}/${encodeURIComponent(
-            track.trackSummary.hashValue
-          )}`;
+          const link = joinUrlFragments([
+            "#",
+            track.openTrackUrl,
+            encodeURIComponent(track.trackSummary.hashValue),
+          ]);
 
           startMarker.bindPopup(`<a href='${link}'>Track</a>`);
           startMarker.addEventListener("click", (event) => {

@@ -9,6 +9,7 @@ import { saveCollection } from "../../actions/collectionsActions";
 import { themeStyles } from "../../theme/theme";
 import { uploadFile, PeopleMap } from "../../actions/mediaFileActions";
 import { getScreenWidth } from "../../util/screen_size";
+import { joinUrlFragments } from "src/domain/util";
 
 const styles = {
   nameInput: {
@@ -94,7 +95,11 @@ class EditCustomCollectionComponent extends React.Component<
     const encodedIdentifier = encodeURIComponent(
       returnedCollection.identifier()
     );
-    window.location.hash = `#/collections/${encodedType}/${encodedIdentifier}`;
+    window.location.hash = joinUrlFragments([
+      "#/collections",
+      encodedType,
+      encodedIdentifier,
+    ]);
   };
 
   render() {

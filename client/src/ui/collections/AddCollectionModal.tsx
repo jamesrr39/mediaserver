@@ -1,7 +1,7 @@
 import * as React from "react";
-import { ChangeEvent } from "react";
-import Modal from "../Modal";
 import { themeStyles } from "../../theme/theme";
+import { useState } from "react";
+import PopupModal from "../modals/PopupModal";
 
 const styles = {
   nameInput: {
@@ -35,65 +35,48 @@ type Props = {
   onCancel: () => void;
 };
 
-type ComponentState = {
-  name: string;
-};
-
-export default class AddCollectionModal extends React.Component<
-  Props,
-  ComponentState
-> {
-  state = {
-    name: "",
+export default function AddCollectionModal(props: Props) {
+  const [name, setName] = useState("");
+  const refCb = (element: HTMLElement | null) => {
+    if (!element) {
+      return;
+    }
+    element.focus();
   };
 
-  render() {
-    const refCb = (element: HTMLElement | null) => {
-      if (!element) {
-        return;
-      }
-      element.focus();
-    };
-
-    return (
-      <Modal>
-        <div style={styles.container}>
-          <form>
-            <input
-              type="text"
-              placeholder="name"
-              style={styles.nameInput}
-              value={this.state.name}
-              onChange={(event) => this.onNameChange(event)}
-              ref={refCb}
-            />
-            <div style={styles.buttonContainer}>
-              <button
-                type="submit"
-                onClick={() => this.props.onSubmit(this.state.name)}
-                style={themeStyles.button}
-              >
-                Save
-              </button>
-              <button
-                type="button"
-                onClick={this.props.onCancel}
-                style={themeStyles.button}
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-      </Modal>
-    );
-  }
-
-  private onNameChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const name = event.target.value;
-    this.setState((state) => ({
-      ...state,
-      name,
-    }));
-  };
+  return (
+    <PopupModal>
+      <div style={styles.container}>
+        <form>
+          <input
+            type="text"
+            placeholder="name"
+            style={styles.nameInput}
+            value={name}
+            onChange={(event) => {
+              const newName = event.target.value;
+              setName(newName);
+            }}
+            ref={refCb}
+          />
+          <div style={styles.buttonContainer}>
+            <button
+              type="submit"
+              onClick={() => props.onSubmit(name)}
+              style={themeStyles.button}
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              onClick={props.onCancel}
+              style={themeStyles.button}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </PopupModal>
+  );
 }

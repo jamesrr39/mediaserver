@@ -4,6 +4,8 @@ import { PeopleMap } from "src/actions/mediaFileActions";
 import { MediaFile } from "src/domain/MediaFile";
 import GalleryRow, { Row } from "./GalleryRow";
 import { BuildLinkFunc, SelectThumbnailEventInfo } from "./GalleryThumbnail";
+import FullScreenModal from "../FullScreenModal";
+import AddFilesToCollectionModal from "./AddFilesToCollectionModal";
 
 type Props = {
   rows: Row[];
@@ -109,6 +111,12 @@ function InnerGalleryThumbnails(props: Props) {
         </div>
       </div>
       <div>{rowsHtml}</div>
+      {showAddToCollectionModal && (
+        <AddFilesToCollectionModal
+          files={selectedFiles}
+          onClickClose={() => setShowAddToCollectionModal(false)}
+        />
+      )}
     </>
   );
 }

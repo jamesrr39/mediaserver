@@ -33,7 +33,23 @@ export class CustomCollection implements Collection {
   identifier() {
     return `${this.id}-${this.name}`;
   }
+  toJSON() {
+    return {
+      id: this.id,
+      name: this.name,
+      fileHashes: this.fileHashes,
+    }
+  }
 }
+// CustomCollection.prototype.toJSON() {
+//   return {attr: this.getAttr()}; // everything that needs to get stored
+// };
+// MyClass.fromJSON = function(obj) {
+//   if (typeof obj == "string") obj = JSON.parse(obj);
+//   var instance = new MyClass;
+//   instance._attr = obj.attr;
+//   return instance;
+// };
 
 export function extractFolderCollectionsFrommediaFiles(
   mediaFiles: MediaFile[]

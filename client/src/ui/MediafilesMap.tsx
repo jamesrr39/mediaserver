@@ -105,7 +105,7 @@ class MediafilesMap extends React.Component<Props, ComponentState> {
     );
 
     const tracksDetails = await this.fetchRecordsPromise.promise;
-
+    console.log("mediaFileUrlBase", this.props.mediaFileUrlBase);
     const trackDatas = trackSummariesToTrackDatas(
       trackSummaries,
       tracksDetails,

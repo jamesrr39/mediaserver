@@ -59,7 +59,6 @@ export type FetchCollectionsResponse = {
 export function fetchCollections() {
   return async (
     dispatch: Dispatch<CollectionsAction>,
-    getState: () => State
   ): Promise<FetchCollectionsResponse> => {
     dispatch({
       type: CollectionActions.FETCH_COLLECTIONS,
@@ -97,7 +96,6 @@ export function fetchCollections() {
 export function saveCollection(collection: CustomCollection) {
   return async (
     dispatch: (action: CollectionsAction) => void,
-    getState: () => State
   ) => {
     const url =
       collection.id === 0
@@ -105,9 +103,13 @@ export function saveCollection(collection: CustomCollection) {
         : `/api/collections/${encodeURIComponent(collection.id)}`;
     const method = collection.id === 0 ? "POST" : "PUT";
 
+    console.log('url::', url, method, collection, collection.toJSON())
+
+const body = JSON.stringify(collection)
+
     const response = await fetch(url, {
       method,
-      body: JSON.stringify(collection),
+      body,
     });
 
     if (!response.ok) {
@@ -115,7 +117,7 @@ export function saveCollection(collection: CustomCollection) {
     }
 
     const collectionJSON = await response.json();
-    // collectionJSON: CustomCollectionJSON) => {
+
     const returnedCollection = new CustomCollection(
       collectionJSON.id,
       collectionJSON.name,

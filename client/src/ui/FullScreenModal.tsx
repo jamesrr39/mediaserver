@@ -16,8 +16,10 @@ const styles = {
   },
 };
 
-export default class Modal extends React.Component {
-  render() {
-    return <div style={styles.modal}>{this.props.children}</div>;
-  }
+type Props = {
+  children: React.ReactNode | React.ReactNode[];
+};
+
+export default function FullScreenModal(props: Props) {
+  return <div style={styles.modal}>{props.children}</div>;
 }

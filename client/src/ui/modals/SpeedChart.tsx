@@ -12,6 +12,7 @@ import { Record, getSpeedsFromRecords } from "../../domain/FitTrack";
 
 type Props = {
   trackRecords: Record[];
+  onChartMouseOver: (index: number) => void;
 };
 
 type ComponentState = {
@@ -28,8 +29,6 @@ export default class SpeedChart extends React.Component<Props, ComponentState> {
   render() {
     // https://recharts.org/en-US/examples/HighlightAndZoomLineChart
     const data = this.getChartData();
-
-    console.log("data", data);
 
     return (
       <>
@@ -60,10 +59,24 @@ export default class SpeedChart extends React.Component<Props, ComponentState> {
           />
         </label>
 
-        <LineChart width={600} height={300} data={data}>
+        <LineChart
+          width={600}
+          height={300}
+          data={data}
+          onMouseMove={(event) => {
+            const { activeTooltipIndex } = event;
+            if (activeTooltipIndex) {
+              this.props.onChartMouseOver(activeTooltipIndex);
+            }
+          }}
+        >
           <Line type="monotone" dataKey="pace" stroke="#8884d8" />
           <CartesianGrid stroke="#ccc" />
-          <XAxis type="number" dataKey="time" />
+          <XAxis
+            type="number"
+            dataKey="time"
+            tickFormatter={(value) => (value / 60).toFixed(2)}
+          />
           <YAxis type="number" dataKey="pace" />
           <Tooltip />
           <Legend />

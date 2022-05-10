@@ -117,12 +117,10 @@ class MediaServer extends React.Component<MediaServerProps> {
             />
             <Route
               path="/map"
-              element={() =>
-                withNavBar(
-                  <MediafilesMap mediaFileUrlBase="/gallery/detail" />,
-                  <UploadComponent />
-                )
-              }
+              element={withNavBar(
+                <MediafilesMap mediaFileUrlBase="/gallery/detail" />,
+                <UploadComponent />
+              )}
             />
             <Route
               path="/gallery"

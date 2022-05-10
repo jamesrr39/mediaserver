@@ -70,7 +70,7 @@ export function InnerMap(props: Props) {
   const mapProps = {
     size: {
       width: "100%",
-      height: "600px",
+      height: "100%",
     },
     markers,
     tracks,

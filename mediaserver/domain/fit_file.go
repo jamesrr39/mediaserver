@@ -91,7 +91,7 @@ func getTrackRecordsFromGpxFileReader(mediaFileInfo MediaFileInfo, reader io.Rea
 
 		}
 	}
-	println("total distance:", totalDistance, mediaFileInfo.HashValue)
+
 	return records, nil
 }
 

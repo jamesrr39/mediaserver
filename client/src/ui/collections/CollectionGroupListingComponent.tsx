@@ -5,6 +5,7 @@ import { themeStyles } from "../../theme/theme";
 import AddCollectionModal from "./AddCollectionModal";
 import { saveCollection } from "../../actions/collectionsActions";
 import { connect } from "react-redux";
+import { joinUrlFragments } from "src/domain/util";
 
 const styles = {
   collectionsWrapper: {
@@ -104,7 +105,12 @@ class CollectionGroupListingComponent extends React.Component<
     const encodedIdentifier = encodeURIComponent(
       returnedCollection.identifier()
     );
-    window.location.hash = `#/collections/${encodedType}/${encodedIdentifier}/edit`;
+    window.location.hash = joinUrlFragments([
+      "#/collections",
+      encodedType,
+      encodedIdentifier,
+      "edit",
+    ]);
   }
 }
 

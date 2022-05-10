@@ -8,8 +8,8 @@ import FileInfoComponent from "./FileInfoComponent";
 import { isNarrowScreen } from "../../util/screen_size";
 import { MediaFile } from "../../domain/MediaFile";
 import { MediaFileType } from "../../domain/MediaFileType";
-import Modal from "../Modal";
-import TrackModalContent from "./TrackModalContent";
+import FullScreenModal from "../FullScreenModal";
+import TrackModalContent from "./track_modal/TrackModalContent";
 import VideoModal from "./VideoModal";
 import PictureModal from "./PictureModal";
 import ModalTopBar from "./ModalTopBar";
@@ -115,9 +115,9 @@ class MediaFileModal extends React.Component<Props, ComponentState> {
       const onCloseButtonClicked = () =>
         this.setState((state) => ({ ...state, showInfo: false }));
       return (
-        <Modal>
+        <FullScreenModal>
           <FileInfoComponent {...{ mediaFile, onCloseButtonClicked }} />
-        </Modal>
+        </FullScreenModal>
       );
     }
 
@@ -139,7 +139,7 @@ class MediaFileModal extends React.Component<Props, ComponentState> {
     };
 
     return (
-      <Modal>
+      <FullScreenModal>
         <div style={s}>
           <div style={childS}>
             <ModalTopBar {...topBarProps} />
@@ -151,7 +151,7 @@ class MediaFileModal extends React.Component<Props, ComponentState> {
             </div>
           )}
         </div>
-      </Modal>
+      </FullScreenModal>
     );
   }
 
