@@ -16,7 +16,7 @@ codegen:
 .PHONY: build_prod_x86_64
 build_prod_x86_64: clean bundle_static_assets
 	mkdir -p build/bin/x86_64
-	env GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -tags "purego prod" -o build/bin/x86_64/mediaserver cmd/media-server-main.go
+	env GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -tags "purego prod" -o build/bin/x86_64/mediaserver media-server-main.go
 
 .PHONY: build_prod
 build_prod: clean bundle_static_assets
@@ -26,19 +26,19 @@ build_prod: clean bundle_static_assets
 # compiles the production Go application only. Does not recompile the JS client application.
 .PHONY: compile_prod_go
 compile_prod_go:
-	env CGO_ENABLED=0 go build -tags "purego prod" -o ${DEFAULT_BUILD_OUTPUT} cmd/media-server-main.go
+	env CGO_ENABLED=0 go build -tags "purego prod" -o ${DEFAULT_BUILD_OUTPUT} media-server-main.go
 	echo "program built and placed at ${DEFAULT_BUILD_OUTPUT}"
 
 # raspberry pi 3
 .PHONY: build_prod_arm7
 build_prod_arm7: clean bundle_static_assets
 	mkdir -p build/bin/arm7
-	env GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -tags "purego prod" -o build/bin/arm7/mediaserver cmd/media-server-main.go
+	env GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -tags "purego prod" -o build/bin/arm7/mediaserver media-server-main.go
 
 .PHONY: build_windows_x86_64
 build_windows_x86_64:
 	mkdir -p build/bin/windows_x86_64
-	env GOOS=windows CGO_ENABLED=0 go build -tags "purego prod" -o build/bin/windows_x86_64/mediaserver.exe cmd/media-server-main.go
+	env GOOS=windows CGO_ENABLED=0 go build -tags "purego prod" -o build/bin/windows_x86_64/mediaserver.exe media-server-main.go
 
 .PHONY: run_dev_client
 run_dev_client:
@@ -50,12 +50,13 @@ run_dev_server:
 	mkdir -p \
 		${LOCALENV_BASE_DIR}/data \
 		${LOCALENV_BASE_DIR}/metadata \
-		${LOCALENV_BASE_DIR}/cache
-	go run cmd/media-server-main.go \
+		${LOCALENV_BASE_DIR}/cache \
+		${LOCALENV_BASE_DIR}/profile
+	go run media-server-main.go \
 		${LOCALENV_BASE_DIR}/data \
 		--metadata-dir=${LOCALENV_BASE_DIR}/metadata \
 		--cache-dir=${LOCALENV_BASE_DIR}/cache \
-		--profile-dir=${LOCALENV_BASE_DIR}
+		--profile-dir=${LOCALENV_BASE_DIR}/profile
 
 .PHONY: clean_dev_metadata
 clean_dev_metadata:

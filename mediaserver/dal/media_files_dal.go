@@ -208,7 +208,10 @@ func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx) errorsx.Error {
 		return nil
 	}
 
-	err := gofs.Walk(dal.fs, dal.picturesBasePath, walkFunc, gofs.WalkOptions{FollowSymlinks: true})
+	err := gofs.Walk(dal.fs, dal.picturesBasePath, walkFunc, gofs.WalkOptions{
+		MaxConcurrency: 1000,
+		FollowSymlinks: true,
+	})
 	if nil != err {
 		return errorsx.Wrap(err)
 	}
@@ -270,11 +273,11 @@ func (dal *MediaFilesDAL) processFile(fs gofs.Fs, tx *sql.Tx, path string, fileI
 
 	dal.log.Info("start processing %q", path)
 	defer func() {
-		t := "skipped"
+		fileType := "skipped"
 		if mediaFile != nil && err == nil {
-			t = mediaFile.GetMediaFileInfo().MediaFileType.String()
+			fileType = mediaFile.GetMediaFileInfo().MediaFileType.String()
 		}
-		dal.log.Info("finished processing %q (%q)", path, t)
+		dal.log.Info("finished processing %q (%q)", path, fileType)
 	}()
 
 	file, err := dal.fs.Open(path)
@@ -297,7 +300,7 @@ func (dal *MediaFilesDAL) processFile(fs gofs.Fs, tx *sql.Tx, path string, fileI
 		return nil, errorsx.Wrap(err)
 	}
 
-	_, err = file.Seek(0, 0)
+	_, err = file.Seek(0, io.SeekStart)
 	if nil != err {
 		return nil, errorsx.Wrap(err)
 	}

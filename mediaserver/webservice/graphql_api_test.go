@@ -12,9 +12,9 @@ import (
 	"testing"
 	"time"
 
+	snapshot "github.com/jamesrr39/go-snapshot-testing"
 	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/jamesrr39/goutil/logpkg"
-	"github.com/jamesrr39/goutil/snapshot"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

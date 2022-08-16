@@ -9,10 +9,23 @@
 
 // Package ql implements a pure Go embedded SQL database engine.
 //
+// Builders
+//
+// Builder results available at
+//
+//	https://modern-c.appspot.com/-/builder/?importpath=modernc.org%2fql
+//
 // QL is a member of the SQL family of languages. It is less complex and less
 // powerful than SQL (whichever specification SQL is considered to be).
 //
 // Change list
+//
+// 2020-12-10: sql/database driver now supports url parameter removeemptywal=N
+// which has the same semantics as passing RemoveEmptyWAL = N != 0 to OpenFile
+// options.
+//
+// 2020-11-09: Add IF NOT EXISTS support for the INSERT INTO statement. Add
+// IsDuplicateUniqueIndexError function.
 //
 // 2018-11-04: Back end file format V2 is now released. To use the new format
 // for newly created databases set the FileFormat field in *Options passed to
@@ -1645,7 +1658,12 @@
 // assigned to a column must be the same as is the column's type or the value
 // must be NULL.
 //
-//  InsertIntoStmt = "INSERT" "INTO" TableName [ "(" ColumnNameList ")" ] ( Values | SelectStmt ) .
+// If there exists an unique index that would make the insert statement fail,
+// the optional IF NOT EXISTS turns the insert statement in such case into a
+// no-op.
+//
+//  InsertIntoStmt = "INSERT" "INTO" TableName [ "IF" "NOT" "EXISTS" ]
+//	[ "(" ColumnNameList ")" ] ( Values | SelectStmt ) .
 //
 //  ColumnNameList = ColumnName { "," ColumnName } [ "," ] .
 //  Values = "VALUES" "(" ExpressionList ")" { "," "(" ExpressionList ")" } [ "," ] .

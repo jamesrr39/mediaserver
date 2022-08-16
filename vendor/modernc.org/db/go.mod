@@ -1,7 +1,10 @@
 module modernc.org/db
 
+go 1.15
+
 require (
-	github.com/remyoudompheng/bigfft v0.0.0-20170806203942-52369c62f446 // indirect
-	modernc.org/internal v1.0.0
-	modernc.org/mathutil v1.0.0
+	modernc.org/file v1.0.3
+	modernc.org/internal v1.0.2
+	modernc.org/mathutil v1.4.1
+	modernc.org/strutil v1.1.1
 )

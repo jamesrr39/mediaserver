@@ -913,7 +913,7 @@ func convert(val interface{}, typ int) (v interface{}, err error) { //NTYPE
 		case int16:
 			return string(rune(x)), nil
 		case int32:
-			return string(rune(x)), nil
+			return string(x), nil
 		case int64:
 			return string(rune(x)), nil
 		case string:

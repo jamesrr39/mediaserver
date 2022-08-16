@@ -7,6 +7,10 @@
 //
 // Release history and compatibility issues
 //
+// 2020-12-20 v1.2.1 fixes MulOverflowInt64.
+//
+// 2020-12-19 Added {Add,Sub,Mul}OverflowInt{8,16,32,64}
+//
 // 2018-10-21 Added BinaryLog
 //
 // 2018-04-25: New functions for determining Max/Min of nullable values. Ex:
@@ -1426,4 +1430,175 @@ func CheckAddInt64(a, b int64) (sum int64, gt bool) {
 // math.MinInt64.
 func CheckSubInt64(a, b int64) (sum int64, lt bool) {
 	return a - b, a > 0 && a-math.MaxInt64 > b || a < 0 && a-math.MinInt64 < b
+}
+
+// AddOverflowInt8 returns a + b and an indication whether the addition
+// overflowed the int8 range.
+func AddOverflowInt8(a, b int8) (r int8, ovf bool) {
+	r = a + b
+	if a > 0 && b > 0 {
+		return r, uint8(r) > math.MaxInt8
+	}
+
+	if a < 0 && b < 0 {
+		return r, uint8(r) <= math.MaxInt8
+	}
+
+	return r, false
+}
+
+// AddOverflowInt16 returns a + b and an indication whether the addition
+// overflowed the int16 range.
+func AddOverflowInt16(a, b int16) (r int16, ovf bool) {
+	r = a + b
+	if a > 0 && b > 0 {
+		return r, uint16(r) > math.MaxInt16
+	}
+
+	if a < 0 && b < 0 {
+		return r, uint16(r) <= math.MaxInt16
+	}
+
+	return r, false
+}
+
+// AddOverflowInt32 returns a + b and an indication whether the addition
+// overflowed the int32 range.
+func AddOverflowInt32(a, b int32) (r int32, ovf bool) {
+	r = a + b
+	if a > 0 && b > 0 {
+		return r, uint32(r) > math.MaxInt32
+	}
+
+	if a < 0 && b < 0 {
+		return r, uint32(r) <= math.MaxInt32
+	}
+
+	return r, false
+}
+
+// AddOverflowInt64 returns a + b and an indication whether the addition
+// overflowed the int64 range.
+func AddOverflowInt64(a, b int64) (r int64, ovf bool) {
+	r = a + b
+	if a > 0 && b > 0 {
+		return r, uint64(r) > math.MaxInt64
+	}
+
+	if a < 0 && b < 0 {
+		return r, uint64(r) <= math.MaxInt64
+	}
+
+	return r, false
+}
+
+// SubOverflowInt8 returns a - b and an indication whether the subtraction
+// overflowed the int8 range.
+func SubOverflowInt8(a, b int8) (r int8, ovf bool) {
+	r = a - b
+	if a >= 0 && b < 0 {
+		return r, uint8(r) >= math.MaxInt8+1
+	}
+
+	if a < 0 && b > 0 {
+		return r, uint8(r) <= math.MaxInt8
+	}
+
+	return r, false
+}
+
+// SubOverflowInt16 returns a - b and an indication whether the subtraction
+// overflowed the int16 range.
+func SubOverflowInt16(a, b int16) (r int16, ovf bool) {
+	r = a - b
+	if a >= 0 && b < 0 {
+		return r, uint16(r) >= math.MaxInt16+1
+	}
+
+	if a < 0 && b > 0 {
+		return r, uint16(r) <= math.MaxInt16
+	}
+
+	return r, false
+}
+
+// SubOverflowInt32 returns a - b and an indication whether the subtraction
+// overflowed the int32 range.
+func SubOverflowInt32(a, b int32) (r int32, ovf bool) {
+	r = a - b
+	if a >= 0 && b < 0 {
+		return r, uint32(r) >= math.MaxInt32+1
+	}
+
+	if a < 0 && b > 0 {
+		return r, uint32(r) <= math.MaxInt32
+	}
+
+	return r, false
+}
+
+// SubOverflowInt64 returns a - b and an indication whether the subtraction
+// overflowed the int64 range.
+func SubOverflowInt64(a, b int64) (r int64, ovf bool) {
+	r = a - b
+	if a >= 0 && b < 0 {
+		return r, uint64(r) >= math.MaxInt64+1
+	}
+
+	if a < 0 && b > 0 {
+		return r, uint64(r) <= math.MaxInt64
+	}
+
+	return r, false
+}
+
+// MulOverflowInt8 returns a * b and an indication whether the product
+// overflowed the int8 range.
+func MulOverflowInt8(a, b int8) (r int8, ovf bool) {
+	if a == 0 || b == 0 {
+		return 0, false
+	}
+
+	z := int16(a) * int16(b)
+	return int8(z), z < math.MinInt8 || z > math.MaxInt8
+}
+
+// MulOverflowInt16 returns a * b and an indication whether the product
+// overflowed the int16 range.
+func MulOverflowInt16(a, b int16) (r int16, ovf bool) {
+	if a == 0 || b == 0 {
+		return 0, false
+	}
+
+	z := int32(a) * int32(b)
+	return int16(z), z < math.MinInt16 || z > math.MaxInt16
+}
+
+// MulOverflowInt32 returns a * b and an indication whether the product
+// overflowed the int32 range.
+func MulOverflowInt32(a, b int32) (r int32, ovf bool) {
+	if a == 0 || b == 0 {
+		return 0, false
+	}
+
+	z := int64(a) * int64(b)
+	return int32(z), z < math.MinInt32 || z > math.MaxInt32
+}
+
+// MulOverflowInt64 returns a * b and an indication whether the product
+// overflowed the int64 range.
+func MulOverflowInt64(a, b int64) (r int64, ovf bool) {
+	// https://groups.google.com/g/golang-nuts/c/h5oSN5t3Au4/m/KaNQREhZh0QJ
+	const mostPositive = 1<<63 - 1
+	const mostNegative = -(mostPositive + 1)
+	r = a * b
+	if a == 0 || b == 0 || a == 1 || b == 1 {
+		return r, false
+	}
+
+	if a == mostNegative || b == mostNegative {
+		return r, true
+	}
+
+	return r, r/b != a
 }
