@@ -27,3 +27,17 @@ If you run in Docker, make sure that you have the data and metadata directories 
 ## Contributions
 
 Pull requests welcome for small fixes, for features please open an issue to discuss the feature first.
+
+## Screenshots
+
+### The gallery
+
+![gallery-view](https://user-images.githubusercontent.com/4579573/184879313-3d1d49bd-367c-46ca-b57f-16676e975e13.png)
+
+### Gallery with filter open
+
+![gallery-filter-view](https://user-images.githubusercontent.com/4579573/184879305-2b6c36c8-ab22-4f76-8308-8c40e2a07cb6.png)
+
+### Image view
+
+![image-detail-view](https://user-images.githubusercontent.com/4579573/184879316-19143ac3-45f7-42df-8f9a-459467bdc65c.png)
