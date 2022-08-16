@@ -47,8 +47,15 @@ run_dev_client:
 .PHONY: run_dev_server
 run_dev_server:
 	echo "localenv base dir: ${LOCALENV_BASE_DIR}"
-	mkdir -p ${LOCALENV_BASE_DIR}/data ${LOCALENV_BASE_DIR}/metadata ${LOCALENV_BASE_DIR}/cache
-	go run cmd/media-server-main.go ${LOCALENV_BASE_DIR}/data --metadata-dir=${LOCALENV_BASE_DIR}/metadata --cache-dir=${LOCALENV_BASE_DIR}/cache --profile-dir=${LOCALENV_BASE_DIR}
+	mkdir -p \
+		${LOCALENV_BASE_DIR}/data \
+		${LOCALENV_BASE_DIR}/metadata \
+		${LOCALENV_BASE_DIR}/cache
+	go run cmd/media-server-main.go \
+		${LOCALENV_BASE_DIR}/data \
+		--metadata-dir=${LOCALENV_BASE_DIR}/metadata \
+		--cache-dir=${LOCALENV_BASE_DIR}/cache \
+		--profile-dir=${LOCALENV_BASE_DIR}
 
 .PHONY: clean_dev_metadata
 clean_dev_metadata:

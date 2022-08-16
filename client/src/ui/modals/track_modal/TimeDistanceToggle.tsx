@@ -1,9 +1,13 @@
 import { useState } from "react";
 
-type Props = {};
+type Value = "time" | "distance";
+
+type Props = {
+  onChange(value: Value): void;
+};
 
 export default function TimeDistanceToggle(props: Props) {
-  const [value, setValue] = useState("time" as "time" | "distance");
+  const [value, setValue] = useState("time" as Value);
 
   return (
     <div>
@@ -13,7 +17,10 @@ export default function TimeDistanceToggle(props: Props) {
             type="radio"
             name="timeDistanceRadio"
             checked={value === "time"}
-            onChange={() => setValue("time")}
+            onChange={() => {
+              setValue("time");
+              props.onChange("time");
+            }}
           />{" "}
           Time
         </label>
@@ -22,7 +29,10 @@ export default function TimeDistanceToggle(props: Props) {
             type="radio"
             name="timeDistanceRadio"
             checked={value === "distance"}
-            onChange={() => setValue("distance")}
+            onChange={() => {
+              setValue("distance");
+              props.onChange("distance");
+            }}
           />{" "}
           Distance
         </label>

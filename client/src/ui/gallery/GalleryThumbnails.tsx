@@ -93,22 +93,20 @@ function InnerGalleryThumbnails(props: Props) {
 
   return (
     <>
-      <div>
-        <div>
-          {selectedFiles.length} files selected{" "}
-          <button
-            disabled={selectedFiles.length === 0}
-            className="btn btn-primary"
-            type="button"
-            onClick={(event) => {
-              event.preventDefault();
+      <div className="container-fluid">
+        {selectedFiles.length} files selected{" "}
+        <button
+          disabled={selectedFiles.length === 0}
+          className="btn btn-primary"
+          type="button"
+          onClick={(event) => {
+            event.preventDefault();
 
-              setShowAddToCollectionModal(true);
-            }}
-          >
-            Add to collection
-          </button>
-        </div>
+            setShowAddToCollectionModal(true);
+          }}
+        >
+          Add to collection
+        </button>
       </div>
       <div>{rowsHtml}</div>
       {showAddToCollectionModal && (

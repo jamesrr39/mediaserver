@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 set -e
 
@@ -11,6 +11,8 @@ cp public/index.html dist/index.html
 # cp node_modules/bootstrap/dist/css/bootstrap.min.css dist/
 # cp -r node_modules/bootstrap-icons dist/
 
+echo 'Start bundling CSS'
+
 # esbuild the CSS bundle
 esbuild src/index.css \
     --loader:.png=dataurl \
@@ -22,9 +24,14 @@ esbuild src/index.css \
     --bundle \
     --outfile=dist/main.css
 
+echo 'Finished bundling CSS. Please note, CSS is not "watched" and to re-bundle, you have to run '
+echo 'Start bundling js'
+
 # esbuild the JS bundle
 esbuild src/index.tsx \
     --loader:.png=dataurl \
     --watch \
     --bundle \
     --outfile=dist/main.js
+
+echo 'Finished bundling js'

@@ -73,6 +73,8 @@ export type Lap = {
   distance: number;
 };
 
+export const DEFAULT_LAP_INTERVAL = 1000;
+
 export function getLapsFromRecords(records: Record[], interval: number) {
   if (records.length === 0) {
     return [];

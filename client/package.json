@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "./build.bash",
+    "start": "./build.sh",
     "build": "esbuild src/index.tsx --bundle --outfile=dist/main.js",
     "lint": "prettier --write ."
   },

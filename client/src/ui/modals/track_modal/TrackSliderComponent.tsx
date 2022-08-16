@@ -37,18 +37,18 @@ const styles = {
   },
 };
 
-const MIN = 0;
-const MAX = 100;
-
 type Props = {
+  min: number;
+  max: number;
   onChange: (newValues: { lower: number; upper: number }) => void;
 };
 
 export default function TrackSliderComponent(props: Props) {
-  const [slider1Val, setSlider1Val] = useState(MIN);
-  const [slider2Val, setSlider2Val] = useState(MAX);
+  const { max, min } = props;
+  const [slider1Val, setSlider1Val] = useState(min);
+  const [slider2Val, setSlider2Val] = useState(max);
 
-  const range = MAX - MIN;
+  const range = max - min;
 
   const lowerAndUpper = getLowerAndUpper(slider1Val, slider2Val);
   const { lower, upper } = lowerAndUpper;
@@ -61,8 +61,8 @@ export default function TrackSliderComponent(props: Props) {
         <input
           style={styles.rangeSlider}
           type="range"
-          min={MIN}
-          max={MAX}
+          min={min}
+          max={max}
           onChange={(e) => {
             const val = parseFloat(e.target.value);
             setSlider1Val(val);
@@ -73,8 +73,8 @@ export default function TrackSliderComponent(props: Props) {
         <input
           style={{ ...styles.rangeSlider, zIndex: 10001 }}
           type="range"
-          min={MIN}
-          max={MAX}
+          min={min}
+          max={max}
           onChange={(e) => {
             const val = parseFloat(e.target.value);
             setSlider2Val(val);

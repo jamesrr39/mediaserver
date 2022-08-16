@@ -8,6 +8,7 @@ import * as Leaflet from "leaflet";
 import TrackModalTable from "./TrackModalTable";
 import TimeDistanceToggle from "./TimeDistanceToggle";
 import TrackSliderComponent from "./TrackSliderComponent";
+import TrackDetailsComponent from "./TrackDetailsComponent";
 
 function displayDistance(distanceMetres: number): string {
   const flooredDistanceMetres = Math.floor(distanceMetres);
@@ -21,14 +22,19 @@ function displayDistance(distanceMetres: number): string {
   return `${wholeKm}.${remainderMetres}km`;
 }
 
-const LAP_INTERVAL = 1000;
-
 const styles = {
   container: {
     width: "100%",
     overflow: "auto",
     height: "100%",
   },
+};
+
+const dateLocaleOpts = {
+  weekday: "long" as "long",
+  day: "numeric" as "numeric",
+  month: "long" as "long",
+  year: "numeric" as "numeric",
 };
 
 type Props = {
@@ -41,8 +47,6 @@ type Props = {
 
 type State = {
   trackRecords?: Record[];
-  trackExtractionPoints?: TrackExtractionData;
-  highlightedRecord?: Record;
 };
 
 type TrackExtractionData = { start?: Record; end?: Record };
@@ -50,8 +54,6 @@ type TrackExtractionData = { start?: Record; end?: Record };
 class TrackModalContent extends React.Component<Props, State> {
   state = {
     trackRecords: undefined as undefined | Record[],
-    trackExtractionPoints: undefined as undefined | TrackExtractionData,
-    highlightedRecord: undefined as undefined | Record,
   };
 
   componentDidMount() {
@@ -91,186 +93,29 @@ class TrackModalContent extends React.Component<Props, State> {
 
   render() {
     const { trackSummary } = this.props;
-
-    const map = this.renderRecordInformation();
-
-    const opts = {
-      weekday: "long" as "long",
-      day: "numeric" as "numeric",
-      month: "long" as "long",
-      year: "numeric" as "numeric",
-    };
+    const { trackRecords } = this.state;
 
     return (
       <div style={styles.container}>
         <h3>
-          {trackSummary.startTime.toLocaleDateString(undefined, opts)} at{" "}
-          {trackSummary.startTime.toLocaleTimeString()}
+          {trackSummary.startTime.toLocaleDateString(undefined, dateLocaleOpts)}{" "}
+          at {trackSummary.startTime.toLocaleTimeString()}
         </h3>
         <small>{trackSummary.relativePath}</small>
         <p>
           {displayDistance(trackSummary.totalDistance)} in{" "}
           {trackSummary.getDuration().getDisplayString()}
         </p>
-        {map}
+        {!trackRecords && (
+          <div className="alert alert-info">Loading records...</div>
+        )}
+        {trackRecords && (
+          <TrackDetailsComponent
+            trackSummary={trackSummary}
+            trackRecords={trackRecords}
+          />
+        )}
       </div>
-    );
-  }
-
-  private renderRecordInformation() {
-    const { trackSummary } = this.props;
-    const { trackRecords } = this.state;
-
-    if (!trackRecords) {
-      return <p>loading</p>;
-    }
-
-    return (
-      <div className="container-fluid">
-        <div className="row">
-          <div className="col-12">
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={(e) => {
-                if (this.state.trackExtractionPoints) {
-                  this.setState((state) => ({
-                    ...state,
-                    trackExtractionPoints: undefined,
-                  }));
-                  return;
-                }
-
-                this.setState((state) => ({
-                  ...state,
-                  trackExtractionPoints: {},
-                }));
-              }}
-            >
-              Extract section
-            </button>
-            {this.state.trackExtractionPoints && (
-              <>
-                <span>
-                  {this.state.trackExtractionPoints.start
-                    ? this.state.trackExtractionPoints.start.toString()
-                    : "Please select the start point"}
-                </span>
-                {this.state.trackExtractionPoints.start && (
-                  <span>
-                    {this.state.trackExtractionPoints.end
-                      ? this.state.trackExtractionPoints.end.toString()
-                      : "Please select the end point"}
-                  </span>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-        <div className="row">
-          <div className="col-12">{this.renderMap(trackRecords)}</div>
-        </div>
-        <div className="row">
-          <div className="col-12">
-            <TimeDistanceToggle />
-          </div>
-        </div>
-        <div className="row">
-          <div className="col-12">
-            <TrackSliderComponent />
-          </div>
-        </div>
-        <div className="row">
-          <div className="col-12">
-            <SpeedChart
-              trackRecords={trackRecords}
-              onChartMouseOver={(idx) =>
-                this.setState((state) => ({
-                  ...state,
-                  highlightedRecord: this.state.trackRecords[idx],
-                }))
-              }
-            />
-          </div>
-        </div>
-        <div className="row">
-          <div className="col-12">
-            <TrackModalTable
-              trackSummary={trackSummary}
-              laps={getLapsFromRecords(trackRecords, LAP_INTERVAL)}
-            />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  private renderMap(trackRecords: Record[]) {
-    const { trackSummary } = this.props;
-
-    const size = {
-      width: "100%",
-      height: "400px",
-    };
-    const tracks = [
-      {
-        trackSummary,
-        points: trackRecords.map((record) => ({
-          lat: record.posLat,
-          lon: record.posLong,
-        })),
-        activityBounds: trackSummary.activityBounds,
-      },
-    ];
-
-    let onClickPoint = undefined;
-    if (this.state.trackExtractionPoints) {
-      onClickPoint = (latLng: Leaflet.LatLng) => {
-        // if start is set already, set end
-        if (this.state.trackExtractionPoints.start) {
-          // this.setState((state) => ({
-          //   ...state,
-          //   trackExtractionPoints: {
-          //     ...state.trackExtractionPoints,
-          //     end: latLng,
-          //   },
-          // }));
-          return;
-        }
-
-        // start is not set, set it
-        // this.setState((state) => ({
-        //   ...state,
-        //   trackExtractionPoints: {
-        //     ...state.trackExtractionPoints,
-        //     start: latLng,
-        //   },
-        // }));
-        return;
-      };
-    }
-
-    let markers = undefined;
-    const { highlightedRecord } = this.state;
-    if (highlightedRecord) {
-      markers = [
-        {
-          location: {
-            lat: highlightedRecord.posLat,
-            lon: highlightedRecord.posLong,
-          },
-        },
-      ];
-    }
-
-    return (
-      <MapComponent
-        size={size}
-        tracks={tracks}
-        zoomControl={true}
-        onClickPoint={onClickPoint}
-        markers={markers}
-      />
     );
   }
 }

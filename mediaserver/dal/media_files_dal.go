@@ -289,6 +289,8 @@ func (dal *MediaFilesDAL) processFile(fs gofs.Fs, tx *sql.Tx, path string, fileI
 	}
 
 	relativePath := strings.TrimPrefix(path, dal.picturesBasePath)
+	// trim any preceeding / (or \ on windows)
+	relativePath = strings.TrimPrefix(relativePath, string(filepath.Separator))
 
 	hash, err := domain.NewHash(file)
 	if nil != err {

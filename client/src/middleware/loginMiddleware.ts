@@ -23,7 +23,6 @@ export function loginMiddleware({
 
     switch (action.type) {
       case UserActionType.USER_LOGIN:
-        console.log("user logged in", action.type);
         const fns = [
           fetchPicturesMetadata(),
           fetchCollections(),
