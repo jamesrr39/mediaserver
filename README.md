@@ -20,7 +20,7 @@ You can also put photos in `data/localenv/data` folder. This is especially usefu
 
 ### Docker
 
-Docker is nice way to deploy software. There are various targets in the Makefile (e.g. `build_docker_linux_x86_64`) for building a docker image, and a Dockerfile is available in the repository.
+Docker/Podman is a nice way to deploy software! There are various targets in the Makefile (e.g. `build_docker_linux_x86_64`) for building a docker image, and a Dockerfile is available in the repository.
 
 If you run in Docker, make sure that you have the data and metadata directories mounted as volumes, and the file/directory owner user IDs are set to be the same between the host computer and the guest container.
 
