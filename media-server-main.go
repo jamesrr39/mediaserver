@@ -74,14 +74,20 @@ func getProfileWriter() io.WriteCloser {
 	}
 
 	expandedProfileDir, err := userextra.ExpandUser(*profileDir)
-	errorsx.ExitIfErr(errorsx.Errorf("Couldn't expand the profile directory path from %q. Error: %q\n", *profileDir, err))
+	if err != nil {
+		errorsx.ExitIfErr(errorsx.Errorf("Couldn't expand the profile directory path from %q. Error: %q\n", *profileDir, err))
+	}
 
 	profileFilePath := filepath.Join(expandedProfileDir, fmt.Sprintf("profile_%s.pbf", time.Now().Format("2006-01-02_15_04_05")))
 	profileFile, err := os.Create(profileFilePath)
-	errorsx.ExitIfErr(errorsx.Errorf("Couldn't create profile writer file at %q. Error: %q\n", profileFilePath, err))
+	if err != nil {
+		errorsx.ExitIfErr(errorsx.Errorf("Couldn't create profile writer file at %q. Error: %q\n", profileFilePath, err))
+	}
 
 	profileWriter, err := streamtostorage.NewWriter(profileFile, streamtostorage.MessageSizeBufferLenDefault)
-	errorsx.ExitIfErr(errorsx.Wrap(err))
+	if err != nil {
+		errorsx.ExitIfErr(errorsx.Wrap(err))
+	}
 
 	return ProfileWriter{
 		profileWriter,
@@ -122,12 +128,14 @@ func main() {
 
 	var hmacSigningSecret []byte
 	if *base64HmacSigningSecret != "" {
+		logger.Info("using provided HMAC secret")
 		hmacSigningSecret, err = base64x.DecodeBase64(bytes.NewBufferString(*base64HmacSigningSecret))
 		if err != nil {
 			log.Fatalf("couldn't decode HMAC signing secret: %q\n", err)
 		}
 	} else {
-		hmacSigningSecret = make([]byte, 256)
+		logger.Info("no HMAC secret supplied; generating our own HMAC signing secret")
+		hmacSigningSecret = make([]byte, 32)
 		_, err = rand.Read(hmacSigningSecret)
 		if err != nil {
 			log.Fatalf("couldn't generate HMAC signing secret: %q\n", err)
@@ -152,14 +160,14 @@ func main() {
 		log.Fatalf("couldn't create a new media server and scan the pictures directory. Error: %s", err)
 	}
 	defer mediaServer.Close()
-	{
-		log.Printf("attempting to start serving on address: '%s'\n", *addr)
-		err := mediaServer.ListenAndServe(*addr)
-		if nil != err {
-			log.Fatalf("Couldn't start HTTP server. Error: %s\nStack:\n%s\n", err, err.Stack())
-		}
+
+	logger.Info("attempting to start serving on address: '%s'\n", *addr)
+	err = mediaServer.ListenAndServe(*addr)
+	if nil != err {
+		log.Fatalf("Couldn't start HTTP server. %s\n", errorsx.ErrWithStack(errorsx.Wrap(err)))
 	}
 }
+
 func getFullDataPath(path string) (string, error) {
 	expandedPath, err := userextra.ExpandUser(path)
 	if nil != err {

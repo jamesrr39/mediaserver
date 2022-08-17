@@ -1,5 +1,7 @@
 LOCALENV_BASE_DIR="$(shell pwd)/data/localenv"
 DEFAULT_BUILD_OUTPUT=build/bin/default/mediaserver
+DEV_HMAC_SECRET=QRcqF6Rj5qktSirwhA3sBwOkbqYmJ31rCOEURTFLFik=
+
 
 .PHONY: help
 help:
@@ -56,7 +58,8 @@ run_dev_server:
 		${LOCALENV_BASE_DIR}/data \
 		--metadata-dir=${LOCALENV_BASE_DIR}/metadata \
 		--cache-dir=${LOCALENV_BASE_DIR}/cache \
-		--profile-dir=${LOCALENV_BASE_DIR}/profile
+		--profile-dir=${LOCALENV_BASE_DIR}/profile \
+		--base64-hmac-signing-secret=${DEV_HMAC_SECRET}
 
 .PHONY: clean_dev_metadata
 clean_dev_metadata:
