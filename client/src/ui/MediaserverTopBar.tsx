@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
+import { themeStyles } from "src/theme/theme";
 
 type Props = {
   child?: React.ReactNode;
@@ -7,8 +8,8 @@ type Props = {
 
 const styles = {
   container: {
+    ...themeStyles.topBar,
     padding: "15px 10px 10px",
-    backgroundColor: "#eee",
   },
   linkContainer: {
     padding: "10px",

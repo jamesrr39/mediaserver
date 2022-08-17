@@ -10,6 +10,9 @@ import GalleryThumbnail, {
   BuildLinkFunc,
   SelectThumbnailEventInfo,
 } from "./GalleryThumbnail";
+import { connect } from "react-redux";
+import { getScreenWidth } from "src/util/screen_size";
+import { State } from "src/reducers/rootReducer";
 
 export type Row = {
   groups: GroupWithSizes[];
@@ -50,7 +53,7 @@ type Props = {
     mediaFile: MediaFile,
     eventInfo: SelectThumbnailEventInfo
   ) => void;
-  getRowWidth(): number;
+  rowWidth: number;
   isThumbnailVisible(el: HTMLElement): void;
 };
 
@@ -79,9 +82,7 @@ class GalleryRow extends React.Component<Props> {
   }
 
   private renderGroup(group: GroupWithSizes) {
-    const { getRowWidth, row } = this.props;
-
-    const rowWidth = getRowWidth();
+    const { rowWidth, row } = this.props;
 
     if (row.fitsInOneLine) {
       return group.mediaFiles.map((mediaFileWithSize, index) => {
@@ -161,7 +162,9 @@ class GalleryRow extends React.Component<Props> {
   }
 }
 
-export default GalleryRow;
+export default connect((state: State) => {
+  return { rowWidth: state.windowReducer.innerWidth };
+})(GalleryRow);
 
 export function filesToRows(
   rowSizePx: number,

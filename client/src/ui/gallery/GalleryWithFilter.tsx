@@ -15,7 +15,7 @@ export type GalleryProps = {
   mediaFileUrlBase?: string; // example: `/gallery/detail`. If undefined, no link should be added.
   onClickThumbnail?: (pictureMetadata: MediaFile) => void;
   showMap?: boolean;
-  getRowWidth(): number;
+  title?: string;
 };
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
@@ -65,6 +65,7 @@ class GalleryWithFilter extends React.Component<GalleryProps, GalleryState> {
 
   render() {
     const { scrollObservable, resizeObservable } = this;
+    const { title } = this.props;
 
     const dateRange = getDateRange(this.props.mediaFiles);
 
@@ -77,27 +78,26 @@ class GalleryWithFilter extends React.Component<GalleryProps, GalleryState> {
       },
     };
 
+    const isThumbnailVisible = (thumbnailEl: HTMLElement) => {
+      if (!this.galleryContainerEl) {
+        return false;
+      }
+
+      const thumbnailRect = thumbnailEl.getBoundingClientRect();
+
+      if (thumbnailRect.top < window.innerHeight && thumbnailRect.bottom > 0) {
+        return true;
+      }
+
+      return false;
+    };
+
     const innerGalleryProps = {
       ...this.props,
       scrollObservable,
       resizeObservable,
       onFilterChangeObservable: this.onFilterChangeObservable,
-      isThumbnailVisible: (thumbnailEl: HTMLElement) => {
-        if (!this.galleryContainerEl) {
-          return false;
-        }
-
-        const thumbnailRect = thumbnailEl.getBoundingClientRect();
-
-        if (
-          thumbnailRect.top < window.innerHeight &&
-          thumbnailRect.bottom > 0
-        ) {
-          return true;
-        }
-
-        return false;
-      },
+      isThumbnailVisible,
     };
 
     const wrapperStyles = {
@@ -108,6 +108,7 @@ class GalleryWithFilter extends React.Component<GalleryProps, GalleryState> {
     return (
       <>
         <FilterComponent {...filterComponentProps} />
+        {title && <h1>{title}</h1>}
         <div
           style={wrapperStyles}
           ref={(el) => {

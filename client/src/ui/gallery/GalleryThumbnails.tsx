@@ -17,13 +17,12 @@ type Props = {
   onClickThumbnail?: (mediaFile: MediaFile) => void;
   mediaFileUrlBase?: string;
   peopleMap: PeopleMap;
-  getRowWidth: () => number;
   isThumbnailVisible(el: HTMLElement): void;
 };
 
 export const ROWS_IN_INCREMENT = 10;
 
-function InnerGalleryThumbnails(props: Props) {
+function GalleryThumbnails(props: Props) {
   const [showAddToCollectionModal, setShowAddToCollectionModal] =
     useState(false);
   const [selectedFiles, setSelectedFiles] = useState([] as MediaFile[]);
@@ -35,7 +34,6 @@ function InnerGalleryThumbnails(props: Props) {
     onClickThumbnail,
     mediaFileUrlBase,
     filterJson,
-    getRowWidth,
     isThumbnailVisible,
     scrollObservable,
     resizeObservable,
@@ -61,7 +59,6 @@ function InnerGalleryThumbnails(props: Props) {
       row,
       onClickThumbnail,
       buildLink,
-      getRowWidth,
       isThumbnailVisible,
       peopleMap,
       scrollObservable,
@@ -119,4 +116,4 @@ function InnerGalleryThumbnails(props: Props) {
   );
 }
 
-export default InnerGalleryThumbnails;
+export default GalleryThumbnails;

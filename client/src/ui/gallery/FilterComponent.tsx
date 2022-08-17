@@ -7,9 +7,8 @@ const styles = {
     marginRight: "5px",
   },
   container: {
+    ...themeStyles.topBar,
     padding: "5px",
-    margin: "10px",
-    background: "lightgrey",
   },
   customiseButton: {
     ...themeStyles.button,

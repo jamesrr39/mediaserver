@@ -13,7 +13,9 @@ import { Observable } from "ts-util/dist/Observable";
 import { PeopleMap } from "../../actions/mediaFileActions";
 import { BuildLinkFunc, SelectThumbnailEventInfo } from "./GalleryThumbnail";
 import { useState } from "react";
-import InnerGalleryThumbnails, { ROWS_IN_INCREMENT } from "./GalleryThumbnails";
+import GalleryThumbnails, { ROWS_IN_INCREMENT } from "./GalleryThumbnails";
+import { connect } from "react-redux";
+import { State } from "src/reducers/rootReducer";
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
@@ -27,7 +29,7 @@ export type InnerGalleryProps = {
   mediaFiles: MediaFile[];
   mediaFileUrlBase?: string;
   peopleMap: PeopleMap;
-  getRowWidth: () => number;
+  rowWidth: number;
   isThumbnailVisible(el: HTMLElement): void;
 };
 
@@ -36,10 +38,7 @@ type InnerGalleryState = {
   rows: Row[];
 };
 
-class InnerGallery extends React.Component<
-  InnerGalleryProps,
-  InnerGalleryState
-> {
+class Gallery extends React.Component<InnerGalleryProps, InnerGalleryState> {
   state = {
     lastIndexShown: 0,
     rows: [],
@@ -74,7 +73,7 @@ class InnerGallery extends React.Component<
       <>
         {this.props.showMap && this.renderMap()}
         <div>
-          <InnerGalleryThumbnails
+          <GalleryThumbnails
             rows={this.state.rows}
             lastIndexShown={this.state.lastIndexShown}
             {...this.props}
@@ -123,11 +122,11 @@ class InnerGallery extends React.Component<
   };
 
   private setRowsState() {
-    const { mediaFiles, getRowWidth } = this.props;
+    const { mediaFiles, rowWidth } = this.props;
 
     const groupsMap = mediaFilesToDateGroups(mediaFiles);
     const groups = groupsMapToGroups(groupsMap);
-    const rows = filesToRows(getRowWidth(), groups);
+    const rows = filesToRows(rowWidth, groups);
 
     if (rows.length !== this.state.rows.length) {
       this.setState((state) => ({
@@ -138,4 +137,8 @@ class InnerGallery extends React.Component<
   }
 }
 
-export default InnerGallery;
+export default connect((state: State) => {
+  return {
+    rowWidth: state.windowReducer.innerWidth,
+  };
+})(Gallery);

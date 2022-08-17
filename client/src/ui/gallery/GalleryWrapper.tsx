@@ -7,7 +7,7 @@ import { MediaFile } from "../../domain/MediaFile";
 import { MediaFileType } from "../../domain/MediaFileType";
 import { FitTrack, Record } from "../../domain/FitTrack";
 import { GalleryFilter } from "../../domain/Filter";
-import InnerGallery from "./Gallery";
+import Gallery from "./Gallery";
 import { CancellablePromise } from "ts-util/dist/Promises";
 import { connect } from "react-redux";
 import {
@@ -26,7 +26,6 @@ export type GalleryProps = {
   fetchRecordsForTracks: (
     trackSummary: FitTrack[]
   ) => Promise<Map<string, Record[]>>;
-  getRowWidth(): number;
   isThumbnailVisible(el: HTMLElement): void;
 };
 
@@ -80,7 +79,6 @@ class InnerGalleryWrapper extends React.Component<
 
   render() {
     const {
-      getRowWidth,
       isThumbnailVisible,
       resizeObservable,
       scrollObservable,
@@ -97,14 +95,13 @@ class InnerGalleryWrapper extends React.Component<
       tracks,
       showMap,
       filterJson: JSON.stringify(galleryFilter.toJsObject()),
-      getRowWidth,
       isThumbnailVisible,
       resizeObservable,
       scrollObservable,
       peopleMap,
     };
 
-    return <InnerGallery {...statelessGalleryProps} />;
+    return <Gallery {...statelessGalleryProps} />;
   }
 
   private filterChangeCallback = (galleryFilter: GalleryFilter) => {

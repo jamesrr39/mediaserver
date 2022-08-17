@@ -4,28 +4,25 @@ import { State } from "../reducers/rootReducer";
 import { connect } from "react-redux";
 import GalleryWithFilter from "./gallery/GalleryWithFilter";
 import { MediaFile } from "../domain/MediaFile";
-import { getScreenWidth } from "../util/screen_size";
 import { PeopleMap } from "../actions/mediaFileActions";
 
 type GalleryProps = {
   mediaFiles: MediaFile[];
   peopleMap: PeopleMap;
+  rowWidth: number;
 };
 
-class AllPicturesGallery extends React.Component<GalleryProps> {
-  render() {
-    const { mediaFiles, peopleMap } = this.props;
+function AllPicturesGallery(props: GalleryProps) {
+  const { mediaFiles, peopleMap, rowWidth } = props;
 
-    return (
-      <GalleryWithFilter
-        mediaFiles={mediaFiles}
-        peopleMap={peopleMap}
-        showMap={false}
-        mediaFileUrlBase="/gallery/detail"
-        getRowWidth={getScreenWidth}
-      />
-    );
-  }
+  return (
+    <GalleryWithFilter
+      mediaFiles={mediaFiles}
+      peopleMap={peopleMap}
+      showMap={false}
+      mediaFileUrlBase="/gallery/detail"
+    />
+  );
 }
 
 function mapStateToProps(state: State) {
@@ -35,6 +32,7 @@ function mapStateToProps(state: State) {
   return {
     mediaFiles,
     peopleMap,
+    rowWidth: state.windowReducer.innerWidth,
   };
 }
 

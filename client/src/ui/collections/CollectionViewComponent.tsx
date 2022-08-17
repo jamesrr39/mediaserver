@@ -14,12 +14,6 @@ type Props = {
   peopleMap: PeopleMap;
 };
 
-const styles = {
-  container: {
-    margin: "0 20px",
-  },
-};
-
 class CollectionViewComponent extends React.Component<Props> {
   render() {
     const { collection, mediaFilesMap, routeUrl, peopleMap } = this.props;
@@ -37,15 +31,10 @@ class CollectionViewComponent extends React.Component<Props> {
       peopleMap,
       mediaFileUrlBase: `${routeUrl}/detail`,
       showMap: true,
-      getRowWidth: () => getScreenWidth(),
+      title: this.props.collection.name,
     };
 
-    return (
-      <div style={styles.container}>
-        <h1>{this.props.collection.name}</h1>
-        <GalleryWithFilter {...galleryProps} />
-      </div>
-    );
+    return <GalleryWithFilter {...galleryProps} />;
   }
 }
 

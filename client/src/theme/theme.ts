@@ -5,4 +5,7 @@ export const themeStyles = {
     padding: "6px 12px",
     cursor: "pointer",
   },
+  topBar: {
+    backgroundColor: "#eee",
+  },
 };
