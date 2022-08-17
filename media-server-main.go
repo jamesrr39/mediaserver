@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"mediaserver/mediaserver"
 	"mediaserver/mediaserver/dal"
@@ -60,6 +60,35 @@ func getThumbnailCachePolicy(name string) (dal.ThumbnailCachePolicy, error) {
 	return policy, nil
 }
 
+type ProfileWriter struct {
+	io.Writer
+	io.Closer
+}
+
+func getProfileWriter() io.WriteCloser {
+	if *profileDir == "" {
+		return ProfileWriter{
+			io.Discard,
+			io.NopCloser(nil),
+		}
+	}
+
+	expandedProfileDir, err := userextra.ExpandUser(*profileDir)
+	errorsx.ExitIfErr(errorsx.Errorf("Couldn't expand the profile directory path from %q. Error: %q\n", *profileDir, err))
+
+	profileFilePath := filepath.Join(expandedProfileDir, fmt.Sprintf("profile_%s.pbf", time.Now().Format("2006-01-02_15_04_05")))
+	profileFile, err := os.Create(profileFilePath)
+	errorsx.ExitIfErr(errorsx.Errorf("Couldn't create profile writer file at %q. Error: %q\n", profileFilePath, err))
+
+	profileWriter, err := streamtostorage.NewWriter(profileFile, streamtostorage.MessageSizeBufferLenDefault)
+	errorsx.ExitIfErr(errorsx.Wrap(err))
+
+	return ProfileWriter{
+		profileWriter,
+		profileFile,
+	}
+}
+
 func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
@@ -80,25 +109,8 @@ func main() {
 		log.Fatalf("Couldn't expand the data directory path from %q. Error: %q\n", *metadataDir, err)
 	}
 
-	profileWriter := ioutil.Discard
-	if *profileDir != "" {
-		expandedProfileDir, err := userextra.ExpandUser(*profileDir)
-		if err != nil {
-			log.Fatalf("Couldn't expand the profile directory path from %q. Error: %q\n", *profileDir, err)
-		}
-
-		profileFilePath := filepath.Join(expandedProfileDir, fmt.Sprintf("profile_%s.pbf", time.Now().Format("2006-01-02_15_04_05")))
-		profileFile, err := os.Create(profileFilePath)
-		if err != nil {
-			log.Fatalf("Couldn't create profile writer file at %q. Error: %q\n", profileFilePath, err)
-		}
-		defer profileFile.Close()
-
-		profileWriter, err = streamtostorage.NewWriter(profileFile, streamtostorage.MessageSizeBufferLenDefault)
-		if err != nil {
-			log.Fatalln(err)
-		}
-	}
+	profileWriter := getProfileWriter()
+	defer profileWriter.Close()
 
 	profiler := profile.NewProfiler(profileWriter)
 
