@@ -1,12 +1,14 @@
 package mediaserver
 
 import (
+	"compress/gzip"
 	"database/sql"
 	"mediaserver/mediaserver/dal"
 	"mediaserver/mediaserver/dal/diskstorage/mediaserverdb"
 	"mediaserver/mediaserver/events"
 	"mediaserver/mediaserver/mediaserverjobs"
 	"mediaserver/mediaserver/statichandlers"
+	"mediaserver/mediaserver/webservice"
 	pictureswebservice "mediaserver/mediaserver/webservice"
 	"mediaserver/mediaserver/webservice/mediaservermiddleware"
 	"net/http"
@@ -14,6 +16,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"github.com/jamesrr39/goutil/errorsx"
 	"github.com/jamesrr39/goutil/gofs"
 	"github.com/jamesrr39/goutil/logpkg"
@@ -112,12 +115,15 @@ func (ms *MediaServer) ListenAndServe(addr string) errorsx.Error {
 	readyChan := make(chan bool)
 
 	mainRouter := chi.NewRouter()
+	mainRouter.Use(middleware.Logger)
+	mainRouter.Use(middleware.Compress(gzip.DefaultCompression))
 	mainRouter.Use(mediaservermiddleware.LoadingMiddleware(readyChan))
 	mainRouter.Use(mediaservermiddleware.CreateRequestLoggerMiddleware(ms.logger))
 
 	authMW := mediaservermiddleware.NewAuthMiddleware(ms.logger, ms.hmacSigningSecret)
 
 	mainRouter.Route("/api/", func(r chi.Router) {
+		r.Get("/currentuser", webservice.BuildGetCurrentUser(ms.logger, ms.hmacSigningSecret, ms.dbConn, ms.mediaServerDAL.PeopleDAL))
 		r.Mount("/login/", ms.loginService)
 		r.Route("/", func(r chi.Router) {
 			r.Use(authMW)

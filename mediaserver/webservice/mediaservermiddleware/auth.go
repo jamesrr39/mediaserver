@@ -2,6 +2,7 @@ package mediaservermiddleware
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"time"
 
@@ -23,16 +24,14 @@ func NewAuthMiddleware(logger *logpkg.Logger, hmacSecret []byte) func(http.Handl
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 
-			userID, err := getUserIDFromRequest(r, hmacSecret)
+			userID, err := GetUserIDFromRequest(r, hmacSecret)
 			if err != nil {
-				switch e := err.Error.(type) {
-				case errorsx.Error:
-					errorsx.HTTPError(w, logger, errorsx.Wrap(e), err.ResponseCode)
-					return
-				default:
-					http.Error(w, e.Error(), err.ResponseCode)
+				if errorsx.Cause(err) == ErrNoOrExpiredToken {
+					http.Error(w, err.Error(), http.StatusUnauthorized)
 					return
 				}
+				errorsx.HTTPJSONError(w, logger, errorsx.Wrap(err), http.StatusInternalServerError)
+				return
 			}
 
 			ctx = context.WithValue(ctx, gotoken.TokenAccountIDCtxKey, userID)
@@ -46,17 +45,20 @@ func NewAuthMiddleware(logger *logpkg.Logger, hmacSecret []byte) func(http.Handl
 	}
 }
 
-func getUserIDFromRequest(r *http.Request, hmacSecret []byte) (int64, *errType) {
+var ErrNoOrExpiredToken = errors.New("ErrNoOrExpiredToken")
+
+// GetUserIDFromRequest returns the user ID or an error, either ErrNoOrExpiredToken, or a different unexpected error
+func GetUserIDFromRequest(r *http.Request, hmacSecret []byte) (int64, error) {
 	cookie, err := r.Cookie(authTokenCookieName)
 	if err != nil {
 		if errorsx.Cause(err) == http.ErrNoCookie {
-			return 0, &errType{http.ErrNoCookie, http.StatusUnauthorized}
+			return 0, ErrNoOrExpiredToken
 		}
-		return 0, &errType{errorsx.Wrap(err), http.StatusInternalServerError}
+		return 0, errorsx.Wrap(err)
 	}
 
 	if cookie.Expires.After(time.Now()) {
-		return 0, &errType{errorsx.Wrap(err), http.StatusUnauthorized}
+		return 0, ErrNoOrExpiredToken
 	}
 
 	token, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (interface{}, error) {
@@ -68,19 +70,19 @@ func getUserIDFromRequest(r *http.Request, hmacSecret []byte) (int64, *errType) 
 		return hmacSecret, nil
 	})
 	if err != nil {
-		return 0, &errType{errorsx.Wrap(err), http.StatusUnauthorized}
+		return 0, errorsx.Wrap(err)
 	}
 
 	if !token.Valid {
-		return 0, &errType{errorsx.Wrap(err), http.StatusUnauthorized}
+		return 0, errorsx.Wrap(err)
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		return 0, &errType{errorsx.Wrap(err), http.StatusBadRequest}
+		return 0, errorsx.Wrap(err)
 	}
 
-	// float64 -> int64
+	// MapClaims stores numbers as float64. Convert to int64 for userID.
 	userID := int64(claims[gotoken.JwtAccountIDKey].(float64))
 	return userID, nil
 }
