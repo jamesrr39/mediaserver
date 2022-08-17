@@ -26,6 +26,7 @@ func BuildGetCurrentUser(logger *logpkg.Logger, hmacSigningSecret []byte, dbConn
 			}
 
 			render.JSON(w, r, CurrentUserStatus{})
+			return
 		}
 
 		// TODO: this shouldn't require a tx
@@ -45,6 +46,5 @@ func BuildGetCurrentUser(logger *logpkg.Logger, hmacSigningSecret []byte, dbConn
 		render.JSON(w, r, CurrentUserStatus{
 			User: user,
 		})
-
 	}
 }

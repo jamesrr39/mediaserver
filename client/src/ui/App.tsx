@@ -26,8 +26,12 @@ function useCurrentUser() {
       return Promise.reject(respBody.message);
     }
 
-    const body: { user: Person } = await resp.json();
+    const body: { user?: Person } = await resp.json();
     const { user } = body;
+
+    if (!user) {
+      return;
+    }
 
     dispatch({
       type: UserActionType.USER_LOGIN,
@@ -45,7 +49,7 @@ function App(props: Props) {
     return (
       <div className="alert alert-danger">
         Error when loading users. Please make sure you have an internet
-        connection and the server is running
+        connection and the server is running.
       </div>
     );
   }

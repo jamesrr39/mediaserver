@@ -53,98 +53,93 @@ const styles = {
   },
 };
 
-class MediaServer extends React.Component<MediaServerProps> {
-  render() {
-    const {
-      loadingState,
-      peopleMap,
-      customCollections,
-      mediaFiles,
-      mediaFilesMap,
-    } = this.props;
+function MediaServer(props: MediaServerProps) {
+  const {
+    loadingState,
+    peopleMap,
+    customCollections,
+    mediaFiles,
+    mediaFilesMap,
+  } = props;
 
-    if (loadingState === LoadingState.IN_PROGRESS) {
-      return <p>Loading...</p>;
-    }
-
-    if (loadingState === LoadingState.FAILED) {
-      return <p>Error: failed to load...</p>;
-    }
-
-    return (
-      <HashRouter>
-        <div>
-          <Routes>
-            <Route
-              path="/collections/:type/:identifier/edit"
-              element={withNavBar(
-                <EditCustomCollectionScreen
-                  peopleMap={peopleMap}
-                  customCollections={customCollections}
-                />
-              )}
-            />
-            <Route
-              path="/collections/:type/:identifier"
-              element={withNavBar(
-                <CollectionViewScreen
-                  mediaFiles={mediaFiles}
-                  peopleMap={peopleMap}
-                  customCollections={customCollections}
-                />,
-                <CollectionViewNavBarComponent
-                  mediaFiles={mediaFiles}
-                  customCollections={customCollections}
-                />
-              )}
-            />
-            <Route
-              path="/collections/:type/:identifier/detail/:hash"
-              element={withNavBar(
-                <PictureInCollectionModalScreen
-                  mediaFiles={mediaFiles}
-                  mediaFilesMap={mediaFilesMap}
-                  customCollections={customCollections}
-                />
-              )}
-            />
-            <Route
-              path="/collections"
-              element={withNavBar(
-                <CollectionsComponent />,
-                <UploadComponent />
-              )}
-            />
-            <Route
-              path="/map"
-              element={withNavBar(
-                <MediafilesMap mediaFileUrlBase="/gallery/detail" />,
-                <UploadComponent />
-              )}
-            />
-            <Route
-              path="/gallery"
-              element={withNavBar(<AllPicturesGallery />, <UploadComponent />)}
-            />
-            <Route
-              path="/gallery/detail/:hash"
-              element={withNavBar(
-                <AllPicturesModalScreen mediaFiles={mediaFiles} />,
-                <UploadComponent />
-              )}
-            />
-            <Route path="/" element={<Navigate to="/gallery" />} />
-          </Routes>
-          <div style={styles.notificationsComponent}>
-            <NotificationBarComponent />
-          </div>
-          <div style={styles.uploadProgressComponent}>
-            <UploadProgressComponent />
-          </div>
-        </div>
-      </HashRouter>
-    );
+  if (loadingState === LoadingState.IN_PROGRESS) {
+    return <p>Loading...</p>;
   }
+
+  if (loadingState === LoadingState.FAILED) {
+    return <p>Error: failed to load</p>;
+  }
+
+  return (
+    <HashRouter>
+      <div>
+        <Routes>
+          <Route
+            path="/collections/:type/:identifier/edit"
+            element={withNavBar(
+              <EditCustomCollectionScreen
+                peopleMap={peopleMap}
+                customCollections={customCollections}
+              />
+            )}
+          />
+          <Route
+            path="/collections/:type/:identifier"
+            element={withNavBar(
+              <CollectionViewScreen
+                mediaFiles={mediaFiles}
+                peopleMap={peopleMap}
+                customCollections={customCollections}
+              />,
+              <CollectionViewNavBarComponent
+                mediaFiles={mediaFiles}
+                customCollections={customCollections}
+              />
+            )}
+          />
+          <Route
+            path="/collections/:type/:identifier/detail/:hash"
+            element={withNavBar(
+              <PictureInCollectionModalScreen
+                mediaFiles={mediaFiles}
+                mediaFilesMap={mediaFilesMap}
+                customCollections={customCollections}
+              />
+            )}
+          />
+          <Route
+            path="/collections"
+            element={withNavBar(<CollectionsComponent />, <UploadComponent />)}
+          />
+          <Route
+            path="/map"
+            element={withNavBar(
+              <MediafilesMap mediaFileUrlBase="/gallery/detail" />,
+              <UploadComponent />
+            )}
+          />
+          <Route
+            path="/gallery"
+            element={withNavBar(<AllPicturesGallery />, <UploadComponent />)}
+          />
+          <Route
+            path="/gallery/detail/:hash"
+            element={withNavBar(
+              <AllPicturesModalScreen mediaFiles={mediaFiles} />,
+              <UploadComponent />
+            )}
+          />
+          <Route path="/" element={<Navigate to="/gallery" />} />
+        </Routes>
+        <div style={styles.notificationsComponent}>
+          <NotificationBarComponent />
+        </div>
+        <div style={styles.uploadProgressComponent}>
+          <UploadProgressComponent />
+        </div>
+      </div>
+    </HashRouter>
+  );
 }
 
 function getCombinedLoadingState(
