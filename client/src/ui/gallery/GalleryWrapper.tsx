@@ -17,8 +17,6 @@ import {
 
 export type GalleryProps = {
   mediaFiles: MediaFile[];
-  scrollObservable: Observable<void>;
-  resizeObservable: Observable<void>;
   mediaFileUrlBase?: string; // example: `/gallery/detail`. If undefined, no link should be added.
   onClickThumbnail?: (pictureMetadata: MediaFile) => void;
   showMap?: boolean;
@@ -80,28 +78,27 @@ class InnerGalleryWrapper extends React.Component<
   render() {
     const {
       isThumbnailVisible,
-      resizeObservable,
-      scrollObservable,
       peopleMap,
+      onClickThumbnail,
+      mediaFileUrlBase,
     } = this.props;
     const { showMap, tracks, galleryFilter } = this.state;
     const mediaFiles = this.props.mediaFiles.filter(galleryFilter.filter);
 
     mediaFiles.sort(gallerySortingFunc);
 
-    const statelessGalleryProps = {
-      ...this.props,
-      mediaFiles,
-      tracks,
-      showMap,
-      filterJson: JSON.stringify(galleryFilter.toJsObject()),
-      isThumbnailVisible,
-      resizeObservable,
-      scrollObservable,
-      peopleMap,
-    };
-
-    return <Gallery {...statelessGalleryProps} />;
+    return (
+      <Gallery
+        showMap={showMap}
+        tracks={tracks}
+        filter={galleryFilter}
+        onClickThumbnail={onClickThumbnail}
+        mediaFiles={mediaFiles}
+        mediaFileUrlBase={mediaFileUrlBase}
+        peopleMap={peopleMap}
+        isThumbnailVisible={isThumbnailVisible}
+      />
+    );
   }
 
   private filterChangeCallback = (galleryFilter: GalleryFilter) => {

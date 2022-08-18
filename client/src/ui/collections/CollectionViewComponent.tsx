@@ -4,8 +4,8 @@ import GalleryWithFilter from "../gallery/GalleryWithFilter";
 import { connect } from "react-redux";
 import { MediaFile } from "../../domain/MediaFile";
 import { State } from "../../reducers/rootReducer";
-import { getScreenWidth } from "../../util/screen_size";
 import { PeopleMap } from "../../actions/mediaFileActions";
+import Gallery from "../gallery/Gallery";
 
 type Props = {
   mediaFilesMap: Map<string, MediaFile>;
@@ -14,28 +14,28 @@ type Props = {
   peopleMap: PeopleMap;
 };
 
-class CollectionViewComponent extends React.Component<Props> {
-  render() {
-    const { collection, mediaFilesMap, routeUrl, peopleMap } = this.props;
+function CollectionViewComponent(props: Props) {
+  const { collection, mediaFilesMap, routeUrl, peopleMap } = props;
 
-    const mediaFiles = collection.fileHashes.map((hash, index) => {
-      const mediaFile = mediaFilesMap.get(hash);
-      if (!mediaFile) {
-        throw new Error(`couldn't find media file for ${hash}`);
-      }
-      return mediaFile;
-    });
+  const mediaFiles = collection.fileHashes.map((hash, index) => {
+    const mediaFile = mediaFilesMap.get(hash);
+    if (!mediaFile) {
+      throw new Error(`couldn't find media file for ${hash}`);
+    }
+    return mediaFile;
+  });
 
-    const galleryProps = {
-      mediaFiles,
-      peopleMap,
-      mediaFileUrlBase: `${routeUrl}/detail`,
-      showMap: true,
-      title: this.props.collection.name,
-    };
-
-    return <GalleryWithFilter {...galleryProps} />;
-  }
+  return (
+    <>
+      <h1>{collection.name}</h1>
+      <Gallery
+        mediaFiles={mediaFiles}
+        peopleMap={peopleMap}
+        mediaFileUrlBase={`${routeUrl}/detail`}
+        showMap={true}
+      />
+    </>
+  );
 }
 
 export default connect((state: State) => ({

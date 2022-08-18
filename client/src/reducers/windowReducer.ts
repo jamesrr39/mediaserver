@@ -1,3 +1,5 @@
+import { Observable } from "ts-util/dist/Observable";
+import { DebouncedObservable } from "ts-util/src/Observable";
 import { WindowAction, WindowActionType } from "../actions/windowActions";
 
 export type WindowState = {
@@ -5,6 +7,8 @@ export type WindowState = {
   innerWidth: number;
   scrollY: number;
   addEventListener(eventName: "scroll" | "resize", callback: () => void): void;
+  scrollObservable: Observable<void>;
+  resizeObservable: Observable<void>;
 };
 
 export function createWindowReducer(initialState: WindowState) {

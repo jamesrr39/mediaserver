@@ -45,8 +45,8 @@ interface GroupWithSizes {
 type Props = {
   row: Row;
   peopleMap: PeopleMap;
-  scrollObservable: Observable<void>;
-  resizeObservable: Observable<void>;
+  // scrollObservable: Observable<void>;
+  // resizeObservable: Observable<void>;
   onClickThumbnail?: (mediaFile: MediaFile) => void;
   buildLink?: BuildLinkFunc;
   onSelectThumbnail?: (

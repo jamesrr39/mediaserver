@@ -1,3 +1,4 @@
+import { State } from "src/reducers/rootReducer";
 import { DebouncedObservable } from "ts-util/dist/Observable";
 
 export type WindowSize = {
@@ -30,18 +31,20 @@ export type Win = {
 } & WindowSize;
 
 export function listenToWindowActions(win: Win) {
-  return async (dispatch: (action: WindowAction) => void) => {
-    const scrollObservable = new DebouncedObservable<void>(150);
-    const resizeObservable = new DebouncedObservable<void>(150);
+  return async (
+    dispatch: (action: WindowAction) => void,
+    getState: () => State
+  ) => {
+    const state = getState();
 
-    scrollObservable.addListener(() => {
+    state.windowReducer.scrollObservable.addListener(() => {
       dispatch({
         type: WindowActionType.SCROLL,
         scrollY: win.scrollY,
       });
     });
 
-    resizeObservable.addListener(() => {
+    state.windowReducer.resizeObservable.addListener(() => {
       dispatch({
         type: WindowActionType.RESIZE,
         innerHeight: win.innerHeight,
@@ -49,7 +52,11 @@ export function listenToWindowActions(win: Win) {
       });
     });
 
-    win.addEventListener("scroll", () => scrollObservable.triggerEvent());
-    win.addEventListener("resize", () => resizeObservable.triggerEvent());
+    win.addEventListener("scroll", () =>
+      state.windowReducer.scrollObservable.triggerEvent()
+    );
+    win.addEventListener("resize", () =>
+      state.windowReducer.resizeObservable.triggerEvent()
+    );
   };
 }

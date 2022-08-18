@@ -12,6 +12,7 @@ import {
 import { EventState, eventReducer } from "./eventReducer";
 import { ActiveUserReducerState, activeUserReducer } from "./activeUserReducer";
 import { PeopleState, peopleReducer } from "./peopleReducer";
+import { DebouncedObservable } from "ts-util/src/Observable";
 
 export type State = {
   mediaFilesReducer: MediaFilesState;
@@ -28,7 +29,11 @@ export default function createRootReducer(win: WindowState) {
     mediaFilesReducer,
     collectionsReducer,
     notificationsReducer,
-    windowReducer: createWindowReducer(win),
+    windowReducer: createWindowReducer({
+      ...win,
+      scrollObservable: new DebouncedObservable<void>(150),
+      resizeObservable: new DebouncedObservable<void>(150),
+    }),
     eventReducer,
     activeUserReducer,
     peopleReducer,

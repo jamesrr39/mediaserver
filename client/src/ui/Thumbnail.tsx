@@ -9,6 +9,8 @@ import { PictureThumbnail } from "./thumbnails/PictureThumbnail";
 import { VideoThumbnail } from "./thumbnails/VideoFileThumbnail";
 import TrackThumbnail from "./thumbnails/TrackThumbnail";
 import { Size } from "../domain/Size";
+import { connect } from "react-redux";
+import { State } from "src/reducers/rootReducer";
 
 const WIDE_SCREEN_THUMBNAIL_HEIGHT = 200;
 const NARROW_SCREEN_THUMBNAIL_HEIGHT = 100;
@@ -178,4 +180,11 @@ class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
   }
 }
 
-export default Thumbnail;
+export default connect((state: State) => {
+  const { resizeObservable, scrollObservable } = state.windowReducer;
+
+  return {
+    scrollObservable,
+    resizeObservable,
+  };
+})(Thumbnail);

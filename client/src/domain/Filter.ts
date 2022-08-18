@@ -5,7 +5,7 @@ type FilterJson = {
   date?: {
     start: number;
     end: number;
-    includeWithOutDates: boolean;
+    includeFilesWithoutDates: boolean;
   };
 };
 
@@ -42,7 +42,7 @@ export class GalleryFilter {
     ].join(" ");
   }
 
-  public toJsObject() {
+  public toJsObject(): FilterJson {
     if (this.dateFilter) {
       return {
         date: {
@@ -54,6 +54,10 @@ export class GalleryFilter {
     }
 
     return {};
+  }
+
+  public toJSON(): string {
+    return JSON.stringify(this.toJsObject());
   }
 }
 
@@ -151,7 +155,7 @@ export function filterFromJson(json: string) {
       new DateFilter(
         new Date(filterJson.date.start),
         new Date(filterJson.date.end),
-        filterJson.date.includeWithOutDates
+        filterJson.date.includeFilesWithoutDates
       )
     );
   }

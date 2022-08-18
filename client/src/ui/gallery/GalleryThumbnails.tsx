@@ -6,14 +6,15 @@ import GalleryRow, { Row } from "./GalleryRow";
 import { BuildLinkFunc, SelectThumbnailEventInfo } from "./GalleryThumbnail";
 import FullScreenModal from "../FullScreenModal";
 import AddFilesToCollectionModal from "./AddFilesToCollectionModal";
+import { GalleryFilter } from "src/domain/Filter";
 
 type Props = {
   rows: Row[];
   lastIndexShown: number;
-
-  filterJson: string;
-  scrollObservable: Observable<void>;
-  resizeObservable: Observable<void>;
+  filter: GalleryFilter;
+  // filterJson: string;
+  // scrollObservable: Observable<void>;
+  // resizeObservable: Observable<void>;
   onClickThumbnail?: (mediaFile: MediaFile) => void;
   mediaFileUrlBase?: string;
   peopleMap: PeopleMap;
@@ -30,20 +31,20 @@ function GalleryThumbnails(props: Props) {
   const {
     rows,
     lastIndexShown,
-
+    filter,
     onClickThumbnail,
     mediaFileUrlBase,
-    filterJson,
+    // filterJson,
     isThumbnailVisible,
-    scrollObservable,
-    resizeObservable,
+    // scrollObservable,
+    // resizeObservable,
     peopleMap,
   } = props;
 
   let buildLink: undefined | BuildLinkFunc = undefined;
   if (mediaFileUrlBase) {
     buildLink = (mediaFile: MediaFile) => {
-      const query = `filterJson=${encodeURIComponent(filterJson)}`;
+      const query = `filterJson=${encodeURIComponent(filter.toJSON())}`;
       const linkUrl = `${mediaFileUrlBase}/${mediaFile.hashValue}?${query}`;
       return linkUrl;
     };
@@ -61,8 +62,8 @@ function GalleryThumbnails(props: Props) {
       buildLink,
       isThumbnailVisible,
       peopleMap,
-      scrollObservable,
-      resizeObservable,
+      // scrollObservable,
+      // resizeObservable,
       onSelectThumbnail: (
         mediaFile: MediaFile,
         eventInfo: SelectThumbnailEventInfo

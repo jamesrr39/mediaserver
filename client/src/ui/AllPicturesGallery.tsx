@@ -9,11 +9,10 @@ import { PeopleMap } from "../actions/mediaFileActions";
 type GalleryProps = {
   mediaFiles: MediaFile[];
   peopleMap: PeopleMap;
-  rowWidth: number;
 };
 
 function AllPicturesGallery(props: GalleryProps) {
-  const { mediaFiles, peopleMap, rowWidth } = props;
+  const { mediaFiles, peopleMap } = props;
 
   return (
     <GalleryWithFilter
@@ -32,7 +31,6 @@ function mapStateToProps(state: State) {
   return {
     mediaFiles,
     peopleMap,
-    rowWidth: state.windowReducer.innerWidth,
   };
 }
 

@@ -8,6 +8,15 @@ import { GalleryFilter } from "../../domain/Filter";
 import { getScreenHeight } from "../../util/screen_size";
 import InnerGalleryWrapper from "./GalleryWrapper";
 import { PeopleMap } from "../../actions/mediaFileActions";
+import { connect } from "react-redux";
+import { State } from "src/reducers/rootReducer";
+import { Observable } from "ts-util/src/Observable";
+
+const styles = {
+  title: {
+    margin: "10px",
+  },
+};
 
 export type GalleryProps = {
   mediaFiles: MediaFile[];
@@ -16,6 +25,8 @@ export type GalleryProps = {
   onClickThumbnail?: (pictureMetadata: MediaFile) => void;
   showMap?: boolean;
   title?: string;
+  scrollObservable: Observable<void>;
+  resizeObservable: Observable<void>;
 };
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
@@ -47,24 +58,20 @@ function getDateRange(mediaFiles: MediaFile[]): DateRange {
   return { start, end };
 }
 
-type GalleryState = {
-  elementPosTopOffset: number;
-};
-
-class GalleryWithFilter extends React.Component<GalleryProps, GalleryState> {
+class GalleryWithFilter extends React.Component<GalleryProps> {
   state = {
     elementPosTopOffset: 0,
   };
 
   private onFilterChangeObservable = new DebouncedObservable<GalleryFilter>(50);
 
-  private scrollObservable = new DebouncedObservable<void>(150);
-  private resizeObservable = new DebouncedObservable<void>(150);
+  // private scrollObservable = new DebouncedObservable<void>(150);
+  // private resizeObservable = new DebouncedObservable<void>(150);
 
   private galleryContainerEl: HTMLElement | null = null;
 
   render() {
-    const { scrollObservable, resizeObservable } = this;
+    // const { scrollObservable, resizeObservable } = this;
     const { title } = this.props;
 
     const dateRange = getDateRange(this.props.mediaFiles);
@@ -94,8 +101,8 @@ class GalleryWithFilter extends React.Component<GalleryProps, GalleryState> {
 
     const innerGalleryProps = {
       ...this.props,
-      scrollObservable,
-      resizeObservable,
+      // scrollObservable,
+      // resizeObservable,
       onFilterChangeObservable: this.onFilterChangeObservable,
       isThumbnailVisible,
     };
@@ -108,7 +115,7 @@ class GalleryWithFilter extends React.Component<GalleryProps, GalleryState> {
     return (
       <>
         <FilterComponent {...filterComponentProps} />
-        {title && <h1>{title}</h1>}
+        {title && <h1 style={styles.title}>{title}</h1>}
         <div
           style={wrapperStyles}
           ref={(el) => {
@@ -127,8 +134,12 @@ class GalleryWithFilter extends React.Component<GalleryProps, GalleryState> {
       return;
     }
 
-    el.addEventListener("scroll", () => this.scrollObservable.triggerEvent());
-    el.addEventListener("resize", () => this.resizeObservable.triggerEvent());
+    el.addEventListener("scroll", () =>
+      this.props.scrollObservable.triggerEvent()
+    );
+    el.addEventListener("resize", () =>
+      this.props.resizeObservable.triggerEvent()
+    );
 
     const elementPosTopOffset = el.getBoundingClientRect().top;
 
@@ -140,4 +151,8 @@ class GalleryWithFilter extends React.Component<GalleryProps, GalleryState> {
   }
 }
 
-export default GalleryWithFilter;
+export default connect((state: State) => {
+  const { resizeObservable, scrollObservable } = state.windowReducer;
+
+  return { resizeObservable, scrollObservable };
+})(GalleryWithFilter);

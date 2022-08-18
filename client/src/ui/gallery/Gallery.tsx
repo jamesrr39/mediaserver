@@ -9,20 +9,19 @@ import {
   groupsMapToGroups,
 } from "../../domain/MediaFileGroup";
 import { InnerMap } from "./InnerMap";
-import { Observable } from "ts-util/dist/Observable";
 import { PeopleMap } from "../../actions/mediaFileActions";
-import { BuildLinkFunc, SelectThumbnailEventInfo } from "./GalleryThumbnail";
-import { useState } from "react";
 import GalleryThumbnails, { ROWS_IN_INCREMENT } from "./GalleryThumbnails";
 import { connect } from "react-redux";
 import { State } from "src/reducers/rootReducer";
+import { GalleryFilter } from "src/domain/Filter";
+import { Observable } from "ts-util/dist/Observable";
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
 export type InnerGalleryProps = {
   showMap: boolean;
   tracks: TrackMapData[];
-  filterJson: string;
+  filter: GalleryFilter;
   scrollObservable: Observable<void>;
   resizeObservable: Observable<void>;
   onClickThumbnail?: (mediaFile: MediaFile) => void;
@@ -138,7 +137,15 @@ class Gallery extends React.Component<InnerGalleryProps, InnerGalleryState> {
 }
 
 export default connect((state: State) => {
+  const {
+    innerWidth: rowWidth,
+    scrollObservable,
+    resizeObservable,
+  } = state.windowReducer;
+
   return {
-    rowWidth: state.windowReducer.innerWidth,
+    rowWidth,
+    scrollObservable,
+    resizeObservable,
   };
 })(Gallery);

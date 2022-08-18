@@ -24,8 +24,8 @@ type Props = {
   size: Size;
 
   peopleMap: PeopleMap;
-  scrollObservable: Observable<void>;
-  resizeObservable: Observable<void>;
+  // scrollObservable: Observable<void>;
+  // resizeObservable: Observable<void>;
   onClickThumbnail?: (mediaFile: MediaFile) => void;
   buildLink?: BuildLinkFunc;
   onSelectThumbnail?: (
@@ -44,8 +44,8 @@ function GalleryThumbnail(props: Props) {
     onClickThumbnail,
     onSelectThumbnail,
     isThumbnailVisible,
-    scrollObservable,
-    resizeObservable,
+    // scrollObservable,
+    // resizeObservable,
     peopleMap,
   } = props;
 
@@ -53,8 +53,8 @@ function GalleryThumbnail(props: Props) {
     size,
     mediaFile,
     isThumbnailVisible,
-    scrollObservable,
-    resizeObservable,
+    // scrollObservable,
+    // resizeObservable,
   };
 
   let thumbnail = <Thumbnail {...thumbnailProps} />;
