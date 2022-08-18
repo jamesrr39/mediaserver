@@ -32,11 +32,11 @@ Pull requests welcome for small fixes, for features please open an issue to disc
 
 ### The gallery
 
-![gallery-view](https://user-images.githubusercontent.com/4579573/184879313-3d1d49bd-367c-46ca-b57f-16676e975e13.png)
+![gallery-view](https://user-images.githubusercontent.com/4579573/185333119-880d3a9c-0cbb-4d5b-910c-7a702188f2af.png)
 
 ### Gallery with filter open
 
-![gallery-filter-view](https://user-images.githubusercontent.com/4579573/184879305-2b6c36c8-ab22-4f76-8308-8c40e2a07cb6.png)
+![gallery-filter-view](https://user-images.githubusercontent.com/4579573/185333147-b06f842c-5a26-4d7e-8a30-3357f36afa5c.png)
 
 ### Image view
 
