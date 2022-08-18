@@ -36,7 +36,7 @@ Pull requests welcome for small fixes, for features please open an issue to disc
 
 ### Gallery with filter open
 
-![gallery-filter-view](https://user-images.githubusercontent.com/4579573/185333147-b06f842c-5a26-4d7e-8a30-3357f36afa5c.png)
+![gallery-filter-view](https://user-images.githubusercontent.com/4579573/185333438-90c0f174-9e4b-41c3-b79a-c8d375990df9.png)
 
 ### Image view
 
