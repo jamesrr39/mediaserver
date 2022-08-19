@@ -3,7 +3,7 @@ import { MediaFileType } from "../MediaFileType";
 import { DateFilter } from "./DateFilter";
 import { Filter } from "./Filter";
 
-function toISO8601Date(d: Date) {
+export function toISO8601Date(d: Date) {
   return d.toISOString().split("T")[0];
 }
 
