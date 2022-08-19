@@ -6,7 +6,7 @@ import { TrackMapData } from "../MapComponent";
 import { MediaFile } from "../../domain/MediaFile";
 import { MediaFileType } from "../../domain/MediaFileType";
 import { FitTrack, Record } from "../../domain/FitTrack";
-import { GalleryFilter } from "../../domain/Filter";
+import { GalleryFilter } from "../../domain/filter/GalleryFilter";
 import Gallery from "./Gallery";
 import { CancellablePromise } from "ts-util/dist/Promises";
 import { connect } from "react-redux";
@@ -14,6 +14,7 @@ import {
   fetchRecordsForTracks,
   PeopleMap,
 } from "../../actions/mediaFileActions";
+import { DateFilter } from "src/domain/filter/DateFilter";
 
 export type GalleryProps = {
   mediaFiles: MediaFile[];
@@ -46,7 +47,9 @@ class InnerGalleryWrapper extends React.Component<
   state = {
     showMap: this.props.showMap || false,
     tracks: [],
-    galleryFilter: new GalleryFilter(null),
+    galleryFilter: new GalleryFilter(
+      new DateFilter({ includeFilesWithoutDates: true })
+    ),
   };
 
   private fetchRecordsPromise?: CancellablePromise<Map<string, Record[]>>;

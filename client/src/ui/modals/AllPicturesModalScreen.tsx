@@ -1,6 +1,6 @@
 // import * as React from 'react';
 import { useParams } from "react-router-dom";
-import { filterFromJson } from "../../domain/Filter";
+import { filterFromJson } from "../../domain/filter/GalleryFilter";
 import { MediaFile } from "../../domain/MediaFile";
 import { gallerySortingFunc } from "./../gallery/GalleryWithFilter";
 import MediaFileModal from "./MediaFileModal";

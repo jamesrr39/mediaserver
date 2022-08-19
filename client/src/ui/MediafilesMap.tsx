@@ -8,11 +8,12 @@ import { FitTrack, Record } from "../domain/FitTrack";
 import { TrackMapData } from "./MapComponent";
 import { MediaFileType } from "../domain/MediaFileType";
 import { fetchRecordsForTracks } from "../actions/mediaFileActions";
-import { FilterComponent } from "./gallery/FilterComponent";
-import { GalleryFilter } from "../domain/Filter";
+import FilterComponent from "./gallery/FilterComponent";
+import { GalleryFilter } from "../domain/filter/GalleryFilter";
 import { DebouncedObservable } from "ts-util/dist/Observable";
 import { trackSummariesToTrackDatas } from "../actions/selectors";
 import { CancellablePromise, makeCancelable } from "ts-util/dist/Promises";
+import { DateFilter } from "src/domain/filter/DateFilter";
 
 type Props = {
   mediaFiles: MediaFile[];
@@ -30,7 +31,9 @@ type ComponentState = {
 class MediafilesMap extends React.Component<Props, ComponentState> {
   state = {
     tracks: [] as TrackMapData[],
-    filter: new GalleryFilter(null),
+    filter: new GalleryFilter(
+      new DateFilter({ includeFilesWithoutDates: true })
+    ),
     loaded: false,
   };
 

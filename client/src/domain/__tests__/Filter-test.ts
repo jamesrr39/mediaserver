@@ -1,13 +1,14 @@
-import { GalleryFilter, DateFilter } from "../Filter";
+import { DateFilter } from "../filter/DateFilter";
+import { GalleryFilter } from "../filter/GalleryFilter";
 import { PictureMetadata } from "../PictureMetadata";
 
 test("filter", () => {
   const filter = new GalleryFilter(
-    new DateFilter(
-      new Date("2000-01-01T00:00:00"),
-      new Date("2000-01-01T00:00:02"),
-      false
-    )
+    new DateFilter({
+      start: new Date("2000-01-01T00:00:00"),
+      end: new Date("2000-01-01T00:00:02"),
+      includeFilesWithoutDates: false,
+    })
   );
 
   const mf1 = new PictureMetadata(

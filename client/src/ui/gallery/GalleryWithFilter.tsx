@@ -3,14 +3,15 @@ import { createCompareTimeTakenFunc } from "../../domain/PictureMetadata";
 
 import { DebouncedObservable } from "ts-util/dist/Observable";
 import { MediaFile } from "../../domain/MediaFile";
-import { FilterComponent } from "./FilterComponent";
-import { GalleryFilter } from "../../domain/Filter";
+import FilterComponent from "./FilterComponent";
+import { GalleryFilter } from "../../domain/filter/GalleryFilter";
 import { getScreenHeight } from "../../util/screen_size";
 import InnerGalleryWrapper from "./GalleryWrapper";
 import { PeopleMap } from "../../actions/mediaFileActions";
 import { connect } from "react-redux";
 import { State } from "src/reducers/rootReducer";
 import { Observable } from "ts-util/src/Observable";
+import { DateFilter } from "src/domain/filter/DateFilter";
 
 const styles = {
   title: {
@@ -65,19 +66,17 @@ class GalleryWithFilter extends React.Component<GalleryProps> {
 
   private onFilterChangeObservable = new DebouncedObservable<GalleryFilter>(50);
 
-  // private scrollObservable = new DebouncedObservable<void>(150);
-  // private resizeObservable = new DebouncedObservable<void>(150);
-
   private galleryContainerEl: HTMLElement | null = null;
 
   render() {
-    // const { scrollObservable, resizeObservable } = this;
     const { title } = this.props;
 
     const dateRange = getDateRange(this.props.mediaFiles);
 
     const filterComponentProps = {
-      initialFilter: new GalleryFilter(null),
+      initialFilter: new GalleryFilter(
+        new DateFilter({ includeFilesWithoutDates: true })
+      ),
       initialStartDateValue: dateRange.start,
       initialEndDateValue: dateRange.end,
       onFilterChange: (filter: GalleryFilter) => {
@@ -101,8 +100,6 @@ class GalleryWithFilter extends React.Component<GalleryProps> {
 
     const innerGalleryProps = {
       ...this.props,
-      // scrollObservable,
-      // resizeObservable,
       onFilterChangeObservable: this.onFilterChangeObservable,
       isThumbnailVisible,
     };
