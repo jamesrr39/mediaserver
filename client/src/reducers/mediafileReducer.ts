@@ -5,7 +5,6 @@ import {
 import { FileQueue } from "../fileQueue";
 import { MediaFile } from "../domain/MediaFile";
 import { Record, FitTrack } from "../domain/FitTrack";
-import { LoadingState } from "../actions/util";
 
 export type MediaFilesState = {
   mediaFiles: MediaFile[];
@@ -13,7 +12,6 @@ export type MediaFilesState = {
   uploadQueue: FileQueue;
   trackRecordsMap: Map<string, Promise<Record[]>>;
   fetchTrackRecordsQueue: FitTrack[];
-  loadingState: LoadingState;
 };
 
 const maxConcurrentUploads = 2;
@@ -24,7 +22,6 @@ const mediaFilesInitialState = {
   uploadQueue: new FileQueue(maxConcurrentUploads),
   trackRecordsMap: new Map<string, Promise<Record[]>>(),
   fetchTrackRecordsQueue: [],
-  loadingState: LoadingState.NOT_STARTED,
 };
 
 export function mediaFilesReducer(
@@ -32,11 +29,6 @@ export function mediaFilesReducer(
   action: MediaserverAction
 ) {
   switch (action.type) {
-    case FilesActionTypes.FETCH_MEDIA_FILES:
-      return {
-        ...state,
-        loadingState: LoadingState.IN_PROGRESS,
-      };
     case FilesActionTypes.MEDIA_FILES_FETCHED:
       const mediaFilesMap = new Map<string, MediaFile>();
       action.mediaFiles.forEach((mediaFile) => {
@@ -46,12 +38,6 @@ export function mediaFilesReducer(
         ...state,
         mediaFiles: action.mediaFiles,
         mediaFilesMap: mediaFilesMap,
-        loadingState: LoadingState.SUCCESS,
-      };
-    case FilesActionTypes.MEDIA_FILES_FETCH_FAILED:
-      return {
-        ...state,
-        loadingState: LoadingState.FAILED,
       };
     case FilesActionTypes.FILE_SUCCESSFULLY_UPLOADED:
       return {

@@ -6,7 +6,6 @@ export enum PeopleActionTypes {
   PEOPLE_FETCHED = "PEOPLE_FETCHED",
   PEOPLE_FETCH_FAILED = "PEOPLE_FETCH_FAILED",
   PEOPLE_CREATED = "PEOPLE_CREATED",
-  PEOPLE_FETCH_STARTED = "PEOPLE_FETCH_STARTED",
 }
 
 export interface PersonCreatedAction {
@@ -19,10 +18,6 @@ export type PeopleFetchedAction = {
   people: Person[];
 };
 
-export type PeopleFetchStartedAction = {
-  type: PeopleActionTypes.PEOPLE_FETCH_STARTED;
-};
-
 export type PeopleFetchedFailedAction = {
   type: PeopleActionTypes.PEOPLE_FETCH_FAILED;
 };
@@ -30,43 +25,22 @@ export type PeopleFetchedFailedAction = {
 export type PeopleAction =
   | PersonCreatedAction
   | PeopleFetchedAction
-  | PeopleFetchedFailedAction
-  | PeopleFetchStartedAction;
+  | PeopleFetchedFailedAction;
 
 export type FetchAllPeopleResponse = {
   people: Person[];
 };
 
-export function fetchAllPeople() {
-  return async (
-    dispatch: (action: PeopleAction) => void,
-    getState: () => State
-  ): Promise<FetchAllPeopleResponse> => {
-    dispatch({
-      type: PeopleActionTypes.PEOPLE_FETCH_STARTED,
-    });
+export async function fetchAllPeople() {
+  const response = await fetch(`/api/graphql?query={people{id,name,isUser}}`);
+  if (!response.ok) {
+    throw new Error(createErrorMessage(response));
+  }
 
-    const response = await fetch(`/api/graphql?query={people{id,name,isUser}}`);
-    if (!response.ok) {
-      dispatch({
-        type: PeopleActionTypes.PEOPLE_FETCH_FAILED,
-      });
-      throw new Error(createErrorMessage(response));
-    }
+  const peopleJSON: DataResponse<{ people: Person[] }> = await response.json();
+  const { people } = peopleJSON.data;
 
-    const peopleJSON: DataResponse<{ people: Person[] }> =
-      await response.json();
-    const { people } = peopleJSON.data;
-
-    dispatch({
-      type: PeopleActionTypes.PEOPLE_FETCHED,
-      people,
-    });
-
-    return {
-      people,
-    };
-  };
+  return people;
 }
 
 export function createPerson(name: string) {

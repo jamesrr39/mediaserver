@@ -7,9 +7,12 @@ import { Provider } from "react-redux";
 import configureStore from "./configureStore";
 import App from "./ui/App";
 import { QueryClient, QueryClientProvider } from "react-query";
+import { DebouncedObservable } from "ts-util/src/Observable";
+import { listenToWindowActions } from "./actions/windowActions";
 
-const store = configureStore(window);
-
+const scrollObservable = new DebouncedObservable<void>(150);
+const resizeObservable = new DebouncedObservable<void>(150);
+const store = configureStore(window, scrollObservable, resizeObservable);
 const queryClient = new QueryClient();
 
 const app = (

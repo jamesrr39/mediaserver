@@ -11,21 +11,11 @@ import { createMediaFileWithParticipants } from "../domain/util";
 export type PeopleMap = Map<number, Person>;
 
 export enum FilesActionTypes {
-  FETCH_MEDIA_FILES = "FETCH_MEDIA_FILES",
   MEDIA_FILES_FETCHED = "MEDIA_FILES_FETCHED",
-  MEDIA_FILES_FETCH_FAILED = "MEDIA_FILES_FETCH_FAILED",
   QUEUE_FOR_UPLOAD = "QUEUE_FOR_UPLOAD",
   FILE_SUCCESSFULLY_UPLOADED = "FILE_SUCCESSFULLY_UPLOADED",
   TRACK_RECORDS_FETCHED_ACTION = "TRACK_RECORDS_FETCHED_ACTION",
   PARTICIPANTS_SET_ON_MEDIAFILE = "PARTICIPANTS_SET_ON_MEDIAFILE",
-}
-
-export interface PicturesMetadataFetchFailedAction extends Action {
-  type: FilesActionTypes.MEDIA_FILES_FETCH_FAILED;
-}
-
-export interface FetchPicturesMetadataAction extends Action {
-  type: FilesActionTypes.FETCH_MEDIA_FILES;
 }
 
 export interface PicturesMetadataFetchedAction extends Action {
@@ -57,11 +47,9 @@ export type ParticipantAddedToMediaFile = {
 export type MediaserverAction =
   | PicturesMetadataFetchedAction
   | PictureSuccessfullyUploadedAction
-  | FetchPicturesMetadataAction
   | TrackRecordsFetchedAction
   | QueueForUploadAction
-  | ParticipantAddedToMediaFile
-  | PicturesMetadataFetchFailedAction;
+  | ParticipantAddedToMediaFile;
 
 type TrackJSON = {
   hash: string;
@@ -80,33 +68,17 @@ export type FetchPicturesMetadataResponse = {
   mediaFiles: MediaFile[];
 };
 
-export function fetchPicturesMetadata() {
-  return async (
-    dispatch: (action: MediaserverAction) => FetchPicturesMetadataResponse,
-    getState: () => State
-  ) => {
-    dispatch({
-      type: FilesActionTypes.FETCH_MEDIA_FILES,
-    });
+export async function fetchPicturesMetadata() {
+  const response = await fetch(`/api/files/`);
+  if (!response.ok) {
+    throw new Error(createErrorMessage(response));
+  }
 
-    const response = await fetch(`/api/files/`);
-    if (!response.ok) {
-      throw new Error(createErrorMessage(response));
-    }
+  const mediaFilesJSON: MediaFileJSON[] = await response.json();
 
-    const mediaFilesJSON: MediaFileJSON[] = await response.json();
+  const mediaFiles = mediaFilesJSON.map((json) => fromJSON(json));
 
-    const mediaFiles = mediaFilesJSON.map((json) => fromJSON(json));
-    
-    dispatch({
-      type: FilesActionTypes.MEDIA_FILES_FETCHED,
-      mediaFiles,
-    });
-
-    return {
-      mediaFiles,
-    };
-  };
+  return mediaFiles;
 }
 
 async function fetchTrackRecords(state: State, hashes: string[]) {

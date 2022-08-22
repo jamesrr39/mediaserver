@@ -33,7 +33,6 @@ function FilterComponent(props: Props) {
 
     setFilter(filter);
     onFilterChange(filter);
-    console.log("filter change", filter);
   }, []);
 
   return (

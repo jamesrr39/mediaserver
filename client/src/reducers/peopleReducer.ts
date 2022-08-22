@@ -1,18 +1,15 @@
 import { Person } from "../domain/People";
 import { PeopleMap } from "../actions/mediaFileActions";
-import { LoadingState } from "../actions/util";
 import { PeopleAction, PeopleActionTypes } from "../actions/peopleActions";
 
 export type PeopleState = {
   people: Person[];
   peopleMap: PeopleMap;
-  loadingState: LoadingState;
 };
 
 const peopleInitialState = {
   people: [],
   peopleMap: new Map<number, Person>(),
-  loadingState: LoadingState.NOT_STARTED,
 };
 
 export function peopleReducer(
@@ -20,11 +17,6 @@ export function peopleReducer(
   action: PeopleAction
 ) {
   switch (action.type) {
-    case PeopleActionTypes.PEOPLE_FETCH_STARTED:
-      return {
-        ...state,
-        loadingState: LoadingState.IN_PROGRESS,
-      };
     case PeopleActionTypes.PEOPLE_FETCHED: {
       const { people } = action;
       const peopleMap = new Map<number, Person>();
@@ -34,7 +26,6 @@ export function peopleReducer(
         ...state,
         people,
         peopleMap,
-        loadingState: LoadingState.SUCCESS,
       };
     }
 
@@ -51,7 +42,6 @@ export function peopleReducer(
     case PeopleActionTypes.PEOPLE_FETCH_FAILED:
       return {
         ...state,
-        loadingState: LoadingState.FAILED,
       };
     default:
       return state;

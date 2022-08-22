@@ -85,7 +85,7 @@ class PartipantsComponent extends React.Component<Props, ComponentState> {
     const { people, mediaFile } = this.props;
 
     const peopleInFile = people
-      .filter((person) => mediaFile.participantIds.includes(person.id))
+      .filter((person) => mediaFile.participantIds.indexOf(person.id) !== -1)
       .map((person) => ({
         value: person.id + "",
         label: person.name,

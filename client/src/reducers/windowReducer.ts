@@ -1,7 +1,12 @@
 import { Observable } from "ts-util/dist/Observable";
 import { DebouncedObservable } from "ts-util/src/Observable";
-import { WindowAction, WindowActionType } from "../actions/windowActions";
+import {
+  listenToWindowActions,
+  WindowAction,
+  WindowActionType,
+} from "../actions/windowActions";
 
+// TODO move to React Context?
 export type WindowState = {
   innerHeight: number;
   innerWidth: number;
@@ -12,6 +17,8 @@ export type WindowState = {
 };
 
 export function createWindowReducer(initialState: WindowState) {
+  listenToWindowActions(initialState);
+
   return (state: WindowState = initialState, action: WindowAction) => {
     switch (action.type) {
       case WindowActionType.RESIZE:

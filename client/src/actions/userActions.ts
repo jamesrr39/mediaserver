@@ -13,59 +13,47 @@ export type UserActionLogin = {
 
 export type UserAction = UserActionLogin;
 
-export function fetchUsers() {
-  return async (): Promise<Person[]> => {
-    const response = await fetch(`/api/login/users/`);
-    if (!response.ok) {
-      throw new Error(createErrorMessage(response));
-    }
+export async function fetchUsers() {
+  const response = await fetch(`/api/login/users/`);
+  if (!response.ok) {
+    throw new Error(createErrorMessage(response));
+  }
 
-    const respBody: DataResponse<{ people: Person[] }> = await response.json();
+  const respBody: DataResponse<{ people: Person[] }> = await response.json();
 
-    return respBody.data.people;
-  };
+  return respBody.data.people;
 }
 
-export function login(userId: number) {
-  return async (dispatch: (action: UserAction) => void): Promise<void> => {
-    const response = await fetch(`/api/login/`, {
-      method: "POST",
-      body: JSON.stringify({ userId }),
-    });
-    if (!response.ok) {
-      throw new Error(createErrorMessage(response));
-    }
+export async function login(userId: number) {
+  const response = await fetch(`/api/login/`, {
+    method: "POST",
+    body: JSON.stringify({ userId }),
+  });
+  if (!response.ok) {
+    throw new Error(createErrorMessage(response));
+  }
 
-    const respBody: DataResponse<{ user: Person; token: string }> =
-      await response.json();
+  const respBody: DataResponse<{ user: Person; token: string }> =
+    await response.json();
 
-    const { user } = respBody.data;
+  const { user } = respBody.data;
 
-    dispatch({
-      type: UserActionType.USER_LOGIN,
-      user,
-    });
-  };
+  return user;
 }
 
-export function createUserAndLogin(username: string) {
-  return async (dispatch: (action: UserAction) => void): Promise<void> => {
-    const response = await fetch(`/api/login/users/`, {
-      method: "POST",
-      body: JSON.stringify({ username }),
-    });
-    if (!response.ok) {
-      throw new Error(createErrorMessage(response));
-    }
+export async function createUserAndLogin(username: string) {
+  const response = await fetch(`/api/login/users/`, {
+    method: "POST",
+    body: JSON.stringify({ username }),
+  });
+  if (!response.ok) {
+    throw new Error(createErrorMessage(response));
+  }
 
-    const respBody: DataResponse<{ user: Person; token: string }> =
-      await response.json();
+  const respBody: DataResponse<{ user: Person; token: string }> =
+    await response.json();
 
-    const { user } = respBody.data;
+  const { user } = respBody.data;
 
-    dispatch({
-      type: UserActionType.USER_LOGIN,
-      user,
-    });
-  };
+  return user;
 }

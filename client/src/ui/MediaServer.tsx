@@ -1,9 +1,13 @@
 import * as React from "react";
 import AllPicturesGallery from "./AllPicturesGallery";
 import { Route, Navigate, Routes } from "react-router-dom";
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import { State } from "../reducers/rootReducer";
-import { PeopleMap } from "../actions/mediaFileActions";
+import {
+  fetchPicturesMetadata,
+  FilesActionTypes,
+  PeopleMap,
+} from "../actions/mediaFileActions";
 import { HashRouter } from "react-router-dom";
 import MediaserverTopBar from "./MediaserverTopBar";
 import CollectionsComponent from "./collections/CollectionsListingComponent";
@@ -14,13 +18,18 @@ import { MediaFile } from "../domain/MediaFile";
 import UploadProgressComponent from "./upload/UploadProgressComponent";
 import MediafilesMap from "./MediafilesMap";
 import { Win } from "../actions/windowActions";
-import { LoadingState } from "../actions/util";
 import { EditCustomCollectionScreen } from "./collections/EditCustomCollectionScreen";
 import AllPicturesModalScreen from "./modals/AllPicturesModalScreen";
 import PictureInCollectionModalScreen from "./modals/PictureInCollectionModalScreen";
 import CollectionViewScreen, {
   CollectionViewNavBarComponent,
 } from "./collections/CollectionViewScreen";
+import {
+  CollectionActions,
+  fetchCollections,
+} from "src/actions/collectionsActions";
+import { fetchAllPeople, PeopleActionTypes } from "src/actions/peopleActions";
+import { isError, useQuery } from "react-query";
 
 type MediaServerProps = {
   mediaFiles: MediaFile[];
@@ -28,8 +37,39 @@ type MediaServerProps = {
   peopleMap: PeopleMap;
   customCollections: CustomCollection[];
   window: Win;
-  loadingState: LoadingState;
 };
+
+function useFetchMediaserverData() {
+  const dispatch = useDispatch();
+
+  return useQuery("mediaserver-data", async () => {
+    const fns = [
+      () => fetchPicturesMetadata(),
+      () => fetchCollections(),
+      () => fetchAllPeople(),
+      // connectToWebsocket(),
+    ];
+
+    const datasets = await Promise.all(fns.map((fn) => fn()));
+
+    const [mediaFiles, customCollections, people] = datasets;
+
+    dispatch({
+      type: FilesActionTypes.MEDIA_FILES_FETCHED,
+      mediaFiles,
+    });
+    dispatch({
+      type: CollectionActions.COLLECTIONS_FETCHED,
+      customCollections,
+    });
+    dispatch({
+      type: PeopleActionTypes.PEOPLE_FETCHED,
+      people,
+    });
+
+    return { mediaFiles, customCollections, people };
+  });
+}
 
 const withNavBar = (component: JSX.Element, navBarChild?: React.ReactNode) => (
   <>
@@ -54,21 +94,17 @@ const styles = {
 };
 
 function MediaServer(props: MediaServerProps) {
-  const {
-    loadingState,
-    peopleMap,
-    customCollections,
-    mediaFiles,
-    mediaFilesMap,
-  } = props;
+  const { isLoading, isError } = useFetchMediaserverData();
 
-  if (loadingState === LoadingState.IN_PROGRESS) {
+  if (isLoading) {
     return <p>Loading...</p>;
   }
 
-  if (loadingState === LoadingState.FAILED) {
+  if (isError) {
     return <p>Error: failed to load</p>;
   }
+
+  const { peopleMap, customCollections, mediaFiles, mediaFilesMap } = props;
 
   return (
     <HashRouter>
@@ -142,57 +178,17 @@ function MediaServer(props: MediaServerProps) {
   );
 }
 
-function getCombinedLoadingState(
-  ...loadingStates: LoadingState[]
-): LoadingState {
-  if (
-    loadingStates.findIndex(
-      (loadingState) => loadingState === LoadingState.FAILED
-    ) !== -1
-  ) {
-    return LoadingState.FAILED;
-  }
-
-  if (
-    loadingStates.findIndex(
-      (loadingState) => loadingState === LoadingState.NOT_STARTED
-    ) !== -1
-  ) {
-    return LoadingState.NOT_STARTED;
-  }
-
-  if (
-    loadingStates.findIndex(
-      (loadingState) => loadingState === LoadingState.IN_PROGRESS
-    ) !== -1
-  ) {
-    return LoadingState.IN_PROGRESS;
-  }
-
-  return LoadingState.SUCCESS;
-}
-
 function mapStateToProps(state: State) {
-  const {
-    mediaFiles,
-    mediaFilesMap,
-    loadingState: mediaFilesLoadingState,
-  } = state.mediaFilesReducer;
-  const { customCollections, loadingState: collectionsLoadingState } =
-    state.collectionsReducer;
-  const { peopleMap, loadingState: peopleLoadingState } = state.peopleReducer;
+  const { mediaFiles, mediaFilesMap } = state.mediaFilesReducer;
+  const { customCollections } = state.collectionsReducer;
+  const { peopleMap } = state.peopleReducer;
 
   return {
-    mediaFiles,
-    mediaFilesMap,
     peopleMap,
     customCollections,
+    mediaFiles,
+    mediaFilesMap,
     window: state.windowReducer,
-    loadingState: getCombinedLoadingState(
-      mediaFilesLoadingState,
-      collectionsLoadingState,
-      peopleLoadingState
-    ),
   };
 }
 

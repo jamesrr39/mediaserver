@@ -2,17 +2,14 @@ import {
   CollectionActions,
   CollectionsAction,
 } from "../actions/collectionsActions";
-import { LoadingState } from "../actions/util";
 import { CustomCollection } from "../domain/Collection";
 
 export type CollectionReducerState = {
   customCollections: CustomCollection[];
-  loadingState: LoadingState;
 };
 
 const collectionInitialState = {
   customCollections: [],
-  loadingState: LoadingState.NOT_STARTED,
 };
 
 export function collectionsReducer(
@@ -20,21 +17,10 @@ export function collectionsReducer(
   action: CollectionsAction
 ) {
   switch (action.type) {
-    case CollectionActions.COLLECTION_FETCH_STARTED:
-      return {
-        ...state,
-        loadingState: LoadingState.IN_PROGRESS,
-      };
     case CollectionActions.COLLECTIONS_FETCHED:
       return {
         ...state,
         customCollections: action.customCollections,
-        loadingState: LoadingState.SUCCESS,
-      };
-    case CollectionActions.COLLECTION_FETCH_FAILED:
-      return {
-        ...state,
-        loadingState: LoadingState.FAILED,
       };
     case CollectionActions.COLLECTION_SAVED:
       const collectionsWithoutUpdated = state.customCollections.filter(
