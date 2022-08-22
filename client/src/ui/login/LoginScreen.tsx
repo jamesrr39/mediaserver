@@ -4,124 +4,121 @@ import {
   fetchUsers,
   login,
   createUserAndLogin,
+  UserActionType,
 } from "../../actions/userActions";
-import { connect } from "react-redux";
+import { useDispatch } from "react-redux";
+import { useMutation, useQuery } from "react-query";
 
-type Props = {
-  fetchUsers: () => Promise<Person[]>;
-  login: (userId: number) => Promise<void>;
-  createUserAndLogin: (username: string) => Promise<void>;
-};
+function useLoginWithExistingUser() {
+  const dispatch = useDispatch();
 
-type ComponentState = {
-  loaded: boolean;
-  people: Person[];
-  errorMessage?: string;
-};
+  return useMutation((u: Person) => {
+    const user = login(u.id);
 
-class LoginScreen extends React.Component<Props, ComponentState> {
-  state = {
-    loaded: false,
-    people: [] as Person[],
-    errorMessage: undefined,
-  };
-  componentDidMount() {
-    this.props
-      .fetchUsers()
-      .then((people) =>
-        this.setState((state) => ({ ...state, people, loaded: true }))
-      )
-      .catch((err) =>
-        this.setState((state) => ({
-          ...state,
-          errorMessage: err,
-          loaded: true,
-        }))
-      );
+    dispatch({
+      type: UserActionType.USER_LOGIN,
+      user,
+    });
+
+    return user;
+  });
+}
+
+function useCreateUserAndLogin() {
+  const dispatch = useDispatch();
+
+  return useMutation((username: string) => {
+    const user = createUserAndLogin(username);
+
+    dispatch({
+      type: UserActionType.USER_LOGIN,
+      user,
+    });
+
+    return user;
+  });
+}
+
+function LoginScreen() {
+  const { isLoading, error, data } = useQuery("login", () => fetchUsers());
+  const createUserAndLoginMutation = useCreateUserAndLogin();
+  const loginWithExistingUserMutation = useLoginWithExistingUser();
+
+  if (isLoading) {
+    return "Loading...";
   }
-  render() {
-    const { loaded, people, errorMessage } = this.state;
 
-    if (!loaded) {
-      return "Loading...";
-    }
+  if (error) {
+    return "Error loading users";
+  }
 
-    if (errorMessage) {
-      return "error: " + errorMessage;
-    }
+  if (loginWithExistingUserMutation.isLoading) {
+    return "Logging in...";
+  }
 
-    if (people.length === 0) {
-      return (
-        <div>
-          <p>No users found. Create one?</p>
-          <form>
-            <label>
-              Username:
-              <input type="text" name="username" />
-            </label>
-            <button
-              type="submit"
-              onClick={(event) => {
-                event.preventDefault();
-                const form = event.currentTarget.form;
-                if (!form) {
-                  throw new Error("couldn't find form");
-                }
-                const username = (
-                  form.elements.namedItem("username") as HTMLInputElement
-                ).value;
+  if (loginWithExistingUserMutation.error) {
+    return "Error logging in";
+  }
 
-                this.createUserAndLogin(username);
-              }}
-            >
-              Create user!
-            </button>
-          </form>
-        </div>
-      );
-    }
+  if (createUserAndLoginMutation.isLoading) {
+    return "Creating a new user and logging in...";
+  }
 
+  if (createUserAndLoginMutation.error) {
+    return "Error creating a new user and logging in";
+  }
+
+  const people = data;
+
+  if (people.length === 0) {
     return (
       <div>
-        <p>Select a user:</p>
+        <p>No users found. Create one?</p>
+        <form>
+          <label>
+            Username:
+            <input type="text" name="username" />
+          </label>
+          <button
+            type="submit"
+            onClick={(event) => {
+              event.preventDefault();
+              const form = event.currentTarget.form;
 
-        <ul style={{ listStyle: "none" }}>
-          {people.map((person, idx) => {
-            return (
-              <li key={idx}>
-                <button
-                  className="btn btn-primary"
-                  onClick={() => this.loginWithExistingUser(person)}
-                >
-                  {person.name}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+              const username = (
+                form.elements.namedItem("username") as HTMLInputElement
+              ).value;
+
+              createUserAndLoginMutation.mutate(username);
+            }}
+          >
+            Create user!
+          </button>
+        </form>
       </div>
     );
   }
 
-  private async loginWithExistingUser(user: Person) {
-    try {
-      await this.props.login(user.id);
-    } catch (err) {
-      this.setState((state) => ({ ...state, errorMessage: err, loaded: true }));
-    }
-  }
+  return (
+    <div>
+      <p>Select a user:</p>
 
-  private async createUserAndLogin(username: string) {
-    try {
-      await this.props.createUserAndLogin(username);
-    } catch (err) {
-      this.setState((state) => ({ ...state, errorMessage: err, loaded: true }));
-    }
-  }
+      <ul style={{ listStyle: "none" }}>
+        {people.map((person, idx) => {
+          return (
+            <li key={idx}>
+              <button
+                className="btn btn-primary"
+                onClick={() => loginWithExistingUserMutation.mutate(person)}
+              >
+                {person.name}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
 }
 
-export default connect(undefined, {
-  fetchUsers,
-  login,
-  createUserAndLogin,
-})(LoginScreen);
+export default LoginScreen;
