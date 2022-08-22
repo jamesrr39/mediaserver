@@ -44,28 +44,15 @@ function useFetchMediaserverData() {
 
   return useQuery("mediaserver-data", async () => {
     const fns = [
-      () => fetchPicturesMetadata(),
-      () => fetchCollections(),
-      () => fetchAllPeople(),
+      () => fetchPicturesMetadata()(dispatch),
+      () => fetchCollections()(dispatch),
+      () => fetchAllPeople()(dispatch),
       // connectToWebsocket(),
     ];
 
     const datasets = await Promise.all(fns.map((fn) => fn()));
 
     const [mediaFiles, customCollections, people] = datasets;
-
-    dispatch({
-      type: FilesActionTypes.MEDIA_FILES_FETCHED,
-      mediaFiles,
-    });
-    dispatch({
-      type: CollectionActions.COLLECTIONS_FETCHED,
-      customCollections,
-    });
-    dispatch({
-      type: PeopleActionTypes.PEOPLE_FETCHED,
-      people,
-    });
 
     return { mediaFiles, customCollections, people };
   });

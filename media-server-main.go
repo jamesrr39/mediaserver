@@ -156,9 +156,7 @@ func main() {
 		*maxConcurrentResizes,
 		hmacSigningSecret,
 	)
-	if nil != err {
-		log.Fatalf("couldn't create a new media server and scan the pictures directory. Error: %s", err)
-	}
+	errorsx.ExitIfErr(errorsx.Wrap(err))
 	defer mediaServer.Close()
 
 	logger.Info("attempting to start serving on address: '%s'\n", *addr)

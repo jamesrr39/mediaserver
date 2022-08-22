@@ -4,7 +4,6 @@ import {
   fetchUsers,
   login,
   createUserAndLogin,
-  UserActionType,
 } from "../../actions/userActions";
 import { useDispatch } from "react-redux";
 import { useMutation, useQuery } from "react-query";
@@ -12,13 +11,8 @@ import { useMutation, useQuery } from "react-query";
 function useLoginWithExistingUser() {
   const dispatch = useDispatch();
 
-  return useMutation((u: Person) => {
-    const user = login(u.id);
-
-    dispatch({
-      type: UserActionType.USER_LOGIN,
-      user,
-    });
+  return useMutation((userId: number) => {
+    const user = login(userId)(dispatch);
 
     return user;
   });
@@ -28,12 +22,7 @@ function useCreateUserAndLogin() {
   const dispatch = useDispatch();
 
   return useMutation((username: string) => {
-    const user = createUserAndLogin(username);
-
-    dispatch({
-      type: UserActionType.USER_LOGIN,
-      user,
-    });
+    const user = createUserAndLogin(username)(dispatch);
 
     return user;
   });
@@ -109,7 +98,7 @@ function LoginScreen() {
             <li key={idx}>
               <button
                 className="btn btn-primary"
-                onClick={() => loginWithExistingUserMutation.mutate(person)}
+                onClick={() => loginWithExistingUserMutation.mutate(person.id)}
               >
                 {person.name}
               </button>

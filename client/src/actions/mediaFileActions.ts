@@ -1,4 +1,4 @@
-import { Action } from "redux";
+import { Action, Dispatch } from "redux";
 import { MediaFile } from "../domain/MediaFile";
 import { MediaFileJSON, fromJSON } from "../domain/deserialise";
 import { FitTrack, Record } from "../domain/FitTrack";
@@ -68,17 +68,24 @@ export type FetchPicturesMetadataResponse = {
   mediaFiles: MediaFile[];
 };
 
-export async function fetchPicturesMetadata() {
-  const response = await fetch(`/api/files/`);
-  if (!response.ok) {
-    throw new Error(createErrorMessage(response));
-  }
+export function fetchPicturesMetadata() {
+  return async function (dispatch: Dispatch) {
+    const response = await fetch(`/api/files/`);
+    if (!response.ok) {
+      throw new Error(createErrorMessage(response));
+    }
 
-  const mediaFilesJSON: MediaFileJSON[] = await response.json();
+    const mediaFilesJSON: MediaFileJSON[] = await response.json();
 
-  const mediaFiles = mediaFilesJSON.map((json) => fromJSON(json));
+    const mediaFiles = mediaFilesJSON.map((json) => fromJSON(json));
 
-  return mediaFiles;
+    dispatch({
+      type: FilesActionTypes.MEDIA_FILES_FETCHED,
+      mediaFiles,
+    });
+
+    return mediaFiles;
+  };
 }
 
 async function fetchTrackRecords(state: State, hashes: string[]) {

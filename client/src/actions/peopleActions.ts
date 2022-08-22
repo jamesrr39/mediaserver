@@ -1,3 +1,4 @@
+import { Dispatch } from "redux";
 import { Person } from "../domain/People";
 import { State } from "../reducers/rootReducer";
 import { createErrorMessage, DataResponse } from "./util";
@@ -31,16 +32,24 @@ export type FetchAllPeopleResponse = {
   people: Person[];
 };
 
-export async function fetchAllPeople() {
-  const response = await fetch(`/api/graphql?query={people{id,name,isUser}}`);
-  if (!response.ok) {
-    throw new Error(createErrorMessage(response));
-  }
+export function fetchAllPeople() {
+  return async function (dispatch: Dispatch) {
+    const response = await fetch(`/api/graphql?query={people{id,name,isUser}}`);
+    if (!response.ok) {
+      throw new Error(createErrorMessage(response));
+    }
 
-  const peopleJSON: DataResponse<{ people: Person[] }> = await response.json();
-  const { people } = peopleJSON.data;
+    const peopleJSON: DataResponse<{ people: Person[] }> =
+      await response.json();
+    const { people } = peopleJSON.data;
 
-  return people;
+    dispatch({
+      type: PeopleActionTypes.PEOPLE_FETCHED,
+      people,
+    });
+
+    return people;
+  };
 }
 
 export function createPerson(name: string) {

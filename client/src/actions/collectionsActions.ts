@@ -1,6 +1,5 @@
-import { Action } from "redux";
+import { Action, Dispatch } from "redux";
 import { Collection, CustomCollection } from "../domain/Collection";
-import { Dispatch } from "react";
 import { createErrorMessage } from "./util";
 
 export enum CollectionActions {
@@ -30,24 +29,31 @@ export type FetchCollectionsResponse = {
   customCollections: CustomCollection[];
 };
 
-export async function fetchCollections() {
-  const response = await fetch(`/api/collections/`);
-  if (!response.ok) {
-    throw new Error(createErrorMessage(response));
-  }
+export function fetchCollections() {
+  return async function (dispatch: Dispatch) {
+    const response = await fetch(`/api/collections/`);
+    if (!response.ok) {
+      throw new Error(createErrorMessage(response));
+    }
 
-  const collectionsJSON: CustomCollectionJSON[] = await response.json();
+    const collectionsJSON: CustomCollectionJSON[] = await response.json();
 
-  const customCollections = collectionsJSON.map(
-    (collectionJSON) =>
-      new CustomCollection(
-        collectionJSON.id,
-        collectionJSON.name,
-        collectionJSON.fileHashes
-      )
-  );
+    const customCollections = collectionsJSON.map(
+      (collectionJSON) =>
+        new CustomCollection(
+          collectionJSON.id,
+          collectionJSON.name,
+          collectionJSON.fileHashes
+        )
+    );
 
-  return customCollections;
+    dispatch({
+      type: CollectionActions.COLLECTIONS_FETCHED,
+      customCollections,
+    });
+
+    return customCollections;
+  };
 }
 
 export function saveCollection(collection: CustomCollection) {

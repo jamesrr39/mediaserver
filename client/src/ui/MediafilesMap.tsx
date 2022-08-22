@@ -1,7 +1,7 @@
 import * as React from "react";
 
-import { State } from "../reducers/rootReducer";
-import { connect } from "react-redux";
+import createRootReducer, { State } from "../reducers/rootReducer";
+import { connect, useDispatch } from "react-redux";
 import { MediaFile } from "../domain/MediaFile";
 import { InnerMap } from "./gallery/InnerMap";
 import { FitTrack, Record } from "../domain/FitTrack";
@@ -14,13 +14,20 @@ import { DebouncedObservable } from "ts-util/dist/Observable";
 import { trackSummariesToTrackDatas } from "../actions/selectors";
 import { CancellablePromise, makeCancelable } from "ts-util/dist/Promises";
 import { DateFilter } from "src/domain/filter/DateFilter";
+import { useQuery } from "react-query";
+
+function useFetchRecordsForTracks(tracks: FitTrack[]) {
+  const dispatch = useDispatch();
+  const state = React.useReducer(createRootReducer);
+
+  return useQuery("tracks-records", () =>
+    fetchRecordsForTracks(tracks)(dispatch, () => state)
+  );
+}
 
 type Props = {
   mediaFiles: MediaFile[];
   mediaFileUrlBase: string;
-  fetchRecordsForTracks: (
-    trackSummary: FitTrack[]
-  ) => Promise<Map<string, Record[]>>;
 };
 
 type ComponentState = {
@@ -58,6 +65,8 @@ class MediafilesMap extends React.Component<Props, ComponentState> {
   }
 
   render() {
+    fetchRecordsForTracks;
+
     const { filter, tracks, loaded } = this.state;
 
     if (!loaded) {
@@ -131,6 +140,4 @@ function mapStateToProps(state: State) {
   };
 }
 
-export default connect(mapStateToProps, {
-  fetchRecordsForTracks,
-})(MediafilesMap);
+export default connect(mapStateToProps)(MediafilesMap);

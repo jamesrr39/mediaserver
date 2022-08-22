@@ -1,3 +1,4 @@
+import { Dispatch } from "redux";
 import { Person } from "../domain/People";
 import { createErrorMessage, DataResponse } from "./util";
 
@@ -24,36 +25,50 @@ export async function fetchUsers() {
   return respBody.data.people;
 }
 
-export async function login(userId: number) {
-  const response = await fetch(`/api/login/`, {
-    method: "POST",
-    body: JSON.stringify({ userId }),
-  });
-  if (!response.ok) {
-    throw new Error(createErrorMessage(response));
-  }
+export function login(userId: number) {
+  return async function (dispatch: Dispatch) {
+    const response = await fetch(`/api/login/`, {
+      method: "POST",
+      body: JSON.stringify({ userId }),
+    });
+    if (!response.ok) {
+      throw new Error(createErrorMessage(response));
+    }
 
-  const respBody: DataResponse<{ user: Person; token: string }> =
-    await response.json();
+    const respBody: DataResponse<{ user: Person; token: string }> =
+      await response.json();
 
-  const { user } = respBody.data;
+    const { user } = respBody.data;
 
-  return user;
+    dispatch({
+      type: UserActionType.USER_LOGIN,
+      user,
+    });
+
+    return user;
+  };
 }
 
-export async function createUserAndLogin(username: string) {
-  const response = await fetch(`/api/login/users/`, {
-    method: "POST",
-    body: JSON.stringify({ username }),
-  });
-  if (!response.ok) {
-    throw new Error(createErrorMessage(response));
-  }
+export function createUserAndLogin(username: string) {
+  return async function (dispatch: Dispatch) {
+    const response = await fetch(`/api/login/users/`, {
+      method: "POST",
+      body: JSON.stringify({ username }),
+    });
+    if (!response.ok) {
+      throw new Error(createErrorMessage(response));
+    }
 
-  const respBody: DataResponse<{ user: Person; token: string }> =
-    await response.json();
+    const respBody: DataResponse<{ user: Person; token: string }> =
+      await response.json();
 
-  const { user } = respBody.data;
+    const { user } = respBody.data;
 
-  return user;
+    dispatch({
+      type: UserActionType.USER_LOGIN,
+      user,
+    });
+
+    return user;
+  };
 }
