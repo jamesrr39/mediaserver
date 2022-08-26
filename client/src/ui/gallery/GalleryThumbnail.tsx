@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useReducer, useState } from "react";
+import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { PeopleMap } from "src/actions/mediaFileActions";
 import { MediaFile } from "src/domain/MediaFile";
 import { Size } from "src/domain/Size";
+import { peopleInitialState, peopleReducer } from "src/reducers/peopleReducer";
+import { State } from "src/reducers/rootReducer";
 import { Observable } from "ts-util/dist/Observable";
 import Thumbnail from "../Thumbnail";
 
@@ -24,40 +27,37 @@ type Props = {
   size: Size;
 
   peopleMap: PeopleMap;
-  // scrollObservable: Observable<void>;
-  // resizeObservable: Observable<void>;
   onClickThumbnail?: (mediaFile: MediaFile) => void;
   buildLink?: BuildLinkFunc;
   onSelectThumbnail?: (
     mediaFile: MediaFile,
     eventInfo: SelectThumbnailEventInfo
   ) => void;
-  isThumbnailVisible(el: HTMLElement): void;
+  isThumbnailVisible(el: HTMLElement): boolean;
 };
 
 function GalleryThumbnail(props: Props) {
   const [checked, setChecked] = useState(false);
+  const peopleMap = useSelector(
+    (state: State) => state.peopleReducer.peopleMap
+  );
 
-  const { mediaFile, size } = props;
   const {
+    mediaFile,
+    size,
     buildLink,
     onClickThumbnail,
     onSelectThumbnail,
     isThumbnailVisible,
-    // scrollObservable,
-    // resizeObservable,
-    peopleMap,
   } = props;
 
-  const thumbnailProps = {
-    size,
-    mediaFile,
-    isThumbnailVisible,
-    // scrollObservable,
-    // resizeObservable,
-  };
-
-  let thumbnail = <Thumbnail {...thumbnailProps} />;
+  let thumbnail = (
+    <Thumbnail
+      size={size}
+      mediaFile={mediaFile}
+      isThumbnailVisible={isThumbnailVisible}
+    />
+  );
 
   if (buildLink) {
     thumbnail = <Link to={buildLink(mediaFile)}>{thumbnail}</Link>;

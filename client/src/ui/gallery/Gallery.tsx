@@ -3,7 +3,7 @@ import { createCompareTimeTakenFunc } from "../../domain/PictureMetadata";
 
 import { TrackMapData } from "../MapComponent";
 import { MediaFile } from "../../domain/MediaFile";
-import GalleryRow, { filesToRows, Row } from "./GalleryRow";
+import { filesToRows } from "./GalleryRow";
 import {
   mediaFilesToDateGroups,
   groupsMapToGroups,
@@ -11,97 +11,56 @@ import {
 import { InnerMap } from "./InnerMap";
 import { PeopleMap } from "../../actions/mediaFileActions";
 import GalleryThumbnails, { ROWS_IN_INCREMENT } from "./GalleryThumbnails";
-import { connect } from "react-redux";
-import { State } from "src/reducers/rootReducer";
-import { GalleryFilter } from "src/domain/Filter";
-import { Observable } from "ts-util/dist/Observable";
+import GalleryFilter from "src/domain/filter/GalleryFilter";
+import { ScrollResizeContext, WindowContext } from "src/context/WindowContext";
+import { Row } from "./GalleryUtil";
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
-export type InnerGalleryProps = {
+export type GalleryProps = {
   showMap: boolean;
   tracks: TrackMapData[];
   filter: GalleryFilter;
-  scrollObservable: Observable<void>;
-  resizeObservable: Observable<void>;
   onClickThumbnail?: (mediaFile: MediaFile) => void;
   mediaFiles: MediaFile[];
   mediaFileUrlBase?: string;
   peopleMap: PeopleMap;
-  rowWidth: number;
   isThumbnailVisible(el: HTMLElement): void;
 };
 
-type InnerGalleryState = {
-  lastIndexShown: number;
+type ComponentState = {
   rows: Row[];
+  setRows: (rows: Row[]) => void;
+  lastIndexShown: number;
+  setLastIndexShown: (lastIndex: number) => void;
 };
 
-class Gallery extends React.Component<InnerGalleryProps, InnerGalleryState> {
-  state = {
-    lastIndexShown: 0,
-    rows: [],
+function useScrollOrResize(mediaFiles: MediaFile[], state: ComponentState) {
+  const { rows, setRows, lastIndexShown, setLastIndexShown } = state;
+
+  const scrollResizeContext = React.useContext(ScrollResizeContext);
+  const windowContext = React.useContext(WindowContext);
+  const rowWidth = windowContext.innerWidth;
+
+  const setRowsState = () => {
+    const groupsMap = mediaFilesToDateGroups(mediaFiles);
+    const groups = groupsMapToGroups(groupsMap);
+    const newRows = filesToRows(rowWidth, groups);
+
+    if (newRows.length !== rows.length) {
+      setRows(newRows);
+    }
   };
 
-  componentDidMount() {
-    const { scrollObservable, resizeObservable } = this.props;
+  const onScrollOrResize = () => {
+    console.log("onScrollOrResize");
 
-    [scrollObservable, resizeObservable].forEach((observable) => {
-      observable.triggerEvent();
-      observable.addListener(this.onScroll);
-      observable.addListener(this.onResize);
-    });
-  }
-
-  componentWillUnmount() {
-    const { scrollObservable, resizeObservable } = this.props;
-
-    [scrollObservable, resizeObservable].forEach((observable) => {
-      observable.removeListener(this.onScroll);
-      observable.removeListener(this.onResize);
-    });
-  }
-
-  componentDidUpdate() {
-    this.props.scrollObservable.triggerEvent();
-    this.props.resizeObservable.triggerEvent();
-  }
-
-  render() {
-    return (
-      <>
-        {this.props.showMap && this.renderMap()}
-        <div>
-          <GalleryThumbnails
-            rows={this.state.rows}
-            lastIndexShown={this.state.lastIndexShown}
-            {...this.props}
-          />
-        </div>
-      </>
-    );
-  }
-
-  private renderMap = () => {
-    const { tracks, mediaFileUrlBase, mediaFiles } = this.props;
-
-    const props = {
-      tracks,
-      mediaFileUrlBase,
-      mediaFiles,
-    };
-
-    return <InnerMap {...props} />;
-  };
-
-  private onScroll = () => {
-    const { lastIndexShown } = this.state;
-    if (lastIndexShown >= this.props.mediaFiles.length) {
+    if (lastIndexShown >= mediaFiles.length) {
       // we are already showing everything
       return;
     }
 
-    this.setRowsState();
+    setRowsState();
 
     const scrolledTo = window.scrollY;
     const bodyHeight = document.documentElement.scrollHeight;
@@ -109,43 +68,65 @@ class Gallery extends React.Component<InnerGalleryProps, InnerGalleryState> {
 
     const distanceFromBottom = bodyHeight - (scrolledTo + viewportHeight);
     if (distanceFromBottom < viewportHeight) {
-      this.setState((state) => ({
-        ...state,
-        lastIndexShown: state.lastIndexShown + ROWS_IN_INCREMENT,
-      }));
+      setLastIndexShown(lastIndexShown + ROWS_IN_INCREMENT);
     }
   };
 
-  private onResize = () => {
-    this.setRowsState();
-  };
+  React.useEffect(() => {
+    scrollResizeContext.addListener(onScrollOrResize);
 
-  private setRowsState() {
-    const { mediaFiles, rowWidth } = this.props;
+    return () => scrollResizeContext.removeListener(onScrollOrResize);
+  }, []);
 
-    const groupsMap = mediaFilesToDateGroups(mediaFiles);
-    const groups = groupsMapToGroups(groupsMap);
-    const rows = filesToRows(rowWidth, groups);
-
-    if (rows.length !== this.state.rows.length) {
-      this.setState((state) => ({
-        ...state,
-        rows,
-      }));
-    }
-  }
+  React.useEffect(
+    () => {
+      scrollResizeContext.triggerEvent();
+      console.log("triggered");
+    },
+    []
+    // [{ lastIndexShown, rows }]
+  );
 }
 
-export default connect((state: State) => {
+function Gallery(props: GalleryProps) {
   const {
-    innerWidth: rowWidth,
-    scrollObservable,
-    resizeObservable,
-  } = state.windowReducer;
+    tracks,
+    mediaFileUrlBase,
+    mediaFiles,
+    showMap,
+    filter,
+    peopleMap,
+    isThumbnailVisible,
+  } = props;
+  const [lastIndexShown, setLastIndexShown] = React.useState(0);
+  const [rows, setRows] = React.useState([] as Row[]);
+  useScrollOrResize(mediaFiles, {
+    rows,
+    setRows,
+    lastIndexShown,
+    setLastIndexShown,
+  });
 
-  return {
-    rowWidth,
-    scrollObservable,
-    resizeObservable,
-  };
-})(Gallery);
+  return (
+    <>
+      {showMap && (
+        <InnerMap
+          tracks={tracks}
+          mediaFiles={mediaFiles}
+          mediaFileUrlBase={mediaFileUrlBase}
+        />
+      )}
+      <div>
+        <GalleryThumbnails
+          rows={rows}
+          lastIndexShown={lastIndexShown}
+          filter={filter}
+          peopleMap={peopleMap}
+          isThumbnailVisible={isThumbnailVisible}
+        />
+      </div>
+    </>
+  );
+}
+
+export default Gallery;

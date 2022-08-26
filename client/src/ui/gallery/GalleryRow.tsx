@@ -13,15 +13,15 @@ import GalleryThumbnail, {
 import { connect } from "react-redux";
 import { getScreenWidth } from "src/util/screen_size";
 import { State } from "src/reducers/rootReducer";
-
-export type Row = {
-  groups: GroupWithSizes[];
-  fitsInOneLine: boolean;
-};
-
-export const GALLERY_GROUP_LEFT_MARGIN_PX = 50;
-
-export const GALLERY_FILE_LEFT_MARGIN_PX = 10;
+import { WindowContext } from "src/context/WindowContext";
+import {
+  GALLERY_FILE_LEFT_MARGIN_PX,
+  GALLERY_GROUP_LEFT_MARGIN_PX,
+  GroupWithSizes,
+  MediaFileWithSize,
+  Row,
+} from "./GalleryUtil";
+import ThumbnailGroup from "./ThumbnailGroup";
 
 const styles = {
   row: {
@@ -31,29 +31,15 @@ const styles = {
   },
 };
 
-type MediaFileWithSize = {
-  mediaFile: MediaFile;
-  size: Size;
-};
-
-interface GroupWithSizes {
-  name: string;
-  mediaFiles: MediaFileWithSize[];
-  value: number; // higher = sorted first
-}
-
 type Props = {
   row: Row;
   peopleMap: PeopleMap;
-  // scrollObservable: Observable<void>;
-  // resizeObservable: Observable<void>;
   onClickThumbnail?: (mediaFile: MediaFile) => void;
   buildLink?: BuildLinkFunc;
   onSelectThumbnail?: (
     mediaFile: MediaFile,
     eventInfo: SelectThumbnailEventInfo
   ) => void;
-  rowWidth: number;
   isThumbnailVisible(el: HTMLElement): void;
 };
 
@@ -73,98 +59,18 @@ class GalleryRow extends React.Component<Props> {
           return (
             <div key={index} style={style}>
               <h4>{group.name}</h4>
-              <div>{this.renderGroup(group)}</div>
+              <div>
+                <ThumbnailGroup group={group} row={row} />
+              </div>
             </div>
           );
         })}
       </div>
     );
   }
-
-  private renderGroup(group: GroupWithSizes) {
-    const { rowWidth, row } = this.props;
-
-    if (row.fitsInOneLine) {
-      return group.mediaFiles.map((mediaFileWithSize, index) => {
-        const { mediaFile, size } = mediaFileWithSize;
-
-        const leftPx = index === 0 ? 0 : GALLERY_FILE_LEFT_MARGIN_PX;
-        const style = {
-          marginLeft: `${leftPx}px`,
-        };
-
-        return (
-          <div key={index} style={style}>
-            <GalleryThumbnail
-              mediaFile={mediaFile}
-              size={size}
-              {...this.props}
-            />
-          </div>
-        );
-      });
-    }
-
-    let distanceThroughContainer = 0;
-    const rows: MediaFileWithSize[][] = [];
-    let currentRow: MediaFileWithSize[] = [];
-
-    group.mediaFiles.forEach((mediaFileWithSize, index) => {
-      const { size } = mediaFileWithSize;
-
-      if (distanceThroughContainer + size.width > rowWidth) {
-        rows.push(currentRow);
-        currentRow = [mediaFileWithSize];
-        distanceThroughContainer = size.width;
-      } else {
-        const leftPx = index === 0 ? 0 : GALLERY_FILE_LEFT_MARGIN_PX;
-        distanceThroughContainer += size.width + leftPx;
-        currentRow.push(mediaFileWithSize);
-      }
-    });
-
-    if (currentRow.length !== 0) {
-      rows.push(currentRow);
-    }
-
-    return rows.map((row, index) => {
-      const rowThumbnails = row.map((mediaFileWithSize, index) => {
-        const { mediaFile, size } = mediaFileWithSize;
-
-        const leftPx = index === 0 ? 0 : GALLERY_FILE_LEFT_MARGIN_PX;
-
-        const style = {
-          marginLeft: `${leftPx}px`,
-        };
-
-        return (
-          <div key={index} style={style}>
-            <GalleryThumbnail
-              mediaFile={mediaFile}
-              size={size}
-              {...this.props}
-            />
-          </div>
-        );
-      });
-
-      const style = {
-        display: "flex",
-        marginTop: index === 0 ? 0 : "10px",
-      };
-
-      return (
-        <div key={index} style={style}>
-          {rowThumbnails}
-        </div>
-      );
-    });
-  }
 }
 
-export default connect((state: State) => {
-  return { rowWidth: state.windowReducer.innerWidth };
-})(GalleryRow);
+export default GalleryRow;
 
 export function filesToRows(
   rowSizePx: number,

@@ -15,7 +15,7 @@ type FilterObject = {
   };
 };
 
-export class GalleryFilter {
+export default class GalleryFilter {
   constructor(public readonly dateFilter: DateFilter) {}
 
   public filter = (mediaFile: MediaFile): boolean => {

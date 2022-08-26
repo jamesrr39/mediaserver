@@ -7,18 +7,26 @@ import { Provider } from "react-redux";
 import configureStore from "./configureStore";
 import App from "./ui/App";
 import { QueryClient, QueryClientProvider } from "react-query";
-import { DebouncedObservable } from "ts-util/src/Observable";
-import { listenToWindowActions } from "./actions/windowActions";
+import { DebouncedObservable, Observable } from "ts-util/src/Observable";
+import { ScrollResizeContext, WindowContext } from "./context/WindowContext";
 
-const scrollObservable = new DebouncedObservable<void>(150);
-const resizeObservable = new DebouncedObservable<void>(150);
-const store = configureStore(window, scrollObservable, resizeObservable);
+// TODO use configureStore from redux toolkit
+const store = configureStore();
 const queryClient = new QueryClient();
+
+// setup scroll/resize observable
+const scrollResizeObservable = new DebouncedObservable<void>(150);
+window.addEventListener("scroll", () => scrollResizeObservable.triggerEvent());
+window.addEventListener("resize", () => scrollResizeObservable.triggerEvent());
 
 const app = (
   <Provider store={store}>
     <QueryClientProvider client={queryClient}>
-      <App />
+      <ScrollResizeContext.Provider value={scrollResizeObservable}>
+        <WindowContext.Provider value={window}>
+          <App />
+        </WindowContext.Provider>
+      </ScrollResizeContext.Provider>
     </QueryClientProvider>
   </Provider>
 );

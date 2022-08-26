@@ -1,9 +1,5 @@
 import * as React from "react";
-import { State } from "../../reducers/rootReducer";
-import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import { Action, Dispatch } from "redux";
-import { compose } from "redux";
 import FileInfoComponent from "./FileInfoComponent";
 import { isNarrowScreen } from "../../util/screen_size";
 import { MediaFile } from "../../domain/MediaFile";
@@ -23,14 +19,6 @@ const KeyCodes = {
 enum Subview {
   INFO = "info",
 }
-
-type Props = {
-  hash: string;
-  mediaFiles: MediaFile[];
-  dispatch: Dispatch<Action>;
-  baseUrl: string; // for example, /gallery
-  subview?: Subview;
-};
 
 const styles = {
   narrowScreenPictureInfoContainer: {
@@ -78,6 +66,13 @@ const navButtonTextStyle = {
   textAlign: "center" as "center",
   top: "50%",
   position: "absolute" as "absolute",
+};
+
+type Props = {
+  hash: string;
+  mediaFiles: MediaFile[];
+  baseUrl: string; // for example, /gallery
+  subview?: Subview;
 };
 
 type ComponentState = {
@@ -305,10 +300,4 @@ class MediaFileModal extends React.Component<Props, ComponentState> {
   }
 }
 
-function mapStateToProps(state: State) {
-  return {
-    windowSize: state.windowReducer,
-  };
-}
-
-export default compose(connect(mapStateToProps))(MediaFileModal);
+export default MediaFileModal;

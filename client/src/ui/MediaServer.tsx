@@ -17,7 +17,6 @@ import UploadComponent from "./upload/UploadComponent";
 import { MediaFile } from "../domain/MediaFile";
 import UploadProgressComponent from "./upload/UploadProgressComponent";
 import MediafilesMap from "./MediafilesMap";
-import { Win } from "../actions/windowActions";
 import { EditCustomCollectionScreen } from "./collections/EditCustomCollectionScreen";
 import AllPicturesModalScreen from "./modals/AllPicturesModalScreen";
 import PictureInCollectionModalScreen from "./modals/PictureInCollectionModalScreen";
@@ -36,7 +35,6 @@ type MediaServerProps = {
   mediaFilesMap: Map<string, MediaFile>;
   peopleMap: PeopleMap;
   customCollections: CustomCollection[];
-  window: Win;
 };
 
 function useFetchMediaserverData() {
@@ -175,7 +173,6 @@ function mapStateToProps(state: State) {
     customCollections,
     mediaFiles,
     mediaFilesMap,
-    window: state.windowReducer,
   };
 }
 

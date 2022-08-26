@@ -11,6 +11,7 @@ import TrackThumbnail from "./thumbnails/TrackThumbnail";
 import { Size } from "../domain/Size";
 import { connect } from "react-redux";
 import { State } from "src/reducers/rootReducer";
+import { ScrollResizeContext } from "src/context/WindowContext";
 
 const WIDE_SCREEN_THUMBNAIL_HEIGHT = 200;
 const NARROW_SCREEN_THUMBNAIL_HEIGHT = 100;
@@ -95,96 +96,81 @@ const generateThumbnailStyle = (mediaFile: MediaFile, isLoaded: boolean) => {
 
 export type ThumbnailProps = {
   mediaFile: MediaFile;
-  scrollObservable: Observable<void>;
-  resizeObservable: Observable<void>;
   size: Size;
-  isThumbnailVisible(el: HTMLElement): void;
+  isThumbnailVisible(el: HTMLElement): boolean;
 };
 
-type ThumbnailState = {
-  isQueued: boolean;
-};
+function Thumbnail(props: ThumbnailProps) {
+  const { mediaFile, size } = props;
 
-class Thumbnail extends React.Component<ThumbnailProps, ThumbnailState> {
-  state = {
-    isQueued: false,
+  const [isQueued, setIsQueued] = React.useState(false);
+
+  const element = React.useRef();
+
+  const scrollResizeContext = React.useContext(ScrollResizeContext);
+
+  const isThumbnailVisible = (el) => {
+    return true;
   };
 
-  private element: null | HTMLElement = null;
-
-  componentDidMount() {
-    this.props.scrollObservable.addListener(this.onScroll);
-    this.props.resizeObservable.addListener(this.onScroll);
-  }
-
-  componentWillUnmount() {
-    this.props.scrollObservable.removeListener(this.onScroll);
-    this.props.resizeObservable.removeListener(this.onScroll);
-  }
-
-  render() {
-    const { mediaFile, size } = this.props;
-
-    if (!this.state.isQueued) {
-      const thumbnailStyle = generateThumbnailStyle(
-        mediaFile,
-        this.state.isQueued
-      );
-
-      return <div style={thumbnailStyle} ref={(el) => (this.element = el)} />;
+  const onScroll = () => {
+    console.log("setIsQueued 0");
+    if (!element) {
+      return;
     }
+    console.log("setIsQueued 1");
 
-    switch (mediaFile.fileType) {
-      case MediaFileType.Picture: {
-        const props = {
-          pictureMetadata: mediaFile,
-          size,
-        };
-        return <PictureThumbnail {...props} />;
-      }
-      case MediaFileType.Video: {
-        const props = {
-          videoMetadata: mediaFile,
-          size,
-        };
-        return <VideoThumbnail {...props} />;
-      }
-      case MediaFileType.FitTrack: {
-        const props = {
-          trackSummary: mediaFile,
-          size,
-        };
-        return <TrackThumbnail {...props} />;
-      }
-      default:
-        return <div>(Unknown Item)</div>;
-    }
-  }
-
-  private onScroll = () => {
-    if (!this.isInViewport()) {
+    if (!isThumbnailVisible(element.current)) {
       return;
     }
 
-    this.setState({
-      isQueued: true,
-    });
+    console.log("setIsQueued 2");
+
+    setIsQueued(true);
   };
 
-  private isInViewport() {
-    if (!this.element) {
-      return false;
-    }
+  React.useEffect(() => {
+    scrollResizeContext.addListener(onScroll);
 
-    return this.props.isThumbnailVisible(this.element);
+    // function returned is called on unmount
+    return () => {
+      console.log("unmount...");
+      scrollResizeContext.removeListener(onScroll);
+    };
+  }, []);
+
+  console.log("rendering Thumbnail. isQueued?", isQueued);
+  if (!isQueued) {
+    const thumbnailStyle = generateThumbnailStyle(mediaFile, isQueued);
+
+    return <div style={thumbnailStyle} ref={element} />;
+  }
+
+  switch (mediaFile.fileType) {
+    case MediaFileType.Picture: {
+      const props = {
+        pictureMetadata: mediaFile,
+        size,
+      };
+      return <PictureThumbnail {...props} />;
+    }
+    case MediaFileType.Video: {
+      const props = {
+        videoMetadata: mediaFile,
+        size,
+      };
+      return <VideoThumbnail {...props} />;
+    }
+    case MediaFileType.FitTrack: {
+      const props = {
+        trackSummary: mediaFile,
+        size,
+      };
+      return <TrackThumbnail {...props} />;
+    }
+    default:
+      return <div>(Unknown Item)</div>;
   }
 }
 
-export default connect((state: State) => {
-  const { resizeObservable, scrollObservable } = state.windowReducer;
-
-  return {
-    scrollObservable,
-    resizeObservable,
-  };
-})(Thumbnail);
+export default Thumbnail;

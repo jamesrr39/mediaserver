@@ -2,19 +2,16 @@ import { useState } from "react";
 import { Observable } from "ts-util/src/Observable";
 import { PeopleMap } from "src/actions/mediaFileActions";
 import { MediaFile } from "src/domain/MediaFile";
-import GalleryRow, { Row } from "./GalleryRow";
+import GalleryRow from "./GalleryRow";
 import { BuildLinkFunc, SelectThumbnailEventInfo } from "./GalleryThumbnail";
-import FullScreenModal from "../FullScreenModal";
 import AddFilesToCollectionModal from "./AddFilesToCollectionModal";
-import { GalleryFilter } from "src/domain/Filter";
+import GalleryFilter from "src/domain/filter/GalleryFilter";
+import { Row } from "./GalleryUtil";
 
 type Props = {
   rows: Row[];
   lastIndexShown: number;
   filter: GalleryFilter;
-  // filterJson: string;
-  // scrollObservable: Observable<void>;
-  // resizeObservable: Observable<void>;
   onClickThumbnail?: (mediaFile: MediaFile) => void;
   mediaFileUrlBase?: string;
   peopleMap: PeopleMap;
@@ -34,10 +31,7 @@ function GalleryThumbnails(props: Props) {
     filter,
     onClickThumbnail,
     mediaFileUrlBase,
-    // filterJson,
     isThumbnailVisible,
-    // scrollObservable,
-    // resizeObservable,
     peopleMap,
   } = props;
 
@@ -62,8 +56,6 @@ function GalleryThumbnails(props: Props) {
       buildLink,
       isThumbnailVisible,
       peopleMap,
-      // scrollObservable,
-      // resizeObservable,
       onSelectThumbnail: (
         mediaFile: MediaFile,
         eventInfo: SelectThumbnailEventInfo

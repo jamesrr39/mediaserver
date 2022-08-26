@@ -1,5 +1,5 @@
 import { DateFilter } from "../filter/DateFilter";
-import { GalleryFilter } from "../filter/GalleryFilter";
+import GalleryFilter from "../filter/GalleryFilter";
 import { PictureMetadata } from "../PictureMetadata";
 
 test("filter", () => {

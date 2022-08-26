@@ -9,8 +9,8 @@ export const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
 function getMarkers(mediaFiles: MediaFile[], mediaFileUrlBase?: string) {
   const markers: MapMarker[] = [];
-  mediaFiles.forEach((metadata) => {
-    const location = metadata.getLocation();
+  mediaFiles.forEach((mediaFile) => {
+    const location = mediaFile.getLocation();
     if (!location) {
       return;
     }
@@ -20,17 +20,17 @@ function getMarkers(mediaFiles: MediaFile[], mediaFileUrlBase?: string) {
     };
 
     if (mediaFileUrlBase) {
-      switch (metadata.fileType) {
+      switch (mediaFile.fileType) {
         case MediaFileType.Picture:
-          const linkUrl = `#${mediaFileUrlBase}/${metadata.hashValue}`;
+          const linkUrl = `#${mediaFileUrlBase}/${mediaFile.hashValue}`;
 
           marker.popupData = {
-            name: metadata.getName(),
+            name: mediaFile.getName(),
             imagePreviewUrl: `file/picture/${encodeURIComponent(
-              metadata.hashValue
+              mediaFile.hashValue
             )}`,
             linkUrl,
-            pictureRawSize: metadata.rawSize,
+            pictureRawSize: mediaFile.rawSize,
           };
           break;
         default:
@@ -67,20 +67,18 @@ export function InnerMap(props: Props) {
     return null;
   }
 
-  const mapProps = {
-    size: {
-      width: "100%",
-      height: "100%",
-    },
-    markers,
-    tracks,
-    extraLatLongMapPadding: 0.001,
-    zoomControl: true,
-  };
-
   return (
     <div style={styles.mapContainer}>
-      <MapComponent {...mapProps} />
+      <MapComponent
+        size={{
+          width: "100%",
+          height: "400px", // TODO variable sized height
+        }}
+        markers={markers}
+        tracks={tracks}
+        extraLatLongMapPadding={0.001}
+        zoomControl={true}
+      />
     </div>
   );
 }

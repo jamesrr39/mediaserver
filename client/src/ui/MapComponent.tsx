@@ -8,9 +8,6 @@ import { ActivityBounds, FitTrack } from "../domain/FitTrack";
 import markerIcon from "../../node_modules/leaflet/dist/images/marker-icon.png";
 import markerShadow from "../../node_modules/leaflet/dist/images/marker-shadow.png";
 import { deepEqual } from "../util/equal";
-import { connect } from "react-redux";
-import { State } from "../reducers/rootReducer";
-import { WindowSize } from "../actions/windowActions";
 import { joinUrlFragments } from "src/domain/util";
 
 const StartIcon = Leaflet.Icon.extend({
@@ -138,7 +135,6 @@ type Props = {
   tracks?: TrackMapData[];
   extraLatLongMapPadding?: number;
   zoomControl: boolean;
-  windowSize: WindowSize;
   onClickPoint?: (latLng: Leaflet.LatLng) => void;
 };
 
@@ -172,6 +168,8 @@ class MapComponent extends React.Component<Props> {
     if (!element) {
       return;
     }
+
+    console.log("renderMap", element);
 
     const { extraLatLongMapPadding, zoomControl } = this.props;
 
@@ -370,10 +368,4 @@ export function newDivIcon() {
   return icon;
 }
 
-export default connect((state: State) => {
-  const { innerHeight, innerWidth } = state.windowReducer;
-
-  return {
-    windowSize: { innerHeight, innerWidth },
-  };
-})(MapComponent);
+export default MapComponent;

@@ -2,79 +2,62 @@ import * as React from "react";
 import { FitTrack, Record } from "../../domain/FitTrack";
 import MapComponent from "../MapComponent";
 import { fetchRecordsForTracks } from "../../actions/mediaFileActions";
-import { connect } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
 import { Size } from "../../domain/Size";
+import { useQuery } from "react-query";
+import { State } from "src/reducers/rootReducer";
 
 type Props = {
   size: Size;
   trackSummary: FitTrack;
-  fetchRecordsForTracks: (
-    trackSummaries: FitTrack[]
-  ) => Promise<Map<string, Record[]>>;
 };
 
-type ComponentState = {
-  trackRecords: Record[];
-};
+function TrackThumbnail(props: Props) {
+  const { trackSummary, size } = props;
+  const { width, height } = size;
 
-class TrackThumbnail extends React.Component<Props, ComponentState> {
-  state = {
-    trackRecords: [] as Record[],
+  const dispatch = useDispatch();
+  const state = useSelector((state: State) => state);
+
+  const { data, isLoading, error } = useQuery(
+    `track-records-${trackSummary.hashValue}`,
+    () => fetchRecordsForTracks([trackSummary])(dispatch, () => state)
+  );
+  if (error) {
+    return <div>error loading track records</div>;
+  }
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  const trackRecords = data.get(trackSummary.hashValue);
+
+  const sizeStyle = {
+    width: width + "px",
+    height: height + "px",
   };
 
-  componentDidMount() {
-    this.fetchRecords();
-  }
+  const tracks = [
+    {
+      trackSummary,
+      points: trackRecords.map((record) => {
+        const { posLat, posLong } = record;
 
-  render() {
-    const { width, height } = this.props.size;
-    const { trackSummary } = this.props;
-    const { trackRecords } = this.state;
+        return {
+          lat: posLat,
+          lon: posLong,
+        };
+      }),
+      activityBounds: trackSummary.activityBounds,
+    },
+  ];
 
-    const props = {
-      size: {
-        width: width + "px",
-        height: height + "px",
-      },
-      tracks: [
-        {
-          trackSummary,
-          points: trackRecords.map((record) => {
-            const { posLat, posLong } = record;
-
-            return {
-              lat: posLat,
-              lon: posLong,
-            };
-          }),
-          activityBounds: trackSummary.activityBounds,
-        },
-      ],
-      zoomControl: false,
-    };
-    return (
-      <div>
-        <MapComponent {...props} />
-      </div>
-    );
-  }
-
-  private async fetchRecords() {
-    const tracksDetails = await this.props.fetchRecordsForTracks([
-      this.props.trackSummary,
-    ]);
-    const records = tracksDetails.get(this.props.trackSummary.hashValue);
-    if (!records) {
-      throw new Error(
-        `couldn't get records for ${this.props.trackSummary.hashValue}`
-      );
-    }
-
-    this.setState((state) => ({
-      ...state,
-      trackRecords: records,
-    }));
-  }
+  return (
+    <div>
+      <MapComponent size={sizeStyle} tracks={tracks} zoomControl={false} />
+    </div>
+  );
 }
 
-export default connect(undefined, { fetchRecordsForTracks })(TrackThumbnail);
+export default TrackThumbnail;

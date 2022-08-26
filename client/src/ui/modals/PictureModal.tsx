@@ -4,7 +4,6 @@ import { THUMBNAIL_HEIGHTS } from "../../generated/thumbnail_sizes";
 import { INFO_CONTAINER_WIDTH } from "./FileInfoComponent";
 import { connect } from "react-redux";
 import { State } from "../../reducers/rootReducer";
-import { WindowState } from "../../reducers/windowReducer";
 
 const styles = {
   container: {
@@ -21,7 +20,6 @@ const styles = {
 type Props = {
   pictureMetadata: PictureMetadata;
   showInfo: boolean;
-  windowSize: WindowState;
 };
 
 class PictureModal extends React.Component<Props> {
@@ -93,8 +91,4 @@ class PictureModal extends React.Component<Props> {
   };
 }
 
-export default connect((state: State) => {
-  return {
-    windowSize: state.windowReducer,
-  };
-})(PictureModal);
+export default PictureModal;

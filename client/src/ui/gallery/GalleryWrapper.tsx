@@ -1,32 +1,16 @@
 import * as React from "react";
 import { createCompareTimeTakenFunc } from "../../domain/PictureMetadata";
 
-import { Observable } from "ts-util/dist/Observable";
+import { Observable } from "ts-util/src/Observable";
 import { TrackMapData } from "../MapComponent";
 import { MediaFile } from "../../domain/MediaFile";
 import { MediaFileType } from "../../domain/MediaFileType";
 import { FitTrack, Record } from "../../domain/FitTrack";
-import { GalleryFilter } from "../../domain/filter/GalleryFilter";
+import GalleryFilter from "../../domain/filter/GalleryFilter";
 import Gallery from "./Gallery";
-import { CancellablePromise } from "ts-util/dist/Promises";
-import { connect } from "react-redux";
-import {
-  fetchRecordsForTracks,
-  PeopleMap,
-} from "../../actions/mediaFileActions";
+import { CancellablePromise } from "ts-util/src/Promises";
+import { PeopleMap } from "../../actions/mediaFileActions";
 import { DateFilter } from "src/domain/filter/DateFilter";
-
-export type GalleryProps = {
-  mediaFiles: MediaFile[];
-  mediaFileUrlBase?: string; // example: `/gallery/detail`. If undefined, no link should be added.
-  onClickThumbnail?: (pictureMetadata: MediaFile) => void;
-  showMap?: boolean;
-  peopleMap: PeopleMap;
-  fetchRecordsForTracks: (
-    trackSummary: FitTrack[]
-  ) => Promise<Map<string, Record[]>>;
-  isThumbnailVisible(el: HTMLElement): void;
-};
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
@@ -36,12 +20,18 @@ type GalleryState = {
   galleryFilter: GalleryFilter;
 };
 
-type InnerGalleryWrapperProps = {
+type GalleryWrapperProps = {
   onFilterChangeObservable: Observable<GalleryFilter>;
-} & GalleryProps;
+  mediaFiles: MediaFile[];
+  mediaFileUrlBase?: string; // example: `/gallery/detail`. If undefined, no link should be added.
+  onClickThumbnail?: (pictureMetadata: MediaFile) => void;
+  showMap?: boolean;
+  peopleMap: PeopleMap;
+  isThumbnailVisible(el: HTMLElement): void;
+};
 
-class InnerGalleryWrapper extends React.Component<
-  InnerGalleryWrapperProps,
+class GalleryWrapper extends React.Component<
+  GalleryWrapperProps,
   GalleryState
 > {
   state = {
@@ -112,6 +102,4 @@ class InnerGalleryWrapper extends React.Component<
   };
 }
 
-export default connect(undefined, { fetchRecordsForTracks })(
-  InnerGalleryWrapper
-);
+export default GalleryWrapper;

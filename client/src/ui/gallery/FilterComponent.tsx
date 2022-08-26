@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { DateFilter } from "src/domain/filter/DateFilter";
-import { GalleryFilter } from "../../domain/filter/GalleryFilter";
+import GalleryFilter from "../../domain/filter/GalleryFilter";
 import DateFilterComponent from "../filter/DateFilterComponent";
 import DateFilterSummaryComponent from "../filter/DateFilterSummaryComponent";
 

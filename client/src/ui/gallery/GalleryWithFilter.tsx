@@ -1,17 +1,15 @@
 import * as React from "react";
 import { createCompareTimeTakenFunc } from "../../domain/PictureMetadata";
 
-import { DebouncedObservable } from "ts-util/dist/Observable";
 import { MediaFile } from "../../domain/MediaFile";
 import FilterComponent from "./FilterComponent";
-import { GalleryFilter } from "../../domain/filter/GalleryFilter";
+import GalleryFilter from "../../domain/filter/GalleryFilter";
 import { getScreenHeight } from "../../util/screen_size";
-import InnerGalleryWrapper from "./GalleryWrapper";
+import GalleryWrapper from "./GalleryWrapper";
 import { PeopleMap } from "../../actions/mediaFileActions";
-import { connect } from "react-redux";
-import { State } from "src/reducers/rootReducer";
-import { Observable } from "ts-util/src/Observable";
+import { Observable, DebouncedObservable } from "ts-util/src/Observable";
 import { DateFilter } from "src/domain/filter/DateFilter";
+import { ScrollResizeContext } from "src/context/WindowContext";
 
 const styles = {
   title: {
@@ -26,8 +24,6 @@ export type GalleryProps = {
   onClickThumbnail?: (pictureMetadata: MediaFile) => void;
   showMap?: boolean;
   title?: string;
-  scrollObservable: Observable<void>;
-  resizeObservable: Observable<void>;
 };
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
@@ -59,97 +55,95 @@ function getDateRange(mediaFiles: MediaFile[]): DateRange {
   return { start, end };
 }
 
-class GalleryWithFilter extends React.Component<GalleryProps> {
-  state = {
-    elementPosTopOffset: 0,
-  };
+function GalleryWithFilter(props: GalleryProps) {
+  const onFilterChangeObservable = new DebouncedObservable<GalleryFilter>(50);
 
-  private onFilterChangeObservable = new DebouncedObservable<GalleryFilter>(50);
+  const galleryContainerEl = React.useRef();
 
-  private galleryContainerEl: HTMLElement | null = null;
+  const {
+    title,
+    mediaFiles,
+    mediaFileUrlBase,
+    onClickThumbnail,
+    showMap,
+    peopleMap,
+  } = props;
+  const [elementPosTopOffset, setElementPosTopOffset] = React.useState(0);
 
-  render() {
-    const { title } = this.props;
+  const scrollResizeObservable = React.useContext(ScrollResizeContext);
 
-    const dateRange = getDateRange(this.props.mediaFiles);
-
-    const filterComponentProps = {
-      initialFilter: new GalleryFilter(
-        new DateFilter({ includeFilesWithoutDates: true })
-      ),
-      initialStartDateValue: dateRange.start,
-      initialEndDateValue: dateRange.end,
-      onFilterChange: (filter: GalleryFilter) => {
-        this.onFilterChangeObservable.triggerEvent(filter);
-      },
-    };
-
-    const isThumbnailVisible = (thumbnailEl: HTMLElement) => {
-      if (!this.galleryContainerEl) {
-        return false;
-      }
-
-      const thumbnailRect = thumbnailEl.getBoundingClientRect();
-
-      if (thumbnailRect.top < window.innerHeight && thumbnailRect.bottom > 0) {
-        return true;
-      }
-
-      return false;
-    };
-
-    const innerGalleryProps = {
-      ...this.props,
-      onFilterChangeObservable: this.onFilterChangeObservable,
-      isThumbnailVisible,
-    };
-
-    const wrapperStyles = {
-      height: getScreenHeight() - this.state.elementPosTopOffset,
-      overflowY: "scroll" as "scroll",
-    };
-
-    return (
-      <>
-        <FilterComponent {...filterComponentProps} />
-        {title && <h1 style={styles.title}>{title}</h1>}
-        <div
-          style={wrapperStyles}
-          ref={(el) => {
-            this.setGalleryHeight(el);
-            this.galleryContainerEl = el;
-          }}
-        >
-          <InnerGalleryWrapper {...innerGalleryProps} />
-        </div>
-      </>
-    );
-  }
-
-  private setGalleryHeight(el: HTMLElement | null) {
+  const setGalleryHeight = (
+    el: HTMLElement | null,
+    scrollResizeObservable: Observable<void>
+  ) => {
+    console.log("setGH", el);
     if (!el) {
       return;
     }
 
-    el.addEventListener("scroll", () =>
-      this.props.scrollObservable.triggerEvent()
-    );
-    el.addEventListener("resize", () =>
-      this.props.resizeObservable.triggerEvent()
-    );
+    el.addEventListener("scroll", () => scrollResizeObservable.triggerEvent());
+    el.addEventListener("resize", () => scrollResizeObservable.triggerEvent());
 
-    const elementPosTopOffset = el.getBoundingClientRect().top;
+    const newElementPosTopOffset = el.getBoundingClientRect().top;
 
-    if (elementPosTopOffset === this.state.elementPosTopOffset) {
+    if (elementPosTopOffset === newElementPosTopOffset) {
       return;
     }
 
-    this.setState((state) => ({ ...state, elementPosTopOffset }));
-  }
+    setElementPosTopOffset(newElementPosTopOffset);
+  };
+
+  setGalleryHeight(galleryContainerEl.current, scrollResizeObservable);
+
+  const dateRange = getDateRange(mediaFiles);
+
+  const filterComponentProps = {
+    initialFilter: new GalleryFilter(
+      new DateFilter({ includeFilesWithoutDates: true })
+    ),
+    initialStartDateValue: dateRange.start,
+    initialEndDateValue: dateRange.end,
+    onFilterChange: (filter: GalleryFilter) =>
+      onFilterChangeObservable.triggerEvent(filter),
+  };
+
+  const isThumbnailVisible = (thumbnailEl: HTMLElement) => {
+    console.log("isTV");
+    if (!galleryContainerEl.current) {
+      return false;
+    }
+
+    const thumbnailRect = thumbnailEl.getBoundingClientRect();
+
+    if (thumbnailRect.top < window.innerHeight && thumbnailRect.bottom > 0) {
+      return true;
+    }
+
+    return false;
+  };
+
+  const wrapperStyles = {
+    height: getScreenHeight() - elementPosTopOffset,
+    overflowY: "scroll" as "scroll",
+  };
+
+  return (
+    <>
+      <FilterComponent {...filterComponentProps} />
+      {title && <h1 style={styles.title}>{title}</h1>}
+      <div style={wrapperStyles} ref={galleryContainerEl}>
+        <GalleryWrapper
+          onFilterChangeObservable={onFilterChangeObservable}
+          mediaFiles={mediaFiles}
+          mediaFileUrlBase={mediaFileUrlBase}
+          onClickThumbnail={onClickThumbnail}
+          showMap={showMap}
+          peopleMap={peopleMap}
+          isThumbnailVisible={isThumbnailVisible}
+        />
+      </div>
+    </>
+  );
 }
 
-export default connect((state: State) => {
-  const { resizeObservable, scrollObservable } = state.windowReducer;
-
-  return { resizeObservable, scrollObservable };
-})(GalleryWithFilter);
+export default GalleryWithFilter;

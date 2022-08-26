@@ -157,6 +157,7 @@ export function fetchRecordsForTracks(trackSummaries: FitTrack[]) {
 
         trackSummaryIdsMap.set(hash, promise);
       });
+      // TODO: re-instate TRACK_RECORDS_FETCH_QUEUED_ACTION so we can avoid getting the same track records when fetching many tracks concurrently
       // dispatch queue action here
       // dispatch({
       //   type: FilesActionTypes.TRACK_RECORDS_FETCH_QUEUED_ACTION,

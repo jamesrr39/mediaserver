@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import createRootReducer, { State } from "../reducers/rootReducer";
-import { connect, useDispatch } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
 import { MediaFile } from "../domain/MediaFile";
 import { InnerMap } from "./gallery/InnerMap";
 import { FitTrack, Record } from "../domain/FitTrack";
@@ -9,19 +9,19 @@ import { TrackMapData } from "./MapComponent";
 import { MediaFileType } from "../domain/MediaFileType";
 import { fetchRecordsForTracks } from "../actions/mediaFileActions";
 import FilterComponent from "./gallery/FilterComponent";
-import { GalleryFilter } from "../domain/filter/GalleryFilter";
-import { DebouncedObservable } from "ts-util/dist/Observable";
-import { trackSummariesToTrackDatas } from "../actions/selectors";
-import { CancellablePromise, makeCancelable } from "ts-util/dist/Promises";
-import { DateFilter } from "src/domain/filter/DateFilter";
+import GalleryFilter from "../domain/filter/GalleryFilter";
 import { useQuery } from "react-query";
+import { DateFilter } from "src/domain/filter/DateFilter";
 
-function useFetchRecordsForTracks(tracks: FitTrack[]) {
+function useFetchRecordsForTracks(trackSummaries: FitTrack[]) {
   const dispatch = useDispatch();
-  const state = React.useReducer(createRootReducer);
+  const state = useSelector((state: State) => state);
 
-  return useQuery("tracks-records", () =>
-    fetchRecordsForTracks(tracks)(dispatch, () => state)
+  return useQuery(
+    `track-records-${trackSummaries
+      .map((summary) => summary.hashValue)
+      .join("-")}`,
+    () => fetchRecordsForTracks(trackSummaries)(dispatch, () => state)
   );
 }
 
@@ -30,107 +30,116 @@ type Props = {
   mediaFileUrlBase: string;
 };
 
-type ComponentState = {
-  tracks: TrackMapData[];
-  loaded: boolean;
-};
+function MediafilesMap(props: Props) {
+  const { mediaFiles, mediaFileUrlBase } = props;
+  const trackSummaries = mediaFiles
+    .filter((mediaFile) => mediaFile.fileType === MediaFileType.FitTrack)
+    .map((summary) => summary as FitTrack);
+  const [filter, setFilter] = React.useState<GalleryFilter>(
+    new GalleryFilter(
+      new DateFilter({
+        includeFilesWithoutDates: true,
+      })
+    )
+  );
 
-class MediafilesMap extends React.Component<Props, ComponentState> {
-  state = {
-    tracks: [] as TrackMapData[],
-    filter: new GalleryFilter(
-      new DateFilter({ includeFilesWithoutDates: true })
-    ),
-    loaded: false,
-  };
+  const { data, isLoading, error } = useFetchRecordsForTracks(trackSummaries);
 
-  private onFilterChangeObservable = new DebouncedObservable<GalleryFilter>(50);
-
-  private fetchRecordsPromise?: CancellablePromise<Map<string, Record[]>>;
-
-  componentDidMount() {
-    this.onFilterChangeObservable.addListener((filter) => {
-      this.setState((state) => ({
-        ...state,
-        filter,
-      }));
-    });
-    this.fetchRecords();
+  if (error) {
+    return <p>Error loading tracks</p>;
   }
 
-  componentWillUnmount() {
-    if (this.fetchRecordsPromise) {
-      this.fetchRecordsPromise.cancel();
-    }
+  if (isLoading) {
+    return <p>loading...</p>;
   }
 
-  render() {
-    fetchRecordsForTracks;
+  const filteredTrackMapData: TrackMapData[] = [];
 
-    const { filter, tracks, loaded } = this.state;
-
-    if (!loaded) {
-      return <p>loading...</p>;
-    }
-
-    const filteredTracks = tracks.filter((track) => {
-      return filter.filter(track.trackSummary);
-    });
-
-    return this.renderMap(filteredTracks);
-  }
-
-  renderMap(tracks: TrackMapData[]) {
-    const { mediaFiles, mediaFileUrlBase } = this.props;
-
-    const filterProps = {
-      initialFilter: this.state.filter,
-      onFilterChange: (filter: GalleryFilter) => {
-        this.onFilterChangeObservable.triggerEvent(filter);
-      },
-    };
-
-    const mapProps = {
-      tracks,
-      mediaFileUrlBase,
-      mediaFiles,
-    };
-
-    return (
-      <>
-        <FilterComponent {...filterProps} />
-        <InnerMap {...mapProps} />
-      </>
-    );
-  }
-
-  private async fetchRecords() {
-    const trackSummaries: FitTrack[] = [];
-    this.props.mediaFiles.forEach((file) => {
-      if (file.fileType === MediaFileType.FitTrack) {
-        trackSummaries.push(file);
+  trackSummaries
+    .filter((trackSummary) => {
+      return filter.filter(trackSummary);
+    })
+    .forEach((trackSummary) => {
+      const { activityBounds } = trackSummary;
+      const records = data.get(trackSummary.hashValue);
+      if (!records) {
+        throw new Error(`no data found for track ${trackSummary.hashValue}`);
       }
+
+      const points = records.map((record) => ({
+        lat: record.posLat,
+        lon: record.posLong,
+      }));
+
+      filteredTrackMapData.push({
+        trackSummary,
+        activityBounds,
+        points,
+      });
     });
 
-    this.fetchRecordsPromise = makeCancelable(
-      this.props.fetchRecordsForTracks(trackSummaries)
-    );
-
-    const tracksDetails = await this.fetchRecordsPromise.promise;
-    console.log("mediaFileUrlBase", this.props.mediaFileUrlBase);
-    const trackDatas = trackSummariesToTrackDatas(
-      trackSummaries,
-      tracksDetails,
-      this.props.mediaFileUrlBase
-    );
-
-    this.setState((state) => ({
-      ...state,
-      tracks: state.tracks.concat(trackDatas),
-      loaded: true,
-    }));
-  }
+  return (
+    <>
+      <FilterComponent initialFilter={filter} onFilterChange={setFilter} />
+      <InnerMap
+        tracks={filteredTrackMapData}
+        mediaFiles={mediaFiles}
+        mediaFileUrlBase={mediaFileUrlBase}
+      />
+    </>
+  );
 }
+
+// renderMap(tracks: TrackMapData[]) {
+//   const { mediaFiles, mediaFileUrlBase } = this.props;
+
+//   const filterProps = {
+//     initialFilter: this.state.filter,
+//     onFilterChange: (filter: GalleryFilter) => {
+//       this.onFilterChangeObservable.triggerEvent(filter);
+//     },
+//   };
+
+//   const mapProps = {
+//     tracks,
+//     mediaFileUrlBase,
+//     mediaFiles,
+//   };
+
+//   return (
+//     <>
+//       <FilterComponent {...filterProps} />
+//       <InnerMap {...mapProps} />
+//     </>
+//   );
+// }
+
+// private async fetchRecords() {
+//   const trackSummaries: FitTrack[] = [];
+//   this.props.mediaFiles.forEach((file) => {
+//     if (file.fileType === MediaFileType.FitTrack) {
+//       trackSummaries.push(file);
+//     }
+//   });
+
+//   this.fetchRecordsPromise = makeCancelable(
+//     fetchRecordsForTracks(trackSummaries)
+//   );
+
+//   const tracksDetails = await this.fetchRecordsPromise.promise;
+//   console.log("mediaFileUrlBase", this.props.mediaFileUrlBase);
+//   const trackDatas = trackSummariesToTrackDatas(
+//     trackSummaries,
+//     tracksDetails,
+//     this.props.mediaFileUrlBase
+//   );
+
+//   this.setState((state) => ({
+//     ...state,
+//     tracks: state.tracks.concat(trackDatas),
+//     loaded: true,
+//   }));
+// }
 
 function mapStateToProps(state: State) {
   const { mediaFiles } = state.mediaFilesReducer;

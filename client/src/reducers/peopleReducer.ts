@@ -7,7 +7,7 @@ export type PeopleState = {
   peopleMap: PeopleMap;
 };
 
-const peopleInitialState = {
+export const peopleInitialState = {
   people: [],
   peopleMap: new Map<number, Person>(),
 };
