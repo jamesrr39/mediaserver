@@ -14,7 +14,7 @@ type Props = {
 };
 
 function OneLineThumbnailGroup(props: Props) {
-  const { row, group } = props;
+  const { group } = props;
 
   const rowsJSX = group.mediaFiles.map((mediaFileWithSize, index) => {
     const { mediaFile, size } = mediaFileWithSize;
