@@ -75,7 +75,7 @@ class GalleryWrapper extends React.Component<
       onClickThumbnail,
       mediaFileUrlBase,
     } = this.props;
-    const { showMap, tracks, galleryFilter } = this.state;
+    const { showMap, galleryFilter } = this.state;
     const mediaFiles = this.props.mediaFiles.filter(galleryFilter.filter);
 
     mediaFiles.sort(gallerySortingFunc);
@@ -83,7 +83,6 @@ class GalleryWrapper extends React.Component<
     return (
       <Gallery
         showMap={showMap}
-        tracks={tracks}
         filter={galleryFilter}
         onClickThumbnail={onClickThumbnail}
         mediaFiles={mediaFiles}

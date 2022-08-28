@@ -4,6 +4,8 @@ import { createCompareTimeTakenFunc } from "../../domain/PictureMetadata";
 import MapComponent, { MapMarker, TrackMapData } from "../MapComponent";
 import { MediaFile } from "../../domain/MediaFile";
 import { MediaFileType } from "../../domain/MediaFileType";
+import { useTrackMapData } from "src/hooks/trackRecordHooks";
+import { FitTrack } from "src/domain/FitTrack";
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
@@ -44,7 +46,6 @@ function getMarkers(mediaFiles: MediaFile[], mediaFileUrlBase?: string) {
 }
 
 type Props = {
-  tracks: TrackMapData[];
   mediaFileUrlBase?: string;
   mediaFiles: MediaFile[];
 };
@@ -59,9 +60,27 @@ const styles = {
 };
 
 export function InnerMap(props: Props) {
-  const { mediaFiles, tracks, mediaFileUrlBase } = props;
+  const { mediaFiles, mediaFileUrlBase } = props;
 
   const markers = getMarkers(mediaFiles, mediaFileUrlBase);
+
+  const {
+    data: tracks,
+    isLoading,
+    error,
+  } = useTrackMapData(
+    mediaFiles
+      .filter((file) => file.fileType === MediaFileType.FitTrack)
+      .map((file) => file as FitTrack)
+  );
+
+  if (error) {
+    return <div className="alert alert-danger">error loading track data</div>;
+  }
+
+  if (isLoading) {
+    return <div className="alert alert-info">Loading...</div>;
+  }
 
   if (markers.length === 0 && tracks.length === 0) {
     return null;

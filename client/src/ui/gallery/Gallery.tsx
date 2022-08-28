@@ -17,9 +17,8 @@ import { Row } from "./GalleryUtil";
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
-export type GalleryProps = {
+export type Props = {
   showMap: boolean;
-  tracks: TrackMapData[];
   filter: GalleryFilter;
   onClickThumbnail?: (mediaFile: MediaFile) => void;
   mediaFiles: MediaFile[];
@@ -52,7 +51,7 @@ function useScrollOrResize(mediaFiles: MediaFile[], state: ComponentState) {
     }
   };
 
-  const onScrollOrResize = () => {
+  const calculateAndSetLastIndexAndRowsState = () => {
     console.log("onScrollOrResize");
 
     if (lastIndexShown >= mediaFiles.length) {
@@ -73,24 +72,18 @@ function useScrollOrResize(mediaFiles: MediaFile[], state: ComponentState) {
   };
 
   React.useEffect(() => {
-    scrollResizeContext.addListener(onScrollOrResize);
+    scrollResizeContext.addListener(calculateAndSetLastIndexAndRowsState);
 
-    return () => scrollResizeContext.removeListener(onScrollOrResize);
+    // call manually after the first time render
+    calculateAndSetLastIndexAndRowsState();
+
+    return () =>
+      scrollResizeContext.removeListener(calculateAndSetLastIndexAndRowsState);
   }, []);
-
-  React.useEffect(
-    () => {
-      scrollResizeContext.triggerEvent();
-      console.log("triggered");
-    },
-    []
-    // [{ lastIndexShown, rows }]
-  );
 }
 
-function Gallery(props: GalleryProps) {
+function Gallery(props: Props) {
   const {
-    tracks,
     mediaFileUrlBase,
     mediaFiles,
     showMap,
@@ -110,11 +103,7 @@ function Gallery(props: GalleryProps) {
   return (
     <>
       {showMap && (
-        <InnerMap
-          tracks={tracks}
-          mediaFiles={mediaFiles}
-          mediaFileUrlBase={mediaFileUrlBase}
-        />
+        <InnerMap mediaFiles={mediaFiles} mediaFileUrlBase={mediaFileUrlBase} />
       )}
       <div>
         <GalleryThumbnails
@@ -123,6 +112,7 @@ function Gallery(props: GalleryProps) {
           filter={filter}
           peopleMap={peopleMap}
           isThumbnailVisible={isThumbnailVisible}
+          mediaFileUrlBase={mediaFileUrlBase}
         />
       </div>
     </>

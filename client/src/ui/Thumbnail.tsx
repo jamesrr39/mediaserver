@@ -110,11 +110,12 @@ function Thumbnail(props: ThumbnailProps) {
   const scrollResizeContext = React.useContext(ScrollResizeContext);
 
   const isThumbnailVisible = (el) => {
+    console.log("TODO: better calculation");
     return true;
   };
 
   const onScroll = () => {
-    console.log("setIsQueued 0");
+    console.log("Thumbnail::setIsQueued 0");
     if (!element) {
       return;
     }
@@ -130,6 +131,7 @@ function Thumbnail(props: ThumbnailProps) {
   };
 
   React.useEffect(() => {
+    console.log("adding onscroll listener to thumbnail");
     scrollResizeContext.addListener(onScroll);
 
     // function returned is called on unmount

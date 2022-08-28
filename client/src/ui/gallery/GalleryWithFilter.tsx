@@ -56,7 +56,10 @@ function getDateRange(mediaFiles: MediaFile[]): DateRange {
 }
 
 function GalleryWithFilter(props: GalleryProps) {
-  const onFilterChangeObservable = new DebouncedObservable<GalleryFilter>(50);
+  const onFilterChangeObservable = React.useMemo(
+    () => new DebouncedObservable<GalleryFilter>(50),
+    []
+  );
 
   const galleryContainerEl = React.useRef();
 
@@ -82,7 +85,10 @@ function GalleryWithFilter(props: GalleryProps) {
     }
 
     el.addEventListener("scroll", () => scrollResizeObservable.triggerEvent());
-    el.addEventListener("resize", () => scrollResizeObservable.triggerEvent());
+    el.addEventListener("resize", () => {
+      console.log("GWF trigger");
+      scrollResizeObservable.triggerEvent();
+    });
 
     const newElementPosTopOffset = el.getBoundingClientRect().top;
 

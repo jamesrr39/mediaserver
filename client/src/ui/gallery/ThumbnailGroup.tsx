@@ -32,7 +32,7 @@ function ThumbnailGroup(props: Props) {
       );
     });
 
-    return <>{rowsJSX}</>;
+    return <div style={{ display: "flex" }}>{rowsJSX}</div>;
   }
 
   let distanceThroughContainer = 0;

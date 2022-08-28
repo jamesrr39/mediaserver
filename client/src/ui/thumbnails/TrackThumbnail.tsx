@@ -1,8 +1,7 @@
-import * as React from "react";
-import { FitTrack, Record } from "../../domain/FitTrack";
+import { FitTrack } from "../../domain/FitTrack";
 import MapComponent from "../MapComponent";
 import { fetchRecordsForTracks } from "../../actions/mediaFileActions";
-import { connect, useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Size } from "../../domain/Size";
 import { useQuery } from "react-query";
 import { State } from "src/reducers/rootReducer";

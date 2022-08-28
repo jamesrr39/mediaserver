@@ -88,7 +88,7 @@ export function fetchPicturesMetadata() {
   };
 }
 
-async function fetchTrackRecords(state: State, hashes: string[]) {
+export async function fetchTrackRecords(state: State, hashes: string[]) {
   const response = await fetch(`/api/graphql`, {
     method: "POST",
     headers: {
