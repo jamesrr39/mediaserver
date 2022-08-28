@@ -13,26 +13,32 @@ type Props = {
   group: GroupWithSizes;
 };
 
+function OneLineThumbnailGroup(props: Props) {
+  const { row, group } = props;
+
+  const rowsJSX = group.mediaFiles.map((mediaFileWithSize, index) => {
+    const { mediaFile, size } = mediaFileWithSize;
+
+    const leftPx = index === 0 ? 0 : GALLERY_FILE_LEFT_MARGIN_PX;
+    const style = {
+      marginLeft: `${leftPx}px`,
+    };
+
+    return (
+      <div key={index} style={style}>
+        <GalleryThumbnail mediaFile={mediaFile} size={size} {...this.props} />
+      </div>
+    );
+  });
+
+  return <div style={{ display: "flex" }}>{rowsJSX}</div>;
+}
+
 function ThumbnailGroup(props: Props) {
   const { row, group } = props;
 
   if (row.fitsInOneLine) {
-    const rowsJSX = group.mediaFiles.map((mediaFileWithSize, index) => {
-      const { mediaFile, size } = mediaFileWithSize;
-
-      const leftPx = index === 0 ? 0 : GALLERY_FILE_LEFT_MARGIN_PX;
-      const style = {
-        marginLeft: `${leftPx}px`,
-      };
-
-      return (
-        <div key={index} style={style}>
-          <GalleryThumbnail mediaFile={mediaFile} size={size} {...this.props} />
-        </div>
-      );
-    });
-
-    return <div style={{ display: "flex" }}>{rowsJSX}</div>;
+    return <OneLineThumbnailGroup row={row} group={group} />;
   }
 
   let distanceThroughContainer = 0;

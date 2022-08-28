@@ -43,31 +43,29 @@ type Props = {
   isThumbnailVisible(el: HTMLElement): void;
 };
 
-class GalleryRow extends React.Component<Props> {
-  render() {
-    const { row } = this.props;
+function GalleryRow(props: Props) {
+  const { row } = props;
 
-    const { groups } = row;
+  const { groups } = row;
 
-    return (
-      <div style={styles.row}>
-        {groups.map((group, index) => {
-          const style: React.CSSProperties = {};
-          if (index !== 0) {
-            style.marginLeft = `${GALLERY_GROUP_LEFT_MARGIN_PX}px`;
-          }
-          return (
-            <div key={index} style={style}>
-              <h4>{group.name}</h4>
-              <div>
-                <ThumbnailGroup group={group} row={row} />
-              </div>
+  return (
+    <div style={styles.row}>
+      {groups.map((group, index) => {
+        const style: React.CSSProperties = {};
+        if (index !== 0) {
+          style.marginLeft = `${GALLERY_GROUP_LEFT_MARGIN_PX}px`;
+        }
+        return (
+          <div key={index} style={style}>
+            <h4>{group.name}</h4>
+            <div>
+              <ThumbnailGroup group={group} row={row} />
             </div>
-          );
-        })}
-      </div>
-    );
-  }
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export default GalleryRow;
