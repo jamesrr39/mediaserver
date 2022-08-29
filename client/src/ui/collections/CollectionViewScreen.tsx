@@ -45,7 +45,6 @@ function CollectionViewScreen(props: Props) {
   return (
     <CollectionViewComponent
       collection={collection}
-      peopleMap={props.peopleMap}
       routeUrl={`/collections/${encodedType}/${encodedIdentifier}`}
     />
   );
@@ -74,7 +73,7 @@ export const CollectionViewNavBarComponent = (
     return null;
   }
 
-  const editUrl = `collections/${encodeURIComponent(
+  const editUrl = `/collections/${encodeURIComponent(
     collection.type
   )}/${encodeURIComponent(collection.identifier())}/edit`;
 

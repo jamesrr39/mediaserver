@@ -8,7 +8,7 @@ import {
 import { useDispatch } from "react-redux";
 import { useMutation, useQuery } from "react-query";
 
-function useLoginWithExistingUser() {
+function useLoginWithExistingUserMutation() {
   const dispatch = useDispatch();
 
   return useMutation((userId: number) => {
@@ -18,7 +18,7 @@ function useLoginWithExistingUser() {
   });
 }
 
-function useCreateUserAndLogin() {
+function useCreateUserAndLoginMutation() {
   const dispatch = useDispatch();
 
   return useMutation((username: string) => {
@@ -29,32 +29,40 @@ function useCreateUserAndLogin() {
 }
 
 function LoginScreen() {
-  const { isLoading, error, data } = useQuery("login", () => fetchUsers());
-  const createUserAndLoginMutation = useCreateUserAndLogin();
-  const loginWithExistingUserMutation = useLoginWithExistingUser();
+  const { isLoading, error, data } = useQuery("users", () => fetchUsers());
+  const createUserAndLoginMutation = useCreateUserAndLoginMutation();
+  const loginWithExistingUserMutation = useLoginWithExistingUserMutation();
 
   if (isLoading) {
-    return "Loading...";
+    return <div className="alert alert-info">Loading...</div>;
   }
 
   if (error) {
-    return "Error loading users";
+    return <div className="alert alert-danger">"Error loading users"</div>;
   }
 
   if (loginWithExistingUserMutation.isLoading) {
-    return "Logging in...";
+    return <div className="alert alert-info">Logging in...</div>;
   }
 
   if (loginWithExistingUserMutation.error) {
-    return "Error logging in";
+    return <div className="alert alert-danger">"Error logging in</div>;
   }
 
   if (createUserAndLoginMutation.isLoading) {
-    return "Creating a new user and logging in...";
+    return (
+      <div className="alert alert-info">
+        Creating a new user and logging in...
+      </div>
+    );
   }
 
   if (createUserAndLoginMutation.error) {
-    return "Error creating a new user and logging in";
+    return (
+      <div className="alert alert-danger">
+        Error creating a new user and logging in
+      </div>
+    );
   }
 
   const people = data;

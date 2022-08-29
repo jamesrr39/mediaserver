@@ -13,12 +13,6 @@ type Props = {
   mediaFiles: MediaFile[];
 };
 
-const styles = {
-  container: {
-    margin: "0 20px",
-  },
-};
-
 class CollectionsComponent extends React.Component<Props> {
   renderFolderCollections() {
     const props = {
@@ -41,11 +35,13 @@ class CollectionsComponent extends React.Component<Props> {
   }
   render() {
     return (
-      <div style={styles.container}>
-        <h1>Collections</h1>
+      <>
+        <div className="container-fluid">
+          <h1>Collections</h1>
+        </div>
         {this.renderCustomCollections()}
         {this.renderFolderCollections()}
-      </div>
+      </>
     );
   }
 }

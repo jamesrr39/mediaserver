@@ -1,23 +1,19 @@
 import * as React from "react";
 
-import { State } from "../reducers/rootReducer";
-import { connect } from "react-redux";
-import { MediaFile } from "../domain/MediaFile";
-import { InnerMap } from "./gallery/InnerMap";
-import { FitTrack } from "../domain/FitTrack";
-import { MediaFileType } from "../domain/MediaFileType";
-import FilterComponent from "./gallery/FilterComponent";
-import GalleryFilter from "../domain/filter/GalleryFilter";
+import { useSelector } from "react-redux";
 import { DateFilter } from "src/domain/filter/DateFilter";
-import { useTrackMapData } from "src/hooks/trackRecordHooks";
+import GalleryFilter from "../domain/filter/GalleryFilter";
+import { State } from "../reducers/rootReducer";
+import FilterComponent from "./gallery/FilterComponent";
+import { InnerMap } from "./gallery/InnerMap";
 
 type Props = {
-  mediaFiles: MediaFile[];
   mediaFileUrlBase: string;
 };
 
 function MediafilesMap(props: Props) {
-  const { mediaFiles, mediaFileUrlBase } = props;
+  const { mediaFileUrlBase } = props;
+  const { mediaFiles } = useSelector((state: State) => state.mediaFilesReducer);
 
   const [filter, setFilter] = React.useState<GalleryFilter>(
     new GalleryFilter(
@@ -27,20 +23,24 @@ function MediafilesMap(props: Props) {
     )
   );
 
+  const filteredMediaFiles = mediaFiles.filter((mediaFile) =>
+    filter.filter(mediaFile)
+  );
+
   return (
     <>
       <FilterComponent initialFilter={filter} onFilterChange={setFilter} />
-      <InnerMap mediaFiles={mediaFiles} mediaFileUrlBase={mediaFileUrlBase} />
+      {filteredMediaFiles.length === 0 && (
+        <div className="alert alert-info">No tracks with this filter</div>
+      )}
+      {filteredMediaFiles.length !== 0 && (
+        <InnerMap
+          mediaFiles={filteredMediaFiles}
+          mediaFileUrlBase={mediaFileUrlBase}
+        />
+      )}
     </>
   );
 }
 
-function mapStateToProps(state: State) {
-  const { mediaFiles } = state.mediaFilesReducer;
-
-  return {
-    mediaFiles,
-  };
-}
-
-export default connect(mapStateToProps)(MediafilesMap);
+export default MediafilesMap;

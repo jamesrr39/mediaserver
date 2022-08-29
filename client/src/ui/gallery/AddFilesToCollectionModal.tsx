@@ -15,14 +15,16 @@ type Props = {
 };
 
 export default function AddFilesToCollectionModal(props: Props) {
-  const { files } = props;
+  const { files, onClickClose } = props;
   const dispatch = useDispatch();
 
   const [creatingNewCollection, setCreatingNewCollection] = useState(false);
 
-  const { isLoading, error, data } = useQuery(`collections`, () =>
-    fetchCollections()(dispatch)
-  );
+  const {
+    isLoading,
+    error,
+    data: customCollections,
+  } = useQuery(`collections`, () => fetchCollections()(dispatch));
 
   if (error) {
     return <div className="alert alert-danger">Error</div>;
@@ -34,7 +36,12 @@ export default function AddFilesToCollectionModal(props: Props) {
 
   if (creatingNewCollection) {
     return (
-      <PopupModal onClickClose={() => setCreatingNewCollection(false)}>
+      <PopupModal
+        onClickClose={() => {
+          setCreatingNewCollection(false);
+          onClickClose();
+        }}
+      >
         <form
           onSubmit={async (event) => {
             event.preventDefault();
@@ -59,7 +66,7 @@ export default function AddFilesToCollectionModal(props: Props) {
   }
 
   return (
-    <PopupModal onClickClose={() => props.onClickClose()}>
+    <PopupModal onClickClose={() => onClickClose()}>
       <form
         onSubmit={async (event) => {
           event.preventDefault();
@@ -84,7 +91,7 @@ export default function AddFilesToCollectionModal(props: Props) {
           }
 
           const allCollectionsMap = new Map<number, CustomCollection>();
-          data.customCollections.forEach((collection) =>
+          customCollections.forEach((collection) =>
             allCollectionsMap.set(collection.id, collection)
           );
 
@@ -113,15 +120,15 @@ export default function AddFilesToCollectionModal(props: Props) {
         }}
       >
         <h3>Add to collection</h3>
-        {data.customCollections.length === 0 && <p>No collections... yet!</p>}
-        {data.customCollections.length !== 0 && (
+        {customCollections.length === 0 && <p>No collections... yet!</p>}
+        {customCollections.length !== 0 && (
           <div>
             <select
               className="form-select"
               name="collectionIds"
               multiple={true}
             >
-              {data.customCollections.map((collection) => {
+              {customCollections.map((collection) => {
                 return (
                   <option key={collection.id} value={collection.id}>
                     {collection.name}

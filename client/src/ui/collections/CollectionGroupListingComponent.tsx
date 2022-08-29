@@ -4,102 +4,16 @@ import CollectionThumbnail from "./CollectionThumbnail";
 import { themeStyles } from "../../theme/theme";
 import AddCollectionModal from "./AddCollectionModal";
 import { saveCollection } from "../../actions/collectionsActions";
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import { joinUrlFragments } from "src/domain/util";
+import { useState } from "react";
+import { useMutation } from "react-query";
 
-const styles = {
-  collectionsWrapper: {
-    display: "flex",
-    flexWrap: "wrap",
-  } as React.CSSProperties,
-};
+function useSaveCollectionMutation() {
+  const dispatch = useDispatch();
 
-type Props = {
-  saveCollection: (collection: CustomCollection) => Promise<CustomCollection>;
-  title: string;
-  collections: Collection[];
-  canAddCollection?: boolean;
-};
-
-type ComponentState = {
-  showAddCollectionModal: boolean;
-};
-
-class CollectionGroupListingComponent extends React.Component<
-  Props,
-  ComponentState
-> {
-  state = {
-    showAddCollectionModal: false,
-  };
-
-  render() {
-    const itemsHtml = this.props.collections.map((collection, index) => {
-      const props = {
-        collection,
-      };
-
-      return (
-        <div key={index}>
-          <CollectionThumbnail {...props} />
-        </div>
-      );
-    });
-
-    const addCollectionModal = this.state.showAddCollectionModal ? (
-      <AddCollectionModal
-        onSubmit={(name) => this.onAddCollectionModalSubmit(name)}
-        onCancel={() => this.onAddCollectionModalCancel()}
-      />
-    ) : null;
-
-    return (
-      <div>
-        <h2>{this.props.title}</h2>
-        {this.renderAddCollectionBtn()}
-        <div style={styles.collectionsWrapper}>{itemsHtml}</div>
-        {addCollectionModal}
-      </div>
-    );
-  }
-
-  private renderAddCollectionBtn = () => {
-    if (!this.props.canAddCollection) {
-      return null;
-    }
-
-    return (
-      <button
-        type="button"
-        style={themeStyles.button}
-        onClick={() => {
-          this.setState((state) => ({
-            ...state,
-            showAddCollectionModal: true,
-          }));
-        }}
-      >
-        &#43; Add
-      </button>
-    );
-  };
-
-  private onAddCollectionModalCancel = () => {
-    this.setState((state) => ({
-      ...state,
-      showAddCollectionModal: false,
-    }));
-  };
-
-  private onAddCollectionModalSubmit = (name: string) => {
-    const newCollection = new CustomCollection(0, name, []);
-    this.saveCollection(newCollection);
-  };
-
-  private async saveCollection(newCollection: CustomCollection) {
-    const { saveCollection } = this.props;
-
-    const returnedCollection = await saveCollection(newCollection);
+  return useMutation(async (newCollection: CustomCollection) => {
+    const returnedCollection = await saveCollection(newCollection)(dispatch);
 
     const encodedType = encodeURIComponent(returnedCollection.type);
     const encodedIdentifier = encodeURIComponent(
@@ -111,9 +25,64 @@ class CollectionGroupListingComponent extends React.Component<
       encodedIdentifier,
       "edit",
     ]);
-  }
+  });
 }
 
-export default connect(undefined, { saveCollection })(
-  CollectionGroupListingComponent
-);
+const styles = {
+  collectionsWrapper: {
+    display: "flex",
+    flexWrap: "wrap",
+  } as React.CSSProperties,
+};
+
+type Props = {
+  title: string;
+  collections: Collection[];
+  canAddCollection?: boolean;
+};
+
+function CollectionGroupListingComponent(props: Props) {
+  const { title, canAddCollection, collections } = props;
+  const [showAddCollectionModal, setShowAddCollectionModal] = useState(false);
+  const saveCollectionMutation = useSaveCollectionMutation();
+
+  return (
+    <div>
+      <div className="container-fluid">
+        <h2>{title}</h2>
+        {canAddCollection && (
+          <button
+            type="button"
+            style={themeStyles.button}
+            onClick={() => setShowAddCollectionModal(true)}
+          >
+            &#43; Add
+          </button>
+        )}
+      </div>
+      <div style={styles.collectionsWrapper}>
+        {collections.length === 0 ? (
+          <div className="container-fluid">None... yet</div>
+        ) : (
+          collections.map((collection, index) => {
+            return (
+              <div key={index}>
+                <CollectionThumbnail collection={collection} />
+              </div>
+            );
+          })
+        )}
+      </div>
+      {showAddCollectionModal && (
+        <AddCollectionModal
+          onSubmit={(name) => {
+            saveCollectionMutation.mutate(new CustomCollection(0, name, []));
+          }}
+          onCancel={() => setShowAddCollectionModal(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+export default CollectionGroupListingComponent;
