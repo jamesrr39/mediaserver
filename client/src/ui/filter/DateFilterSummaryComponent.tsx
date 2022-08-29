@@ -5,7 +5,7 @@ type Props = {
 };
 
 function DateFilterSummaryComponent(props: Props) {
-  const { start, end, includeFilesWithoutDates } = props.dateFilter.filterObj;
+  const { start, end, includeFilesWithoutDates } = props.dateFilter;
 
   if (!start && !end) {
     return <span>All date ranges</span>;

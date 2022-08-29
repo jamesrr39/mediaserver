@@ -5,6 +5,7 @@ import {
   FitTrack,
   Record,
 } from "src/domain/FitTrack";
+import { useTrackRecords } from "src/hooks/trackRecordHooks";
 import SpeedChart from "../SpeedChart";
 import TimeDistanceToggle from "./TimeDistanceToggle";
 import TrackModalMap from "./TrackModalMap";
@@ -13,14 +14,25 @@ import TrackSliderComponent from "./TrackSliderComponent";
 
 type Props = {
   trackSummary: FitTrack;
-  trackRecords: Record[];
 };
 
 export default function TrackDetailsComponent(props: Props) {
-  const { trackSummary, trackRecords } = props;
+  const { trackSummary } = props;
   const [highlightedRecord, setHighlightedRecord] = useState(
     undefined as undefined | Record
   );
+
+  const { data, isLoading, error } = useTrackRecords([trackSummary]);
+
+  if (error) {
+    return <div className="alert alert-danger">Error fetching records</div>;
+  }
+
+  if (isLoading) {
+    return <div className="alert alert-info">Loading records...</div>;
+  }
+
+  const trackRecords = data.get(trackSummary.hashValue);
 
   return (
     <div className="container-fluid">

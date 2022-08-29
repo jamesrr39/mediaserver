@@ -1,19 +1,9 @@
 import * as React from "react";
-import { MediaFile } from "../../domain/MediaFile";
-import Thumbnail, { getSizeForThumbnail } from "../Thumbnail";
-import { Size } from "../../domain/Size";
-import { MediaFileGroup } from "../../domain/MediaFileGroup";
-import { Link } from "react-router-dom";
-import { Observable } from "ts-util/dist/Observable";
 import { PeopleMap } from "../../actions/mediaFileActions";
-import GalleryThumbnail, {
-  BuildLinkFunc,
-  SelectThumbnailEventInfo,
-} from "./GalleryThumbnail";
-import { connect } from "react-redux";
-import { getScreenWidth } from "src/util/screen_size";
-import { State } from "src/reducers/rootReducer";
-import { WindowContext } from "src/context/WindowContext";
+import { MediaFile } from "../../domain/MediaFile";
+import { MediaFileGroup } from "../../domain/MediaFileGroup";
+import { getSizeForThumbnail } from "../Thumbnail";
+import { SelectThumbnailEventInfo } from "./GalleryThumbnail";
 import {
   GALLERY_FILE_LEFT_MARGIN_PX,
   GALLERY_GROUP_LEFT_MARGIN_PX,
@@ -33,9 +23,7 @@ const styles = {
 
 type Props = {
   row: Row;
-  peopleMap: PeopleMap;
   onClickThumbnail?: (mediaFile: MediaFile) => void;
-  buildLink?: BuildLinkFunc;
   onSelectThumbnail?: (
     mediaFile: MediaFile,
     eventInfo: SelectThumbnailEventInfo

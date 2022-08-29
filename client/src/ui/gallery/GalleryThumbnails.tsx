@@ -1,20 +1,14 @@
 import { useState } from "react";
-import { Observable } from "ts-util/src/Observable";
-import { PeopleMap } from "src/actions/mediaFileActions";
 import { MediaFile } from "src/domain/MediaFile";
-import GalleryRow from "./GalleryRow";
-import { BuildLinkFunc, SelectThumbnailEventInfo } from "./GalleryThumbnail";
 import AddFilesToCollectionModal from "./AddFilesToCollectionModal";
-import GalleryFilter from "src/domain/filter/GalleryFilter";
+import GalleryRow from "./GalleryRow";
+import { SelectThumbnailEventInfo } from "./GalleryThumbnail";
 import { Row } from "./GalleryUtil";
 
 type Props = {
   rows: Row[];
   lastIndexShown: number;
-  filter: GalleryFilter;
   onClickThumbnail?: (mediaFile: MediaFile) => void;
-  mediaFileUrlBase?: string;
-  peopleMap: PeopleMap;
   isThumbnailVisible(el: HTMLElement): void;
 };
 
@@ -25,24 +19,7 @@ function GalleryThumbnails(props: Props) {
     useState(false);
   const [selectedFiles, setSelectedFiles] = useState([] as MediaFile[]);
 
-  const {
-    rows,
-    lastIndexShown,
-    filter,
-    onClickThumbnail,
-    mediaFileUrlBase,
-    isThumbnailVisible,
-    peopleMap,
-  } = props;
-
-  let buildLink: undefined | BuildLinkFunc = undefined;
-  if (mediaFileUrlBase) {
-    buildLink = (mediaFile: MediaFile) => {
-      const query = `filterJson=${encodeURIComponent(filter.toJSON())}`;
-      const linkUrl = `${mediaFileUrlBase}/${mediaFile.hashValue}?${query}`;
-      return linkUrl;
-    };
-  }
+  const { rows, lastIndexShown, onClickThumbnail, isThumbnailVisible } = props;
 
   const rowsHtml = rows.map((row, index) => {
     if (index > lastIndexShown + ROWS_IN_INCREMENT) {
@@ -53,9 +30,7 @@ function GalleryThumbnails(props: Props) {
     const rowProps = {
       row,
       onClickThumbnail,
-      buildLink,
       isThumbnailVisible,
-      peopleMap,
       onSelectThumbnail: (
         mediaFile: MediaFile,
         eventInfo: SelectThumbnailEventInfo

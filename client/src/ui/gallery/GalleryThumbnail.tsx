@@ -1,15 +1,12 @@
-import { useReducer, useState } from "react";
+import { useContext, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { PeopleMap } from "src/actions/mediaFileActions";
+import { BuildLinkContext } from "src/context/BuildLinkContext";
 import { MediaFile } from "src/domain/MediaFile";
 import { Size } from "src/domain/Size";
-import { peopleInitialState, peopleReducer } from "src/reducers/peopleReducer";
 import { State } from "src/reducers/rootReducer";
-import { Observable } from "ts-util/dist/Observable";
 import Thumbnail from "../Thumbnail";
-
-export type BuildLinkFunc = (mediaFile: MediaFile) => string;
 
 export type SelectThumbnailEventInfo = {
   selected: boolean;
@@ -28,7 +25,6 @@ type Props = {
 
   peopleMap: PeopleMap;
   onClickThumbnail?: (mediaFile: MediaFile) => void;
-  buildLink?: BuildLinkFunc;
   onSelectThumbnail?: (
     mediaFile: MediaFile,
     eventInfo: SelectThumbnailEventInfo
@@ -45,7 +41,6 @@ function GalleryThumbnail(props: Props) {
   const {
     mediaFile,
     size,
-    buildLink,
     onClickThumbnail,
     onSelectThumbnail,
     isThumbnailVisible,
@@ -58,6 +53,8 @@ function GalleryThumbnail(props: Props) {
       isThumbnailVisible={isThumbnailVisible}
     />
   );
+
+  const buildLink = useContext(BuildLinkContext);
 
   if (buildLink) {
     thumbnail = <Link to={buildLink(mediaFile)}>{thumbnail}</Link>;

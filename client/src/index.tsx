@@ -17,10 +17,7 @@ const queryClient = new QueryClient();
 // setup scroll/resize observable
 const scrollResizeObservable = new DebouncedObservable<void>(150);
 window.addEventListener("scroll", () => scrollResizeObservable.triggerEvent());
-window.addEventListener("resize", () => {
-  console.log("window:resize");
-  scrollResizeObservable.triggerEvent();
-});
+window.addEventListener("resize", () => scrollResizeObservable.triggerEvent());
 
 const app = (
   <Provider store={store}>

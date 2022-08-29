@@ -12,7 +12,7 @@ function DateFilterComponent(props: Props) {
 
   const [filter, setFilterState] = useState(initialFilter);
 
-  const { start, end, includeFilesWithoutDates } = filter.filterObj;
+  const { start, end, includeFilesWithoutDates } = filter;
 
   const setFilter = (dateFilter: DateFilter) => {
     setFilterState(dateFilter);
@@ -34,7 +34,7 @@ function DateFilterComponent(props: Props) {
 
                 setFilter(
                   new DateFilter({
-                    ...filter.filterObj,
+                    ...filter,
                     start: new Date(value),
                   })
                 );
@@ -43,11 +43,11 @@ function DateFilterComponent(props: Props) {
           </label>
           <button
             type="button"
-            disabled={!Boolean(filter.filterObj.start)}
+            disabled={!Boolean(filter.start)}
             onClick={() => {
               setFilter(
                 new DateFilter({
-                  ...filter.filterObj,
+                  ...filter,
                   start: undefined,
                 })
               );
@@ -68,7 +68,7 @@ function DateFilterComponent(props: Props) {
 
                 setFilter(
                   new DateFilter({
-                    ...filter.filterObj,
+                    ...filter,
                     end: new Date(value),
                   })
                 );
@@ -81,7 +81,7 @@ function DateFilterComponent(props: Props) {
             onClick={() => {
               setFilter(
                 new DateFilter({
-                  ...filter.filterObj,
+                  ...filter,
                   end: undefined,
                 })
               );
@@ -100,7 +100,7 @@ function DateFilterComponent(props: Props) {
 
                 setFilter(
                   new DateFilter({
-                    ...filter.filterObj,
+                    ...filter,
                     includeFilesWithoutDates: checked,
                   })
                 );

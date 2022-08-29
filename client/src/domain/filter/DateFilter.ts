@@ -1,3 +1,4 @@
+import { THUMBNAIL_HEIGHTS } from "src/generated/thumbnail_sizes";
 import { MediaFile } from "../MediaFile";
 import { MediaFileType } from "../MediaFileType";
 import { Filter } from "./Filter";
@@ -57,72 +58,75 @@ type DateFilterObject = {
 };
 
 export class DateFilter implements Filter {
-  constructor(public readonly filterObj: DateFilterObject) {
-    const { start, end } = filterObj;
+  public readonly start?: Date;
+  public readonly end?: Date;
+  public readonly includeFilesWithoutDates: boolean;
+  constructor(filterObj?: DateFilterObject) {
+    if (!filterObj) {
+      this.includeFilesWithoutDates = true;
+      return;
+    }
+
+    const { start, end, includeFilesWithoutDates } = filterObj;
 
     if (start && end && start > end) {
       throw new Error("filter start date is after end date");
     }
+
+    this.start = start;
+    this.end = end;
+    this.includeFilesWithoutDates = includeFilesWithoutDates;
   }
   summary(): string {
-    const { start, end, includeFilesWithoutDates } = this.filterObj;
-
-    if (!start && !end) {
+    if (!this.start && !this.end) {
       return "All date ranges";
     }
 
-    if (start && end) {
-      if (includeFilesWithoutDates) {
-        return `Between ${start.toLocaleDateString()} and ${end.toLocaleDateString()}, including files without dates`;
+    if (this.start && this.end) {
+      if (this.includeFilesWithoutDates) {
+        return `Between ${this.start.toLocaleDateString()} and ${this.end.toLocaleDateString()}, including files without dates`;
       }
 
-      return `Between ${start.toLocaleDateString()} and ${end.toLocaleDateString()}, excluding files without dates`;
+      return `Between ${this.start.toLocaleDateString()} and ${this.end.toLocaleDateString()}, excluding files without dates`;
     }
 
-    if (!start) {
+    if (!this.start) {
       // only an end date
-      if (includeFilesWithoutDates) {
-        return `Before ${end.toLocaleDateString()}, including files without dates`;
+      if (this.includeFilesWithoutDates) {
+        return `Before ${this.end.toLocaleDateString()}, including files without dates`;
       }
 
-      return `Before ${end.toLocaleDateString()}, excluding files without dates`;
+      return `Before ${this.end.toLocaleDateString()}, excluding files without dates`;
     }
 
     // only a start date
 
-    if (includeFilesWithoutDates) {
-      return `After ${start.toLocaleDateString()}, including files without dates`;
+    if (this.includeFilesWithoutDates) {
+      return `After ${this.start.toLocaleDateString()}, including files without dates`;
     }
 
-    return `After ${start.toLocaleDateString()}, excluding files without dates`;
+    return `After ${this.start.toLocaleDateString()}, excluding files without dates`;
   }
 
   public filter = (mediaFile: MediaFile): boolean => {
     switch (mediaFile.fileType) {
       case MediaFileType.FitTrack:
-        if (
-          this.filterObj.end &&
-          isDate1Before(this.filterObj.end, mediaFile.startTime)
-        ) {
+        if (this.end && isDate1Before(this.end, mediaFile.startTime)) {
           return false;
         }
-        if (
-          this.filterObj.start &&
-          isDate1After(this.filterObj.start, mediaFile.endTime)
-        ) {
+        if (this.start && isDate1After(this.start, mediaFile.endTime)) {
           return false;
         }
         break;
       default:
         const fileDate = mediaFile.getTimeTaken();
         if (fileDate === null) {
-          return this.filterObj.includeFilesWithoutDates;
+          return this.includeFilesWithoutDates;
         }
 
         if (
-          (this.filterObj.start &&
-            isDate1After(this.filterObj.start, fileDate)) ||
-          (this.filterObj.end && isDate1Before(this.filterObj.end, fileDate))
+          (this.start && isDate1After(this.start, fileDate)) ||
+          (this.end && isDate1Before(this.end, fileDate))
         ) {
           return false;
         }

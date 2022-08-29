@@ -37,10 +37,6 @@ type Props = {
 function TrackModalContent(props: Props) {
   const { trackSummary } = props;
 
-  const { data, isLoading, error } = useTrackRecords([trackSummary]);
-
-  const trackRecords = data.get(trackSummary.hashValue);
-
   return (
     <div style={styles.container}>
       <h3>
@@ -52,16 +48,7 @@ function TrackModalContent(props: Props) {
         {displayDistance(trackSummary.totalDistance)} in{" "}
         {trackSummary.getDuration().getDisplayString()}
       </p>
-      {error && (
-        <div className="alert alert-danger">Error fetching records</div>
-      )}
-      {isLoading && <div className="alert alert-info">Loading records...</div>}
-      {trackRecords && (
-        <TrackDetailsComponent
-          trackSummary={trackSummary}
-          trackRecords={trackRecords}
-        />
-      )}
+      <TrackDetailsComponent trackSummary={trackSummary} />
     </div>
   );
 }

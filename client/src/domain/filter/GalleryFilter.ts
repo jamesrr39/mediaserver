@@ -1,18 +1,18 @@
 import { MediaFile } from "../MediaFile";
-import { MediaFileType } from "../MediaFileType";
 import { DateFilter } from "./DateFilter";
-import { Filter } from "./Filter";
 
 export function toISO8601Date(d: Date) {
   return d.toISOString().split("T")[0];
 }
 
+type DateFilterObject = {
+  start?: Date;
+  end?: Date;
+  includeFilesWithoutDates: boolean;
+};
+
 type FilterObject = {
-  date: {
-    start?: string;
-    end?: string;
-    includeFilesWithoutDates: boolean;
-  };
+  date: DateFilterObject;
 };
 
 export default class GalleryFilter {
@@ -26,10 +26,16 @@ export default class GalleryFilter {
     return true;
   };
 
-  public toJsObject(): FilterObject {
-    const { start, end, includeFilesWithoutDates } = this.dateFilter.filterObj;
+  public toJSON(): string {
+    type SerializedDateFilter = {
+      start?: string;
+      end?: string;
+      includeFilesWithoutDates: boolean;
+    };
 
-    const filter: FilterObject = {
+    const { start, end, includeFilesWithoutDates } = this.dateFilter;
+
+    const filter: { date: SerializedDateFilter } = {
       date: {
         includeFilesWithoutDates,
       },
@@ -43,22 +49,22 @@ export default class GalleryFilter {
       filter.date.end = toISO8601Date(end);
     }
 
-    return filter;
-  }
-
-  public toJSON(): string {
-    return JSON.stringify(this.toJsObject());
+    return JSON.stringify(filter);
   }
 }
 
 export function filterFromJson(json: string) {
-  const filterJson: FilterObject = JSON.parse(json);
+  const filterJson = JSON.parse(json);
 
-  return new GalleryFilter(
-    new DateFilter({
-      start: filterJson.date.start && new Date(filterJson.date.start),
-      end: filterJson.date.end && new Date(filterJson.date.end),
-      includeFilesWithoutDates: filterJson.date.includeFilesWithoutDates,
-    })
-  );
+  let dateFilterObj: undefined | DateFilterObject;
+  if (filterJson.date) {
+    const { start, end, includeFilesWithoutDates } = filterJson.date;
+    dateFilterObj = {
+      start: start && new Date(start),
+      end: end && new Date(end),
+      includeFilesWithoutDates: includeFilesWithoutDates === "true",
+    };
+  }
+
+  return new GalleryFilter(new DateFilter(dateFilterObj));
 }

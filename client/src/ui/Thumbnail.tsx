@@ -115,33 +115,24 @@ function Thumbnail(props: ThumbnailProps) {
   };
 
   const onScroll = () => {
-    console.log("Thumbnail::setIsQueued 0");
     if (!element) {
       return;
     }
-    console.log("setIsQueued 1");
 
     if (!isThumbnailVisible(element.current)) {
       return;
     }
 
-    console.log("setIsQueued 2");
-
     setIsQueued(true);
   };
 
   React.useEffect(() => {
-    console.log("adding onscroll listener to thumbnail");
     scrollResizeContext.addListener(onScroll);
 
     // function returned is called on unmount
-    return () => {
-      console.log("unmount...");
-      scrollResizeContext.removeListener(onScroll);
-    };
+    return () => scrollResizeContext.removeListener(onScroll);
   }, []);
 
-  console.log("rendering Thumbnail. isQueued?", isQueued);
   if (!isQueued) {
     const thumbnailStyle = generateThumbnailStyle(mediaFile, isQueued);
 

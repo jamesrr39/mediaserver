@@ -1,15 +1,19 @@
 import * as React from "react";
 import { createCompareTimeTakenFunc } from "../../domain/PictureMetadata";
 
-import { MediaFile } from "../../domain/MediaFile";
-import FilterComponent from "./FilterComponent";
-import GalleryFilter from "../../domain/filter/GalleryFilter";
-import { getScreenHeight } from "../../util/screen_size";
-import GalleryWrapper from "./GalleryWrapper";
-import { PeopleMap } from "../../actions/mediaFileActions";
-import { Observable, DebouncedObservable } from "ts-util/src/Observable";
-import { DateFilter } from "src/domain/filter/DateFilter";
+import {
+  BuildLinkContext,
+  BuildLinkFunc,
+  createBuildLinkFunc,
+} from "src/context/BuildLinkContext";
 import { ScrollResizeContext } from "src/context/WindowContext";
+import { DateFilter } from "src/domain/filter/DateFilter";
+import { Observable } from "ts-util/src/Observable";
+import GalleryFilter from "../../domain/filter/GalleryFilter";
+import { MediaFile } from "../../domain/MediaFile";
+import { getScreenHeight } from "../../util/screen_size";
+import FilterComponent from "./FilterComponent";
+import Gallery from "./Gallery";
 
 const styles = {
   title: {
@@ -19,7 +23,6 @@ const styles = {
 
 export type GalleryProps = {
   mediaFiles: MediaFile[];
-  peopleMap: PeopleMap;
   mediaFileUrlBase?: string; // example: `/gallery/detail`. If undefined, no link should be added.
   onClickThumbnail?: (pictureMetadata: MediaFile) => void;
   showMap?: boolean;
@@ -56,21 +59,14 @@ function getDateRange(mediaFiles: MediaFile[]): DateRange {
 }
 
 function GalleryWithFilter(props: GalleryProps) {
-  const onFilterChangeObservable = React.useMemo(
-    () => new DebouncedObservable<GalleryFilter>(50),
-    []
+  const [filter, setFilter] = React.useState(
+    new GalleryFilter(new DateFilter({ includeFilesWithoutDates: true }))
   );
 
   const galleryContainerEl = React.useRef();
 
-  const {
-    title,
-    mediaFiles,
-    mediaFileUrlBase,
-    onClickThumbnail,
-    showMap,
-    peopleMap,
-  } = props;
+  const { title, mediaFiles, mediaFileUrlBase, onClickThumbnail, showMap } =
+    props;
   const [elementPosTopOffset, setElementPosTopOffset] = React.useState(0);
 
   const scrollResizeObservable = React.useContext(ScrollResizeContext);
@@ -79,16 +75,12 @@ function GalleryWithFilter(props: GalleryProps) {
     el: HTMLElement | null,
     scrollResizeObservable: Observable<void>
   ) => {
-    console.log("setGH", el);
     if (!el) {
       return;
     }
 
     el.addEventListener("scroll", () => scrollResizeObservable.triggerEvent());
-    el.addEventListener("resize", () => {
-      console.log("GWF trigger");
-      scrollResizeObservable.triggerEvent();
-    });
+    el.addEventListener("resize", () => scrollResizeObservable.triggerEvent());
 
     const newElementPosTopOffset = el.getBoundingClientRect().top;
 
@@ -103,18 +95,17 @@ function GalleryWithFilter(props: GalleryProps) {
 
   const dateRange = getDateRange(mediaFiles);
 
-  const filterComponentProps = {
-    initialFilter: new GalleryFilter(
-      new DateFilter({ includeFilesWithoutDates: true })
-    ),
-    initialStartDateValue: dateRange.start,
-    initialEndDateValue: dateRange.end,
-    onFilterChange: (filter: GalleryFilter) =>
-      onFilterChangeObservable.triggerEvent(filter),
-  };
+  // const filterComponentProps = {
+  //   initialFilter: new GalleryFilter(
+  //     new DateFilter({ includeFilesWithoutDates: true })
+  //   ),
+  //   initialStartDateValue: dateRange.start,
+  //   initialEndDateValue: dateRange.end,
+  //   onFilterChange: (filter: GalleryFilter) =>
+  //     onFilterChangeObservable.triggerEvent(filter),
+  // };
 
   const isThumbnailVisible = (thumbnailEl: HTMLElement) => {
-    console.log("isTV");
     if (!galleryContainerEl.current) {
       return false;
     }
@@ -133,20 +124,27 @@ function GalleryWithFilter(props: GalleryProps) {
     overflowY: "scroll" as "scroll",
   };
 
+  let buildLinkFunc: BuildLinkFunc | undefined;
+  if (mediaFileUrlBase) {
+    buildLinkFunc = createBuildLinkFunc(filter, mediaFileUrlBase);
+  }
+
   return (
     <>
-      <FilterComponent {...filterComponentProps} />
+      <FilterComponent initialFilter={filter} onFilterChange={setFilter} />
       {title && <h1 style={styles.title}>{title}</h1>}
       <div style={wrapperStyles} ref={galleryContainerEl}>
-        <GalleryWrapper
-          onFilterChangeObservable={onFilterChangeObservable}
-          mediaFiles={mediaFiles}
-          mediaFileUrlBase={mediaFileUrlBase}
-          onClickThumbnail={onClickThumbnail}
-          showMap={showMap}
-          peopleMap={peopleMap}
-          isThumbnailVisible={isThumbnailVisible}
-        />
+        <BuildLinkContext.Provider value={buildLinkFunc}>
+          <Gallery
+            mediaFiles={mediaFiles.filter((mediaFile) =>
+              filter.filter(mediaFile)
+            )}
+            mediaFileUrlBase={mediaFileUrlBase}
+            onClickThumbnail={onClickThumbnail}
+            showMap={showMap}
+            isThumbnailVisible={isThumbnailVisible}
+          />
+        </BuildLinkContext.Provider>
       </div>
     </>
   );

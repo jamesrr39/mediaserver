@@ -1,29 +1,24 @@
 import * as React from "react";
 import { createCompareTimeTakenFunc } from "../../domain/PictureMetadata";
 
-import { TrackMapData } from "../MapComponent";
-import { MediaFile } from "../../domain/MediaFile";
-import { filesToRows } from "./GalleryRow";
-import {
-  mediaFilesToDateGroups,
-  groupsMapToGroups,
-} from "../../domain/MediaFileGroup";
-import { InnerMap } from "./InnerMap";
-import { PeopleMap } from "../../actions/mediaFileActions";
-import GalleryThumbnails, { ROWS_IN_INCREMENT } from "./GalleryThumbnails";
-import GalleryFilter from "src/domain/filter/GalleryFilter";
 import { ScrollResizeContext, WindowContext } from "src/context/WindowContext";
+import { MediaFile } from "../../domain/MediaFile";
+import {
+  groupsMapToGroups,
+  mediaFilesToDateGroups,
+} from "../../domain/MediaFileGroup";
+import { filesToRows } from "./GalleryRow";
+import GalleryThumbnails, { ROWS_IN_INCREMENT } from "./GalleryThumbnails";
 import { Row } from "./GalleryUtil";
+import { InnerMap } from "./InnerMap";
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
 export type Props = {
   showMap: boolean;
-  filter: GalleryFilter;
   onClickThumbnail?: (mediaFile: MediaFile) => void;
   mediaFiles: MediaFile[];
   mediaFileUrlBase?: string;
-  peopleMap: PeopleMap;
   isThumbnailVisible(el: HTMLElement): void;
 };
 
@@ -52,8 +47,6 @@ function useScrollOrResize(mediaFiles: MediaFile[], state: ComponentState) {
   };
 
   const calculateAndSetLastIndexAndRowsState = () => {
-    console.log("onScrollOrResize");
-
     if (lastIndexShown >= mediaFiles.length) {
       // we are already showing everything
       return;
@@ -83,14 +76,10 @@ function useScrollOrResize(mediaFiles: MediaFile[], state: ComponentState) {
 }
 
 function Gallery(props: Props) {
-  const {
-    mediaFileUrlBase,
-    mediaFiles,
-    showMap,
-    filter,
-    peopleMap,
-    isThumbnailVisible,
-  } = props;
+  const { mediaFileUrlBase, mediaFiles, showMap, isThumbnailVisible } = props;
+
+  mediaFiles.sort(gallerySortingFunc);
+
   const [lastIndexShown, setLastIndexShown] = React.useState(0);
   const [rows, setRows] = React.useState([] as Row[]);
   useScrollOrResize(mediaFiles, {
@@ -109,10 +98,7 @@ function Gallery(props: Props) {
         <GalleryThumbnails
           rows={rows}
           lastIndexShown={lastIndexShown}
-          filter={filter}
-          peopleMap={peopleMap}
           isThumbnailVisible={isThumbnailVisible}
-          mediaFileUrlBase={mediaFileUrlBase}
         />
       </div>
     </>
