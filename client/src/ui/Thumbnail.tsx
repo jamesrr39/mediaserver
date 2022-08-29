@@ -129,6 +129,8 @@ function Thumbnail(props: ThumbnailProps) {
   React.useEffect(() => {
     scrollResizeContext.addListener(onScroll);
 
+    scrollResizeContext.triggerEvent();
+
     // function returned is called on unmount
     return () => scrollResizeContext.removeListener(onScroll);
   }, []);
