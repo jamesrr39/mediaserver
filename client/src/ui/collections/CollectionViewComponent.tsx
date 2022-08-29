@@ -1,6 +1,11 @@
 import { useSelector } from "react-redux";
+import {
+  BuildLinkContext,
+  createBuildLinkFunc,
+} from "src/context/BuildLinkContext";
+import { DateFilter } from "src/domain/filter/DateFilter";
+import GalleryFilter from "src/domain/filter/GalleryFilter";
 import { Collection } from "../../domain/Collection";
-import { MediaFile } from "../../domain/MediaFile";
 import { State } from "../../reducers/rootReducer";
 import Gallery from "../gallery/Gallery";
 import { InnerMap } from "../gallery/InnerMap";
@@ -16,7 +21,7 @@ function CollectionViewComponent(props: Props) {
     (state: State) => state.mediaFilesReducer
   );
 
-  const mediaFiles = collection.fileHashes.map((hash, index) => {
+  const mediaFiles = collection.fileHashes.map((hash) => {
     const mediaFile = mediaFilesMap.get(hash);
     if (!mediaFile) {
       throw new Error(`couldn't find media file for ${hash}`);
@@ -24,18 +29,27 @@ function CollectionViewComponent(props: Props) {
     return mediaFile;
   });
 
+  const buildLinkFunc = createBuildLinkFunc(
+    new GalleryFilter(new DateFilter()),
+    `/collections/${encodeURIComponent(collection.type)}/${encodeURIComponent(
+      collection.identifier()
+    )}/detail`
+  );
+
   return (
     <>
       <div className="container-fluid">
         <h1>{collection.name}</h1>
       </div>
       <InnerMap mediaFiles={mediaFiles} />
-      <Gallery
-        mediaFiles={mediaFiles}
-        mediaFileUrlBase={`${routeUrl}/detail`}
-        showMap={true}
-        isThumbnailVisible={() => true} // TODO: replace
-      />
+      <BuildLinkContext.Provider value={buildLinkFunc}>
+        <Gallery
+          mediaFiles={mediaFiles}
+          mediaFileUrlBase={`${routeUrl}/detail`}
+          showMap={true}
+          isThumbnailVisible={() => true} // TODO: replace
+        />
+      </BuildLinkContext.Provider>
     </>
   );
 }

@@ -38,7 +38,7 @@ export class CustomCollection implements Collection {
       id: this.id,
       name: this.name,
       fileHashes: this.fileHashes,
-    }
+    };
   }
 }
 // CustomCollection.prototype.toJSON() {

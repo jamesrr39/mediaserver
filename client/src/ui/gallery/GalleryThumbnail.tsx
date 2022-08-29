@@ -3,48 +3,33 @@ import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { PeopleMap } from "src/actions/mediaFileActions";
 import { BuildLinkContext } from "src/context/BuildLinkContext";
+import { SelectThumbnailContext } from "src/context/SelectThumbnailContext";
 import { MediaFile } from "src/domain/MediaFile";
 import { Size } from "src/domain/Size";
 import { State } from "src/reducers/rootReducer";
 import Thumbnail from "../Thumbnail";
-
-export type SelectThumbnailEventInfo = {
-  selected: boolean;
-};
 
 const styles = {
   participantListWrapper: {
     padding: 0,
     listStyle: "none",
   },
+  checkbox: {
+    padding: "10px",
+  },
 };
 
 type Props = {
   mediaFile: MediaFile;
   size: Size;
-
-  peopleMap: PeopleMap;
-  onClickThumbnail?: (mediaFile: MediaFile) => void;
-  onSelectThumbnail?: (
-    mediaFile: MediaFile,
-    eventInfo: SelectThumbnailEventInfo
-  ) => void;
   isThumbnailVisible(el: HTMLElement): boolean;
 };
 
 function GalleryThumbnail(props: Props) {
   const [checked, setChecked] = useState(false);
-  const peopleMap = useSelector(
-    (state: State) => state.peopleReducer.peopleMap
-  );
+  const { peopleMap } = useSelector((state: State) => state.peopleReducer);
 
-  const {
-    mediaFile,
-    size,
-    onClickThumbnail,
-    onSelectThumbnail,
-    isThumbnailVisible,
-  } = props;
+  const { mediaFile, size, isThumbnailVisible } = props;
 
   let thumbnail = (
     <Thumbnail
@@ -60,18 +45,7 @@ function GalleryThumbnail(props: Props) {
     thumbnail = <Link to={buildLink(mediaFile)}>{thumbnail}</Link>;
   }
 
-  if (onClickThumbnail) {
-    const onClickThumbnailCb = (event: React.MouseEvent<HTMLAnchorElement>) => {
-      event.preventDefault();
-      onClickThumbnail(mediaFile);
-    };
-
-    thumbnail = (
-      <a href="#" onClick={onClickThumbnailCb}>
-        {thumbnail}
-      </a>
-    );
-  }
+  const onSelectThumbnail = useContext(SelectThumbnailContext);
 
   const checkbox = onSelectThumbnail ? (
     <div className="form-check">
@@ -81,30 +55,11 @@ function GalleryThumbnail(props: Props) {
         onChange={(event) => {
           const { checked } = event.target;
           setChecked(checked);
-          onSelectThumbnail(mediaFile, { selected: checked });
+          onSelectThumbnail(mediaFile, checked);
         }}
-        style={{
-          padding: "10px",
-          // position: "absolute",
-          // opacity: 0,
-          // cursor: "pointer",
-          // height: 0,
-          // width: 0,
-        }}
+        style={styles.checkbox}
       />
-      <label
-        className="form-check-label"
-        style={
-          {
-            // position: "absolute",
-            // top: 0,
-            // left: 0,
-            // height: "25px",
-            // width: "25px",
-            // backgroundColor: "#eee",
-          }
-        }
-      ></label>
+      <label className="form-check-label"></label>
     </div>
   ) : null;
 

@@ -1,9 +1,6 @@
 import * as React from "react";
-import { PeopleMap } from "../../actions/mediaFileActions";
-import { MediaFile } from "../../domain/MediaFile";
 import { MediaFileGroup } from "../../domain/MediaFileGroup";
 import { getSizeForThumbnail } from "../Thumbnail";
-import { SelectThumbnailEventInfo } from "./GalleryThumbnail";
 import {
   GALLERY_FILE_LEFT_MARGIN_PX,
   GALLERY_GROUP_LEFT_MARGIN_PX,
@@ -23,11 +20,6 @@ const styles = {
 
 type Props = {
   row: Row;
-  onClickThumbnail?: (mediaFile: MediaFile) => void;
-  onSelectThumbnail?: (
-    mediaFile: MediaFile,
-    eventInfo: SelectThumbnailEventInfo
-  ) => void;
   isThumbnailVisible(el: HTMLElement): void;
 };
 

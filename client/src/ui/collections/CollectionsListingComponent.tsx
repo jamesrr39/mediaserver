@@ -1,12 +1,12 @@
 import * as React from "react";
-import { State } from "../../reducers/rootReducer";
 import { connect } from "react-redux";
 import {
-  extractFolderCollectionsFrommediaFiles,
   CustomCollection,
+  extractFolderCollectionsFrommediaFiles,
 } from "../../domain/Collection";
-import CollectionGroupListingComponent from "./CollectionGroupListingComponent";
 import { MediaFile } from "../../domain/MediaFile";
+import { State } from "../../reducers/rootReducer";
+import CollectionGroupListingComponent from "./CollectionGroupListingComponent";
 
 type Props = {
   collections: CustomCollection[];
