@@ -34,12 +34,8 @@ function OneLineThumbnailGroup(props: Props) {
   return <div style={{ display: "flex" }}>{rowsJSX}</div>;
 }
 
-function ThumbnailGroup(props: Props) {
-  const { row, group } = props;
-
-  if (row.fitsInOneLine) {
-    return <OneLineThumbnailGroup row={row} group={group} />;
-  }
+function MultipleLineThumbnailGroup(props: Props) {
+  const { group } = props;
 
   let distanceThroughContainer = 0;
   const rows: MediaFileWithSize[][] = [];
@@ -96,6 +92,16 @@ function ThumbnailGroup(props: Props) {
   });
 
   return <>{rowsJSX}</>;
+}
+
+function ThumbnailGroup(props: Props) {
+  const { row, group } = props;
+
+  if (row.fitsInOneLine) {
+    return <OneLineThumbnailGroup row={row} group={group} />;
+  }
+
+  return <MultipleLineThumbnailGroup row={row} group={group} />;
 }
 
 export default ThumbnailGroup;
