@@ -29,7 +29,6 @@ const styles = {
 
 type Props = {
   mediaFiles: MediaFile[];
-  peopleMap: PeopleMap;
   collection: CustomCollection;
   saveCollection: (collection: CustomCollection) => Promise<CustomCollection>;
   uploadFile: (file: File) => Promise<MediaFile>;
@@ -103,8 +102,6 @@ class EditCustomCollectionComponent extends React.Component<
   };
 
   render() {
-    const { peopleMap } = this.props;
-
     const filesInCollection: MediaFile[] = [];
     const filesOutOfCollection: MediaFile[] = [];
     this.props.mediaFiles.forEach((pictureMetadata) => {
@@ -121,23 +118,6 @@ class EditCustomCollectionComponent extends React.Component<
 
     const onClickFilesOutOfCollectionThumbnail = (mediaFile: MediaFile) => {
       this.addToFilesInCollection(mediaFile.hashValue);
-    };
-
-    const commonGalleryProps = {
-      peopleMap,
-      getRowWidth: () => getScreenWidth(),
-    };
-
-    const itemsInCollectionGalleryProps = {
-      ...commonGalleryProps,
-      mediaFiles: filesInCollection,
-      onClickThumbnail: onClickFilesInCollectionThumbnail,
-    };
-
-    const itemsOutOfCollectionGalleryProps = {
-      ...commonGalleryProps,
-      mediaFiles: filesOutOfCollection,
-      onClickThumbnail: onClickFilesOutOfCollectionThumbnail,
     };
 
     return (
@@ -167,9 +147,23 @@ class EditCustomCollectionComponent extends React.Component<
             />
           </label>
           <h3>Items in collection</h3>
-          <GalleryWithFilter {...itemsInCollectionGalleryProps} />
+          {filesInCollection.length === 0 ? (
+            <div>No files in collection... yet</div>
+          ) : (
+            <GalleryWithFilter
+              mediaFiles={filesInCollection}
+              onClickThumbnail={onClickFilesInCollectionThumbnail}
+            />
+          )}
           <h3>Items out of collection</h3>
-          <GalleryWithFilter {...itemsOutOfCollectionGalleryProps} />
+          {filesOutOfCollection.length === 0 ? (
+            <div>No files remaining out of the collection</div>
+          ) : (
+            <GalleryWithFilter
+              mediaFiles={filesOutOfCollection}
+              onClickThumbnail={onClickFilesOutOfCollectionThumbnail}
+            />
+          )}
         </form>
       </div>
     );
