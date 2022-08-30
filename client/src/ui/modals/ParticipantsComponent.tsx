@@ -51,13 +51,6 @@ const styles = {
 
 type Props = {
   mediaFile: MediaFile;
-  people: Person[];
-  peopleMap: PeopleMap;
-  setParticipantsOnMediaFile: (
-    mediaFile: MediaFile,
-    participants: Person[]
-  ) => void;
-  createPerson: (name: string) => Promise<Person>;
 };
 
 function PartipantsComponent(props: Props) {
