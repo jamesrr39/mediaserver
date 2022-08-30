@@ -95,30 +95,6 @@ function GalleryWithFilter(props: GalleryProps) {
 
   const dateRange = getDateRange(mediaFiles);
 
-  // const filterComponentProps = {
-  //   initialFilter: new GalleryFilter(
-  //     new DateFilter({ includeFilesWithoutDates: true })
-  //   ),
-  //   initialStartDateValue: dateRange.start,
-  //   initialEndDateValue: dateRange.end,
-  //   onFilterChange: (filter: GalleryFilter) =>
-  //     onFilterChangeObservable.triggerEvent(filter),
-  // };
-
-  const isThumbnailVisible = (thumbnailEl: HTMLElement) => {
-    if (!galleryContainerEl.current) {
-      return false;
-    }
-
-    const thumbnailRect = thumbnailEl.getBoundingClientRect();
-
-    if (thumbnailRect.top < window.innerHeight && thumbnailRect.bottom > 0) {
-      return true;
-    }
-
-    return false;
-  };
-
   const wrapperStyles = {
     height: getScreenHeight() - elementPosTopOffset,
     overflowY: "scroll" as "scroll",
@@ -142,7 +118,6 @@ function GalleryWithFilter(props: GalleryProps) {
             mediaFileUrlBase={mediaFileUrlBase}
             onClickThumbnail={onClickThumbnail}
             showMap={showMap}
-            isThumbnailVisible={isThumbnailVisible}
           />
         </BuildLinkContext.Provider>
       </div>

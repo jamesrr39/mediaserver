@@ -5,6 +5,7 @@ import {
 } from "src/context/BuildLinkContext";
 import { DateFilter } from "src/domain/filter/DateFilter";
 import GalleryFilter from "src/domain/filter/GalleryFilter";
+import { joinUrlFragments } from "src/domain/util";
 import { Collection } from "../../domain/Collection";
 import { State } from "../../reducers/rootReducer";
 import Gallery from "../gallery/Gallery";
@@ -31,9 +32,12 @@ function CollectionViewComponent(props: Props) {
 
   const buildLinkFunc = createBuildLinkFunc(
     new GalleryFilter(new DateFilter()),
-    `/collections/${encodeURIComponent(collection.type)}/${encodeURIComponent(
-      collection.identifier()
-    )}/detail`
+    joinUrlFragments([
+      "collections",
+      encodeURIComponent(collection.type),
+      encodeURIComponent(collection.identifier()),
+      "detail",
+    ])
   );
 
   return (
@@ -47,7 +51,6 @@ function CollectionViewComponent(props: Props) {
           mediaFiles={mediaFiles}
           mediaFileUrlBase={`${routeUrl}/detail`}
           showMap={true}
-          isThumbnailVisible={() => true} // TODO: replace
         />
       </BuildLinkContext.Provider>
     </>

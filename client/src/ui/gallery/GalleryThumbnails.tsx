@@ -4,13 +4,12 @@ import { Row } from "./GalleryUtil";
 type Props = {
   rows: Row[];
   lastIndexShown: number;
-  isThumbnailVisible(el: HTMLElement): void;
 };
 
 export const ROWS_IN_INCREMENT = 10;
 
 function GalleryThumbnails(props: Props) {
-  const { rows, lastIndexShown, isThumbnailVisible } = props;
+  const { rows, lastIndexShown } = props;
 
   const rowsHtml = rows
     .map((row, index) => {
@@ -19,13 +18,7 @@ function GalleryThumbnails(props: Props) {
         return null;
       }
 
-      return (
-        <GalleryRow
-          key={index}
-          row={row}
-          isThumbnailVisible={isThumbnailVisible}
-        />
-      );
+      return <GalleryRow key={index} row={row} />;
     })
     .filter((rowHtml) => Boolean(rowHtml));
 

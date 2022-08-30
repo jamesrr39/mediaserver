@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "./build.sh",
-    "build": "esbuild src/index.tsx --bundle --outfile=dist/main.js",
+    "start": "ts-node build.ts --watch",
+    "build": "ts-node build.ts",
     "lint": "prettier --write ."
   },
   "dependencies": {
@@ -25,10 +25,11 @@
   },
   "devDependencies": {
     "@types/leaflet": "^1.7.9",
+    "@types/node": "^18.7.14",
     "@types/react": "^18.0.8",
-    "concurrently": "^7.3.0",
     "esbuild": "^0.14.38",
     "prettier": "^2.6.2",
+    "ts-node": "^10.9.1",
     "typescript": "^4.6.4"
   }
 }

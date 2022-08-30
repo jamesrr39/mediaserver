@@ -11,7 +11,11 @@ import TrackThumbnail from "./thumbnails/TrackThumbnail";
 import { Size } from "../domain/Size";
 import { connect } from "react-redux";
 import { State } from "src/reducers/rootReducer";
-import { ScrollResizeContext } from "src/context/WindowContext";
+import {
+  GalleryContainerContext,
+  ScrollResizeContext,
+} from "src/context/WindowContext";
+import { useIsThumbnailVisible } from "src/hooks/windowHooks";
 
 const WIDE_SCREEN_THUMBNAIL_HEIGHT = 200;
 const NARROW_SCREEN_THUMBNAIL_HEIGHT = 100;
@@ -97,7 +101,6 @@ const generateThumbnailStyle = (mediaFile: MediaFile, isLoaded: boolean) => {
 export type ThumbnailProps = {
   mediaFile: MediaFile;
   size: Size;
-  isThumbnailVisible(el: HTMLElement): boolean;
 };
 
 function Thumbnail(props: ThumbnailProps) {
@@ -108,18 +111,16 @@ function Thumbnail(props: ThumbnailProps) {
   const element = React.useRef();
 
   const scrollResizeContext = React.useContext(ScrollResizeContext);
+  const galleryContainer = React.useContext(GalleryContainerContext);
 
-  const isThumbnailVisible = (el) => {
-    console.log("TODO: better calculation");
-    return true;
-  };
+  const isThumbnailVisible = useIsThumbnailVisible();
 
   const onScroll = () => {
     if (!element) {
       return;
     }
 
-    if (!isThumbnailVisible(element.current)) {
+    if (!isThumbnailVisible(galleryContainer, element.current)) {
       return;
     }
 

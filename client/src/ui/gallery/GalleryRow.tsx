@@ -20,7 +20,6 @@ const styles = {
 
 type Props = {
   row: Row;
-  isThumbnailVisible(el: HTMLElement): void;
 };
 
 function GalleryRow(props: Props) {

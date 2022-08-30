@@ -22,22 +22,15 @@ const styles = {
 type Props = {
   mediaFile: MediaFile;
   size: Size;
-  isThumbnailVisible(el: HTMLElement): boolean;
 };
 
 function GalleryThumbnail(props: Props) {
   const [checked, setChecked] = useState(false);
   const { peopleMap } = useSelector((state: State) => state.peopleReducer);
 
-  const { mediaFile, size, isThumbnailVisible } = props;
+  const { mediaFile, size } = props;
 
-  let thumbnail = (
-    <Thumbnail
-      size={size}
-      mediaFile={mediaFile}
-      isThumbnailVisible={isThumbnailVisible}
-    />
-  );
+  let thumbnail = <Thumbnail size={size} mediaFile={mediaFile} />;
 
   const buildLink = useContext(BuildLinkContext);
 

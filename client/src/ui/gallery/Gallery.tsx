@@ -1,7 +1,11 @@
 import * as React from "react";
 import { createCompareTimeTakenFunc } from "../../domain/PictureMetadata";
 
-import { ScrollResizeContext, WindowContext } from "src/context/WindowContext";
+import {
+  GalleryContainerContext,
+  ScrollResizeContext,
+  WindowContext,
+} from "src/context/WindowContext";
 import { MediaFile } from "../../domain/MediaFile";
 import {
   groupsMapToGroups,
@@ -19,7 +23,6 @@ export type Props = {
   onClickThumbnail?: (mediaFile: MediaFile) => void;
   mediaFiles: MediaFile[];
   mediaFileUrlBase?: string;
-  isThumbnailVisible(el: HTMLElement): void;
 };
 
 type ComponentState = {
@@ -76,7 +79,7 @@ function useScrollOrResize(mediaFiles: MediaFile[], state: ComponentState) {
 }
 
 function Gallery(props: Props) {
-  const { mediaFileUrlBase, mediaFiles, showMap, isThumbnailVisible } = props;
+  const { mediaFileUrlBase, mediaFiles, showMap } = props;
 
   mediaFiles.sort(gallerySortingFunc);
 
@@ -89,17 +92,17 @@ function Gallery(props: Props) {
     setLastIndexShown,
   });
 
+  const galleryEl = React.useRef();
+
   return (
     <>
       {showMap && (
         <InnerMap mediaFiles={mediaFiles} mediaFileUrlBase={mediaFileUrlBase} />
       )}
-      <div>
-        <GalleryThumbnails
-          rows={rows}
-          lastIndexShown={lastIndexShown}
-          isThumbnailVisible={isThumbnailVisible}
-        />
+      <div ref={galleryEl}>
+        <GalleryContainerContext.Provider value={galleryEl?.current}>
+          <GalleryThumbnails rows={rows} lastIndexShown={lastIndexShown} />
+        </GalleryContainerContext.Provider>
       </div>
     </>
   );
