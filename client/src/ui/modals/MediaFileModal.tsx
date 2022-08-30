@@ -111,7 +111,10 @@ class MediaFileModal extends React.Component<Props, ComponentState> {
         this.setState((state) => ({ ...state, showInfo: false }));
       return (
         <FullScreenModal>
-          <FileInfoComponent {...{ mediaFile, onCloseButtonClicked }} />
+          <FileInfoComponent
+            mediaFile={mediaFile}
+            onCloseButtonClicked={onCloseButtonClicked}
+          />
         </FullScreenModal>
       );
     }
@@ -142,7 +145,7 @@ class MediaFileModal extends React.Component<Props, ComponentState> {
           </div>
           {this.state.showInfo && (
             <div style={styles.wideScreen.pictureInfoContainer}>
-              <FileInfoComponent {...{ mediaFile }} />
+              <FileInfoComponent mediaFile={mediaFile} />
             </div>
           )}
         </div>
@@ -169,7 +172,7 @@ class MediaFileModal extends React.Component<Props, ComponentState> {
     if (this.state.showInfo) {
       return (
         <div style={styles.narrowScreenPictureInfoContainer}>
-          <FileInfoComponent {...{ mediaFile }} />
+          <FileInfoComponent mediaFile={mediaFile} />
         </div>
       );
     }

@@ -50,8 +50,7 @@ class FileInfoComponent extends React.Component<Props> {
         <p>No Location Data available</p>
       );
 
-    const reason =
-      mediaFile.suggestedLocation && mediaFile.suggestedLocation.reason;
+    const { reason } = mediaFile?.suggestedLocation || {};
 
     return (
       <div style={styles.container}>
