@@ -71,14 +71,21 @@ export function createPerson(name: string) {
       throw new Error(createErrorMessage(response));
     }
 
-    const json: DataResponse<Person> = await response.json();
-    const person = json.data;
+    const json: DataResponse<{ createPeople: Person[] }> =
+      await response.json();
+
+    const people = json.data.createPeople;
+    if (people.length !== 1) {
+      throw new Error(
+        `expected 1 person to be created, but got ${people.length}`
+      );
+    }
 
     dispatch({
       type: PeopleActionTypes.PEOPLE_CREATED,
-      people: [person],
+      people: people,
     });
 
-    return person;
+    return people[0];
   };
 }

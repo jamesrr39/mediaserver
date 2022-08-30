@@ -32,12 +32,13 @@ function CollectionViewComponent(props: Props) {
 
   const buildLinkFunc = createBuildLinkFunc(
     new GalleryFilter(new DateFilter()),
-    joinUrlFragments([
-      "collections",
-      encodeURIComponent(collection.type),
-      encodeURIComponent(collection.identifier()),
-      "detail",
-    ])
+    "/" +
+      joinUrlFragments([
+        "collections",
+        encodeURIComponent(collection.type),
+        encodeURIComponent(collection.identifier()),
+        "detail",
+      ])
   );
 
   return (

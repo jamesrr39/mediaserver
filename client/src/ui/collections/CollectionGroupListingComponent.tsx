@@ -4,7 +4,7 @@ import CollectionThumbnail from "./CollectionThumbnail";
 import { themeStyles } from "../../theme/theme";
 import AddCollectionModal from "./AddCollectionModal";
 import { saveCollection } from "../../actions/collectionsActions";
-import { connect, useDispatch } from "react-redux";
+import { useDispatch } from "react-redux";
 import { joinUrlFragments } from "src/domain/util";
 import { useState } from "react";
 import { useMutation } from "react-query";
@@ -20,7 +20,8 @@ function useSaveCollectionMutation() {
       returnedCollection.identifier()
     );
     window.location.hash = joinUrlFragments([
-      "#/collections",
+      "#",
+      "collections",
       encodedType,
       encodedIdentifier,
       "edit",
@@ -30,9 +31,9 @@ function useSaveCollectionMutation() {
 
 const styles = {
   collectionsWrapper: {
-    display: "flex",
-    flexWrap: "wrap",
-  } as React.CSSProperties,
+    display: "flex" as "flex",
+    flexWrap: "wrap" as "wrap",
+  },
 };
 
 type Props = {

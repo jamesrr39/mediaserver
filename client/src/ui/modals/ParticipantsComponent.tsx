@@ -1,23 +1,53 @@
 import * as React from "react";
-import { MediaFile } from "../../domain/MediaFile";
+import { useMutation } from "react-query";
+import { useDispatch, useSelector } from "react-redux";
+import { OnChangeValue } from "react-select";
 import CreateableSelect from "react-select/creatable";
-import { ValueType } from "react-select/src/types";
-import { connect } from "react-redux";
-import { State } from "../../reducers/rootReducer";
-import { Person } from "../../domain/People";
+import { createPerson } from "src/actions/peopleActions";
 import {
   PeopleMap,
   setParticipantsOnMediaFile,
 } from "../../actions/mediaFileActions";
-import { createPerson } from "../../actions/peopleActions";
+import { MediaFile } from "../../domain/MediaFile";
+import { Person } from "../../domain/People";
+import { State } from "../../reducers/rootReducer";
+
+type Option = {
+  value: string;
+  label: string;
+};
+
+function useChoosePersonMutation(mediaFile: MediaFile) {
+  const dispatch = useDispatch();
+
+  const state = useSelector((state: State) => state);
+  const { peopleMap } = state.peopleReducer;
+
+  return useMutation(async (selectedItems: OnChangeValue<Option, true>) => {
+    const people: Person[] = [];
+    for (let selected of selectedItems) {
+      const id = parseInt(selected.value, 10);
+
+      let person = peopleMap.get(id);
+      if (!person) {
+        person = await createPerson(selected.label)(dispatch, () => state);
+      }
+
+      people.push(person);
+    }
+
+    setParticipantsOnMediaFile(mediaFile, people)(dispatch, () => state);
+  });
+}
 
 const styles = {
   selectStyles: {
     color: "black",
   },
+  container: {
+    padding: "10px",
+  },
 };
-
-type SelectedOption = { value: string; label: string; __isNew__?: boolean };
 
 type Props = {
   mediaFile: MediaFile;
@@ -30,127 +60,70 @@ type Props = {
   createPerson: (name: string) => Promise<Person>;
 };
 
-type ComponentState = {
-  editing: boolean;
-};
+function PartipantsComponent(props: Props) {
+  const { mediaFile } = props;
+  const { people } = useSelector((state: State) => state.peopleReducer);
+  const [editing, setEditing] = React.useState(false);
 
-class PartipantsComponent extends React.Component<Props, ComponentState> {
-  state = {
-    editing: false,
-  };
-
-  render() {
-    const { editing } = this.state;
-
-    return (
-      <>
-        <h3>Who was here</h3>
-        {editing ? this.renderEditView() : this.renderReadView()}
-      </>
-    );
-  }
-
-  private renderReadView() {
-    const { mediaFile, peopleMap } = this.props;
-
-    const names = mediaFile.participantIds.map((id) => {
-      const person = peopleMap.get(id);
-
-      if (!person) {
-        return `unknown person (ID: ${id})`;
-      }
-
-      return person.name;
-    });
-
-    return (
-      <>
-        <ul>
-          {names.map((name, index) => (
-            <li key={index}>{name}</li>
-          ))}
-        </ul>
-        <button
-          onClick={(event) =>
-            this.setState((state) => ({ ...state, editing: true }))
-          }
-        >
-          Edit
-        </button>
-      </>
-    );
-  }
-
-  private renderEditView() {
-    const { people, mediaFile } = this.props;
-
-    const peopleInFile = people
-      .filter((person) => mediaFile.participantIds.indexOf(person.id) !== -1)
-      .map((person) => ({
-        value: person.id + "",
-        label: person.name,
-      }));
-
-    const allPeople = people.map((person) => ({
+  const peopleInFile = people
+    .filter((person) => mediaFile.participantIds.indexOf(person.id) !== -1)
+    .map((person) => ({
       value: person.id + "",
       label: person.name,
     }));
 
-    return (
-      <>
-        <span style={styles.selectStyles}>
-          <CreateableSelect
-            isMulti={true}
-            onChange={(selected: ValueType<SelectedOption[]>) =>
-              this.onChoosePerson(selected as SelectedOption[])
-            }
-            defaultValue={peopleInFile}
-            // options={(allPeople as unknown) as undefined}
-            options={allPeople as unknown as undefined}
-          />
-        </span>
+  const allPeople = people.map((person) => ({
+    value: person.id + "",
+    label: person.name,
+  }));
 
-        <button
-          onClick={(event) =>
-            this.setState((state) => ({ ...state, editing: false }))
-          }
-        >
-          Finished Editing
-        </button>
-      </>
-    );
-  }
+  const choosePersonMutation = useChoosePersonMutation(mediaFile);
 
-  private async onChoosePerson(selectedItems: SelectedOption[]) {
-    const { setParticipantsOnMediaFile, mediaFile, peopleMap, createPerson } =
-      this.props;
-
-    const people: Person[] = [];
-    for (let selected of selectedItems) {
-      const id = parseInt(selected.value, 10);
-
-      let person = peopleMap.get(id);
-      if (!person) {
-        person = await createPerson(selected.label);
-      }
-
-      people.push(person);
-    }
-
-    setParticipantsOnMediaFile(mediaFile, people);
-  }
-}
-
-function mapStateToProps(state: State) {
-  const { people, peopleMap } = state.peopleReducer;
-
-  return {
-    people,
-    peopleMap,
+  const onChange = (newValue: OnChangeValue<Option, true>) => {
+    return choosePersonMutation.mutate(newValue);
   };
+
+  const [selection, setSelection] = React.useState(
+    [] as OnChangeValue<Option, true>
+  );
+
+  return (
+    <div className="border border-white rounded" style={styles.container}>
+      <label>Who was here?</label>
+      <span style={styles.selectStyles}>
+        <CreateableSelect
+          isDisabled={!editing}
+          styles={{
+            option: (provided, state) => ({
+              ...provided,
+              backgroundColor: "lightgrey",
+            }),
+            control: (provided) => ({
+              ...provided,
+              backgroundColor: "transparent",
+            }),
+          }}
+          isMulti={true}
+          onChange={(newValue: OnChangeValue<Option, true>) =>
+            setSelection(newValue)
+          }
+          defaultValue={peopleInFile}
+          options={allPeople as unknown as undefined}
+        />
+      </span>
+
+      <button
+        className="btn btn-secondary"
+        onClick={() => {
+          setEditing(!editing);
+          onChange(selection);
+        }}
+      >
+        {editing && <i className="fa fa-check"></i>}
+        {!editing && <i className="fa fa-pencil"></i>}
+      </button>
+    </div>
+  );
 }
 
-export default connect(mapStateToProps, {
-  setParticipantsOnMediaFile,
-  createPerson,
-})(PartipantsComponent);
+export default PartipantsComponent;
