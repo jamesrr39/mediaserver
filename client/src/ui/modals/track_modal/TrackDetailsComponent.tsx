@@ -1,16 +1,17 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
-  getLapsFromRecords,
   DEFAULT_LAP_INTERVAL,
   FitTrack,
+  getLapsFromRecords,
   Record,
 } from "src/domain/FitTrack";
 import { useTrackRecords } from "src/hooks/trackRecordHooks";
 import SpeedChart from "../SpeedChart";
-import TimeDistanceToggle from "./TimeDistanceToggle";
+import TimeDistanceToggle, { Value } from "./TimeDistanceToggle";
 import TrackModalMap from "./TrackModalMap";
 import TrackModalTable from "./TrackModalTable";
 import TrackSliderComponent from "./TrackSliderComponent";
+import { Time } from "ts-util/src/Time";
 
 type Props = {
   trackSummary: FitTrack;
@@ -20,6 +21,23 @@ export default function TrackDetailsComponent(props: Props) {
   const { trackSummary } = props;
   const [highlightedRecord, setHighlightedRecord] = useState(
     undefined as undefined | Record
+  );
+
+  const initialTimeRange = {
+    lower: 0,
+    upper: trackSummary.getDuration().getSeconds(),
+  };
+
+  const [timeRange, setTimeRange] = useState(initialTimeRange);
+
+  const showingWholeTrack =
+    initialTimeRange.lower === timeRange.lower &&
+    initialTimeRange.upper === timeRange.upper;
+
+  const [timeDistanceToggle, setTimeDistanceToggle] = useState("time" as Value);
+  const onTimeDistanceToggleChange = useCallback(
+    (value: Value) => setTimeDistanceToggle(value),
+    []
   );
 
   const { data, isLoading, error } = useTrackRecords([trackSummary]);
@@ -34,49 +52,20 @@ export default function TrackDetailsComponent(props: Props) {
 
   const trackRecords = data.get(trackSummary.hashValue);
 
+  let trackRecordsInRange = trackRecords;
+  if (!showingWholeTrack) {
+    trackRecordsInRange = trackRecords.filter((record) => {
+      return (
+        record.timestamp.getTime() - trackSummary.startTime.getTime() >=
+          timeRange.lower * 1000 &&
+        record.timestamp.getTime() - trackSummary.startTime.getTime() <=
+          timeRange.upper * 1000
+      );
+    });
+  }
+
   return (
     <div className="container-fluid">
-      {/* <div className="row">
-        <div className="col-12">
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={(e) => {
-              alert("not implemented"); not implemented error
-              // if (this.state.trackExtractionPoints) {
-              //   this.setState((state) => ({
-              //     ...state,
-              //     trackExtractionPoints: undefined,
-              //   }));
-              //   return;
-              // }
-
-              // this.setState((state) => ({
-              //   ...state,
-              //   trackExtractionPoints: {},
-              // }));
-            }}
-          >
-            Extract section
-          </button>
-          {this.state.trackExtractionPoints && (
-            <>
-              <span>
-                {this.state.trackExtractionPoints.start
-                  ? this.state.trackExtractionPoints.start.toString()
-                  : "Please select the start point"}
-              </span>
-              {this.state.trackExtractionPoints.start && (
-                <span>
-                  {this.state.trackExtractionPoints.end
-                    ? this.state.trackExtractionPoints.end.toString()
-                    : "Please select the end point"}
-                </span>
-              )}
-            </>
-          )}
-        </div>
-      </div> */}
       <div className="row">
         <div className="col-12">
           <TrackModalMap
@@ -87,7 +76,14 @@ export default function TrackDetailsComponent(props: Props) {
       </div>
       <div className="row">
         <div className="col-12">
-          <TimeDistanceToggle onChange={() => alert("TODO: not implemented")} />
+          <TimeDistanceToggle onChange={onTimeDistanceToggleChange} />
+          {showingWholeTrack && <p>Showing whole track</p>}
+          {!showingWholeTrack && (
+            <p>
+              Showing from {new Time(timeRange.lower).toString()} to{" "}
+              {new Time(timeRange.upper).toString()}
+            </p>
+          )}
         </div>
       </div>
       <div className="row">
@@ -95,14 +91,14 @@ export default function TrackDetailsComponent(props: Props) {
           <TrackSliderComponent
             min={0}
             max={trackSummary.getDuration().getSeconds()}
-            onChange={() => alert("not implemented")}
+            onChange={(newValue) => setTimeRange(newValue)}
           />
         </div>
       </div>
       <div className="row">
         <div className="col-12">
           <SpeedChart
-            trackRecords={trackRecords}
+            trackRecords={trackRecordsInRange}
             onChartMouseOver={(idx) => setHighlightedRecord(trackRecords[idx])}
           />
         </div>

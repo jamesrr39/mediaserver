@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-type Value = "time" | "distance";
+export type Value = "time" | "distance";
 
 type Props = {
   onChange(value: Value): void;

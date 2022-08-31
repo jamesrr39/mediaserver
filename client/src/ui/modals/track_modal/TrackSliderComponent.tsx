@@ -37,10 +37,12 @@ const styles = {
   },
 };
 
+export type TimeRange = { lower: number; upper: number };
+
 type Props = {
   min: number;
   max: number;
-  onChange: (newValues: { lower: number; upper: number }) => void;
+  onChange: (newValues: TimeRange) => void;
 };
 
 export default function TrackSliderComponent(props: Props) {
