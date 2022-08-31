@@ -123,7 +123,6 @@ export default function MediaFileModal(props: Props) {
         }
       },
       goToNext: () => {
-        console.log("next", nextMediaFile);
         if (nextMediaFile) {
           window.location.hash = `#${baseUrl}/detail/${nextMediaFile.hashValue}`;
         }
@@ -133,7 +132,7 @@ export default function MediaFileModal(props: Props) {
     document.addEventListener("keyup", listenToKeyUp);
 
     return () => document.removeEventListener("keyup", listenToKeyUp);
-  }, [hash]);
+  }, [previousMediaFile, nextMediaFile]);
 
   if (mediaFile === null) {
     return <p>Image not found</p>;
