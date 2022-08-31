@@ -8,6 +8,12 @@ import {
 import { useDispatch } from "react-redux";
 import { useMutation, useQuery } from "react-query";
 
+const styles = {
+  loginWithExistingButton: {
+    minWidth: "300px",
+  },
+};
+
 function useLoginWithExistingUserMutation() {
   const dispatch = useDispatch();
 
@@ -100,20 +106,27 @@ function LoginScreen() {
     <div>
       <p>Select a user:</p>
 
-      <ul style={{ listStyle: "none" }}>
+      <div>
         {people.map((person, idx) => {
           return (
-            <li key={idx}>
-              <button
-                className="btn btn-primary"
-                onClick={() => loginWithExistingUserMutation.mutate(person.id)}
-              >
-                {person.name}
-              </button>
-            </li>
+            <div key={idx} className="row">
+              <div className="col-12">
+                <div className="p-2 d-flex justify-content-center">
+                  <button
+                    style={styles.loginWithExistingButton}
+                    className="btn btn-secondary"
+                    onClick={() =>
+                      loginWithExistingUserMutation.mutate(person.id)
+                    }
+                  >
+                    {person.name}
+                  </button>
+                </div>
+              </div>
+            </div>
           );
         })}
-      </ul>
+      </div>
     </div>
   );
 }

@@ -1,19 +1,16 @@
 import * as React from "react";
-import { Link } from "react-router-dom";
-import FileInfoComponent from "./FileInfoComponent";
-import { isNarrowScreen } from "../../util/screen_size";
 import { MediaFile } from "../../domain/MediaFile";
-import { MediaFileType } from "../../domain/MediaFileType";
+import { isNarrowScreen } from "../../util/screen_size";
 import FullScreenModal from "../FullScreenModal";
-import TrackModalContent from "./track_modal/TrackModalContent";
-import VideoModal from "./VideoModal";
-import PictureModal from "./PictureModal";
+import FileInfoComponent from "./FileInfoComponent";
 import ModalTopBar from "./ModalTopBar";
+import WideScreenModal from "./WideScreenModal";
 
+// https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_key_values
 const KeyCodes = {
-  ESCAPE: 27,
-  LEFT_ARROW: 37,
-  RIGHT_ARROW: 39,
+  ESCAPE: "Escape",
+  LEFT_ARROW: "ArrowLeft",
+  RIGHT_ARROW: "ArrowRight",
 };
 
 enum Subview {
@@ -31,18 +28,7 @@ const styles = {
   narrowScreenContentContainer: {
     width: "auto",
   },
-  navigationButton: {
-    color: "white",
-    textDecoration: "none",
-    fontSize: "2em",
-    width: "50px",
-    height: "50px",
-    lineHeight: "50px",
-    align: "center",
-    verticalAlign: "middle",
-    backgroundColor: "transparent",
-    borderStyle: "none",
-  },
+
   wideScreen: {
     contentContainer: {
       height: "100%",
@@ -56,16 +42,15 @@ const styles = {
       width: "400px",
     },
   },
-};
 
-const navButtonTextStyle = {
-  ...styles.navigationButton,
-  backgroundColor: "#666",
-  opacity: 0.8,
-  zIndex: 1000,
-  textAlign: "center" as "center",
-  top: "50%",
-  position: "absolute" as "absolute",
+  container: {
+    display: "flex",
+    width: "100%",
+    height: "100%",
+  },
+  containerChild: {
+    flexGrow: "1",
+  },
 };
 
 type Props = {
@@ -75,232 +60,120 @@ type Props = {
   subview?: Subview;
 };
 
-type ComponentState = {
-  showInfo: boolean;
+function getMediaFileAtIndex(mediaFiles: MediaFile[], index: number) {
+  if (index < 0 || index >= mediaFiles.length) {
+    return null;
+  }
+
+  return mediaFiles[index];
+}
+
+type NavigationFunc = () => void;
+
+type KeyUpCallbacks = {
+  goBack: NavigationFunc;
+  goToPrevious: NavigationFunc;
+  goToNext: NavigationFunc;
 };
 
-class MediaFileModal extends React.Component<Props, ComponentState> {
-  state = {
-    showInfo: false,
+function useListenToKeyUp({ goBack, goToPrevious, goToNext }: KeyUpCallbacks) {
+  return function (event: KeyboardEvent) {
+    switch (event.key) {
+      case KeyCodes.ESCAPE:
+        goBack();
+        return;
+      case KeyCodes.LEFT_ARROW:
+        goToPrevious();
+        return;
+      case KeyCodes.RIGHT_ARROW:
+        goToNext();
+        return;
+      default:
+        return;
+    }
   };
+}
 
-  private mediaFile: MediaFile | null = null;
-  private previousPictureMetadata: MediaFile | null = null;
-  private nextPictureMetadata: MediaFile | null = null;
+export default function MediaFileModal(props: Props) {
+  const { mediaFiles, baseUrl, hash } = props;
+  const [showInfo, setShowInfo] = React.useState(false);
 
-  componentDidMount() {
-    document.addEventListener("keyup", this.listenToKeyUp);
+  const mediaFileIdx = mediaFiles.findIndex(
+    (mediaFile) => mediaFile.hashValue === hash
+  );
+
+  if (mediaFileIdx === -1) {
+    return (
+      <div className="alert alert-danger">
+        No file found with this content hash
+      </div>
+    );
   }
 
-  componentWillUnmount() {
-    document.removeEventListener("keyup", this.listenToKeyUp);
+  const previousMediaFile = getMediaFileAtIndex(mediaFiles, mediaFileIdx - 1);
+  const mediaFile = getMediaFileAtIndex(mediaFiles, mediaFileIdx);
+  const nextMediaFile = getMediaFileAtIndex(mediaFiles, mediaFileIdx + 1);
+
+  React.useEffect(() => {
+    const listenToKeyUp = useListenToKeyUp({
+      goBack: () => (window.location.hash = `#${baseUrl}`),
+      goToPrevious: () => {
+        if (previousMediaFile) {
+          window.location.hash = `#${baseUrl}/detail/${previousMediaFile.hashValue}`;
+        }
+      },
+      goToNext: () => {
+        console.log("next", nextMediaFile);
+        if (nextMediaFile) {
+          window.location.hash = `#${baseUrl}/detail/${nextMediaFile.hashValue}`;
+        }
+      },
+    });
+
+    document.addEventListener("keyup", listenToKeyUp);
+
+    return () => document.removeEventListener("keyup", listenToKeyUp);
+  }, [hash]);
+
+  if (mediaFile === null) {
+    return <p>Image not found</p>;
   }
 
-  render() {
-    this.setPreviousNextData();
-    const { mediaFile } = this;
-    const { baseUrl } = this.props;
-
-    if (mediaFile === null) {
-      return <p>Image not found</p>;
-    }
-
-    const narrowScreen = isNarrowScreen();
-    if (this.state.showInfo && narrowScreen) {
-      const onCloseButtonClicked = () =>
-        this.setState((state) => ({ ...state, showInfo: false }));
-      return (
-        <FullScreenModal>
-          <FileInfoComponent
-            mediaFile={mediaFile}
-            onCloseButtonClicked={onCloseButtonClicked}
-          />
-        </FullScreenModal>
-      );
-    }
-
-    const topBarProps = {
-      mediaFile,
-      baseUrl,
-      onInfoButtonClicked: () =>
-        this.setState((state) => ({ ...state, showInfo: !state.showInfo })),
-    };
-
-    const s = {
-      display: "flex",
-      width: "100%",
-      height: "100%",
-    };
-
-    const childS = {
-      flex: "1",
-    };
-
+  const narrowScreen = isNarrowScreen();
+  if (showInfo && narrowScreen) {
     return (
       <FullScreenModal>
-        <div style={s}>
-          <div style={childS}>
-            <ModalTopBar {...topBarProps} />
-            {this.renderModalBody(mediaFile)}
-          </div>
-          {this.state.showInfo && (
-            <div style={styles.wideScreen.pictureInfoContainer}>
-              <FileInfoComponent mediaFile={mediaFile} />
-            </div>
-          )}
-        </div>
+        <FileInfoComponent
+          mediaFile={mediaFile}
+          onCloseButtonClicked={() => setShowInfo(!showInfo)}
+        />
       </FullScreenModal>
     );
   }
 
-  private renderModalBody = (mediaFile: MediaFile) => {
-    const narrowScreen = isNarrowScreen();
-    return narrowScreen
-      ? this.renderNarrowScreenModalBody(mediaFile)
-      : this.renderWideScreenModalBody(mediaFile);
-  };
-
-  private renderWideScreenModalBody = (mediaFile: MediaFile) => {
-    return (
-      <div style={styles.wideScreen.contentContainer}>
-        {this.renderMediaFile(mediaFile, false)}
-      </div>
-    );
-  };
-
-  private renderNarrowScreenModalBody = (mediaFile: MediaFile) => {
-    if (this.state.showInfo) {
-      return (
-        <div style={styles.narrowScreenPictureInfoContainer}>
-          <FileInfoComponent mediaFile={mediaFile} />
+  return (
+    <FullScreenModal>
+      <div style={styles.container}>
+        <div style={styles.containerChild}>
+          <ModalTopBar
+            mediaFile={mediaFile}
+            baseUrl={baseUrl}
+            onInfoButtonClicked={() => setShowInfo(!showInfo)}
+          />
+          <WideScreenModal
+            baseUrl={baseUrl}
+            showInfo={showInfo}
+            mediaFile={mediaFile}
+            previousMediaFile={previousMediaFile}
+            nextMediaFile={nextMediaFile}
+          />
         </div>
-      );
-    }
-    return this.renderMediaFile(mediaFile, true);
-  };
-
-  private renderMediaFile = (mediaFile: MediaFile, narrowScreen: boolean) => {
-    const previousLink = this.renderPreviousLink();
-    const nextLink = this.renderNextLink();
-
-    return (
-      <>
-        {previousLink}
-        {this.renderMediaFileContent(mediaFile)}
-        {nextLink}
-      </>
-    );
-  };
-
-  private renderMediaFileContent = (mediaFile: MediaFile) => {
-    const { showInfo } = this.state;
-
-    switch (mediaFile.fileType) {
-      case MediaFileType.Picture: {
-        return <PictureModal pictureMetadata={mediaFile} showInfo={showInfo} />;
-      }
-      case MediaFileType.Video:
-        return <VideoModal {...{ mediaFile }} />;
-      case MediaFileType.FitTrack: {
-        const props = {
-          trackSummary: mediaFile,
-          ts: Date.now(),
-        };
-        return <TrackModalContent {...props} />;
-      }
-      default:
-        return <p>Unknown format</p>;
-    }
-  };
-
-  private renderPreviousLink = () => {
-    const style = {
-      ...navButtonTextStyle,
-      left: "0px",
-    };
-
-    return this.previousPictureMetadata ? (
-      <Link
-        to={`${this.props.baseUrl}/detail/${this.previousPictureMetadata.hashValue}`}
-        style={style}
-        aria-label="previous"
-      >
-        &larr;
-      </Link>
-    ) : null;
-  };
-
-  private renderNextLink = () => {
-    const style = {
-      ...navButtonTextStyle,
-      right: "0px",
-    };
-
-    return this.nextPictureMetadata ? (
-      <Link
-        to={`${this.props.baseUrl}/detail/${this.nextPictureMetadata.hashValue}`}
-        style={style}
-        aria-label="next"
-      >
-        &rarr;
-      </Link>
-    ) : null;
-  };
-
-  private goBack = () => {
-    window.location.hash = `#${this.props.baseUrl}`;
-  };
-
-  private goToPrevious = () => {
-    if (this.previousPictureMetadata !== null) {
-      window.location.hash = `#${this.props.baseUrl}/detail/${this.previousPictureMetadata.hashValue}`;
-    }
-  };
-
-  private goToNext = () => {
-    if (this.nextPictureMetadata !== null) {
-      window.location.hash = `#${this.props.baseUrl}/detail/${this.nextPictureMetadata.hashValue}`;
-    }
-  };
-
-  private listenToKeyUp = (event: KeyboardEvent) => {
-    switch (event.keyCode) {
-      case KeyCodes.ESCAPE:
-        this.goBack();
-        return;
-      case KeyCodes.LEFT_ARROW:
-        this.goToPrevious();
-        return;
-      case KeyCodes.RIGHT_ARROW:
-        this.goToNext();
-        return;
-      default:
-        return;
-    }
-  };
-
-  private setPreviousNextData() {
-    const { mediaFiles: mediaFiles, hash } = this.props;
-    let i;
-
-    for (i = 0; i < mediaFiles.length; i++) {
-      if (mediaFiles[i].hashValue === hash) {
-        if (i !== 0) {
-          this.previousPictureMetadata = mediaFiles[i - 1];
-        } else {
-          this.previousPictureMetadata = null;
-        }
-        this.mediaFile = mediaFiles[i];
-        if (i !== mediaFiles.length - 1) {
-          this.nextPictureMetadata = mediaFiles[i + 1];
-        } else {
-          this.nextPictureMetadata = null;
-        }
-
-        break;
-      }
-    }
-  }
+        {showInfo && (
+          <div style={styles.wideScreen.pictureInfoContainer}>
+            <FileInfoComponent mediaFile={mediaFile} />
+          </div>
+        )}
+      </div>
+    </FullScreenModal>
+  );
 }
-
-export default MediaFileModal;

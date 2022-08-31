@@ -69,8 +69,8 @@ class PictureModal extends React.Component<Props> {
 
     const idealHeight = divContainerEl.clientHeight;
     const infoContainerWidth = this.props.showInfo ? INFO_CONTAINER_WIDTH : 0;
-    const idealWidth = divContainerEl.clientWidth - infoContainerWidth;
-
+    const idealWidth = divContainerEl.clientWidth; // - infoContainerWidth;
+    console.log("idealWidth", idealWidth);
     const aspectRatio =
       pictureMetadata.rawSize.width / pictureMetadata.rawSize.height;
 
