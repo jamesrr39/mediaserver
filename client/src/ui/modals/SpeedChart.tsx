@@ -1,27 +1,32 @@
-import * as React from "react";
 import {
-  LineChart,
-  Line,
+  Area,
+  AreaChart,
   CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  Tooltip,
-  Legend,
 } from "recharts";
-import { Record, getSpeedsFromRecords } from "../../domain/FitTrack";
+import { Time } from "ts-util/src/Time";
+import { FitTrack, getSpeedsFromRecords, Record } from "../../domain/FitTrack";
 
 type Props = {
+  trackSummary: FitTrack;
   trackRecords: Record[];
   onChartMouseOver: (index: number) => void;
 };
 
 // https://recharts.org/en-US/examples/HighlightAndZoomLineChart
 export default function SpeedChart(props: Props) {
-  const { trackRecords, onChartMouseOver } = props;
+  const { trackSummary, trackRecords, onChartMouseOver } = props;
 
   const minimumIntervalSeconds = 20;
 
-  const speeds = getSpeedsFromRecords(trackRecords, minimumIntervalSeconds);
+  const speeds = getSpeedsFromRecords(
+    trackSummary,
+    trackRecords,
+    minimumIntervalSeconds
+  );
   if (speeds.length === 0) {
     return;
   }
@@ -56,17 +61,15 @@ export default function SpeedChart(props: Props) {
     let pace = ((1 / speedMetresPerSecond) * 1000) / 60;
 
     return {
-      name: middleTimeThroughSeconds + "min",
+      name: new Time(middleTimeThroughSeconds).toString(),
       time: middleTimeThroughSeconds,
       pace: parseFloat(pace.toFixed(2)),
     };
   });
 
   return (
-    <>
-      <LineChart
-        width={600}
-        height={300}
+    <ResponsiveContainer width="100%" height={400}>
+      <AreaChart
         data={chartData}
         onMouseMove={(event) => {
           const { activeTooltipIndex } = event;
@@ -75,17 +78,12 @@ export default function SpeedChart(props: Props) {
           }
         }}
       >
-        <Line type="monotone" dataKey="pace" stroke="#8884d8" />
+        <XAxis dataKey="name" />
+        <YAxis label={"min/km"} />
         <CartesianGrid stroke="#ccc" />
-        <XAxis
-          type="number"
-          dataKey="time"
-          tickFormatter={(value) => `${(value / 60).toFixed(2)}min`}
-        />
-        <YAxis type="number" dataKey="pace" />
+        <Area type="monotone" dataKey="pace" stroke="#8884d8" fill="#8884d8" />
         <Tooltip />
-        <Legend />
-      </LineChart>
-    </>
+      </AreaChart>
+    </ResponsiveContainer>
   );
 }

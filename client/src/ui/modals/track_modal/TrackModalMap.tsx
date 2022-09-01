@@ -1,18 +1,20 @@
-import { LatLng } from "leaflet";
 import { FitTrack, Record } from "src/domain/FitTrack";
-import MapComponent from "src/ui/MapComponent";
+import MapComponent, { MapMarker } from "src/ui/MapComponent";
+
+export type SelectedSection = {
+  lower: Record;
+  upper: Record;
+};
 
 type Props = {
   trackRecords: Record[];
   trackSummary: FitTrack;
-  selectedSections?: {
-    lower: Record;
-    upper: Record;
-  };
+  highlightedRecord: Record;
+  selectedSection?: SelectedSection;
 };
 
 export default function TrackModalMap(props: Props) {
-  const { trackSummary, trackRecords, selectedSections } = props;
+  const { trackSummary, trackRecords, selectedSection } = props;
 
   const size = {
     width: "100%",
@@ -29,19 +31,19 @@ export default function TrackModalMap(props: Props) {
     },
   ];
 
-  let markers = undefined;
-  if (selectedSections) {
+  let markers = undefined as undefined | MapMarker[];
+  if (selectedSection) {
     markers = [
       {
         location: {
-          lat: selectedSections.lower.posLat,
-          lon: selectedSections.lower.posLong,
+          lat: selectedSection.lower.posLat,
+          lon: selectedSection.lower.posLong,
         },
       },
       {
         location: {
-          lat: selectedSections.upper.posLat,
-          lon: selectedSections.upper.posLong,
+          lat: selectedSection.upper.posLat,
+          lon: selectedSection.upper.posLong,
         },
       },
     ];

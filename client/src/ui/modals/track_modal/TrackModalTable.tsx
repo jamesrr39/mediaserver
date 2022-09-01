@@ -1,6 +1,10 @@
 import { Duration } from "src/domain/duration";
 import { FitTrack, Lap } from "src/domain/FitTrack";
 
+const styles = {
+  table: { color: "whitesmoke" },
+};
+
 type Props = { laps: Lap[]; trackSummary: FitTrack };
 
 export default function TrackModalTable(props: Props) {
@@ -16,7 +20,7 @@ export default function TrackModalTable(props: Props) {
   const duration = new Duration(trackSummary.startTime, trackSummary.endTime);
 
   return (
-    <table>
+    <table className="table" style={styles.table}>
       <thead>
         <tr>
           <th>Lap</th>

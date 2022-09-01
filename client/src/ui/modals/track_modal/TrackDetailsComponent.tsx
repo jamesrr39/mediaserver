@@ -8,7 +8,7 @@ import {
 import { useTrackRecords } from "src/hooks/trackRecordHooks";
 import SpeedChart from "../SpeedChart";
 import TimeDistanceToggle, { Value } from "./TimeDistanceToggle";
-import TrackModalMap from "./TrackModalMap";
+import TrackModalMap, { SelectedSection } from "./TrackModalMap";
 import TrackModalTable from "./TrackModalTable";
 import TrackSliderComponent from "./TrackSliderComponent";
 import { Time } from "ts-util/src/Time";
@@ -64,6 +64,17 @@ export default function TrackDetailsComponent(props: Props) {
     });
   }
 
+  let selectedSection = undefined as SelectedSection | undefined;
+  if (!showingWholeTrack) {
+    if (trackRecordsInRange.length !== 0) {
+      // prevent crashing on 0 records selected
+      selectedSection = {
+        lower: trackRecordsInRange[0],
+        upper: trackRecordsInRange[trackRecordsInRange.length - 1],
+      };
+    }
+  }
+
   return (
     <div className="container-fluid">
       <div className="row">
@@ -71,6 +82,8 @@ export default function TrackDetailsComponent(props: Props) {
           <TrackModalMap
             trackRecords={trackRecords}
             trackSummary={trackSummary}
+            highlightedRecord={highlightedRecord}
+            selectedSection={selectedSection}
           />
         </div>
       </div>
@@ -98,6 +111,7 @@ export default function TrackDetailsComponent(props: Props) {
       <div className="row">
         <div className="col-12">
           <SpeedChart
+            trackSummary={trackSummary}
             trackRecords={trackRecordsInRange}
             onChartMouseOver={(idx) => setHighlightedRecord(trackRecords[idx])}
           />

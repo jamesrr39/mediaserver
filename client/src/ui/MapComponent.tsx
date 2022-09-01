@@ -248,10 +248,9 @@ class MapComponent extends React.Component<Props> {
         polyLine.on("popupopen", (e: Leaflet.PopupEvent) => {
           const popup = e.popup;
           popup.setContent(
-            "Coordinates: " +
-              popup.getLatLng().lng +
-              " / " +
-              popup.getLatLng().lat
+            `Coordinates: ${popup.getLatLng().lat.toFixed(4)}N, ${popup
+              .getLatLng()
+              .lng.toFixed(4)}E`
           );
 
           this.props.onClickPoint && this.props.onClickPoint(popup.getLatLng());

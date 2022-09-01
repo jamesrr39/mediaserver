@@ -1,7 +1,7 @@
-import { MediaFileType } from "./MediaFileType";
-import { Duration } from "./duration";
 import { AbstractMediaFile } from "./AbstractMediaFile";
+import { Duration } from "./duration";
 import { SuggestedLocation } from "./Location";
+import { MediaFileType } from "./MediaFileType";
 
 /*
 Fit file summary
@@ -75,13 +75,16 @@ export type Lap = {
 
 export const DEFAULT_LAP_INTERVAL = 1000;
 
-export function getLapsFromRecords(records: Record[], interval: number) {
+export function getLapsFromRecords(
+  records: Record[],
+  distanceInterval: number
+) {
   if (records.length === 0) {
     return [];
   }
 
   const laps: Lap[] = [];
-  let nextInterval = interval;
+  let nextInterval = distanceInterval;
   let timestampOfLastInterval = records[0].timestamp;
   let lastIntervalDistance = 0;
 
@@ -101,7 +104,7 @@ export function getLapsFromRecords(records: Record[], interval: number) {
       ),
       distance: record.distance - lastIntervalDistance,
     });
-    nextInterval += interval;
+    nextInterval += distanceInterval;
     timestampOfLastInterval = record.timestamp;
     lastIntervalDistance = record.distance;
   }
@@ -118,6 +121,7 @@ type SpeedWithTime = {
 };
 
 export function getSpeedsFromRecords(
+  trackSummary: FitTrack,
   records: Record[],
   intervalDistanceSeconds: number
 ) {
@@ -126,40 +130,39 @@ export function getSpeedsFromRecords(
   }
 
   const speeds: SpeedWithTime[] = [];
-  let lastRecord = records[0];
-  const firstRecordTime = lastRecord.timestamp;
+  let prevRecord = records[0];
+  const firstRecordTime = trackSummary.startTime;
 
-  records.slice(1).forEach((record, index) => {
+  records.forEach((record, index) => {
     const timeSinceLastIntervalSeconds =
-      (record.timestamp.getTime() - lastRecord.timestamp.getTime()) / 1000;
+      (record.timestamp.getTime() - prevRecord.timestamp.getTime()) / 1000;
     const isLastRecord = index === records.length - 1;
     if (
-      timeSinceLastIntervalSeconds >= intervalDistanceSeconds ||
-      isLastRecord
+      timeSinceLastIntervalSeconds < intervalDistanceSeconds &&
+      !isLastRecord
     ) {
-      const distanceTravelledMetres = record.distance - lastRecord.distance;
-      const speedMetresPerSecond =
-        distanceTravelledMetres / timeSinceLastIntervalSeconds;
-      const startTimeThroughSeconds =
-        (lastRecord.timestamp.getTime() - firstRecordTime.getTime()) / 1000;
-      const endTimeThroughSeconds =
-        (record.timestamp.getTime() - firstRecordTime.getTime()) / 1000;
-
-      speeds.push({
-        speedMetresPerSecond,
-        startTimeThroughSeconds,
-        endTimeThroughSeconds,
-        startDistanceMetres: record.distance,
-        endDistanceMetres: lastRecord.distance,
-      });
-      lastRecord = record;
+      // haven't reached the next interval, or it's not the last interval. Keep going.
+      return;
     }
+
+    // we have reached the next interval
+    const distanceTravelledMetres = record.distance - prevRecord.distance;
+    const speedMetresPerSecond =
+      distanceTravelledMetres / timeSinceLastIntervalSeconds;
+    const startTimeThroughSeconds =
+      (prevRecord.timestamp.getTime() - firstRecordTime.getTime()) / 1000;
+    const endTimeThroughSeconds =
+      (record.timestamp.getTime() - firstRecordTime.getTime()) / 1000;
+
+    speeds.push({
+      speedMetresPerSecond,
+      startTimeThroughSeconds,
+      endTimeThroughSeconds,
+      startDistanceMetres: record.distance,
+      endDistanceMetres: prevRecord.distance,
+    });
+    prevRecord = record;
   });
 
   return speeds;
 }
-
-export type TrackDetail = {
-  hash: string;
-  records: Record[];
-};
