@@ -1,5 +1,5 @@
 import { FitTrack, Record } from "src/domain/FitTrack";
-import MapComponent, { MapMarker, SelectedSection } from "src/ui/MapComponent";
+import MapComponent, { SelectedSection } from "src/ui/MapComponent";
 
 type Props = {
   trackRecords: Record[];

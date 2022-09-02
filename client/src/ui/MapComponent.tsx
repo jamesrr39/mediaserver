@@ -46,7 +46,8 @@ const FinishIcon = Leaflet.Icon.extend({
 function addTrackToMap(
   track: TrackMapData,
   trackIndex: number,
-  map: Leaflet.Map
+  map: Leaflet.Map,
+  onClickPoint: (point: Leaflet.LatLng) => void
 ) {
   const { selectedSection } = track;
 
@@ -98,7 +99,7 @@ function addTrackToMap(
     const beforePolyLine = createPolyLine(
       beforePoints,
       backgroundColor,
-      this.props.onClickPoint
+      onClickPoint
     );
     beforePolyLine.addTo(map);
   }
@@ -107,7 +108,7 @@ function addTrackToMap(
     const afterPolyLine = createPolyLine(
       afterPoints,
       backgroundColor,
-      this.props.onClickPoint
+      onClickPoint
     );
     afterPolyLine.addTo(map);
   }
@@ -115,11 +116,7 @@ function addTrackToMap(
   // main line
   const mainColor = generateColorFromIndex(trackIndex);
 
-  const mainLine = createPolyLine(
-    selectedPoints,
-    mainColor,
-    this.props.onClickPoint
-  );
+  const mainLine = createPolyLine(selectedPoints, mainColor, onClickPoint);
   mainLine.addTo(map);
 
   const firstRecord = track.points[0];
@@ -192,10 +189,14 @@ function createPolyLine(
 
   polyLine.on("popupopen", (e: Leaflet.PopupEvent) => {
     const popup = e.popup;
+    const { lat, lng } = popup.getLatLng();
+    const latFixedDec = lat.toFixed(4);
+    const lngFixDec = lng.toFixed(4);
+    const latDescriptor = lat >= 0 ? "N" : "S";
+    const lngDescriptor = lng >= 0 ? "E" : "W";
+
     popup.setContent(
-      `Coordinates: ${popup.getLatLng().lat.toFixed(4)}N, ${popup
-        .getLatLng()
-        .lng.toFixed(4)}E`
+      `Coordinates: ${latFixedDec}${latDescriptor}, ${lngFixDec}${lngDescriptor}`
     );
 
     onClickPoint && onClickPoint(popup.getLatLng());
@@ -338,7 +339,7 @@ class MapComponent extends React.Component<Props> {
 
     console.log("renderMap", element);
 
-    const { extraLatLongMapPadding, zoomControl } = this.props;
+    const { extraLatLongMapPadding, zoomControl, onClickPoint } = this.props;
 
     if (this.map) {
       this.map.remove();
@@ -375,9 +376,9 @@ class MapComponent extends React.Component<Props> {
     map.addLayer(osm);
 
     if (tracks) {
-      tracks.forEach((track, index) => {
-        addTrackToMap(track, index, map);
-      });
+      tracks.forEach((track, index) =>
+        addTrackToMap(track, index, map, onClickPoint)
+      );
     }
 
     if (markers) {

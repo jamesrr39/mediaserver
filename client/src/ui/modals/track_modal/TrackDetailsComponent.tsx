@@ -58,7 +58,7 @@ export default function TrackDetailsComponent(props: Props) {
   if (!showingWholeTrack) {
     let startIdx: undefined | number = undefined;
     let endIdx: undefined | number = undefined;
-    const trackRecordsInRange = [];
+    trackRecordsInRange = [];
     trackRecords.forEach((record, recordIdx) => {
       const isFilteredIn =
         record.timestamp.getTime() - trackSummary.startTime.getTime() >=
