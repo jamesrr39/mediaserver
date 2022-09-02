@@ -8,10 +8,11 @@ import {
 import { useTrackRecords } from "src/hooks/trackRecordHooks";
 import SpeedChart from "../SpeedChart";
 import TimeDistanceToggle, { Value } from "./TimeDistanceToggle";
-import TrackModalMap, { SelectedSection } from "./TrackModalMap";
+import TrackModalMap from "./TrackModalMap";
 import TrackModalTable from "./TrackModalTable";
 import TrackSliderComponent from "./TrackSliderComponent";
 import { Time } from "ts-util/src/Time";
+import { SelectedSection } from "src/ui/MapComponent";
 
 type Props = {
   trackSummary: FitTrack;
@@ -53,24 +54,39 @@ export default function TrackDetailsComponent(props: Props) {
   const trackRecords = data.get(trackSummary.hashValue);
 
   let trackRecordsInRange = trackRecords;
+  let selectedSection = undefined as SelectedSection | undefined;
   if (!showingWholeTrack) {
-    trackRecordsInRange = trackRecords.filter((record) => {
-      return (
+    let startIdx: undefined | number = undefined;
+    let endIdx: undefined | number = undefined;
+    const trackRecordsInRange = [];
+    trackRecords.forEach((record, recordIdx) => {
+      const isFilteredIn =
         record.timestamp.getTime() - trackSummary.startTime.getTime() >=
           timeRange.lower * 1000 &&
         record.timestamp.getTime() - trackSummary.startTime.getTime() <=
-          timeRange.upper * 1000
-      );
-    });
-  }
+          timeRange.upper * 1000;
 
-  let selectedSection = undefined as SelectedSection | undefined;
-  if (!showingWholeTrack) {
+      if (!isFilteredIn) {
+        return;
+      }
+
+      trackRecordsInRange.push(record);
+
+      // Check startIdx specifically against undefined.
+      // Just checking truthy would mean that startIdx = 0, which is valid, is evaluated as "false"
+      if (startIdx === undefined) {
+        startIdx = recordIdx;
+      }
+
+      // continually overwrite endIdx as long as the record is filtered in
+      endIdx = recordIdx;
+    });
+
     if (trackRecordsInRange.length !== 0) {
       // prevent crashing on 0 records selected
       selectedSection = {
-        lower: trackRecordsInRange[0],
-        upper: trackRecordsInRange[trackRecordsInRange.length - 1],
+        startIdx,
+        endIdx,
       };
     }
   }

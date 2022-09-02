@@ -1,10 +1,5 @@
 import { FitTrack, Record } from "src/domain/FitTrack";
-import MapComponent, { MapMarker } from "src/ui/MapComponent";
-
-export type SelectedSection = {
-  lower: Record;
-  upper: Record;
-};
+import MapComponent, { MapMarker, SelectedSection } from "src/ui/MapComponent";
 
 type Props = {
   trackRecords: Record[];
@@ -15,6 +10,7 @@ type Props = {
 
 export default function TrackModalMap(props: Props) {
   const { trackSummary, trackRecords, selectedSection } = props;
+  const { activityBounds } = trackSummary;
 
   const size = {
     width: "100%",
@@ -23,31 +19,15 @@ export default function TrackModalMap(props: Props) {
   const tracks = [
     {
       trackSummary,
-      points: trackRecords.map((record) => ({
+      points: trackRecords.map((record, idx) => ({
         lat: record.posLat,
         lon: record.posLong,
+        idx,
       })),
-      activityBounds: trackSummary.activityBounds,
+      activityBounds,
+      selectedSection,
     },
   ];
-
-  let markers = undefined as undefined | MapMarker[];
-  if (selectedSection) {
-    markers = [
-      {
-        location: {
-          lat: selectedSection.lower.posLat,
-          lon: selectedSection.lower.posLong,
-        },
-      },
-      {
-        location: {
-          lat: selectedSection.upper.posLat,
-          lon: selectedSection.upper.posLong,
-        },
-      },
-    ];
-  }
 
   return (
     <MapComponent
@@ -55,7 +35,6 @@ export default function TrackModalMap(props: Props) {
       tracks={tracks}
       zoomControl={true}
       onClickPoint={(latLng) => console.log("latLng clicked: ", latLng)}
-      markers={markers}
     />
   );
 }

@@ -43,6 +43,167 @@ const FinishIcon = Leaflet.Icon.extend({
   },
 });
 
+function addTrackToMap(
+  track: TrackMapData,
+  trackIndex: number,
+  map: Leaflet.Map
+) {
+  const { selectedSection } = track;
+
+  if (track.points.length === 0) {
+    // track with 0 points cannot be plotted, and will also crash later on when we try to access the last element of the track points array
+    return;
+  }
+
+  const beforePoints: Leaflet.LatLng[] = [];
+  const selectedPoints: Leaflet.LatLng[] = [];
+  const afterPoints: Leaflet.LatLng[] = [];
+
+  track.points.forEach((point, recordIdx) => {
+    const latLng = new Leaflet.LatLng(point.lat, point.lon);
+
+    if (!selectedSection) {
+      selectedPoints.push(latLng);
+      return;
+    }
+
+    if (recordIdx < selectedSection.startIdx) {
+      beforePoints.push(latLng);
+      return;
+    }
+
+    if (recordIdx === selectedSection.startIdx) {
+      beforePoints.push(latLng);
+      selectedPoints.push(latLng);
+      return;
+    }
+
+    if (recordIdx > selectedSection.endIdx) {
+      afterPoints.push(latLng);
+      return;
+    }
+
+    if (recordIdx === selectedSection.endIdx) {
+      afterPoints.push(latLng);
+      selectedPoints.push(latLng);
+      return;
+    }
+
+    selectedPoints.push(latLng);
+  });
+
+  // background lines
+  const backgroundColor = "#aaa";
+  if (beforePoints.length > 0) {
+    const beforePolyLine = createPolyLine(
+      beforePoints,
+      backgroundColor,
+      this.props.onClickPoint
+    );
+    beforePolyLine.addTo(map);
+  }
+
+  if (afterPoints.length > 0) {
+    const afterPolyLine = createPolyLine(
+      afterPoints,
+      backgroundColor,
+      this.props.onClickPoint
+    );
+    afterPolyLine.addTo(map);
+  }
+
+  // main line
+  const mainColor = generateColorFromIndex(trackIndex);
+
+  const mainLine = createPolyLine(
+    selectedPoints,
+    mainColor,
+    this.props.onClickPoint
+  );
+  mainLine.addTo(map);
+
+  const firstRecord = track.points[0];
+  const lastRecord = track.points[track.points.length - 1];
+  const startMarker = Leaflet.marker(
+    new Leaflet.LatLng(firstRecord.lat, firstRecord.lon),
+    {
+      icon: new StartIcon(),
+    }
+  );
+  startMarker.addTo(map);
+
+  const finishMarker = Leaflet.marker(
+    new Leaflet.LatLng(lastRecord.lat, lastRecord.lon),
+    {
+      icon: new FinishIcon(),
+    }
+  );
+  finishMarker.addTo(map);
+
+  if (track.openTrackUrl) {
+    const link = joinUrlFragments([
+      "#",
+      track.openTrackUrl,
+      encodeURIComponent(track.trackSummary.hashValue),
+    ]);
+
+    startMarker.bindPopup(`<a href='${link}'>Track</a>`);
+    startMarker.addEventListener("click", (event) => {
+      startMarker.openPopup();
+    });
+
+    finishMarker.bindPopup(`<a href='${link}'>Track</a>`);
+    finishMarker.addEventListener("click", (event) => {
+      finishMarker.openPopup();
+    });
+  }
+}
+
+function createPolyLine(
+  points: Leaflet.LatLng[],
+  color: string,
+  onClickPoint: (point: Leaflet.LatLng) => void
+) {
+  const polyLine = Leaflet.polyline(points, {
+    color,
+  });
+  polyLine.on("mouseover", function (e) {
+    var layer = e.target;
+
+    layer.setStyle({
+      color: "blue",
+      opacity: 1,
+      weight: 5,
+    });
+  });
+  polyLine.on("mouseout", function (e) {
+    var layer = e.target;
+
+    layer.setStyle({
+      color: "black",
+      opacity: 1,
+      weight: 5,
+    });
+  });
+
+  polyLine.bindPopup("", {
+    closeButton: false, // https://github.com/Leaflet/Leaflet/issues/1200
+  });
+
+  polyLine.on("popupopen", (e: Leaflet.PopupEvent) => {
+    const popup = e.popup;
+    popup.setContent(
+      `Coordinates: ${popup.getLatLng().lat.toFixed(4)}N, ${popup
+        .getLatLng()
+        .lng.toFixed(4)}E`
+    );
+
+    onClickPoint && onClickPoint(popup.getLatLng());
+  });
+
+  return polyLine;
+}
+
 function generateColorFromIndex(index: number): string {
   let color = (index * 16).toString(16);
   const paddingFieldsCount = 6 - color.length;
@@ -119,11 +280,17 @@ export type MapMarker = {
   popupData?: PopupData;
 };
 
+export type SelectedSection = {
+  startIdx: number;
+  endIdx: number;
+};
+
 export type TrackMapData = {
   trackSummary: FitTrack;
-  points: MapLocation[];
+  points: ({ idx: number } & MapLocation)[];
   activityBounds: ActivityBounds;
   openTrackUrl?: string; // ex: #/gallery/detail
+  selectedSection?: SelectedSection;
 };
 
 type Props = {
@@ -209,82 +376,7 @@ class MapComponent extends React.Component<Props> {
 
     if (tracks) {
       tracks.forEach((track, index) => {
-        if (track.points.length === 0) {
-          return;
-        }
-
-        const points = track.points.map((point) => {
-          return new Leaflet.LatLng(point.lat, point.lon);
-        });
-
-        const color = generateColorFromIndex(index);
-
-        const polyLine = Leaflet.polyline(points, {
-          color,
-        });
-        polyLine.on("mouseover", function (e) {
-          var layer = e.target;
-
-          layer.setStyle({
-            color: "blue",
-            opacity: 1,
-            weight: 5,
-          });
-        });
-        polyLine.on("mouseout", function (e) {
-          var layer = e.target;
-
-          layer.setStyle({
-            color: "black",
-            opacity: 1,
-            weight: 5,
-          });
-        });
-
-        polyLine.bindPopup("", {
-          closeButton: false, // https://github.com/Leaflet/Leaflet/issues/1200
-        });
-
-        polyLine.on("popupopen", (e: Leaflet.PopupEvent) => {
-          const popup = e.popup;
-          popup.setContent(
-            `Coordinates: ${popup.getLatLng().lat.toFixed(4)}N, ${popup
-              .getLatLng()
-              .lng.toFixed(4)}E`
-          );
-
-          this.props.onClickPoint && this.props.onClickPoint(popup.getLatLng());
-        });
-
-        polyLine.addTo(map);
-
-        const startMarker = Leaflet.marker(points[0], {
-          icon: new StartIcon(),
-        });
-        startMarker.addTo(map);
-
-        const finishMarker = Leaflet.marker(points[points.length - 1], {
-          icon: new FinishIcon(),
-        });
-        finishMarker.addTo(map);
-
-        if (track.openTrackUrl) {
-          const link = joinUrlFragments([
-            "#",
-            track.openTrackUrl,
-            encodeURIComponent(track.trackSummary.hashValue),
-          ]);
-
-          startMarker.bindPopup(`<a href='${link}'>Track</a>`);
-          startMarker.addEventListener("click", (event) => {
-            startMarker.openPopup();
-          });
-
-          finishMarker.bindPopup(`<a href='${link}'>Track</a>`);
-          finishMarker.addEventListener("click", (event) => {
-            finishMarker.openPopup();
-          });
-        }
+        addTrackToMap(track, index, map);
       });
     }
 
