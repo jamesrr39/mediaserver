@@ -129,32 +129,26 @@ func (ms *MediaFilesService) serveFileUpload(w http.ResponseWriter, r *http.Requ
 
 	ms.profiler.Mark(profileRun, "start creating or getting file on disk")
 
-	mediaFileInfo, err := ms.mediaServerDAL.CreateOrGetExisting(ms.logger, tx, file, fileHeader.Filename, contentType, profileRun)
+	mediaFile, err := ms.mediaServerDAL.Create(ms.logger, tx, file, fileHeader.Filename, contentType, profileRun)
 	if nil != err {
 		switch errorsx.Cause(err) {
 		case dal.ErrIllegalPathTraversingUp:
-			errorsx.HTTPError(w, ms.logger, err, 400)
+			errorsx.HTTPJSONError(w, ms.logger, err, http.StatusBadRequest)
 		case dal.ErrContentTypeNotSupported:
-			errorsx.HTTPError(w, ms.logger, err, 400)
+			errorsx.HTTPJSONError(w, ms.logger, err, http.StatusBadRequest)
+		case dal.ErrFileWithHashAlreadyExists:
+			errorsx.HTTPJSONError(w, ms.logger, err, http.StatusConflict)
 		default:
-			errorsx.HTTPError(w, ms.logger, err, 500)
+			errorsx.HTTPJSONError(w, ms.logger, err, http.StatusInternalServerError)
 		}
 		return
 	}
 
 	ms.profiler.Mark(profileRun, "finish creating or getting file on disk")
 
-	// queue jobs
-	ms.jobRunner.QueueJob(
-		mediaserverjobs.NewFileProcessorJob(mediaFileInfo, file, ms.mediaServerDAL, contentType, ms.profiler, profileRun, ms.dbConn),
-		func() {
-			ms.onSuccessfulFileProcess(mediaFileInfo, profileRun)
-		},
-	)
-
 	successfullyUploaded = true
 
-	render.JSON(w, r, mediaFileInfo)
+	render.JSON(w, r, mediaFile)
 	return
 }
 

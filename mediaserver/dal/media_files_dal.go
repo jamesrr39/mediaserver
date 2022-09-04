@@ -189,7 +189,7 @@ func (dal *MediaFilesDAL) UpdatePicturesCache(tx *sql.Tx) errorsx.Error {
 
 		sema.Add()
 		go func() {
-			mediaFile, err := dal.processFile(dal.fs, tx, path, fileInfo)
+			mediaFile, err := dal.ProcessFile(dal.fs, tx, path, fileInfo)
 			if err != nil {
 				// mark as done
 				defer sema.Done()
@@ -267,7 +267,7 @@ func (dal *MediaFilesDAL) Update(tx *sql.Tx, mediaFile domain.MediaFile, propert
 	return nil
 }
 
-func (dal *MediaFilesDAL) processFile(fs gofs.Fs, tx *sql.Tx, path string, fileInfo os.FileInfo) (domain.MediaFile, error) {
+func (dal *MediaFilesDAL) ProcessFile(fs gofs.Fs, tx *sql.Tx, path string, fileInfo os.FileInfo) (domain.MediaFile, error) {
 	var mediaFile domain.MediaFile
 	var err error
 

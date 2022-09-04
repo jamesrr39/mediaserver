@@ -16,16 +16,15 @@ type FileProcessorJob struct {
 	mediaFileInfo domain.MediaFileInfo
 	file          io.ReadSeeker
 	dal           *dal.MediaServerDAL
-	contentType   string
 	profiler      *profile.Profiler
 	profileRun    *profile.Run
 	dbConn        *mediaserverdb.DBConn
 }
 
-func NewFileProcessorJob(mediaFileInfo domain.MediaFileInfo, file io.ReadSeeker, dal *dal.MediaServerDAL, contentType string,
+func NewFileProcessorJob(mediaFileInfo domain.MediaFileInfo, file io.ReadSeeker, dal *dal.MediaServerDAL,
 	profiler *profile.Profiler, profileRun *profile.Run,
 	dbConn *mediaserverdb.DBConn) *FileProcessorJob {
-	return &FileProcessorJob{mediaFileInfo, file, dal, contentType, profiler, profileRun, dbConn}
+	return &FileProcessorJob{mediaFileInfo, file, dal, profiler, profileRun, dbConn}
 }
 
 func (j *FileProcessorJob) processImage() (domain.MediaFile, errorsx.Error) {
@@ -43,17 +42,19 @@ func (j *FileProcessorJob) run() errorsx.Error {
 	var mediaFile domain.MediaFile
 	var err error
 
-	switch j.contentType {
-	case "image/jpg", "image/jpeg", "image/png":
-		mediaFile, err = j.processImage()
+	switch j.mediaFileInfo.MediaFileType {
+	case domain.MediaFileTypePicture:
+		imageFile, err := j.processImage()
 		if err != nil {
 			return errorsx.Wrap(err)
 		}
-	case "video/mp4":
+
+		mediaFile = imageFile
+	case domain.MediaFileTypeVideo:
 		videoFile := domain.NewVideoFileMetadata(j.mediaFileInfo)
 
 		mediaFile = videoFile
-	case "application/octet-stream":
+	case domain.MediaFileTypeFitTrack:
 		// try parsing fit file
 		fitFileSummary, err := domain.NewFitFileSummaryFromReader(j.mediaFileInfo, j.file)
 		if err != nil {
@@ -62,7 +63,7 @@ func (j *FileProcessorJob) run() errorsx.Error {
 		mediaFile = fitFileSummary
 
 	default:
-		log.Printf("content type not supported: %q. Filepath: %q\n", j.contentType, j.mediaFileInfo.RelativePath)
+		log.Printf("media file type not supported: %q. Filepath: %q\n", j.mediaFileInfo.MediaFileType, j.mediaFileInfo.RelativePath)
 
 		return errorsx.Wrap(dal.ErrContentTypeNotSupported)
 	}

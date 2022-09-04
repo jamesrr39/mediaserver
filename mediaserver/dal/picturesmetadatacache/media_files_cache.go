@@ -3,8 +3,8 @@ package picturesmetadatacache
 import (
 	"bytes"
 	"crypto/sha1"
-	"encoding/gob"
 	"encoding/hex"
+	"encoding/json"
 	"log"
 	"mediaserver/mediaserver/domain"
 	"sync"
@@ -29,8 +29,8 @@ func (cache *MediaFilesCache) Add(mediaFile domain.MediaFile) error {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
 
-	existingPicture := cache.mapByHash[mediaFile.GetMediaFileInfo().HashValue]
-	if nil != existingPicture {
+	_, ok := cache.mapByHash[mediaFile.GetMediaFileInfo().HashValue]
+	if ok {
 		return ErrItemAlreadyExists
 	}
 
@@ -42,7 +42,7 @@ func (cache *MediaFilesCache) Add(mediaFile domain.MediaFile) error {
 
 func (cache *MediaFilesCache) setHashValue() error {
 	var byteBuffer bytes.Buffer
-	encoder := gob.NewEncoder(&byteBuffer)
+	encoder := json.NewEncoder(&byteBuffer)
 	err := encoder.Encode(cache.mediaFiles)
 	if nil != err {
 		return errorsx.Wrap(err)

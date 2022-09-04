@@ -36,28 +36,6 @@ type DateRange = {
   end?: Date;
 };
 
-function getDateRange(mediaFiles: MediaFile[]): DateRange {
-  let start: Date | undefined = undefined;
-  let end: Date | undefined = undefined;
-
-  mediaFiles.forEach((mediaFile) => {
-    const timeTaken = mediaFile.getTimeTaken();
-    if (timeTaken === null) {
-      return;
-    }
-
-    if (!start || timeTaken < start) {
-      start = timeTaken;
-    }
-
-    if (!end || timeTaken > end) {
-      end = timeTaken;
-    }
-  });
-
-  return { start, end };
-}
-
 function GalleryWithFilter(props: GalleryProps) {
   const [filter, setFilter] = React.useState(
     new GalleryFilter(new DateFilter({ includeFilesWithoutDates: true }))
@@ -92,8 +70,6 @@ function GalleryWithFilter(props: GalleryProps) {
   };
 
   setGalleryHeight(galleryContainerEl.current, scrollResizeObservable);
-
-  const dateRange = getDateRange(mediaFiles);
 
   const wrapperStyles = {
     height: getScreenHeight() - elementPosTopOffset,

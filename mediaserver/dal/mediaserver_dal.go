@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"io"
-	"log"
 	"mediaserver/mediaserver/dal/videodal"
 	"mediaserver/mediaserver/domain"
 	"os"
@@ -83,9 +82,12 @@ func NewMediaServerDAL(
 	}, nil
 }
 
-var ErrContentTypeNotSupported = errors.New("content type not supported")
+var (
+	ErrContentTypeNotSupported   = errors.New("content type not supported")
+	ErrFileWithHashAlreadyExists = errors.New("ErrFileWithHashAlreadyExists")
+)
 
-func (dal *MediaServerDAL) CreateOrGetExisting(logger *logpkg.Logger, tx *sql.Tx, file io.ReadSeeker, filename, contentType string, profileRun *profile.Run) (domain.MediaFileInfo, errorsx.Error) {
+func (dal *MediaServerDAL) Create(logger *logpkg.Logger, tx *sql.Tx, file io.ReadSeeker, filename, contentType string, profileRun *profile.Run) (domain.MediaFile, errorsx.Error) {
 	dal.profiler.Mark(profileRun, "start creating or get existing file")
 	defer dal.profiler.Mark(profileRun, "finish creating or get existing file")
 
@@ -93,77 +95,69 @@ func (dal *MediaServerDAL) CreateOrGetExisting(logger *logpkg.Logger, tx *sql.Tx
 
 	hashValue, err := domain.NewHash(file)
 	if nil != err {
-		return domain.MediaFileInfo{}, errorsx.Wrap(err)
+		return nil, errorsx.Wrap(err)
 	}
 
 	dal.profiler.Mark(profileRun, "checking for existing file")
 
 	existingFile := dal.MediaFilesDAL.Get(hashValue)
 	if existingFile != nil {
-		return existingFile.GetMediaFileInfo(), nil
+		return existingFile, errorsx.Wrap(ErrFileWithHashAlreadyExists)
 	}
 
-	absoluteFilePath, relativePath, err := dal.getPathForNewFile(filename)
+	absoluteFilePath, _, err := dal.getPathForNewFile(filename)
 	if err != nil {
-		return domain.MediaFileInfo{}, errorsx.Wrap(err)
-	}
-
-	fileType, err := domain.GetFileTypeFromPath(relativePath)
-	if err != nil {
-		return domain.MediaFileInfo{}, errorsx.Wrap(err)
-	}
-
-	dal.profiler.Mark(profileRun, "seeking to start of file")
-
-	fileLen, err := file.Seek(0, io.SeekStart)
-	if err != nil {
-		return domain.MediaFileInfo{}, errorsx.Wrap(err)
-	}
-
-	dal.profiler.Mark(profileRun, "file type specific action")
-
-	participantIDs, err := dal.MediaFilesDAL.peopleDAL.GetPeopleIDsInMediaFile(tx, hashValue)
-	if nil != err {
-		return domain.MediaFileInfo{}, errorsx.Wrap(err)
+		return nil, errorsx.Wrap(err)
 	}
 
 	dal.profiler.Mark(profileRun, "making uploads dir if necessary")
 
 	err = dal.fs.MkdirAll(filepath.Dir(absoluteFilePath), 0755)
 	if nil != err {
-		return domain.MediaFileInfo{}, errorsx.Wrap(err)
+		return nil, errorsx.Wrap(err)
 	}
 
-	log.Println("writing to " + absoluteFilePath)
+	logger.Info("writing to %s", absoluteFilePath)
 
 	newFile, err := dal.fs.Create(absoluteFilePath)
 	if nil != err {
-		return domain.MediaFileInfo{}, errorsx.Wrap(err)
+		return nil, errorsx.Wrap(err)
 	}
 	defer newFile.Close()
 
 	_, err = file.Seek(0, io.SeekStart)
 	if err != nil {
-		return domain.MediaFileInfo{}, errorsx.Wrap(err)
+		return nil, errorsx.Wrap(err)
 	}
 
 	dal.profiler.Mark(profileRun, "writing new file")
 
 	_, err = io.Copy(newFile, file)
 	if nil != err {
-		return domain.MediaFileInfo{}, errorsx.Wrap(err)
+		return nil, errorsx.Wrap(err)
 	}
 
 	_, err = file.Seek(0, io.SeekStart)
 	if err != nil {
-		return domain.MediaFileInfo{}, errorsx.Wrap(err)
+		return nil, errorsx.Wrap(err)
 	}
 
 	osFileInfo, err := dal.fs.Stat(absoluteFilePath)
+	if err != nil {
+		return nil, errorsx.Wrap(err)
+	}
 
-	mediaFileInfo := domain.NewMediaFileInfo(relativePath, hashValue, fileType, fileLen, participantIDs, osFileInfo.ModTime(), osFileInfo.Mode())
+	mediaFile, err := dal.MediaFilesDAL.ProcessFile(dal.fs, tx, absoluteFilePath, osFileInfo)
+	if err != nil {
+		return nil, errorsx.Wrap(err)
+	}
 
-	return mediaFileInfo, nil
+	err = dal.MediaFilesDAL.cache.Add(mediaFile)
+	if err != nil {
+		return nil, errorsx.Wrap(err)
+	}
+
+	return mediaFile, nil
 }
 
 // returns:

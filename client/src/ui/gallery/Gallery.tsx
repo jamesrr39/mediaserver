@@ -75,7 +75,7 @@ function useScrollOrResize(mediaFiles: MediaFile[], state: ComponentState) {
 
     return () =>
       scrollResizeContext.removeListener(calculateAndSetLastIndexAndRowsState);
-  }, []);
+  }, [mediaFiles]);
 }
 
 function Gallery(props: Props) {

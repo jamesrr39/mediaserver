@@ -64,11 +64,17 @@ export class FileQueue {
       return;
     }
 
-    response.json().then((mediaFileJSON: MediaFileJSON) => {
-      const mediaFile = fromJSON(mediaFileJSON);
-      this.onUploadFinished(state, queuedFile, { mediaFile });
-      queuedFile.onSuccess(mediaFile);
-    });
+    if (response.status !== 200) {
+      const error = new Error(response.statusText);
+      this.onUploadFinished(state, queuedFile, { error });
+      queuedFile.onFailure(error);
+      return;
+    }
+
+    const mediaFileJSON: MediaFileJSON = await response.json();
+    const mediaFile = fromJSON(mediaFileJSON);
+    this.onUploadFinished(state, queuedFile, { mediaFile });
+    queuedFile.onSuccess(mediaFile);
   }
 
   private onUploadFinished(

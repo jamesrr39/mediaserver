@@ -4,11 +4,14 @@ import { VideoMetadata } from "./VideoMetadata";
 import { ActivityBounds, FitTrack } from "./FitTrack";
 import { SuggestedLocation } from "./Location";
 
-interface BaseMediaFileJSON {
+export interface BaseMediaFileJSON {
   hashValue: string;
   relativePath: string;
   fileSizeBytes: number;
   fileType: MediaFileType;
+  fileModType: string;
+  participantIds: number[];
+  suggestedLocation?: SuggestedLocation;
 }
 
 type PictureMetadataJSON = {
@@ -31,11 +34,10 @@ type FitFileMetadataJSON = {
   activityBounds: ActivityBounds;
 } & BaseMediaFileJSON;
 
-export type MediaFileJSON = {
-  fileType: MediaFileType;
-  participantIds: number[];
-  suggestedLocation?: SuggestedLocation;
-} & (PictureMetadataJSON | VideoMetadataJSON | FitFileMetadataJSON);
+export type MediaFileJSON =
+  | PictureMetadataJSON
+  | VideoMetadataJSON
+  | FitFileMetadataJSON;
 
 export function fromJSON(json: MediaFileJSON) {
   switch (json.fileType) {
