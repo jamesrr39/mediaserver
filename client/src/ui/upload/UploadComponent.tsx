@@ -1,10 +1,12 @@
 import * as React from "react";
 import { ChangeEvent } from "react";
+import { useMutation } from "react-query";
+import { useDispatch, useSelector } from "react-redux";
+import { uploadFile } from "src/actions/mediaFileActions";
+import { State } from "src/reducers/rootReducer";
 
-import { connect } from "react-redux";
-import { themeStyles } from "../../theme/theme";
-import { uploadFile } from "../../actions/mediaFileActions";
 import { MediaFile } from "../../domain/MediaFile";
+import { themeStyles } from "../../theme/theme";
 
 const styles = {
   uploadInput: {
@@ -12,48 +14,45 @@ const styles = {
   },
 };
 
-type Props = {
-  uploadFile: (file: File) => Promise<MediaFile>;
-};
+function useUploadFilesMutation() {
+  const dispatch = useDispatch();
+  const state = useSelector((state: State) => state);
 
-type ComponentState = {
-  isUploadingEnabled: boolean;
-};
-
-class UploadComponent extends React.Component<Props, ComponentState> {
-  state = {
-    isUploadingEnabled: true,
-  };
-
-  onFileUploadSelected = async (event: ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files === null) {
-      return;
+  return useMutation(async (files: FileList) => {
+    const promises = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      promises.push(uploadFile(file)(dispatch, () => state));
     }
-    this.setState((state) => ({
-      ...state,
-      isUploadingEnabled: false,
-    }));
-    for (let i = 0; i < event.target.files.length; i++) {
-      const file = event.target.files[i];
-      await this.props.uploadFile(file);
-    }
-  };
 
-  render() {
-    return (
-      <label className="btn btn-secondary" style={themeStyles.button}>
-        Upload
-        <input
-          style={styles.uploadInput}
-          type="file"
-          multiple={true}
-          onChange={this.onFileUploadSelected}
-        />
-      </label>
-    );
-  }
+    await Promise.all(promises);
+  });
 }
 
-export default connect(undefined, {
-  uploadFile,
-})(UploadComponent);
+function UploadComponent() {
+  const uploadFilesMutation = useUploadFilesMutation();
+
+  const onFileUploadSelected = async (event: ChangeEvent<HTMLInputElement>) => {
+    const { files } = event.target;
+
+    if (!files) {
+      return;
+    }
+
+    uploadFilesMutation.mutate(files);
+  };
+
+  return (
+    <label className="btn btn-secondary" style={themeStyles.button}>
+      Upload
+      <input
+        style={styles.uploadInput}
+        type="file"
+        multiple={true}
+        onChange={onFileUploadSelected}
+      />
+    </label>
+  );
+}
+
+export default UploadComponent;

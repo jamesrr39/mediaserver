@@ -85,7 +85,7 @@ func NewMediaServerDAL(
 
 var ErrContentTypeNotSupported = errors.New("content type not supported")
 
-func (dal *MediaServerDAL) CreateOrGetExisting(tx *sql.Tx, file io.ReadSeeker, filename, contentType string, profileRun *profile.Run) (domain.MediaFileInfo, errorsx.Error) {
+func (dal *MediaServerDAL) CreateOrGetExisting(logger *logpkg.Logger, tx *sql.Tx, file io.ReadSeeker, filename, contentType string, profileRun *profile.Run) (domain.MediaFileInfo, errorsx.Error) {
 	dal.profiler.Mark(profileRun, "start creating or get existing file")
 	defer dal.profiler.Mark(profileRun, "finish creating or get existing file")
 
@@ -104,6 +104,11 @@ func (dal *MediaServerDAL) CreateOrGetExisting(tx *sql.Tx, file io.ReadSeeker, f
 	}
 
 	absoluteFilePath, relativePath, err := dal.getPathForNewFile(filename)
+	if err != nil {
+		return domain.MediaFileInfo{}, errorsx.Wrap(err)
+	}
+
+	fileType, err := domain.GetFileTypeFromPath(relativePath)
 	if err != nil {
 		return domain.MediaFileInfo{}, errorsx.Wrap(err)
 	}
@@ -156,11 +161,15 @@ func (dal *MediaServerDAL) CreateOrGetExisting(tx *sql.Tx, file io.ReadSeeker, f
 
 	osFileInfo, err := dal.fs.Stat(absoluteFilePath)
 
-	mediaFileInfo := domain.NewMediaFileInfo(relativePath, hashValue, domain.MediaFileTypeFitTrack, fileLen, participantIDs, osFileInfo.ModTime(), osFileInfo.Mode())
+	mediaFileInfo := domain.NewMediaFileInfo(relativePath, hashValue, fileType, fileLen, participantIDs, osFileInfo.ModTime(), osFileInfo.Mode())
 
 	return mediaFileInfo, nil
 }
 
+// returns:
+// - absolute path (for the backend to use for I/O)
+// - relative path (to display to the user)
+// - error if necessary
 func (dal *MediaServerDAL) getPathForNewFile(filename string) (string, string, error) {
 	if dirtraversal.IsTryingToTraverseUp(filename) {
 		return "", "", errorsx.Wrap(ErrIllegalPathTraversingUp)

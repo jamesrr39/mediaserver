@@ -310,7 +310,10 @@ func (dal *MediaFilesDAL) processFile(fs gofs.Fs, tx *sql.Tx, path string, fileI
 		return nil, errorsx.Wrap(err)
 	}
 
-	fileType := domain.GetFileTypeFromPath(path)
+	fileType, err := domain.GetFileTypeFromPath(path)
+	if nil != err {
+		return nil, errorsx.Wrap(err)
+	}
 
 	mediaFileInfo := domain.NewMediaFileInfo(relativePath, hash, fileType, osFileInfo.Size(), participantIDs, osFileInfo.ModTime(), osFileInfo.Mode())
 	switch fileType {

@@ -18,7 +18,7 @@ export class PictureMetadata extends AbstractMediaFile {
   }
 
   getTimeTaken(): Date | null {
-    if (this.exif === null) {
+    if (!this.exif) {
       return null;
     }
 

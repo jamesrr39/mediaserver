@@ -129,7 +129,7 @@ func (ms *MediaFilesService) serveFileUpload(w http.ResponseWriter, r *http.Requ
 
 	ms.profiler.Mark(profileRun, "start creating or getting file on disk")
 
-	mediaFileInfo, err := ms.mediaServerDAL.CreateOrGetExisting(tx, file, fileHeader.Filename, contentType, profileRun)
+	mediaFileInfo, err := ms.mediaServerDAL.CreateOrGetExisting(ms.logger, tx, file, fileHeader.Filename, contentType, profileRun)
 	if nil != err {
 		switch errorsx.Cause(err) {
 		case dal.ErrIllegalPathTraversingUp:

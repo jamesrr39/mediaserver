@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"path/filepath"
 	"strings"
+
+	"github.com/jamesrr39/goutil/errorsx"
 )
 
 func gobClone(from, to interface{}) {
@@ -20,16 +22,16 @@ func gobClone(from, to interface{}) {
 	}
 }
 
-func GetFileTypeFromPath(path string) MediaFileType {
-	fileExtensionLower := strings.ToLower(filepath.Ext(path))
-	switch fileExtensionLower {
+func GetFileTypeFromPath(path string) (MediaFileType, errorsx.Error) {
+	ext := strings.ToLower(filepath.Ext(path))
+	switch ext {
 	case ".jpg", ".jpeg", ".png":
-		return MediaFileTypePicture
+		return MediaFileTypePicture, nil
 	case ".mp4":
-		return MediaFileTypeVideo
+		return MediaFileTypeVideo, nil
 	case ".fit", ".gpx":
-		return MediaFileTypeFitTrack
+		return MediaFileTypeFitTrack, nil
 	default:
-		return MediaFileTypeUnknown
+		return MediaFileTypeUnknown, errorsx.Errorf("unknown extension %q from file path %q", ext, path)
 	}
 }
