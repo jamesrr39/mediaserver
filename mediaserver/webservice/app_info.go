@@ -12,9 +12,9 @@ import (
 	"github.com/jamesrr39/goutil/logpkg"
 )
 
-func BuildGetCurrentUser(logger *logpkg.Logger, hmacSigningSecret []byte, dbConn *mediaserverdb.DBConn, peopleDAL *dal.PeopleDAL) http.HandlerFunc {
+func BuildGetAppInfo(logger *logpkg.Logger, hmacSigningSecret []byte, dbConn *mediaserverdb.DBConn, peopleDAL *dal.PeopleDAL) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		type CurrentUserStatus struct {
+		type AppInfo struct {
 			User *domain.Person `json:"user"`
 		}
 
@@ -25,7 +25,7 @@ func BuildGetCurrentUser(logger *logpkg.Logger, hmacSigningSecret []byte, dbConn
 				return
 			}
 
-			render.JSON(w, r, CurrentUserStatus{})
+			render.JSON(w, r, AppInfo{})
 			return
 		}
 
@@ -43,7 +43,7 @@ func BuildGetCurrentUser(logger *logpkg.Logger, hmacSigningSecret []byte, dbConn
 			return
 		}
 
-		render.JSON(w, r, CurrentUserStatus{
+		render.JSON(w, r, AppInfo{
 			User: user,
 		})
 	}

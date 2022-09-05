@@ -11,10 +11,10 @@ import MediaServer from "./MediaServer";
 import { UserActionType } from "src/actions/userActions";
 import { Person } from "../domain/People";
 
-function useCurrentUser() {
+function useAppInfo() {
   const dispatch = useDispatch();
   return useQuery("current-user", async () => {
-    const resp = await fetch("/api/currentuser");
+    const resp = await fetch("/api/appinfo");
 
     if (!resp.ok || resp.status !== 200) {
       const respBody: { message: string } = await resp.json();
@@ -41,7 +41,7 @@ function useCurrentUser() {
 function App() {
   const { activeUser } = useSelector((state: State) => state.activeUserReducer);
 
-  const { isLoading, error, data } = useCurrentUser();
+  const { isLoading, error, data } = useAppInfo();
 
   if (error) {
     return (

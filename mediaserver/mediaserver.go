@@ -123,7 +123,7 @@ func (ms *MediaServer) ListenAndServe(addr string) errorsx.Error {
 	authMW := mediaservermiddleware.NewAuthMiddleware(ms.logger, ms.hmacSigningSecret)
 
 	mainRouter.Route("/api/", func(r chi.Router) {
-		r.Get("/currentuser", webservice.BuildGetCurrentUser(ms.logger, ms.hmacSigningSecret, ms.dbConn, ms.mediaServerDAL.PeopleDAL))
+		r.Get("/appinfo", webservice.BuildGetAppInfo(ms.logger, ms.hmacSigningSecret, ms.dbConn, ms.mediaServerDAL.PeopleDAL))
 		r.Mount("/login/", ms.loginService)
 		r.Route("/", func(r chi.Router) {
 			r.Use(authMW)
