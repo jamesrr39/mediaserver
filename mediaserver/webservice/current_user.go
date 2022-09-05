@@ -38,7 +38,7 @@ func BuildGetCurrentUser(logger *logpkg.Logger, hmacSigningSecret []byte, dbConn
 		defer tx.Rollback()
 
 		user, err := peopleDAL.GetPersonByID(tx, userID)
-		if err != nil {
+		if err != nil && errorsx.Cause(err) != dal.ErrNotFound {
 			errorsx.HTTPJSONError(w, logger, errorsx.Wrap(err), http.StatusInternalServerError)
 			return
 		}

@@ -95,3 +95,7 @@ build4pi: build_prod_arm7
 	rm -rf docker/build/*
 	cp build/bin/arm7/mediaserver docker/build/mediaserver
 	build4pi
+
+.PHONY: localenv_clean_uploads
+localenv_clean_uploads:
+	rm -rf ${LOCALENV_BASE_DIR}/data/uploads ${LOCALENV_BASE_DIR}/metadata/*

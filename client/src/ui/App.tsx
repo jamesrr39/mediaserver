@@ -1,19 +1,15 @@
 import * as React from "react";
+import { useQuery } from "react-query";
+import { useDispatch, useSelector } from "react-redux";
+import { State } from "../reducers/rootReducer";
 // workaround to solve "React is not defined" error (https://stackoverflow.com/a/52352349)
 window.React = React;
-import { connect, useDispatch, useStore } from "react-redux";
-import { useQuery } from "react-query";
-import { State } from "../reducers/rootReducer";
 
 import LoginScreen from "./login/LoginScreen";
 import MediaServer from "./MediaServer";
 
-import { Person } from "../domain/People";
 import { UserActionType } from "src/actions/userActions";
-
-type Props = {
-  loggedIn: boolean;
-};
+import { Person } from "../domain/People";
 
 function useCurrentUser() {
   const dispatch = useDispatch();
@@ -30,7 +26,7 @@ function useCurrentUser() {
     const { user } = body;
 
     if (!user) {
-      return;
+      return { user };
     }
 
     dispatch({
@@ -38,12 +34,14 @@ function useCurrentUser() {
       user,
     });
 
-    return user;
+    return { user };
   });
 }
 
-function App(props: Props) {
-  const { isLoading, error } = useCurrentUser();
+function App() {
+  const { activeUser } = useSelector((state: State) => state.activeUserReducer);
+
+  const { isLoading, error, data } = useCurrentUser();
 
   if (error) {
     return (
@@ -58,16 +56,10 @@ function App(props: Props) {
     return <div className="alert alert-info">Loading...</div>;
   }
 
-  if (!props.loggedIn) {
+  if (!activeUser && !data.user) {
     return <LoginScreen />;
   }
   return <MediaServer />;
 }
 
-export default connect((state: State) => {
-  const { activeUser } = state.activeUserReducer;
-
-  return {
-    loggedIn: Boolean(activeUser),
-  };
-})(App);
+export default App;

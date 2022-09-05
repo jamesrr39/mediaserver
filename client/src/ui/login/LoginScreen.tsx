@@ -75,29 +75,34 @@ function LoginScreen() {
 
   if (people.length === 0) {
     return (
-      <div>
-        <p>No users found. Create one?</p>
-        <form>
-          <label>
-            Username:
-            <input type="text" name="username" />
-          </label>
-          <button
-            type="submit"
-            onClick={(event) => {
-              event.preventDefault();
-              const form = event.currentTarget.form;
+      <div className="row">
+        <div className="col">
+          <div className="container-fluid">
+            <p>No users found. Create one?</p>
+            <form>
+              <label>
+                Username:
+                <input className="form-control" type="text" name="username" />
+              </label>
+              <button
+                type="submit"
+                className="btn btn-secondary"
+                onClick={(event) => {
+                  event.preventDefault();
+                  const form = event.currentTarget.form;
 
-              const username = (
-                form.elements.namedItem("username") as HTMLInputElement
-              ).value;
+                  const username = (
+                    form.elements.namedItem("username") as HTMLInputElement
+                  ).value;
 
-              createUserAndLoginMutation.mutate(username);
-            }}
-          >
-            Create user!
-          </button>
-        </form>
+                  createUserAndLoginMutation.mutate(username);
+                }}
+              >
+                Create user!
+              </button>
+            </form>
+          </div>
+        </div>
       </div>
     );
   }

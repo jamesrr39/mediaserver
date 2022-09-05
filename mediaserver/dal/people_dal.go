@@ -35,6 +35,9 @@ func (r *PeopleDAL) GetPersonByID(tx *sql.Tx, id int64) (*domain.Person, errorsx
 	person := new(domain.Person)
 	err := row.Scan(&person.ID, &person.Name, &person.IsUser)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errorsx.Wrap(ErrNotFound)
+		}
 		return nil, errorsx.Wrap(err)
 	}
 
