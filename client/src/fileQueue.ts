@@ -2,15 +2,23 @@ import { MediaFile } from "./domain/MediaFile";
 import { MediaFileJSON, fromJSON } from "./domain/deserialise";
 import { State } from "./reducers/rootReducer";
 
+export type UploadError = { httpCode: number; message: string };
+
+export type FailedUploadResponse = {
+  fileName: string;
+  success: false;
+  error: UploadError;
+};
+
 type QueuedFile = {
   file: File;
   onSuccess: (mediaFile: MediaFile) => void;
-  onFailure: (error: Error) => void;
+  onFailure: (fileName: string, error: UploadError) => void;
 };
 
 export type MediaFileUploadResponse =
-  | { mediaFile: MediaFile }
-  | { error: Error };
+  | { success: true; mediaFile: MediaFile }
+  | FailedUploadResponse;
 
 export class FileQueue {
   private queue: QueuedFile[] = [];
@@ -52,28 +60,32 @@ export class FileQueue {
     this.currentlyUploading.push(queuedFile);
     const formData = new FormData();
     formData.append("file", queuedFile.file);
+
     const response = await fetch(`/api/files/`, {
       method: "POST",
       body: formData,
     });
 
-    if (!response.ok) {
-      const error = new Error(response.statusText);
-      this.onUploadFinished(state, queuedFile, { error });
-      queuedFile.onFailure(error);
-      return;
-    }
-
-    if (response.status !== 200) {
-      const error = new Error(response.statusText);
-      this.onUploadFinished(state, queuedFile, { error });
-      queuedFile.onFailure(error);
+    if (!response.ok || response.status != 200) {
+      let message = response.statusText;
+      if (response.ok) {
+        // JSON error with message key
+        const { message: bodyMessage } = await response.json();
+        message = bodyMessage;
+      }
+      const error = { httpCode: response.status, message };
+      this.onUploadFinished(state, queuedFile, {
+        fileName: queuedFile.file.name,
+        success: false,
+        error,
+      });
+      queuedFile.onFailure(queuedFile.file.name, error);
       return;
     }
 
     const mediaFileJSON: MediaFileJSON = await response.json();
     const mediaFile = fromJSON(mediaFileJSON);
-    this.onUploadFinished(state, queuedFile, { mediaFile });
+    this.onUploadFinished(state, queuedFile, { success: true, mediaFile });
     queuedFile.onSuccess(mediaFile);
   }
 

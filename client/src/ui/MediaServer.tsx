@@ -73,7 +73,7 @@ const styles = {
   uploadProgressComponent: {
     position: "fixed" as "fixed",
     right: "30px",
-    bottom: "30px",
+    bottom: "0px",
     zIndex: 1000,
   },
 };
