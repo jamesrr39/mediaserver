@@ -5,7 +5,7 @@ import { DateFilter } from "src/domain/filter/DateFilter";
 import GalleryFilter from "../domain/filter/GalleryFilter";
 import { State } from "../reducers/rootReducer";
 import FilterComponent from "./gallery/FilterComponent";
-import { InnerMap } from "./gallery/InnerMap";
+import GeographicMap from "./gallery/InnerMap";
 
 type Props = {
   mediaFileUrlBase: string;
@@ -34,7 +34,7 @@ function MediafilesMap(props: Props) {
         <div className="alert alert-info">No tracks with this filter</div>
       )}
       {filteredMediaFiles.length !== 0 && (
-        <InnerMap
+        <GeographicMap
           mediaFiles={filteredMediaFiles}
           mediaFileUrlBase={mediaFileUrlBase}
         />

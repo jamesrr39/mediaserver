@@ -59,7 +59,7 @@ const styles = {
   },
 };
 
-export function InnerMap(props: Props) {
+export default function GeographicMap(props: Props) {
   const { mediaFiles, mediaFileUrlBase } = props;
 
   const markers = getMarkers(mediaFiles, mediaFileUrlBase);

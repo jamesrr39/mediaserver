@@ -9,7 +9,7 @@ import { joinUrlFragments } from "src/domain/util";
 import { Collection } from "../../domain/Collection";
 import { State } from "../../reducers/rootReducer";
 import Gallery from "../gallery/Gallery";
-import { InnerMap } from "../gallery/InnerMap";
+import GeographicMap from "../gallery/InnerMap";
 
 type Props = {
   collection: Collection;
@@ -46,7 +46,7 @@ function CollectionViewComponent(props: Props) {
       <div className="container-fluid">
         <h1>{collection.name}</h1>
       </div>
-      <InnerMap mediaFiles={mediaFiles} />
+      <GeographicMap mediaFiles={mediaFiles} />
       <BuildLinkContext.Provider value={buildLinkFunc}>
         <Gallery
           mediaFiles={mediaFiles}

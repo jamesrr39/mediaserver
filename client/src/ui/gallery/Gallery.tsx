@@ -14,7 +14,7 @@ import {
 import { filesToRows } from "./GalleryRow";
 import GalleryThumbnails, { ROWS_IN_INCREMENT } from "./GalleryThumbnails";
 import { Row } from "./GalleryUtil";
-import { InnerMap } from "./InnerMap";
+import GeographicMap from "./InnerMap";
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
 
@@ -97,7 +97,10 @@ function Gallery(props: Props) {
   return (
     <>
       {showMap && (
-        <InnerMap mediaFiles={mediaFiles} mediaFileUrlBase={mediaFileUrlBase} />
+        <GeographicMap
+          mediaFiles={mediaFiles}
+          mediaFileUrlBase={mediaFileUrlBase}
+        />
       )}
       <div ref={galleryEl}>
         <GalleryContainerContext.Provider value={galleryEl?.current}>
