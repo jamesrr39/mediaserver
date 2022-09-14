@@ -14,7 +14,7 @@ import {
 import { filesToRows } from "./GalleryRow";
 import GalleryThumbnails, { ROWS_IN_INCREMENT } from "./GalleryThumbnails";
 import { Row } from "./GalleryUtil";
-import GeographicMap from "./InnerMap";
+import GeographicMap from "./GeographicMap";
 
 export const gallerySortingFunc = createCompareTimeTakenFunc(true);
 

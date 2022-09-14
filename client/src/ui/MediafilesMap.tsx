@@ -5,7 +5,7 @@ import { DateFilter } from "src/domain/filter/DateFilter";
 import GalleryFilter from "../domain/filter/GalleryFilter";
 import { State } from "../reducers/rootReducer";
 import FilterComponent from "./gallery/FilterComponent";
-import GeographicMap from "./gallery/InnerMap";
+import GeographicMap from "./gallery/GeographicMap";
 
 type Props = {
   mediaFileUrlBase: string;

@@ -9,7 +9,7 @@ import { joinUrlFragments } from "src/domain/util";
 import { Collection } from "../../domain/Collection";
 import { State } from "../../reducers/rootReducer";
 import Gallery from "../gallery/Gallery";
-import GeographicMap from "../gallery/InnerMap";
+import GeographicMap from "../gallery/GeographicMap";
 
 type Props = {
   collection: Collection;
