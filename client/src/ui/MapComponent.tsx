@@ -49,7 +49,7 @@ function addTrackToMap(
   map: Leaflet.Map,
   onClickPoint: (point: Leaflet.LatLng) => void
 ) {
-  const { selectedSection } = track;
+  const { trackSummary, selectedSection, openTrackUrl } = track;
 
   if (track.points.length === 0) {
     // track with 0 points cannot be plotted, and will also crash later on when we try to access the last element of the track points array
@@ -128,6 +128,12 @@ function addTrackToMap(
     }
   );
   startMarker.addTo(map);
+  openTrackUrl &&
+    startMarker.bindPopup(
+      `<a href='${openTrackUrl}/${
+        trackSummary.hashValue
+      }'>${trackSummary.getName()}</a>`
+    );
 
   const finishMarker = Leaflet.marker(
     new Leaflet.LatLng(lastRecord.lat, lastRecord.lon),
@@ -136,6 +142,12 @@ function addTrackToMap(
     }
   );
   finishMarker.addTo(map);
+  openTrackUrl &&
+    finishMarker.bindPopup(
+      `<a href='${openTrackUrl}/${
+        trackSummary.hashValue
+      }'>${trackSummary.getName()}</a>`
+    );
 
   if (track.openTrackUrl) {
     const link = joinUrlFragments([
@@ -187,8 +199,8 @@ function createPolyLine(
     closeButton: false, // https://github.com/Leaflet/Leaflet/issues/1200
   });
 
-  polyLine.on("popupopen", (e: Leaflet.PopupEvent) => {
-    const popup = e.popup;
+  polyLine.on("popupopen", (event: Leaflet.PopupEvent) => {
+    const { popup } = event;
     const { lat, lng } = popup.getLatLng();
     const latFixedDec = lat.toFixed(4);
     const lngFixDec = lng.toFixed(4);

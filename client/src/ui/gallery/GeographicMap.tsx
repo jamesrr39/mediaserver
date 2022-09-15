@@ -94,7 +94,10 @@ export default function GeographicMap(props: Props) {
           height: "400px", // TODO variable sized height
         }}
         markers={markers}
-        tracks={tracks}
+        tracks={tracks.map((track) => ({
+          ...track,
+          openTrackUrl: mediaFileUrlBase,
+        }))}
         extraLatLongMapPadding={0.001}
         zoomControl={true}
       />
