@@ -1,12 +1,13 @@
 import { Action, Dispatch } from "redux";
-import { MediaFile } from "../domain/MediaFile";
-import { MediaFileJSON, fromJSON } from "../domain/deserialise";
+import { fromJSON, MediaFileJSON } from "../domain/deserialise";
 import { FitTrack, Record } from "../domain/FitTrack";
-import { State } from "../reducers/rootReducer";
-import { Person } from "../domain/People";
+import { MediaFile } from "../domain/MediaFile";
 import { nameForMediaFileType } from "../domain/MediaFileType";
-import { createErrorMessage } from "./util";
+import { Person } from "../domain/People";
 import { createMediaFileWithParticipants } from "../domain/util";
+import { State } from "../reducers/rootReducer";
+import { createErrorMessage } from "./util";
+import { Resolvable } from "ts-util/src/Promises";
 
 export type PeopleMap = Map<number, Person>;
 
@@ -14,8 +15,8 @@ export enum FilesActionTypes {
   MEDIA_FILES_FETCHED = "MEDIA_FILES_FETCHED",
   QUEUE_FOR_UPLOAD = "QUEUE_FOR_UPLOAD",
   FILE_SUCCESSFULLY_UPLOADED = "FILE_SUCCESSFULLY_UPLOADED",
-  TRACK_RECORDS_FETCHED_ACTION = "TRACK_RECORDS_FETCHED_ACTION",
   PARTICIPANTS_SET_ON_MEDIAFILE = "PARTICIPANTS_SET_ON_MEDIAFILE",
+  TRACK_RECORDS_QUEUED_FOR_FETCH = "TRACK_RECORDS_QUEUED_FOR_FETCH",
 }
 
 export interface PicturesMetadataFetchedAction extends Action {
@@ -28,11 +29,6 @@ export interface PictureSuccessfullyUploadedAction extends Action {
   mediaFile: MediaFile;
 }
 
-export type TrackRecordsFetchedAction = {
-  type: FilesActionTypes.TRACK_RECORDS_FETCHED_ACTION;
-  trackSummaryIdsMap: Map<string, Promise<Record[]>>;
-};
-
 export type QueueForUploadAction = {
   type: FilesActionTypes.QUEUE_FOR_UPLOAD;
   file: File;
@@ -44,12 +40,17 @@ export type ParticipantAddedToMediaFile = {
   participants: Person[];
 };
 
+export type TractRecordsQueuedForFetch = {
+  type: FilesActionTypes.TRACK_RECORDS_QUEUED_FOR_FETCH;
+  resolvableMap: Map<string, Resolvable<Record[]>>;
+};
+
 export type MediaserverAction =
   | PicturesMetadataFetchedAction
   | PictureSuccessfullyUploadedAction
-  | TrackRecordsFetchedAction
   | QueueForUploadAction
-  | ParticipantAddedToMediaFile;
+  | ParticipantAddedToMediaFile
+  | TractRecordsQueuedForFetch;
 
 type TrackJSON = {
   hash: string;
@@ -88,7 +89,7 @@ export function fetchPicturesMetadata() {
   };
 }
 
-export async function fetchTrackRecords(state: State, hashes: string[]) {
+async function fetchTrackRecords(hashes: string[]) {
   const response = await fetch(`/api/graphql`, {
     method: "POST",
     headers: {
@@ -119,88 +120,86 @@ export async function fetchTrackRecords(state: State, hashes: string[]) {
     };
   };
   const responseBody = (await response.json()) as Response;
-  return responseBody.data;
+  const { tracks } = responseBody.data;
+
+  return tracks.map((trackJSON) => {
+    return {
+      ...trackJSON,
+      records: trackJSON.records.map((record) => ({
+        ...record,
+        timestamp: new Date(record.timestamp),
+      })),
+    };
+  });
 }
 
-type Resolver = (records: Record[]) => void;
+function fetchMissingHashes(
+  hashesToFetch: string[],
+  trackSummaryIdsMap: Map<string, Promise<Record[]>>
+) {
+  return async (dispatch: (action: MediaserverAction) => void) => {
+    const trackSummaryIdsMapForNewTracks = new Map<string, Promise<Record[]>>();
+    const resolveMap = new Map<string, Resolvable<Record[]>>();
+    hashesToFetch.forEach((hash) => {
+      const resolvable = new Resolvable<Record[]>();
+      resolveMap.set(hash, resolvable);
+    });
+
+    dispatch({
+      type: FilesActionTypes.TRACK_RECORDS_QUEUED_FOR_FETCH,
+      resolvableMap: resolveMap,
+    });
+
+    const tracks = await fetchTrackRecords(hashesToFetch);
+
+    tracks.forEach((track) => {
+      const { hash, records } = track;
+      const resolvable = resolveMap.get(hash);
+      resolvable.resolve(records);
+      const { promise } = resolvable;
+
+      trackSummaryIdsMapForNewTracks.set(hash, promise);
+      trackSummaryIdsMap.set(hash, promise);
+    });
+  };
+}
 
 export function fetchRecordsForTracks(trackSummaries: FitTrack[]) {
   return async (
-    dispatch: (action: TrackRecordsFetchedAction) => void,
+    dispatch: (action: MediaserverAction) => void,
     getState: () => State
   ) => {
     const state = getState();
 
     const trackSummaryIdsMap = new Map<string, Promise<Record[]>>();
-    const trackSummariesToFetch: string[] = [];
+    const hashesToFetch: string[] = [];
     // figure out which already have promises, and which need to be fetched
     trackSummaries.forEach((trackSummary) => {
+      const { hashValue } = trackSummary;
+
       const recordsFromStatePromise =
-        state.mediaFilesReducer.trackRecordsMap.get(trackSummary.hashValue);
+        state.mediaFilesReducer.trackRecordsMap.get(hashValue);
       if (recordsFromStatePromise) {
-        trackSummaryIdsMap.set(trackSummary.hashValue, recordsFromStatePromise);
+        // records are already fetched or queued to fetched
+        trackSummaryIdsMap.set(hashValue, recordsFromStatePromise);
         return;
       }
 
-      trackSummariesToFetch.push(trackSummary.hashValue);
+      hashesToFetch.push(hashValue);
     });
 
-    if (trackSummariesToFetch.length !== 0) {
-      const resolverMap = new Map<string, Resolver>();
-      trackSummariesToFetch.forEach((hash) => {
-        const promise = new Promise<Record[]>((resolve, reject) => {
-          const resolver = (records: Record[]) => {
-            resolve(records);
-          };
-          resolverMap.set(hash, resolver);
-        });
-
-        trackSummaryIdsMap.set(hash, promise);
-      });
-      // TODO: re-instate TRACK_RECORDS_FETCH_QUEUED_ACTION so we can avoid getting the same track records when fetching many tracks concurrently
-      // dispatch queue action here
-      // dispatch({
-      //   type: FilesActionTypes.TRACK_RECORDS_FETCH_QUEUED_ACTION,
-      //   trackSummaryIds: trackSummariesToFetch,
-      // });
-      fetchTrackRecords(state, trackSummariesToFetch).then((response) => {
-        response.tracks.forEach((track) => {
-          const records = track.records.map((record) => ({
-            ...record,
-            timestamp: new Date(record.timestamp),
-          }));
-          const resolver = resolverMap.get(track.hash);
-          if (!resolver) {
-            throw new Error(`couldn't find resolver for ${track.hash}`);
-          }
-          resolver(records);
-        });
-
-        const dispatchMap = new Map<string, Promise<Record[]>>();
-        trackSummariesToFetch.forEach((hash) => {
-          const promise = trackSummaryIdsMap.get(hash);
-          if (!promise) {
-            throw new Error(`couldn't find promise for ${hash}`);
-          }
-          dispatchMap.set(hash, promise);
-        });
-
-        dispatch({
-          type: FilesActionTypes.TRACK_RECORDS_FETCHED_ACTION,
-          trackSummaryIdsMap: dispatchMap,
-        });
-      });
+    if (hashesToFetch.length !== 0) {
+      await fetchMissingHashes(hashesToFetch, trackSummaryIdsMap)(dispatch);
     }
 
     return new Promise<Map<string, Record[]>>((resolve, reject) => {
       const map = new Map<string, Record[]>();
-      trackSummaryIdsMap.forEach((recordsPromise, hash) => {
-        recordsPromise.then((records) => {
-          map.set(hash, records);
-          if (map.size === trackSummaries.length) {
-            resolve(map);
-          }
-        });
+      trackSummaryIdsMap.forEach(async (recordsPromise, hash) => {
+        const records = await recordsPromise;
+        map.set(hash, records);
+        if (trackSummaryIdsMap.size === map.size) {
+          resolve(map);
+        }
       });
     });
   };

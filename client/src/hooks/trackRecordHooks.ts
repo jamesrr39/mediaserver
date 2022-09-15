@@ -42,12 +42,12 @@ export function useTrackMapData(trackSummaries: FitTrack[]) {
       if (trackSummaries.length === 0) {
         return trackMapData;
       }
-
+      console.log('2::')
       const trackData = await fetchRecordsForTracks(trackSummaries)(
         dispatch,
         () => state
       );
-
+      console.log('3::')
       trackSummaries.forEach((trackSummary) => {
         const { activityBounds } = trackSummary;
         const records = trackData.get(trackSummary.hashValue);
@@ -55,7 +55,8 @@ export function useTrackMapData(trackSummaries: FitTrack[]) {
           throw new Error(`no data found for track ${trackSummary.hashValue}`);
         }
 
-        const points = records.map((record) => ({
+        const points = records.map((record, idx) => ({
+          idx,
           lat: record.posLat,
           lon: record.posLong,
         }));
@@ -66,7 +67,7 @@ export function useTrackMapData(trackSummaries: FitTrack[]) {
           points,
         });
       });
-
+      console.log('4::')
       return trackMapData;
     }
   );

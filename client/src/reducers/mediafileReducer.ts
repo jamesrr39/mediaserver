@@ -44,15 +44,16 @@ export function mediaFilesReducer(
         ...state,
         mediaFiles: state.mediaFiles.concat([action.mediaFile]),
       };
-    case FilesActionTypes.TRACK_RECORDS_FETCHED_ACTION:
+    case FilesActionTypes.TRACK_RECORDS_QUEUED_FOR_FETCH: {
       const newMap = new Map(state.trackRecordsMap);
-      action.trackSummaryIdsMap.forEach((records, hash) => {
-        newMap.set(hash, records);
-      });
+      action.resolvableMap.forEach((resolvable, hash) =>
+        newMap.set(hash, resolvable.promise)
+      );
       return {
         ...state,
         trackRecordsMap: newMap,
       };
+    }
     case FilesActionTypes.PARTICIPANTS_SET_ON_MEDIAFILE:
       const { mediaFile } = action;
 
