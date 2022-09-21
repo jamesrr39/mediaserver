@@ -1,7 +1,7 @@
 import * as React from "react";
 import { PictureMetadata } from "../domain/PictureMetadata";
 
-import { Observable } from "ts-util/dist/Observable";
+import { Observable } from "ts-util/src/Observable";
 import { THUMBNAIL_HEIGHTS } from "../generated/thumbnail_sizes";
 import { MediaFile } from "../domain/MediaFile";
 import { MediaFileType } from "../domain/MediaFileType";

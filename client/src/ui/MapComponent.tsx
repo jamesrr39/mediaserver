@@ -2,13 +2,13 @@ import * as React from "react";
 import * as Leaflet from "leaflet";
 import { RawSize } from "../domain/PictureMetadata";
 import { MapLocation } from "../domain/Location";
-import { escapeHtml } from "ts-util/dist/Html";
+import { escapeHtml } from "ts-util/src/Html";
 import { ActivityBounds, FitTrack } from "../domain/FitTrack";
 
 import markerIcon from "../../node_modules/leaflet/dist/images/marker-icon.png";
 import markerShadow from "../../node_modules/leaflet/dist/images/marker-shadow.png";
 import { deepEqual } from "../util/equal";
-import { joinUrlFragments } from "src/domain/util";
+import { joinUrlFragments } from "../domain/util";
 
 const StartIcon = Leaflet.Icon.extend({
   createIcon: () => {

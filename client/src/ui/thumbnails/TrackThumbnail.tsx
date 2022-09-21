@@ -40,10 +40,11 @@ function TrackThumbnail(props: Props) {
   const tracks = [
     {
       trackSummary,
-      points: trackRecords.map((record) => {
+      points: trackRecords.map((record, idx) => {
         const { posLat, posLong } = record;
 
         return {
+          idx,
           lat: posLat,
           lon: posLong,
         };

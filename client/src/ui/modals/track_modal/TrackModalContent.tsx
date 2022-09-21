@@ -31,7 +31,6 @@ const dateLocaleOpts = {
 
 type Props = {
   trackSummary: FitTrack;
-  ts: number;
 };
 
 function TrackModalContent(props: Props) {

@@ -36,11 +36,7 @@ function Content(props: ContentProps) {
     case MediaFileType.Video:
       return <VideoModal {...{ mediaFile }} />;
     case MediaFileType.FitTrack: {
-      const props = {
-        trackSummary: mediaFile,
-        ts: Date.now(),
-      };
-      return <TrackModalContent {...props} />;
+      return <TrackModalContent trackSummary={mediaFile} />;
     }
     default:
       return <p>Unknown format</p>;

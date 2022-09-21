@@ -1,9 +1,8 @@
-import { MediaFile } from "./MediaFile";
-import { VideoMetadata } from "./VideoMetadata";
 import { FitTrack } from "./FitTrack";
-import { PictureMetadata } from "./PictureMetadata";
+import { MediaFile } from "./MediaFile";
 import { MediaFileType } from "./MediaFileType";
-import { Fragment } from "react";
+import { PictureMetadata } from "./PictureMetadata";
+import { VideoMetadata } from "./VideoMetadata";
 
 export function createMediaFileWithParticipants(
   mediaFile: MediaFile,
@@ -50,7 +49,7 @@ export function createMediaFileWithParticipants(
   }
 }
 
-// TODO: ts-util
+// TODO: move to ts-util
 export function joinUrlFragments(fragments: string[]): string {
   const finishedFragments = [];
 

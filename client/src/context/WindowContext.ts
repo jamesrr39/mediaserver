@@ -1,5 +1,5 @@
 import React, { createContext } from "react";
-import { Observable } from "ts-util/dist/Observable";
+import { Observable } from "ts-util/src/Observable";
 
 export const ScrollResizeContext = React.createContext<Observable<void>>(null);
 
