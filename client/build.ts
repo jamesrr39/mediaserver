@@ -41,7 +41,7 @@ const jsBuild = esbuild.build({
     ".png": "dataurl",
   },
   outfile: "dist/index.js",
-  entryPoints: ["src/index.js"],
+  entryPoints: ["src/index.tsx"],
   bundle: true,
   sourcemap: true,
   watch,
