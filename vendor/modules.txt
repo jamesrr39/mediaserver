@@ -8,7 +8,6 @@ github.com/alecthomas/colour
 ## explicit
 github.com/alecthomas/repr
 # github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
-## explicit
 github.com/alecthomas/template
 github.com/alecthomas/template/parse
 # github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137
@@ -34,7 +33,6 @@ github.com/go-chi/chi/middleware
 ## explicit
 github.com/go-chi/render
 # github.com/gobwas/glob v0.2.3
-## explicit
 github.com/gobwas/glob
 github.com/gobwas/glob/compiler
 github.com/gobwas/glob/match
@@ -50,7 +48,7 @@ github.com/gogo/protobuf/protoc-gen-gogo/descriptor
 # github.com/google/uuid v1.3.0
 ## explicit
 github.com/google/uuid
-# github.com/gorilla/websocket v1.4.1-0.20180924232612-3130e8d3f198
+# github.com/gorilla/websocket v1.4.1
 ## explicit
 github.com/gorilla/websocket
 # github.com/graphql-go/graphql v0.7.9-0.20190403165646-199d20bbfed7
@@ -124,10 +122,6 @@ github.com/tkrajina/gpxgo/gpx
 github.com/tormoder/fit
 github.com/tormoder/fit/dyncrc16
 github.com/tormoder/fit/internal/types
-# gitlab.com/cznic/ebnf2y v1.0.0
-## explicit
-# gitlab.com/cznic/golex v1.0.0
-## explicit
 # golang.org/x/image v0.0.0-20220722155232-062f8c9fd539
 ## explicit
 golang.org/x/image/bmp
@@ -173,15 +167,12 @@ gopkg.in/yaml.v3
 modernc.org/b
 # modernc.org/db v1.0.3
 modernc.org/db
-# modernc.org/ebnfutil v1.0.0
-## explicit
 # modernc.org/file v1.0.3
 modernc.org/file
 # modernc.org/fileutil v1.0.1-0.20200808163328-2079183a536e
 ## explicit
 modernc.org/fileutil
 # modernc.org/golex v1.0.1
-## explicit
 modernc.org/golex/lex
 # modernc.org/internal v1.0.3
 modernc.org/internal/buffer
