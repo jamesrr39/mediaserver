@@ -8,7 +8,6 @@ github.com/alecthomas/colour
 ## explicit
 github.com/alecthomas/repr
 # github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
-## explicit
 github.com/alecthomas/template
 github.com/alecthomas/template/parse
 # github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137
@@ -34,7 +33,6 @@ github.com/go-chi/chi/middleware
 ## explicit
 github.com/go-chi/render
 # github.com/gobwas/glob v0.2.3
-## explicit
 github.com/gobwas/glob
 github.com/gobwas/glob/compiler
 github.com/gobwas/glob/match
@@ -124,17 +122,13 @@ github.com/tkrajina/gpxgo/gpx
 github.com/tormoder/fit
 github.com/tormoder/fit/dyncrc16
 github.com/tormoder/fit/internal/types
-# gitlab.com/cznic/ebnf2y v1.0.0
-## explicit
-# gitlab.com/cznic/golex v1.0.0
-## explicit
-# golang.org/x/image v0.0.0-20220722155232-062f8c9fd539
+# golang.org/x/image v0.5.0
 ## explicit
 golang.org/x/image/bmp
 golang.org/x/image/ccitt
 golang.org/x/image/tiff
 golang.org/x/image/tiff/lzw
-# golang.org/x/net v0.0.0-20210614182718-04defd469f4e
+# golang.org/x/net v0.0.0-20220722155237-a158d28d115b
 golang.org/x/net/html
 golang.org/x/net/html/atom
 golang.org/x/net/html/charset
@@ -143,7 +137,7 @@ golang.org/x/net/html/charset
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.3.7
+# golang.org/x/text v0.7.0
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
 golang.org/x/text/encoding/htmlindex
@@ -173,15 +167,12 @@ gopkg.in/yaml.v3
 modernc.org/b
 # modernc.org/db v1.0.3
 modernc.org/db
-# modernc.org/ebnfutil v1.0.0
-## explicit
 # modernc.org/file v1.0.3
 modernc.org/file
 # modernc.org/fileutil v1.0.1-0.20200808163328-2079183a536e
 ## explicit
 modernc.org/fileutil
 # modernc.org/golex v1.0.1
-## explicit
 modernc.org/golex/lex
 # modernc.org/internal v1.0.3
 modernc.org/internal/buffer
